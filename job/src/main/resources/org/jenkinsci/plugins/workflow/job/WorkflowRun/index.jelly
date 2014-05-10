@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<!--
+  ~ The MIT License
+  ~
+  ~ Copyright (c) 2013-2014, CloudBees, Inc.
+  ~
+  ~ Permission is hereby granted, free of charge, to any person obtaining a copy
+  ~ of this software and associated documentation files (the "Software"), to deal
+  ~ in the Software without restriction, including without limitation the rights
+  ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  ~ copies of the Software, and to permit persons to whom the Software is
+  ~ furnished to do so, subject to the following conditions:
+  ~
+  ~ The above copyright notice and this permission notice shall be included in
+  ~ all copies or substantial portions of the Software.
+  ~
+  ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  ~ THE SOFTWARE.
+  -->
+
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt">
+    <l:layout title="${it.fullDisplayName}">
+        <st:include page="sidepanel.jelly"/>
+        <l:main-panel>
+            <div style="float:right; background-color:white; z-index: 1; position:relative; margin-left: 1em">
+                <l:hasPermission permission="${it.UPDATE}">
+                    <st:include page="logKeep.jelly"/>
+                </l:hasPermission>
+                <div style="margin-top:1em">
+                    ${%startedAgo(it.timestampString)}
+                </div>
+                <div>
+                    <j:if test="${it.building}">
+                        ${%beingExecuted(it.executor.timestampString)}
+                    </j:if>
+                    <j:if test="${!it.building}">
+                        ${%Took} <a href="${rootURL}/${it.parent.url}buildTimeTrend">${it.durationString}</a>
+                    </j:if>
+                </div>
+            </div>
+            <t:buildCaption>
+                ${%Build} ${it.displayName}
+                (<i:formatDate value="${it.timestamp.time}" type="both" dateStyle="medium" timeStyle="medium"/>)
+            </t:buildCaption>
+            <div>
+                <t:editableDescription permission="${it.UPDATE}"/>
+            </div>
+            <table style="margin-top: 1em; margin-left:1em;">
+                <t:artifactList build="${it}" caption="${%Build Artifacts}" permission="${it.ARTIFACTS}"/>
+                <j:forEach var="a" items="${it.allActions}">
+                    <st:include page="summary.jelly" from="${a}" optional="true" it="${a}"/>
+                </j:forEach>
+            </table>
+            <!-- TODO no upstream/downstream builds; DependencyGraph uses AP, for no obvious reason -->
+            <!-- TODO place visualizations here: -->
+            <j:forEach var="flowNode" items="${it.execution.currentHeads}">
+                Running: ${flowNode.displayName} [${flowNode.id}]
+            </j:forEach>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>
