@@ -57,7 +57,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.kohsuke</groupId>
+            <groupId>com.cloudbees</groupId>
             <artifactId>groovy-cps</artifactId>
             <version>0.1</version>
         </dependency>
