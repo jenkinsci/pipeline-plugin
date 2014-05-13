@@ -57,8 +57,8 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     @Test
     public void shellStep() {
         p.definition = new CpsFlowDefinition("""
-            dsl.node {
-              dsl.sh(script:"echo hello world")
+            with.node {
+              sh(script:"echo hello world")
             }
         """)
 
@@ -87,7 +87,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
         s.computer.connect(false).get() // wait for the slave to fully get connected
 
         p.definition = new CpsFlowDefinition("""
-            dsl.node {
+            with.node {
                 println 'Yo!'
             }
             println 'Out!'
@@ -113,7 +113,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     public void testRetry() {
         p.definition = new CpsFlowDefinition("""
             int i = 0;
-            dsl.retry(3) {
+            retry(3) {
                 println 'Trying!'
                 if (i++<2)
                     throw new NoSuchElementException();
