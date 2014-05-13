@@ -31,7 +31,6 @@ import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.util.StreamTaskListener;
 
-import javax.annotation.CheckForNull;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -42,7 +41,6 @@ import java.io.PrintStream;
  */
 public abstract class CpsScript extends SerializableScript {
     transient CpsFlowExecution execution;
-    private @CheckForNull EnvVars env;
 
     public CpsScript() {
     }
@@ -57,7 +55,8 @@ public abstract class CpsScript extends SerializableScript {
         if (qe instanceof Run) {
             PrintStream ps = execution.getOwner().getConsole();
             try {
-                env = ((Run) qe).getEnvironment(new StreamTaskListener(ps));
+                EnvVars env = ((Run) qe).getEnvironment(new StreamTaskListener(ps));
+                getBinding().getVariables().putAll(env);
             } catch (InterruptedException x) {
                 throw new IOException(x);
             }
@@ -68,8 +67,6 @@ public abstract class CpsScript extends SerializableScript {
     public Object getProperty(String property) {
         if (property.equals("out")) {
             return execution.getOwner().getConsole();
-        } else if (env != null && env.containsKey(property)) {
-            return env.get(property);
         }
         return super.getProperty(property);
     }
