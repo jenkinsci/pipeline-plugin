@@ -86,7 +86,7 @@ public abstract class SingleJobTestBase {
      */
     public void startBuilding() throws Exception {
         QueueTaskFuture<WorkflowRun> f = p.scheduleBuild2(0);
-        b = f.getStartCondition().get();
+        b = f.waitForStart();
         e = (CpsFlowExecution) b.getExecutionPromise().get();
     }
 
