@@ -1,5 +1,3 @@
-[![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
-
 # Introduction
 
 Building continuous delivery pipelines and similarly complex tasks in Jenkins using freestyle projects and existing plugins is very awkward.
@@ -47,6 +45,8 @@ Not yet using JIRA; waiting for a more or less stable release first.
 In the meantime we have a [Trello board](https://trello.com/b/u2fJQnDX/workflow) tracking active and proposed tasks.
 
 There is a [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/) with validated merge support.
+
+[![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
 
 # Source organization
 
