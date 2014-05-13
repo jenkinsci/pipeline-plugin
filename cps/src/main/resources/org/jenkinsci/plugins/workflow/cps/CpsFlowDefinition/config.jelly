@@ -25,7 +25,6 @@
 
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
   <f:entry title="${%Script}" field="script">
-    <st:adjunct includes="org.kohsuke.stapler.codemirror.mode.groovy.groovy"/>
-    <f:textarea codemirror-mode="text/x-groovy"/>
+    <f:textarea />
   </f:entry>
 </j:jelly>
