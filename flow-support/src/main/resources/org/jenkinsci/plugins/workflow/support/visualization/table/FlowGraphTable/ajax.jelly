@@ -40,12 +40,12 @@
         </tr>
 
         <j:forEach var="row" items="${it.rows}">
+          <j:set var="node" value="${row.node}"/>
           <tr>
-            <td style="padding-left: ${row.treeDepth*20}px">
+            <!-- tooltip is for now debugging only -->
+            <td style="padding-left: ${row.treeDepth*20}px" tooltip="ID: ${node.id}">
               ${row.displayName}
-
             </td>
-            <j:set var="node" value="${row.node}"/>
             <j:forEach var="column" items="${columns}">
               <st:include from="${column}" page="column"/>
             </j:forEach>
