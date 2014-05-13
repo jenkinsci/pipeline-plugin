@@ -79,4 +79,12 @@ public abstract class FlowExecutionOwner implements Serializable {
      * execution, where should I send it to?
      */
     public abstract PrintStream getConsole();
+
+    /**
+     * Returns the URL of {@link FlowExecution}, relative to the context root of Jenkins.
+     *
+     * @return
+     *      String like "/job/foo/32/execution" with leading slash but no trailing slash.
+     */
+    public abstract String getUrl();
 }

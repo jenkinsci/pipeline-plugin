@@ -200,9 +200,11 @@ public class STMExecutionTest {
         @Override public Queue.Executable getExecutable() throws IOException {
             throw new IOException();
         }
-        @Override
-        public PrintStream getConsole() {
+        @Override public PrintStream getConsole() {
             return System.out;
+        }
+        @Override public String getUrl() {
+            return "TODO";
         }
     }
 

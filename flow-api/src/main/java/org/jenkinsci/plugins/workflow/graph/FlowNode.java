@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.graph;
 
+import hudson.Functions;
 import hudson.console.AnnotatedLargeText;
 import hudson.model.BallColor;
 import org.apache.commons.io.IOUtils;
@@ -36,6 +37,8 @@ import com.google.common.collect.ImmutableList;
 import hudson.model.Action;
 import hudson.model.Actionable;
 import hudson.search.SearchItem;
+import org.kohsuke.stapler.Stapler;
+import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -151,20 +154,13 @@ public abstract class FlowNode extends Actionable {
     protected abstract String getTypeDisplayName();
 
     /**
-     * Used to URL-bind {@link AnnotatedLargeText}.
+     * Returns the URL of this {@link FlowNode}, relative to the context root of Jenkins.
+     *
+     * @return
+     *      String like "/job/foo/32/execution/node/abcde" with leading slash but no trailing slash.
      */
-    public AnnotatedLargeText getLogText() {
-        LogAction a = getAction(LogAction.class);
-        return a!=null ? a.getLogText() : null;
-    }
-
-    /**
-     * Used from <tt>console.jelly</tt> to write annotated log to the given output.
-     */
-    public void writeLogTo(long offset, XMLOutput out) throws IOException {
-        AnnotatedLargeText l = getLogText();
-        if (l!=null)
-            l.writeHtmlTo(offset, out.asWriter());
+    public String getUrl() {
+        return getExecution().getUrl()+"/node/"+getId();
     }
 
 /*

@@ -28,13 +28,13 @@ THE SOFTWARE.
   Displays the console output
 -->
 <?jelly escape-by-default='true'?>
-<st:compress xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt" xmlns:this="this">
+<st:compress xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt" xmlns:flow="/lib/flow">
   <l:layout title="${it.displayName} Console" norefresh="true">
-    <st:include page="sidepanel.jelly" />
+    <st:include it="${it.parent}" page="sidepanel.jelly" />
     <l:main-panel>
-      <this:nodeCaption>
+      <flow:nodeCaption node="${it.parent}">
         ${%Console Output}
-      </this:nodeCaption>
+      </flow:nodeCaption>
 
       <j:set var="threshold" value="${h.getSystemProperty('hudson.consoleTailKB')?:'150'}" />
       <!-- Show at most last 150KB (can override with system property) unless consoleFull is set -->
@@ -52,7 +52,7 @@ THE SOFTWARE.
 
       <j:choose>
         <!-- Do progressive console output -->
-        <j:when test="${it.isRunning()}">
+        <j:when test="${it.parent.isRunning()}">
           <pre id="out" />
           <div id="spinner">
             <img src="${imagesURL}/spinner.gif" alt="" />

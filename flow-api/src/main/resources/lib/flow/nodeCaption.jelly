@@ -27,15 +27,21 @@ THE SOFTWARE.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <st:documentation>
+    Generate a caption for the main panel that renders the status of the flow node.
+
+    <st:attribute name="node" />
+  </st:documentation>
+
 	<h1 class="build-caption page-headline">
-	  <j:if test="${it.running}">
+	  <j:if test="${node.running}">
 	    <div class="build-caption-progress-container" style="float:right">
 	      <table class="middle-align"><tr>
 	        <td>
 	          ${%Progress}:
 	        </td><td class="build-caption-progress-bar">
             <!-- TODO: is progress bar doable? -->
-	          <t:buildProgressBar build="${it}"/>
+	          <t:buildProgressBar build="${node}"/>
 	        </td><td>
             <j:if test="${it.parent.hasAbortPermission()}">
               <l:stopButton href="stop" alt="[${%cancel}]"/>
@@ -45,7 +51,8 @@ THE SOFTWARE.
 	    </div>
 	  </j:if>
 
-	  <img class="build-caption-status-icon" src="${imagesURL}/48x48/${it.iconColor.image}" width="48" height="48" alt="${it.iconColor.description}" tooltip="${it.iconColor.description}" />
+	  <img class="build-caption-status-icon" src="${imagesURL}/48x48/${node.iconColor.image}" width="48" height="48"
+         alt="${node.iconColor.description}" tooltip="${node.iconColor.description}" />
 	  <d:invokeBody />
 	</h1>
 </j:jelly>

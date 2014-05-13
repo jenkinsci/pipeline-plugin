@@ -75,6 +75,16 @@ public abstract class FlowExecution implements FlowActionStorage {
     public abstract List<FlowNode> getCurrentHeads();
 
     /**
+     * Returns the URL of this {@link FlowExecution}, relative to the context root of Jenkins.
+     *
+     * @return
+     *      String like "/job/foo/32/execution" with leading slash but no trailing slash.
+     */
+    public String getUrl() {
+        return getOwner().getUrl();
+    }
+
+    /**
      * Terminates the execution of a flow.
      *
      * If any computation is going on synchronously, it will be interrupted/killed/etc.

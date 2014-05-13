@@ -381,6 +381,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 return System.out;  // fallback
             }
         }
+        @Override public String getUrl() {
+            return run.getUrl()+"execution";
+        }
     }
 
     private final class GraphL implements GraphListener {

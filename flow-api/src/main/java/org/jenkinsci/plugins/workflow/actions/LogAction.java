@@ -24,12 +24,12 @@
 
 package org.jenkinsci.plugins.workflow.actions;
 
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
 import hudson.console.AnnotatedLargeText;
 import hudson.model.Action;
 import hudson.model.TaskListener;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
 
 /**
  * Associated with a node which has some log text.
