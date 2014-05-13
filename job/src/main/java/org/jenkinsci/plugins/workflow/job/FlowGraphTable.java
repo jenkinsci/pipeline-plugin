@@ -5,7 +5,10 @@ import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -16,9 +19,14 @@ import java.util.Stack;
  */
 public class FlowGraphTable {
     private final FlowExecution execution;
+    private List<Row> rows;
 
     public FlowGraphTable(FlowExecution execution) {
         this.execution = execution;
+    }
+
+    public List<Row> getRows() {
+        return rows;
     }
 
     /**
@@ -28,6 +36,8 @@ public class FlowGraphTable {
         Map<FlowNode, Row> rows = createAllRows();
         Row firstRow = buildForwardReferences(rows);
         buildTreeFromGraph(rows);
+        buildTreeDepth(firstRow);
+        this.rows = Collections.unmodifiableList(order(firstRow));
     }
 
     /**
@@ -131,6 +141,54 @@ public class FlowGraphTable {
         }
     }
 
+    /**
+     * Sets {@link Row#treeDepth} to the depth of the node from its tree root.
+     */
+    private void buildTreeDepth(Row r) {
+        r.treeDepth = 0;
+
+        Stack<Row> q = new Stack<Row>();
+        q.add(r);
+
+        while (!q.isEmpty()) {
+            r = q.pop();
+            if (r.firstTreeChild!=null) {
+                q.add(r.firstTreeChild);
+                r.firstTreeChild.treeDepth = r.treeDepth +1;
+            }
+            if (r.nextTreeSibling!=null) {
+                q.add(r.nextTreeSibling);
+                r.nextTreeSibling.treeDepth = r.treeDepth;
+            }
+        }
+    }
+
+    /**
+     * Order tree into a sequence.
+     */
+    private List<Row> order(Row r) {
+        List<Row> rows = new ArrayList<Row>();
+
+        Stack<Row> ancestors = new Stack<Row>();
+
+        while (r!=null) {
+            rows.add(r);
+
+            if (r.firstTreeChild!=null) {
+                if (r.nextTreeSibling!=null)
+                    ancestors.push(r.nextTreeSibling);
+                r = r.firstTreeChild;
+            } else
+            if (r.nextTreeSibling!=null) {
+                r = r.nextTreeSibling;
+            } else {
+                r = ancestors.pop();
+            }
+        }
+
+        return rows;
+    }
+
     public class Row {
         private final FlowNode node;
 
@@ -149,7 +207,7 @@ public class FlowGraphTable {
         private Row firstTreeChild;
         private Row nextTreeSibling;
 
-        private int depth = -1;
+        private int treeDepth = -1;
 
         public Row(FlowNode node) {
             this.node = node;
