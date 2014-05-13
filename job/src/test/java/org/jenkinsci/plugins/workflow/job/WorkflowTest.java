@@ -24,20 +24,23 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import hudson.model.Node;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import hudson.slaves.DumbSlave;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.RetentionStrategy;
 import java.io.File;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.FileUtils;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -207,17 +210,18 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
-    @Ignore("TODO WiP")
     @Test public void acquireWorkspace() throws Exception {
         final AtomicReference<String> dir = new AtomicReference<String>();
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                DumbSlave s = createSlave(story.j);
+                @SuppressWarnings("deprecation")
+                String slaveRoot = story.j.createTmpDir().getPath();
+                story.j.jenkins.addNode(new DumbSlave("slave", "dummy", slaveRoot, "2", Node.Mode.NORMAL, "", story.j.createComputerLauncher(null), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList()));
                 p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("FLAG", null)));
-                dir.set(s.getRemoteFS() + "/workspace/" + p.getFullName());
+                dir.set(slaveRoot + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
-                    "dsl.node('" + s.getNodeName() + "') {\n" +
+                    "dsl.node('slave') {\n" +
                     "    dsl.ws {\n" +
                     "        dsl.sh('echo before=$PWD')\n" +
                     "        dsl.watch(new File('" + story.j.jenkins.getRootDir() + "', FLAG))\n" +
@@ -232,7 +236,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 }
                 WorkflowRun b2 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "two"))).waitForStart();
                 CpsFlowExecution e2 = (CpsFlowExecution) b2.getExecutionPromise().get();
-                while (watchDescriptor.getActiveWatches().isEmpty()) {
+                while (watchDescriptor.getActiveWatches().size() == 1) {
                     assertTrue(JenkinsRule.getLog(b2), b2.isBuilding());
                     waitForWorkflowToSuspend(e2);
                 }
