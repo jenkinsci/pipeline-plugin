@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <?jelly escape-by-default='true'?>
 <!--
   ~ The MIT License
@@ -22,10 +23,33 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   ~ THE SOFTWARE.
   -->
+<!--
+  Renders the flow node in a tree list view
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt">
+  <l:ajax>
+    <div id="nodeGraph">
+      <table class="pane bigtable">
+        <j:set var="columns" value="${it.columns}"/>
+        <!-- header row -->
+        <tr>
+          <th>${%Step}</th>
+          <j:forEach var="column" items="${columns}">
+            <st:include page="columnHeader"/>
+          </j:forEach>
+        </tr>
 
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
-  <f:entry title="${%Script}" field="script">
-    <st:adjunct includes="org.kohsuke.stapler.codemirror.mode.groovy.groovy"/>
-    <f:textarea codemirror-mode="text/x-groovy"/>
-  </f:entry>
+        <j:forEach var="row" items="${it.rows}">
+          <tr>
+            <td style="padding-left: ${row.treeDepth*20}px">
+              ${row.displayName}
+            </td>
+            <j:forEach var="column" items="${columns}">
+              <st:include from="${column}" page="columnHeader"/>
+            </j:forEach>
+          </tr>
+        </j:forEach>
+      </table>
+    </div>
+  </l:ajax>
 </j:jelly>

@@ -65,6 +65,7 @@ import javax.annotation.concurrent.GuardedBy;
 import jenkins.model.Jenkins;
 import jenkins.model.lazy.BuildReference;
 import jenkins.model.lazy.LazyBuildMixIn;
+import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
 public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Queue.Executable, LazyBuildMixIn.LazyLoadingRun<WorkflowJob,WorkflowRun> {
@@ -117,6 +118,15 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     @Override public WorkflowRun getNextBuild() {
         return getRunMixIn().getNextBuild();
+    }
+
+    /**
+     * Exposed to URL space via Stapler.
+     */
+    public FlowGraphTable getFlowGraph() {
+        FlowGraphTable t = new FlowGraphTable(getExecution());
+        t.build();
+        return t;
     }
 
     @Override public void run() {

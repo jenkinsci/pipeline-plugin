@@ -36,7 +36,7 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>flow-api</artifactId>
+            <artifactId>flow-support</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
