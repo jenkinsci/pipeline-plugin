@@ -78,10 +78,10 @@ public abstract class FlowExecution implements FlowActionStorage {
      * Returns the URL of this {@link FlowExecution}, relative to the context root of Jenkins.
      *
      * @return
-     *      String like "/job/foo/32/execution" with leading slash but no trailing slash.
+     *      String like "job/foo/32/execution/" with trailing slash but no leading slash.
      */
     public String getUrl() {
-        return getOwner().getUrl();
+        return getOwner().getUrlOfExecution();
     }
 
     /**

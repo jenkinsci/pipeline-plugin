@@ -157,10 +157,10 @@ public abstract class FlowNode extends Actionable {
      * Returns the URL of this {@link FlowNode}, relative to the context root of Jenkins.
      *
      * @return
-     *      String like "/job/foo/32/execution/node/abcde" with leading slash but no trailing slash.
+     *      String like "job/foo/32/execution/node/abcde/" with no leading slash but trailing slash.
      */
     public String getUrl() {
-        return getExecution().getUrl()+"/node/"+getId();
+        return getExecution().getUrl()+"node/"+getId()+'/';
     }
 
 /*

@@ -81,10 +81,18 @@ public abstract class FlowExecutionOwner implements Serializable {
     public abstract PrintStream getConsole();
 
     /**
-     * Returns the URL of {@link FlowExecution}, relative to the context root of Jenkins.
+     * Returns the URL of the model object that owns {@link FlowExecution},
+     * relative to the context root of Jenkins.
+     *
+     * This is usually not the same object as 'this'. This object
+     * must have the {@code getExecution()} method to bind {@link FlowExecution} to the URL space.
      *
      * @return
-     *      String like "/job/foo/32/execution" with leading slash but no trailing slash.
+     *      String like "job/foo/32/" with trailing slash but no leading slash.
      */
     public abstract String getUrl();
+
+    public String getUrlOfExecution() {
+        return getUrl()+"execution/";
+    }
 }

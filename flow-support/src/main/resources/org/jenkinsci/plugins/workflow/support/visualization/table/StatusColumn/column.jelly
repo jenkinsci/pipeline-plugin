@@ -24,5 +24,5 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
-    <t:ballColorTd it="${node.color}" iconSize="32x32"/>
+    <t:ballColorTd it="${node.iconColor}" iconSize="32x32"/>
 </j:jelly>

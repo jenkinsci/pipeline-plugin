@@ -382,7 +382,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
         }
         @Override public String getUrl() {
-            return run.getUrl()+"execution";
+            return run.getUrl();
         }
     }
 
