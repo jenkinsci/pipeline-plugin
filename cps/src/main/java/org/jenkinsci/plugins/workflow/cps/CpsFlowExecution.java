@@ -291,9 +291,9 @@ public class CpsFlowExecution extends FlowExecution {
         programPromise = result;
 
         try {
-            Script s = parseScript();
+            ClassLoader scriptClassLoader = parseScript().getClass().getClassLoader();
 
-            RiverReader r = new RiverReader(programDataFile, s.getClass().getClassLoader());
+            RiverReader r = new RiverReader(programDataFile, scriptClassLoader);
             Futures.addCallback(
                     r.restorePickles(),
 
