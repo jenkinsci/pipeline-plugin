@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.support.actions;
 
+import org.apache.commons.jelly.XMLOutput;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.actions.FlowNodeAction;
@@ -51,6 +52,10 @@ public class LogActionImpl extends LogAction implements FlowNodeAction {
         this.charset = charset.name();
     }
 
+    public FlowNode getParent() {
+        return parent;
+    }
+
     @Override
     public AnnotatedLargeText<? extends FlowNode> getLogText() {
         try {
@@ -73,6 +78,15 @@ public class LogActionImpl extends LogAction implements FlowNodeAction {
         if (log==null)
             log = new File(parent.getExecution().getOwner().getRootDir(), parent.getId() + ".log");
         return log;
+    }
+
+    /**
+     * Used from <tt>console.jelly</tt> to write annotated log to the given output.
+     */
+    public void writeLogTo(long offset, XMLOutput out) throws IOException {
+        AnnotatedLargeText l = getLogText();
+        if (l!=null)
+            l.writeHtmlTo(offset, out.asWriter());
     }
 
     @Override

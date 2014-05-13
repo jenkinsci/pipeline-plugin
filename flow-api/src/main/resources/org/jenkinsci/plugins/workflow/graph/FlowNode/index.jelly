@@ -23,37 +23,15 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   ~ THE SOFTWARE.
   -->
-<!--
-  Renders the flow node in a tree list view
--->
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt">
-  <l:ajax>
-    <div id="nodeGraph">
-      <table class="pane bigtable">
-        <j:set var="columns" value="${it.columns}"/>
-        <!-- header row -->
-        <tr>
-          <th>${%Step}</th>
-          <j:forEach var="column" items="${columns}">
-            <st:include from="${column}" page="columnHeader"/>
-          </j:forEach>
-        </tr>
 
-        <j:forEach var="row" items="${it.rows}">
-          <j:set var="node" value="${row.node}"/>
-          <tr>
-            <!-- tooltip is for now debugging only -->
-            <td style="padding-left: ${row.treeDepth*20}px" tooltip="ID: ${node.id}">
-              <a href="execution/node/${node.id}/">
-                ${row.displayName}
-              </a>
-            </td>
-            <j:forEach var="column" items="${columns}">
-              <st:include from="${column}" page="column"/>
-            </j:forEach>
-          </tr>
-        </j:forEach>
-      </table>
-    </div>
-  </l:ajax>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt" xmlns:flow="/lib/flow">
+  <l:layout title="${it.displayName}">
+    <st:include page="sidepanel.jelly"/>
+    <l:main-panel>
+      <flow:nodeCaption node="${it}">
+        ${%Node} ${it.displayName}
+        <!-- (<i:formatDate value="${it.timestamp.time}" type="both" dateStyle="medium" timeStyle="medium"/>) -->
+      </flow:nodeCaption>
+    </l:main-panel>
+  </l:layout>
 </j:jelly>
