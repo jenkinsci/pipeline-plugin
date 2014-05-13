@@ -23,37 +23,12 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   ~ THE SOFTWARE.
   -->
-<!--
-  Renders the flow node in a tree list view
--->
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt">
-  <l:ajax>
-    <div id="nodeGraph">
-      <table class="pane bigtable">
-        <j:set var="columns" value="${it.columns}"/>
-        <!-- header row -->
-        <tr>
-          <th>${%Step}</th>
-          <j:forEach var="column" items="${columns}">
-            <st:include from="${column}" page="columnHeader"/>
-          </j:forEach>
-        </tr>
-
-        <j:forEach var="row" items="${it.rows}">
-          <j:set var="node" value="${row.node}"/>
-          <tr>
-            <!-- tooltip is for now debugging only -->
-            <td style="padding-left: ${row.treeDepth*20}px" tooltip="ID: ${node.id}">
-              <a href="execution/node/${node.id}/">
-                ${row.displayName}
-              </a>
-            </td>
-            <j:forEach var="column" items="${columns}">
-              <st:include from="${column}" page="column"/>
-            </j:forEach>
-          </tr>
-        </j:forEach>
-      </table>
-    </div>
-  </l:ajax>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson">
+  <l:side-panel>
+    <l:tasks>
+      <j:set var="buildUrl" value="${h.decompose(request)}"/>
+      <l:task icon="images/24x24/up.png" href="../../../" title="${%Up}" contextMenu="false"/>
+      <l:task icon="images/24x24/terminal.png" href="./console" title="${%Console Output}"/>
+    </l:tasks>
+  </l:side-panel>
 </j:jelly>
