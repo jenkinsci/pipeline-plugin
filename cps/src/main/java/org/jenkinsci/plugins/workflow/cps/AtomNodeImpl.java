@@ -40,6 +40,6 @@ public class AtomNodeImpl extends AtomNode {
 
     @Override
     protected String getTypeDisplayName() {
-        return "Demo Atom Node";
+        return "Atom Node";
     }
 }
