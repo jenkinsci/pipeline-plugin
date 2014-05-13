@@ -36,15 +36,18 @@ import jenkins.model.Jenkins;
  * @author Kohsuke Kawaguchi
  */
 public class FilePathPickle extends Pickle {
-    String slave;
-    String path;
+    private final String slave;
+    private final String path;
 
     private FilePathPickle(FilePath v) {
-        for (Computer c : Jenkins.getInstance().getComputers()) {
-            if (v.getChannel()==c.getChannel()) {
-                slave = c.getName();
-                path = v.getRemote();
-                return;
+        Jenkins j = Jenkins.getInstance();
+        if (j != null) {
+            for (Computer c : j.getComputers()) {
+                if (v.getChannel()==c.getChannel()) {
+                    slave = c.getName();
+                    path = v.getRemote();
+                    return;
+                }
             }
         }
         throw new IllegalStateException();
@@ -55,7 +58,11 @@ public class FilePathPickle extends Pickle {
         return new TryRepeatedly<FilePath>(1) {
             @Override
             protected FilePath tryResolve() {
-                VirtualChannel ch = Jenkins.getInstance().getComputer(slave).getChannel();
+                Jenkins j = Jenkins.getInstance();
+                if (j == null) {
+                    return null;
+                }
+                VirtualChannel ch = j.getComputer(slave).getChannel();
                 if (ch == null) return null;
                 return new FilePath(ch, path);
             }
