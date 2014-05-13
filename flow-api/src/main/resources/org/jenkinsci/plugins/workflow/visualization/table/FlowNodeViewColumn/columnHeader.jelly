@@ -27,7 +27,7 @@
   Renders the flow node in a tree list view
 -->
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt">
-  <th>
-    ${it.columnCaption}
+  <th width="32">
+    ${column.columnCaption}
   </th>
 </j:jelly>
