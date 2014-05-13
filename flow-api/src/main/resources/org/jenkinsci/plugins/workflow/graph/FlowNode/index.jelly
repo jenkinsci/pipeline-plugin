@@ -24,16 +24,14 @@
   ~ THE SOFTWARE.
   -->
 
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt" xmlns:this="this">
   <l:layout title="${it.displayName}">
     <st:include page="sidepanel.jelly"/>
     <l:main-panel>
-      <h1 class="build-caption page-headline">
-        <img src="${it.color.getImageOf('48x48')}" />
-
+      <this:nodeCaption>
         ${%Node} ${it.displayName}
         <!-- (<i:formatDate value="${it.timestamp.time}" type="both" dateStyle="medium" timeStyle="medium"/>) -->
-      </h1>
+      </this:nodeCaption>
     </l:main-panel>
   </l:layout>
 </j:jelly>

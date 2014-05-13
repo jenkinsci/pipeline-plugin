@@ -24,9 +24,13 @@
 
 package org.jenkinsci.plugins.workflow.graph;
 
+import hudson.console.AnnotatedLargeText;
 import hudson.model.BallColor;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.jelly.XMLOutput;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.actions.LogAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import com.google.common.collect.ImmutableList;
 import hudson.model.Action;
@@ -37,6 +41,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOError;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.AbstractList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -132,7 +137,7 @@ public abstract class FlowNode extends Actionable {
      * TODO: this makes me wonder if we should support other colored states,
      * like unstable and aborted --- seems useful.
      */
-    public BallColor getColor() {
+    public BallColor getIconColor() {
         BallColor c = getError()!=null ? BallColor.RED : BallColor.BLUE;
         if (isRunning())        c = c.anime();
         return c;
@@ -144,6 +149,23 @@ public abstract class FlowNode extends Actionable {
      * This is used to implement {@link #getDisplayName()} as a fallback in case {@link LabelAction} doesnt exist.
      */
     protected abstract String getTypeDisplayName();
+
+    /**
+     * Used to URL-bind {@link AnnotatedLargeText}.
+     */
+    public AnnotatedLargeText getLogText() {
+        LogAction a = getAction(LogAction.class);
+        return a!=null ? a.getLogText() : null;
+    }
+
+    /**
+     * Used from <tt>console.jelly</tt> to write annotated log to the given output.
+     */
+    public void writeLogTo(long offset, XMLOutput out) throws IOException {
+        AnnotatedLargeText l = getLogText();
+        if (l!=null)
+            l.writeHtmlTo(offset, out.asWriter());
+    }
 
 /*
     We can't use Actionable#actions to store actions because they aren't transient,
