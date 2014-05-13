@@ -24,21 +24,24 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import hudson.FilePath;
+import hudson.model.BallColor;
+import hudson.model.ParametersAction;
+import hudson.model.ParametersDefinitionProperty;
+import hudson.model.StringParameterDefinition;
+import hudson.model.StringParameterValue;
+import hudson.model.queue.QueueTaskFuture;
+import java.io.IOException;
+import javax.inject.Inject;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
-import hudson.FilePath;
-import hudson.model.BallColor;
-import hudson.model.queue.QueueTaskFuture;
+
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import javax.inject.Inject;
-import java.io.IOException;
-
-import static org.junit.Assert.*;
 
 public class WorkflowRunTest {
 
@@ -64,6 +67,13 @@ public class WorkflowRunTest {
         WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertEquals(b1, b2.getPreviousBuild());
         assertEquals(null, b1.getPreviousBuild());
+    }
+
+    @Test public void parameters() throws Exception {
+        p.setDefinition(new CpsFlowDefinition("dsl.node {dsl.sh('echo param=' + PARAM)}"));
+        p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("PARAM", null)));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("PARAM", "value"))));
+        r.assertLogContains("param=value", b);
     }
 
     /**

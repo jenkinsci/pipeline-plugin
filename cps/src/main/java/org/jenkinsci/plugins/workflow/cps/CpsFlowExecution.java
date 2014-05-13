@@ -231,6 +231,8 @@ public class CpsFlowExecution extends FlowExecution {
         // with.node('linux') { ... }
         s.getBinding().setVariable("with", dsl);
 
+        s.loadEnvironment();
+
         FlowHead h = new FlowHead(this,iota.incrementAndGet());
         heads.put(h.getId(),h);
         h.newStartNode(new FlowStartNode(this, iota()));
@@ -255,7 +257,7 @@ public class CpsFlowExecution extends FlowExecution {
         return new GroovyShell(j!=null ? j.getPluginManager().uberClassLoader : getClass().getClassLoader(), new Binding(), cc);
     }
 
-    private Script parseScript() {
+    private CpsScript parseScript() throws IOException {
         GroovyShell shell = buildShell();
         CpsScript s = (CpsScript) shell.parse(script);
         s.execution = this;
