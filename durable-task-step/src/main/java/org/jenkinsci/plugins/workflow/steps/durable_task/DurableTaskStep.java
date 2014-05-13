@@ -205,7 +205,7 @@ public abstract class DurableTaskStep extends Step {
                     LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
                     return wrote ? CheckResult.UPDATED : CheckResult.NO_CHANGE;
                 } else if (exitCode == 0) {
-                    context.onSuccess(null);
+                    context.onSuccess(exitCode);
                 } else {
                     context.onFailure(new AbortException("script returned exit code " + exitCode));
                 }

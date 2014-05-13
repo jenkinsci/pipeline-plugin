@@ -29,10 +29,10 @@ Executors are not consumed while the flow is waiting.
 ## Example script
 
 ```
-dsl.node('linux') { // grab a slave
-  dsl.ws { // allocate a workspace
-    dsl.sh('git clone …');
-    dsl.sh('mvn verify');
+with.node('linux') { // grab a slave
+  with.ws { // allocate a workspace
+    sh('git clone …');
+    sh('mvn verify');
   }
 }
 ```

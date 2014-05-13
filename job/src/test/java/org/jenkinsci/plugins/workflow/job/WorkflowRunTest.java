@@ -77,7 +77,7 @@ public class WorkflowRunTest {
 
         p.setDefinition(new CpsFlowDefinition(
             "println('hello')\n"+
-            "dsl.watch(new File('"+test.getRemote()+"'))\n"+
+            "steps.watch(new File('"+test.getRemote()+"'))\n"+
             "println('hello')\n"
         ));
 

@@ -50,7 +50,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
     private final FlowExecutionOwner handle;
     private transient CpsFlowExecution exec;
 
-    public DSL(FlowExecutionOwner handle) throws IOException {
+    public DSL(FlowExecutionOwner handle) {
         this.handle = handle;
     }
 

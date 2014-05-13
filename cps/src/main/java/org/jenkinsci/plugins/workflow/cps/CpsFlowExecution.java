@@ -224,7 +224,12 @@ public class CpsFlowExecution extends FlowExecution {
     @Override
     public void start() throws IOException {
         Script s = parseScript();
-        s.getBinding().setVariable("dsl", new DSL(owner));
+        DSL dsl = new DSL(owner);
+        s.getBinding().setVariable("steps", dsl);
+        // some of the steps that acquire resources look better with 'with', so exposing
+        // that name, such as:
+        // with.node('linux') { ... }
+        s.getBinding().setVariable("with", dsl);
 
         FlowHead h = new FlowHead(this,iota.incrementAndGet());
         heads.put(h.getId(),h);
@@ -240,6 +245,7 @@ public class CpsFlowExecution extends FlowExecution {
     private GroovyShell buildShell() {
         ImportCustomizer ic = new ImportCustomizer();
         ic.addStarImports(WorkflowMethod.class.getPackage().getName());
+        ic.addStaticStars(CpsBuiltinSteps.class.getName());
 
         CompilerConfiguration cc = new CompilerConfiguration();
         cc.addCompilationCustomizers(ic);

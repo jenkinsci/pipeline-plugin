@@ -26,6 +26,11 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.SerializableScript;
 import groovy.lang.Binding;
+import groovy.lang.MissingMethodException;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * {@link SerializableScript} that overrides target of the output.

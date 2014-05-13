@@ -54,7 +54,7 @@ public class WorkflowTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("dsl.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))"));
+                p.setDefinition(new CpsFlowDefinition("steps.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))"));
                 startBuilding();
                 waitForWorkflowToSuspend();
                 assertTrue(b.isBuilding());
@@ -94,7 +94,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     "def r = s.node.rootPath\n" +
                     "def p = r.getRemote()\n" +
 
-                    "dsl.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))\n" +
+                    "steps.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))\n" +
 
                     // make sure these values are still alive
                     "assert s.nodeName=='" + nodeName + "'\n" +
@@ -141,14 +141,14 @@ public class WorkflowTest extends SingleJobTestBase {
                 p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 dir.set(s.getRemoteFS() + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
-                    "dsl.node('" + s.getNodeName() + "') {\n" +
-                    "    dsl.sh('echo before=$PWD')\n" +
-                    "    dsl.sh('echo ONSLAVE=$ONSLAVE')\n" +
+                    "with.node('" + s.getNodeName() + "') {\n" +
+                    "    sh('echo before=$PWD')\n" +
+                    "    sh('echo ONSLAVE=$ONSLAVE')\n" +
 
                         // we'll suspend the execution here
-                    "    dsl.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))\n" +
+                    "    steps.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))\n" +
 
-                    "    dsl.sh('echo after=$PWD')\n" +
+                    "    sh('echo after=$PWD')\n" +
                     "}"));
 
                 startBuilding();
@@ -189,8 +189,8 @@ public class WorkflowTest extends SingleJobTestBase {
                 p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 dir.set(s.getRemoteFS() + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
-                    "dsl.node('" + s.getNodeName() + "') {\n" +
-                    "    dsl.sh('pwd; echo ONSLAVE=$ONSLAVE')\n" +
+                    "with.node('" + s.getNodeName() + "') {\n" +
+                    "    sh('pwd; echo ONSLAVE=$ONSLAVE')\n" +
                     "}"));
 
                 startBuilding();
@@ -217,11 +217,11 @@ public class WorkflowTest extends SingleJobTestBase {
                 p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("FLAG", null)));
                 dir.set(s.getRemoteFS() + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
-                    "dsl.node('" + s.getNodeName() + "') {\n" +
-                    "    dsl.ws {\n" +
-                    "        dsl.sh('echo before=$PWD')\n" +
-                    "        dsl.watch(new File('" + story.j.jenkins.getRootDir() + "', FLAG))\n" +
-                    "        dsl.sh('echo after=$PWD')\n" +
+                    "with.node('" + s.getNodeName() + "') {\n" +
+                    "    with.ws {\n" +
+                    "        sh('echo before=$PWD')\n" +
+                    "        steps.watch(new File('" + story.j.jenkins.getRootDir() + "', FLAG))\n" +
+                    "        sh('echo after=$PWD')\n" +
                     "    }\n" +
                     "}"));
                 WorkflowRun b1 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "one"))).waitForStart();
@@ -274,9 +274,9 @@ public class WorkflowTest extends SingleJobTestBase {
                 p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
                     "int count=0;\n" +
-                    "dsl.retry(3) {\n" +
+                    "retry(3) {\n" +
                         // we'll suspend the execution here
-                    "    dsl.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))\n" +
+                    "    steps.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))\n" +
 
                     "    if (count++ < 2) {\n" + // forcing retry
                     "        throw new IllegalArgumentException();\n" +

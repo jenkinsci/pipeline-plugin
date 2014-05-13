@@ -71,7 +71,7 @@ for (int i=0; i<10; i++)
         def dir = tmp.newFolder()
 
         def flow = new CpsFlowDefinition("""
-            dsl.watch(new File("${dir}/marker"))
+            steps.watch(new File("${dir}/marker"))
             println 'Yo'
         """)
 
