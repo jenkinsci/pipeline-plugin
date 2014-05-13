@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.graph;
 
+import hudson.model.BallColor;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -123,6 +124,18 @@ public abstract class FlowNode extends Actionable {
         LabelAction a = getAction(LabelAction.class);
         if (a!=null)    return a.getDisplayName();
         else            return getTypeDisplayName();
+    }
+
+    /**
+     * Returns colored orb that represents the current state of this node.
+     *
+     * TODO: this makes me wonder if we should support other colored states,
+     * like unstable and aborted --- seems useful.
+     */
+    public BallColor getColor() {
+        BallColor c = getError()!=null ? BallColor.RED : BallColor.BLUE;
+        if (isRunning())        c = c.anime();
+        return c;
     }
 
     /**
