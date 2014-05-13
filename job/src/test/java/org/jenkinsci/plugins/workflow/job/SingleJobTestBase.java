@@ -72,11 +72,19 @@ public abstract class SingleJobTestBase {
      * Asserts that {@link #e} is in the suspended state and has nothing more to execute.
      */
     public void assertThatWorkflowIsSuspended() throws Exception {
+        assertThatWorkflowIsSuspended(b, e);
+    }
+
+    public void assertThatWorkflowIsSuspended(WorkflowRun b, CpsFlowExecution e) throws Exception {
         e.waitForSuspension();  // it should be in the suspended state
         assert b.isBuilding() : b.getLog();
     }
 
     public void waitForWorkflowToSuspend() throws Exception {
+        waitForWorkflowToSuspend(e);
+    }
+
+    public void waitForWorkflowToSuspend(CpsFlowExecution e) throws Exception {
         e.waitForSuspension();
         Thread.sleep(1000);
     }
@@ -100,6 +108,10 @@ public abstract class SingleJobTestBase {
      * Verifies that 'b' has completed successfully.
      */
     public void assertBuildCompletedSuccessfully() throws Exception {
+        assertBuildCompletedSuccessfully(b);
+    }
+
+    public void assertBuildCompletedSuccessfully(WorkflowRun b) throws Exception {
         assert !b.isBuilding(): b.getLog();
         assert b.getResult() == Result.SUCCESS: b.getLog();
     }

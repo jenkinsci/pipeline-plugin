@@ -24,14 +24,20 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import hudson.model.ParametersAction;
+import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
+import hudson.model.StringParameterDefinition;
+import hudson.model.StringParameterValue;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import hudson.slaves.DumbSlave;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.FileUtils;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -197,6 +203,64 @@ public class WorkflowTest extends SingleJobTestBase {
 
                 story.j.assertLogContains(dir.get(), b);
                 story.j.assertLogContains("ONSLAVE=true", b);
+            }
+        });
+    }
+
+    @Ignore("TODO WiP")
+    @Test public void acquireWorkspace() throws Exception {
+        final AtomicReference<String> dir = new AtomicReference<String>();
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                DumbSlave s = createSlave(story.j);
+                p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
+                p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("FLAG", null)));
+                dir.set(s.getRemoteFS() + "/workspace/" + p.getFullName());
+                p.setDefinition(new CpsFlowDefinition(
+                    "dsl.node('" + s.getNodeName() + "') {\n" +
+                    "    dsl.ws {\n" +
+                    "        dsl.sh('echo before=$PWD')\n" +
+                    "        dsl.watch(new File('" + story.j.jenkins.getRootDir() + "', FLAG))\n" +
+                    "        dsl.sh('echo after=$PWD')\n" +
+                    "    }\n" +
+                    "}"));
+                WorkflowRun b1 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "one"))).waitForStart();
+                CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
+                while (watchDescriptor.getActiveWatches().isEmpty()) {
+                    assertTrue(JenkinsRule.getLog(b1), b1.isBuilding());
+                    waitForWorkflowToSuspend(e1);
+                }
+                WorkflowRun b2 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "two"))).waitForStart();
+                CpsFlowExecution e2 = (CpsFlowExecution) b2.getExecutionPromise().get();
+                while (watchDescriptor.getActiveWatches().isEmpty()) {
+                    assertTrue(JenkinsRule.getLog(b2), b2.isBuilding());
+                    waitForWorkflowToSuspend(e2);
+                }
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                rebuildContext(story.j);
+                WorkflowRun b1 = p.getBuildByNumber(1);
+                CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecution();
+                assertThatWorkflowIsSuspended(b1, e1);
+                WorkflowRun b2 = p.getBuildByNumber(2);
+                CpsFlowExecution e2 = (CpsFlowExecution) b2.getExecution();
+                assertThatWorkflowIsSuspended(b2, e2);
+                FileUtils.write(new File(story.j.jenkins.getRootDir(), "one"), "here");
+                FileUtils.write(new File(story.j.jenkins.getRootDir(), "two"), "here");
+                while (!e1.isComplete()) {
+                    e1.waitForSuspension();
+                }
+                while (!e2.isComplete()) {
+                    e2.waitForSuspension();
+                }
+                assertBuildCompletedSuccessfully(b1);
+                assertBuildCompletedSuccessfully(b2);
+                story.j.assertLogContains("before=" + dir, b1);
+                story.j.assertLogContains("after=" + dir, b1);
+                story.j.assertLogContains("before=" + dir + "@2", b2);
+                story.j.assertLogContains("after=" + dir + "@2", b2);
             }
         });
     }
