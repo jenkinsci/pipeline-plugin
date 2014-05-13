@@ -27,31 +27,7 @@
   Renders the flow node in a tree list view
 -->
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt">
-  <l:ajax>
-    <div id="nodeGraph">
-      <table class="pane bigtable">
-        <j:set var="columns" value="${it.columns}"/>
-        <!-- header row -->
-        <tr>
-          <th>${%Step}</th>
-          <j:forEach var="column" items="${columns}">
-            <st:include from="${column}" page="columnHeader"/>
-          </j:forEach>
-        </tr>
-
-        <j:forEach var="row" items="${it.rows}">
-          <j:set var="node" value="${row.node}"/>
-          <tr>
-            <!-- tooltip is for now debugging only -->
-            <td style="padding-left: ${row.treeDepth*20}px" tooltip="ID: ${node.id}">
-              ${row.displayName}
-            </td>
-            <j:forEach var="column" items="${columns}">
-              <st:include from="${column}" page="column"/>
-            </j:forEach>
-          </tr>
-        </j:forEach>
-      </table>
-    </div>
-  </l:ajax>
+  <th width="32">
+    ${column.columnCaption}
+  </th>
 </j:jelly>

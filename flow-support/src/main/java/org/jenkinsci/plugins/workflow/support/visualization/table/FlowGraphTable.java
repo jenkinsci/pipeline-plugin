@@ -230,6 +230,10 @@ public class FlowGraphTable {
             this.node = node;
         }
 
+        public FlowNode getNode() {
+            return node;
+        }
+
         public int getTreeDepth() {
             return treeDepth;
         }

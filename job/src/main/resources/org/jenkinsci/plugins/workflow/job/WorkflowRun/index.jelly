@@ -61,9 +61,11 @@
 
             <!-- TODO: make this extensible so that other plugins can contribute more views -->
             <st:include it="${it.flowGraph}" page="ajax"/>
-            <script>
-              refreshPart('nodeGraph','./flowGraph/ajax')
-            </script>
+            <j:if test="${it.isBuilding()}">
+              <script>
+                refreshPart('nodeGraph','./flowGraph/ajax')
+              </script>
+            </j:if>
         </l:main-panel>
     </l:layout>
 </j:jelly>
