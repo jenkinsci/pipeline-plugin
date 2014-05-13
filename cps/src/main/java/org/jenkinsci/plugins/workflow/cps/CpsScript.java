@@ -26,6 +26,13 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.SerializableScript;
 import groovy.lang.Binding;
+import hudson.EnvVars;
+import hudson.model.Queue;
+import hudson.model.Run;
+import hudson.util.StreamTaskListener;
+import java.io.IOException;
+import java.io.PrintStream;
+import javax.annotation.CheckForNull;
 
 /**
  * {@link SerializableScript} that overrides target of the output.
@@ -34,6 +41,7 @@ import groovy.lang.Binding;
  */
 public abstract class CpsScript extends SerializableScript {
     transient CpsFlowExecution execution;
+    private @CheckForNull EnvVars env;
 
     public CpsScript() {
     }
@@ -42,10 +50,25 @@ public abstract class CpsScript extends SerializableScript {
         super(binding);
     }
 
+    @SuppressWarnings("deprecation") // TODO encoding of execution.owner.console?
+    void loadEnvironment() throws IOException {
+        Queue.Executable qe = execution.getOwner().getExecutable();
+        if (qe instanceof Run) {
+            PrintStream ps = execution.getOwner().getConsole();
+            try {
+                env = ((Run) qe).getEnvironment(new StreamTaskListener(ps));
+            } catch (InterruptedException x) {
+                throw new IOException(x);
+            }
+        }
+    }
+
     @Override
     public Object getProperty(String property) {
         if (property.equals("out")) {
             return execution.getOwner().getConsole();
+        } else if (env != null && env.containsKey(property)) {
+            return env.get(property);
         }
         return super.getProperty(property);
     }
