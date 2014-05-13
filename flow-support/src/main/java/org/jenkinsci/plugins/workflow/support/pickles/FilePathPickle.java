@@ -62,7 +62,11 @@ public class FilePathPickle extends Pickle {
                 if (j == null) {
                     return null;
                 }
-                VirtualChannel ch = j.getComputer(slave).getChannel();
+                Computer c = j.getComputer(slave);
+                if (c == null) {
+                    return null;
+                }
+                VirtualChannel ch = c.getChannel();
                 if (ch == null) return null;
                 return new FilePath(ch, path);
             }
