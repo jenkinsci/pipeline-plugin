@@ -36,7 +36,7 @@ import jenkins.model.Jenkins;
  * @author Kohsuke Kawaguchi
  */
 public class ComputerPickle extends Pickle {
-    String slave;
+    private final String slave;
 
     private ComputerPickle(Computer v) {
         this.slave = v.getName();
@@ -47,7 +47,11 @@ public class ComputerPickle extends Pickle {
         return new TryRepeatedly<Computer>(1) {
             @Override
             protected Computer tryResolve() {
-                return Jenkins.getInstance().getComputer(slave);
+                Jenkins j = Jenkins.getInstance();
+                if (j == null) {
+                    return null;
+                }
+                return j.getComputer(slave);
             }
         };
     }

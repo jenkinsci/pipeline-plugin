@@ -30,6 +30,7 @@ import jenkins.util.Timer;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.CheckForNull;
 
 /**
  * {@link ListenableFuture} that promises a value that needs to be periodically tried.
@@ -81,5 +82,5 @@ public abstract class TryRepeatedly<V> extends AbstractFuture<V> {
      * @throws Exception
      *      Any exception thrown will cause the future to fail.
      */
-    protected abstract V tryResolve() throws Exception;
+    protected abstract @CheckForNull V tryResolve() throws Exception;
 }
