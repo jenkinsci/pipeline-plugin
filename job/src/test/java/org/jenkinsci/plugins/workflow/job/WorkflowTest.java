@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import hudson.model.Queue;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import hudson.slaves.DumbSlave;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
@@ -51,12 +52,17 @@ public class WorkflowTest extends SingleJobTestBase {
                 startBuilding();
                 waitForWorkflowToSuspend();
                 assertTrue(b.isBuilding());
+                assertFalse(story.j.jenkins.toComputer().isIdle());
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
+                for (int i = 0; i < 600 && !Queue.getInstance().isEmpty(); i++) {
+                    Thread.sleep(100);
+                }
+                assertFalse(story.j.jenkins.toComputer().isIdle());
                 FileUtils.write(new File(story.j.jenkins.getRootDir(), "touch"), "I'm here");
                 watchDescriptor.watchUpdate();
                 e.waitForSuspension();

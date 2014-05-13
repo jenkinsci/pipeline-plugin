@@ -119,7 +119,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return getRunMixIn().getNextBuild();
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings({"ML_SYNC_ON_UPDATED_FIELD", "UW_UNCOND_WAIT"})
     @Override public void run() {
         // TODO how to set startTime? reflection?
         // TODO lots here copied from execute(RunExecution)
@@ -140,16 +139,32 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             logsToCopy = new LinkedHashMap<String,Long>();
             execution.start();
             executionPromise.set(execution);
-            while (!execution.isComplete()) {
-                synchronized (completionLock) {
-                    completionLock.wait(1000);
-                    copyLogs();
-                }
-            }
+            waitForCompletion();
         } catch (Exception x) {
             LOGGER.log(Level.WARNING, null, x);
             result = Result.FAILURE;
             executionPromise.setException(x);
+        }
+    }
+
+    /**
+     * Sleeps until the run is finished, updating log messages periodically.
+     */
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings({"ML_SYNC_ON_UPDATED_FIELD", "UW_UNCOND_WAIT"})
+    void waitForCompletion() {
+        while (!execution.isComplete()) {
+            synchronized (completionLock) {
+                try {
+                    completionLock.wait(1000);
+                } catch (InterruptedException x) {
+                    try {
+                        execution.abort();
+                    } catch (Exception x2) {
+                        LOGGER.log(Level.WARNING, null, x2);
+                    }
+                }
+                copyLogs();
+            }
         }
     }
 
@@ -213,6 +228,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (execution != null) {
             execution.onLoad();
             execution.addListener(new GraphL());
+            executionPromise.set(execution);
             if (!execution.isComplete()) {
                 try {
                     OutputStream logger = new FileOutputStream(getLogFile(), true);
@@ -223,9 +239,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     listener = new StreamBuildListener(new NullStream());
                 }
                 completionLock = new Object();
-                // TODO should again schedule something from the WorkflowJob (just be careful that createExecutable does not create a new build), and wait on completionLock
+                Queue.getInstance().schedule(new AfterRestartTask(this), 0);
             }
-            executionPromise.set(execution);
         }
         LOADING_RUNS.remove(key()); // or could just make the value type be WeakReference<WorkflowRun>
     }
