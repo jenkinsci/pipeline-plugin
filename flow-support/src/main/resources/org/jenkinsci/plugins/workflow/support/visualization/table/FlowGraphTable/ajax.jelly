@@ -43,7 +43,7 @@
           <j:set var="node" value="${row.node}"/>
           <tr>
             <!-- tooltip is for now debugging only -->
-            <td style="padding-left: ${row.treeDepth*20}px" tooltip="ID: ${node.id}">
+            <td style="padding-left: ${row.treeDepth*20+5}px" tooltip="ID: ${node.id}">
               <a href="execution/node/${node.id}/">
                 ${row.displayName}
               </a>
