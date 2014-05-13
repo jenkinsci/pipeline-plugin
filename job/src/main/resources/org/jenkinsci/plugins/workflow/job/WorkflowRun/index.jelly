@@ -60,9 +60,9 @@
             <!-- TODO no upstream/downstream builds; DependencyGraph uses AP, for no obvious reason -->
 
             <!-- TODO: make this extensible so that other plugins can contribute more views -->
-            <st:include page="ajaxNodeGraph"/>
+            <st:include it="${it.flowGraph}" page="ajax"/>
             <script>
-              refreshPart('nodeGraph','./ajaxNodeGraph')
+              refreshPart('nodeGraph','./flowGraph/ajax')
             </script>
         </l:main-panel>
     </l:layout>

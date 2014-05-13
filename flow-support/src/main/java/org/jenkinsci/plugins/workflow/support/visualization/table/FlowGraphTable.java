@@ -4,7 +4,10 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
+import org.jenkinsci.plugins.workflow.visualization.table.FlowNodeViewColumn;
+import org.jenkinsci.plugins.workflow.visualization.table.FlowNodeViewColumnDescriptor;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -20,8 +23,9 @@ import java.util.Stack;
 public class FlowGraphTable {
     private final FlowExecution execution;
     private List<Row> rows;
+    private List<FlowNodeViewColumn> columns;
 
-    public FlowGraphTable(FlowExecution execution) {
+    public FlowGraphTable(@Nullable FlowExecution execution) {
         this.execution = execution;
     }
 
@@ -29,15 +33,24 @@ public class FlowGraphTable {
         return rows;
     }
 
+    public List<FlowNodeViewColumn> getColumns() {
+        return columns;
+    }
+
     /**
      * Builds the tabular view of a flow node graph.
      */
     public void build() {
-        Map<FlowNode, Row> rows = createAllRows();
-        Row firstRow = buildForwardReferences(rows);
-        buildTreeFromGraph(rows);
-        buildTreeDepth(firstRow);
-        this.rows = Collections.unmodifiableList(order(firstRow));
+        if (execution!=null) {
+            Map<FlowNode, Row> rows = createAllRows();
+            Row firstRow = buildForwardReferences(rows);
+            buildTreeFromGraph(rows);
+            buildTreeDepth(firstRow);
+            this.rows = Collections.unmodifiableList(order(firstRow));
+        } else {
+            this.rows = Collections.emptyList();
+        }
+        this.columns = Collections.unmodifiableList(FlowNodeViewColumnDescriptor.getDefaultInstances());
     }
 
     /**
@@ -209,8 +222,16 @@ public class FlowGraphTable {
 
         private int treeDepth = -1;
 
-        public Row(FlowNode node) {
+        private Row(FlowNode node) {
             this.node = node;
+        }
+
+        public int getTreeDepth() {
+            return treeDepth;
+        }
+
+        public String getDisplayName() {
+            return node.getDisplayName();
         }
 
         boolean isStart() {

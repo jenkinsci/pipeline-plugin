@@ -41,7 +41,7 @@
 
         <j:forEach var="row" items="${it.rows}">
           <tr>
-            <td style="padding-left:${row.indent*20}px">
+            <td style="padding-left: ${row.treeDepth*20}px">
               ${row.displayName}
             </td>
             <j:forEach var="column" items="${columns}">
@@ -49,6 +49,7 @@
             </j:forEach>
           </tr>
         </j:forEach>
+      </table>
     </div>
   </l:ajax>
 </j:jelly>
