@@ -30,21 +30,6 @@ import com.cloudbees.groovy.cps.Outcome;
 import com.cloudbees.groovy.cps.WorkflowMethod;
 import com.cloudbees.groovy.cps.impl.ConstantBlock;
 import com.cloudbees.groovy.cps.impl.ThrowBlock;
-import org.jenkinsci.plugins.workflow.actions.ErrorAction;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import org.jenkinsci.plugins.workflow.flow.GraphListener;
-import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
-import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
-import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
-import org.jenkinsci.plugins.workflow.support.storage.FlowNodeStorage;
-import org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage;
-import org.jenkinsci.plugins.workflow.support.pickles.serialization.PickleResolver;
-import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverReader;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -59,13 +44,27 @@ import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.mapper.Mapper;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
-import groovy.lang.Script;
 import hudson.model.Action;
 import hudson.model.Result;
 import jenkins.model.Jenkins;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.jboss.marshalling.Unmarshaller;
+import org.jenkinsci.plugins.workflow.actions.ErrorAction;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.jenkinsci.plugins.workflow.flow.GraphListener;
+import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
+import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
+import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
+import org.jenkinsci.plugins.workflow.support.pickles.serialization.PickleResolver;
+import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverReader;
+import org.jenkinsci.plugins.workflow.support.storage.FlowNodeStorage;
+import org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -223,7 +222,7 @@ public class CpsFlowExecution extends FlowExecution {
 
     @Override
     public void start() throws IOException {
-        Script s = parseScript();
+        CpsScript s = parseScript();
         DSL dsl = new DSL(owner);
         s.getBinding().setVariable("steps", dsl);
         // some of the steps that acquire resources look better with 'with', so exposing
