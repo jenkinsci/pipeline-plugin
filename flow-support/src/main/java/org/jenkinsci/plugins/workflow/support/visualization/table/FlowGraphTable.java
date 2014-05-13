@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.job;
+package org.jenkinsci.plugins.workflow.support.visualization.table;
 
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
