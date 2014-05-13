@@ -39,6 +39,8 @@ public class FlowGraphTable {
 
     /**
      * Builds the tabular view of a flow node graph.
+     *
+     * Leaving this outside the constructor to enable subtyping to tweak the behaviour.
      */
     public void build() {
         if (execution!=null) {
@@ -184,7 +186,7 @@ public class FlowGraphTable {
 
         Stack<Row> ancestors = new Stack<Row>();
 
-        while (r!=null) {
+        while (true) {
             rows.add(r);
 
             if (r.firstTreeChild!=null) {
@@ -195,6 +197,8 @@ public class FlowGraphTable {
             if (r.nextTreeSibling!=null) {
                 r = r.nextTreeSibling;
             } else {
+                if (ancestors.isEmpty())
+                    break;
                 r = ancestors.pop();
             }
         }

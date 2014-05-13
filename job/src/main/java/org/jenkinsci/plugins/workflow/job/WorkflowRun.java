@@ -124,7 +124,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
      * Exposed to URL space via Stapler.
      */
     public FlowGraphTable getFlowGraph() {
-        return new FlowGraphTable(getExecution());
+        FlowGraphTable t = new FlowGraphTable(getExecution());
+        t.build();
+        return t;
     }
 
     @edu.umd.cs.findbugs.annotations.SuppressWarnings({"ML_SYNC_ON_UPDATED_FIELD", "UW_UNCOND_WAIT"})
