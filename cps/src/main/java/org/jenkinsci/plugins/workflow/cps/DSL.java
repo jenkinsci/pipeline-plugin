@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
@@ -74,6 +75,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         CpsThread thread = CpsThread.current();
 
         AtomNode a = new AtomNodeImpl(exec, exec.iota(), true, thread.head.get());
+        a.addAction(new LabelAction("Step: "+name));    // TODO: use CPS call stack to obtain the current call site source location
 
         NamedArgsAndClosure ps = parseArgs(args);
         Step s = d.newInstance(ps.namedArgs);
