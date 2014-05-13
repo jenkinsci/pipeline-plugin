@@ -62,7 +62,7 @@ public final class WorkspaceStep extends Step {
         }
         FilePath p = n.getWorkspaceFor((TopLevelItem) j);
         WorkspaceList.Lease lease = c.getWorkspaceList().allocate(p);
-        context.invokeBodyLater(new Callback(context, lease), p);
+        context.invokeBodyLater(new Callback(context, lease), lease.path);
         return false;
     }
 
