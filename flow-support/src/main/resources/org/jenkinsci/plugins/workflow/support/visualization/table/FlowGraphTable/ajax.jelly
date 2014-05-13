@@ -35,7 +35,7 @@
         <tr>
           <th>${%Step}</th>
           <j:forEach var="column" items="${columns}">
-            <st:include page="columnHeader"/>
+            <st:include from="${column}" page="columnHeader"/>
           </j:forEach>
         </tr>
 
