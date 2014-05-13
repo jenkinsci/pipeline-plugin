@@ -52,7 +52,6 @@ public class DSL extends GroovyObjectSupport implements Serializable {
 
     public DSL(FlowExecutionOwner handle) throws IOException {
         this.handle = handle;
-        readResolve();
     }
 
     protected Object readResolve() throws IOException {
