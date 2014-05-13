@@ -58,10 +58,12 @@
                 </j:forEach>
             </table>
             <!-- TODO no upstream/downstream builds; DependencyGraph uses AP, for no obvious reason -->
-            <!-- TODO place visualizations here: -->
-            <j:forEach var="flowNode" items="${it.execution.currentHeads}">
-                Running: ${flowNode.displayName} [${flowNode.id}]
-            </j:forEach>
+
+            <!-- TODO: make this extensible so that other plugins can contribute more views -->
+            <st:include page="ajaxNodeGraph"/>
+            <script>
+              refreshPart('nodeGraph','./ajaxNodeGraph')
+            </script>
         </l:main-panel>
     </l:layout>
 </j:jelly>
