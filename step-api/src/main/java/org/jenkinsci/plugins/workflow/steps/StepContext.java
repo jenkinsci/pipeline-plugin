@@ -77,6 +77,8 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      */
     public abstract @Nullable <T> T get(Class<T> key) throws IOException, InterruptedException;
 
+    @Override public abstract void onSuccess(@Nullable Object result);
+
     /**
      * Whether {@link #get} is ready to return values.
      * May be called to break deadlocks during reloading.
