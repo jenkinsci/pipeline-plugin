@@ -25,17 +25,6 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Outcome;
-import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
-import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import org.jenkinsci.plugins.workflow.graph.AtomNode;
-import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl;
-import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import groovy.lang.Closure;
@@ -50,14 +39,25 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.util.StreamTaskListener;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.jenkinsci.plugins.workflow.graph.AtomNode;
+import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.Step;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl;
+import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
+import javax.annotation.CheckForNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.CheckForNull;
 
 /**
  * {@link StepContext} implementation for CPS.
@@ -313,8 +313,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
                         if (thread != null) {
                             if (n instanceof StepStartNode) {
                                 thread.head.setNewHead(new StepEndNode(flow, (StepStartNode)n,
-                                        // TODO: where are parents?
-                                        n));
+                                        thread.head.get()));
                             }
                             thread.resume(getOutcome());
                         }
