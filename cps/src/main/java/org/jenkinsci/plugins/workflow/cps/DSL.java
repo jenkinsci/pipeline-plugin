@@ -172,10 +172,14 @@ public class DSL extends GroovyObjectSupport implements Serializable {
                 return new NamedArgsAndClosure((Map)a.get(0),c);
             }
 
-            if (a.size()>1) {
+            switch (a.size()) {
+            case 0:
+                return new NamedArgsAndClosure(Collections.<String,Object>emptyMap(),c);
+            case 1:
+                return new NamedArgsAndClosure(Collections.singletonMap("value",a.get(0)),c);
+            default:
                 throw new IllegalArgumentException("Expected named arguments but got "+a);
             }
-            return new NamedArgsAndClosure(Collections.singletonMap("value",a.get(0)),c);
         }
 
         return new NamedArgsAndClosure(Collections.singletonMap("value",arg),null);
