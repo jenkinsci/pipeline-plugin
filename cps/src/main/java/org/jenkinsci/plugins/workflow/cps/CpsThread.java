@@ -140,35 +140,18 @@ public final class CpsThread implements Serializable {
                 CURRENT.set(old);
             }
 
-            // make sure we won't set this back to null before the return value from
-            // threadPoolForRemoting.submit() is set in scheduleNextChunk
-            if (outcome.getNormal() instanceof CpsStepContext) {
-                CpsStepContext sc = (CpsStepContext) outcome.getNormal();
-                if (sc.bodyInvoker!=null) {
-                    // step is requesting invocation of the body
-                    sc.bodyInvoker.start(this);
-                }
-
-                if (!sc.switchToAsyncMode()) {
-                    // we have a result now, so just keep executing
-                    // TODO: if this fails with an exception, we need ability to resume by throwing an exception
-                    resumeValue = sc.getOutcome();
-                    sc.node.markAsCompleted();
-                    continue;
-                } else {
-                    // beyond this point, StepContext can receive a result at any time and
-                    // that would result in a call to scheduleNextChunk(). So we the call to
-                    // switchToAsyncMode to happen inside 'synchronized(lock)', so that
-                    // the 'executing' variable gets set to null before the scheduleNextChunk call starts going.
-
-                    // TODO: don't we need to be able to mark AtomNode as running?
-                }
-            }
             if (outcome.getNormal() instanceof ThreadTask) {
                 // if an execution in the thread safepoint is requested, deliver that
                 ThreadTask sc = (ThreadTask) outcome.getNormal();
-                resumeValue = sc.eval(this);
-                continue;
+                ThreadTaskResult r = sc.eval(this);
+                if (r.resume!=null) {
+                    // keep evaluating the CPS code
+                    resumeValue = r.resume;
+                    continue;
+                } else {
+                    // break but with a different value
+                    outcome = r.suspend;
+                }
             }
 
 

@@ -65,6 +65,8 @@ import org.jenkinsci.plugins.workflow.support.pickles.serialization.PickleResolv
 import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverReader;
 import org.jenkinsci.plugins.workflow.support.storage.FlowNodeStorage;
 import org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -272,7 +274,8 @@ public class CpsFlowExecution extends FlowExecution {
     /**
      * Assigns a new ID.
      */
-    /*package*/ String iota() {
+    @Restricted(NoExternalUse.class)
+    public String iota() {
         return String.valueOf(iota.incrementAndGet());
     }
 

@@ -25,10 +25,13 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
+import com.cloudbees.groovy.cps.Outcome;
 import groovy.lang.GroovyObject;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
+import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import groovy.lang.Closure;
@@ -43,8 +46,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
+
 /**
  * Scaffolding to experiment with the call into {@link Step}.
+ *
+ * Serialized as a part of the program state.
  *
  * @author Kohsuke Kawaguchi
  */
@@ -81,7 +88,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         NamedArgsAndClosure ps = parseArgs(args);
         Step s = d.newInstance(ps.namedArgs);
 
-        CpsStepContext context = new CpsStepContext(thread,handle,a,ps.body);
+        final CpsStepContext context = new CpsStepContext(thread,handle,a,ps.body);
         boolean sync;
         try {
             sync = s.start(context);
@@ -104,7 +111,25 @@ public class DSL extends GroovyObjectSupport implements Serializable {
 
             // if it's in progress, suspend it until we get invoked later.
             // when it resumes, the CPS caller behaves as if this method returned with the resume value
-            Continuable.suspend(context);
+            Continuable.suspend(new ThreadTask() {
+                @Override
+                protected ThreadTaskResult eval(CpsThread t) {
+                    if (!context.switchToAsyncMode()) {
+                        // we have a result now, so just keep executing
+                        // TODO: if this fails with an exception, we need ability to resume by throwing an exception
+                        context.node.markAsCompleted();
+                        return resumeWith(context.getOutcome());
+                    } else {
+                        // beyond this point, StepContext can receive a result at any time and
+                        // that would result in a call to scheduleNextChunk(). So we the call to
+                        // switchToAsyncMode to happen inside 'synchronized(lock)', so that
+                        // the 'executing' variable gets set to null before the scheduleNextChunk call starts going.
+
+                        // TODO: don't we need to be able to mark AtomNode as running?
+                        return suspendWith(new Outcome(context,null));
+                    }
+                }
+            });
 
             // the above method throws an exception to unwind the call stack, and
             // the control then goes back to CpsFlowExecution.runNextChunk
@@ -113,7 +138,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
     }
 
-    private void setNewHead(CpsThread thread, AtomNode a) {
+    private void setNewHead(CpsThread thread, FlowNode a) {
         try {
             thread.head.setNewHead(a);
         } catch (IOException e) {

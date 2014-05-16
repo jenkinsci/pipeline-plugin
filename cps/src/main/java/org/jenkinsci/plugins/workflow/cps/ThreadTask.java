@@ -34,8 +34,21 @@ import com.cloudbees.groovy.cps.Outcome;
  * Pass this to {@link Continuable#suspend(Object)} to have {@link #eval(CpsThread)}
  * invoked.
  *
- * After the task is executed, {@link Continuable#suspend(Object)} method "returns"
- * (in the async sense) with the value returned.
+ * <p>
+ * {@link #eval(CpsThread)} can return in one of two ways.
+ *
+ * <p>
+ * If the eval method returns with
+ * {@link ThreadTaskResult#resumeWith(Outcome)}, then the calling CPS program sees
+ * the invocation of {@link Continuable#suspend(Object)} "return"
+ * (in the async sense) with the specified outcome. This is useful if you want to
+ * keep the CPS evaluation going.
+ *
+ * <p>
+ * If the method return with {@link ThreadTaskResult#suspendWith(Outcome)}, then
+ * the synchronous caller of {@link Continuable#run(Object)} returns with the specified
+ * outcome (which is normally what happens with {@link Continuable#suspend(Object)}) call.
+ * This is useful if you want to suspend the computation.
  *
  * @author Kohsuke Kawaguchi
  */
@@ -44,5 +57,5 @@ public abstract class ThreadTask {
      * @param t
      *      the thread that requested this task.
      */
-    protected abstract Outcome eval(CpsThread t);
+    protected abstract ThreadTaskResult eval(CpsThread t);
 }
