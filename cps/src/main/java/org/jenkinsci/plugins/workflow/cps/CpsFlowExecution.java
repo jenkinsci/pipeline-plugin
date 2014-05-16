@@ -401,6 +401,15 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     @Override
+    public boolean isCurrentHead(FlowNode n) {
+        for (FlowHead h : heads.values()) {
+            if (h.get().equals(n))
+                return true;
+        }
+        return false;
+    }
+
+    @Override
     public synchronized void addListener(GraphListener listener) {
         if (listeners == null) {
             listeners = new ArrayList<GraphListener>();

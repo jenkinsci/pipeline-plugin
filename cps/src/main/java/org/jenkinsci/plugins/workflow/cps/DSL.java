@@ -30,7 +30,6 @@ import groovy.lang.GroovyObject;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
-import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -42,7 +41,6 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -82,7 +80,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
 
         CpsThread thread = CpsThread.current();
 
-        AtomNode a = new AtomNodeImpl(exec, exec.iota(), true, thread.head.get());
+        AtomNode a = new AtomNodeImpl(exec, exec.iota(), thread.head.get());
         a.addAction(new LabelAction("Step: "+name));    // TODO: use CPS call stack to obtain the current call site source location
 
         NamedArgsAndClosure ps = parseArgs(args);
@@ -102,7 +100,6 @@ public class DSL extends GroovyObjectSupport implements Serializable {
 
             // if the execution has finished synchronously inside the start method
             // we just move on accordingly
-            a.markAsCompleted();
             setNewHead(thread,a);
             return context.replay();
         } else {
@@ -117,7 +114,6 @@ public class DSL extends GroovyObjectSupport implements Serializable {
                     if (!context.switchToAsyncMode()) {
                         // we have a result now, so just keep executing
                         // TODO: if this fails with an exception, we need ability to resume by throwing an exception
-                        context.node.markAsCompleted();
                         return resumeWith(context.getOutcome());
                     } else {
                         // beyond this point, StepContext can receive a result at any time and
@@ -125,7 +121,6 @@ public class DSL extends GroovyObjectSupport implements Serializable {
                         // switchToAsyncMode to happen inside 'synchronized(lock)', so that
                         // the 'executing' variable gets set to null before the scheduleNextChunk call starts going.
 
-                        // TODO: don't we need to be able to mark AtomNode as running?
                         return suspendWith(new Outcome(context,null));
                     }
                 }

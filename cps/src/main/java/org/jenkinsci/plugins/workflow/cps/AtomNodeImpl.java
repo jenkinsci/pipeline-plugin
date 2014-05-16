@@ -34,8 +34,8 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
  * @author Kohsuke Kawaguchi
  */
 public class AtomNodeImpl extends AtomNode {
-    public AtomNodeImpl(FlowExecution exec, String id, boolean runningState, FlowNode parent) {
-        super(exec, id, runningState, parent);
+    public AtomNodeImpl(FlowExecution exec, String id, FlowNode parent) {
+        super(exec, id, parent);
     }
 
     @Override

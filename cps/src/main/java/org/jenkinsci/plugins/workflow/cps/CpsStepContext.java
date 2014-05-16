@@ -295,8 +295,6 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
     private void scheduleNextRun() {
         if (!syncMode) {
             try {
-                if (node!=null) // TODO: if node is null I think we need to bring it back from the disk
-                    node.markAsCompleted();
                 Futures.addCallback(getFlowExecution().programPromise, new FutureCallback<CpsThreadGroup>() {
                     @Override
                     public void onSuccess(CpsThreadGroup g) {

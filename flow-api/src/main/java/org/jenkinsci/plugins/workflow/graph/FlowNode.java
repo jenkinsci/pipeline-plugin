@@ -24,27 +24,19 @@
 
 package org.jenkinsci.plugins.workflow.graph;
 
-import hudson.Functions;
-import hudson.console.AnnotatedLargeText;
-import hudson.model.BallColor;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.jelly.XMLOutput;
-import org.jenkinsci.plugins.workflow.actions.ErrorAction;
-import org.jenkinsci.plugins.workflow.actions.LabelAction;
-import org.jenkinsci.plugins.workflow.actions.LogAction;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import com.google.common.collect.ImmutableList;
 import hudson.model.Action;
 import hudson.model.Actionable;
+import hudson.model.BallColor;
 import hudson.search.SearchItem;
-import org.kohsuke.stapler.Stapler;
-import org.kohsuke.stapler.StaplerRequest;
+import org.jenkinsci.plugins.workflow.actions.ErrorAction;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOError;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.AbstractList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -89,7 +81,9 @@ public abstract class FlowNode extends Actionable {
      * This can only go from true to false. It can be only true for {@link FlowNode}s
      * that are returned from {@link FlowExecution#getCurrentHeads()}.
      */
-    public abstract boolean isRunning();
+    public boolean isRunning() {
+        return getExecution().isCurrentHead(this);
+    }
 
     /**
      * If this node has terminated with an error, return an object that indicates that.
