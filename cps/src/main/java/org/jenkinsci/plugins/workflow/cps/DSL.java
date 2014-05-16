@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
+import groovy.lang.GroovyObject;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
@@ -35,6 +36,7 @@ import groovy.lang.GroovyObjectSupport;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -130,6 +132,21 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
     }
 
+    /**
+     * Given the Groovy style argument packing used in the sole object parameter of {@link GroovyObject#invokeMethod(String, Object)},
+     * compute the named argument map and an optional closure that represents the body.
+     *
+     * <p>
+     * Positional arguments are not allowed, unless it has a single argument, in which case
+     * it is passed as an argument named "value", that is:
+     *
+     * <pre>
+     * foo(x)  => foo(value:x)
+     * </pre>
+     *
+     * <p>
+     * This handling is designed after how Java defines literal syntax for {@link Annotation}.
+     */
     private NamedArgsAndClosure parseArgs(Object arg) {
         if (arg instanceof Map)
             // TODO: convert the key to a string
@@ -155,14 +172,13 @@ public class DSL extends GroovyObjectSupport implements Serializable {
                 return new NamedArgsAndClosure((Map)a.get(0),c);
             }
 
-            Map<String,Object> m = new HashMap<String,Object>(a.size());
-            for (int i = 0; i < a.size(); i++) {
-                m.put("arg"+i,a.get(i));
+            if (a.size()>1) {
+                throw new IllegalArgumentException("Expected named arguments but got "+a);
             }
-            return new NamedArgsAndClosure(m,c);
+            return new NamedArgsAndClosure(Collections.singletonMap("value",a.get(0)),c);
         }
 
-        return new NamedArgsAndClosure(Collections.singletonMap("arg1",arg),null);
+        return new NamedArgsAndClosure(Collections.singletonMap("value",arg),null);
     }
 
     private static final long serialVersionUID = 1L;
