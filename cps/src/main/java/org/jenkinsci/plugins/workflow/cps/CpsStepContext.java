@@ -57,6 +57,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -133,7 +134,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
      * Only used in the synchronous mode while {@link CpsFlowExecution} is in the RUNNABLE state,
      * so this need not be persisted.
      */
-    transient BodyInvoker bodyInvoker;
+    transient List<BodyInvoker> bodyInvokers = Collections.synchronizedList(new ArrayList<BodyInvoker>());
 
     /**
      * While {@link CpsStepContext} has not received teh response, maintains the body closure.
@@ -195,9 +196,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
         if (syncMode) {
             // we process this in CpsThread#runNextChunk
-            if (bodyInvoker!=null)
-                throw new IllegalStateException("Trying to call invokeBodyLater twice");
-            bodyInvoker = b;
+            bodyInvokers.add(b);
         } else {
             try {
                 Futures.addCallback(getExecution().programPromise, new FutureCallback<CpsThreadGroup>() {

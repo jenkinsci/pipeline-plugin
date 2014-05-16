@@ -106,7 +106,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
 
         if (sync) {
-            assert context.bodyInvoker==null : "If a step claims synchronous completion, it shouldn't invoke body";
+            assert context.bodyInvokers.isEmpty() : "If a step claims synchronous completion, it shouldn't invoke body";
 
             // if the execution has finished synchronously inside the start method
             // we just move on accordingly
@@ -121,10 +121,10 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             Continuable.suspend(new ThreadTask() {
                 @Override
                 protected ThreadTaskResult eval(CpsThread t) {
-                    if (context.bodyInvoker!=null) {
-                        // step is requesting invocation of the body
-                        context.bodyInvoker.start(t);
+                    for (BodyInvoker b : context.bodyInvokers) {
+                        b.start(t);
                     }
+                    context.bodyInvokers.clear();
 
                     if (!context.switchToAsyncMode()) {
                         // we have a result now, so just keep executing
