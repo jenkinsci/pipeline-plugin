@@ -77,7 +77,7 @@ public abstract class SingleJobTestBase {
 
     public void assertThatWorkflowIsSuspended(WorkflowRun b, CpsFlowExecution e) throws Exception {
         e.waitForSuspension();  // it should be in the suspended state
-        assert b.isBuilding() : b.getLog();
+        assert b.isBuilding() : JenkinsRule.getLog(b);
     }
 
     public void waitForWorkflowToSuspend() throws Exception {
@@ -112,7 +112,7 @@ public abstract class SingleJobTestBase {
     }
 
     public void assertBuildCompletedSuccessfully(WorkflowRun b) throws Exception {
-        assert !b.isBuilding(): b.getLog();
-        assert b.getResult() == Result.SUCCESS: b.getLog();
+        assert !b.isBuilding(): JenkinsRule.getLog(b);
+        assert b.getResult() == Result.SUCCESS: JenkinsRule.getLog(b);
     }
 }
