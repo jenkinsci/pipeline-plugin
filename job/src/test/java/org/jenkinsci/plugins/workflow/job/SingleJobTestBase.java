@@ -86,7 +86,6 @@ public abstract class SingleJobTestBase {
 
     public void waitForWorkflowToSuspend(CpsFlowExecution e) throws Exception {
         e.waitForSuspension();
-        Thread.sleep(1000);
     }
 
     /**
