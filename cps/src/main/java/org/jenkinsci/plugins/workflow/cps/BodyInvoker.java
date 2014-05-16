@@ -92,8 +92,6 @@ final class BodyInvoker {
             c.onSuccess(x);   // body has completed synchronously
         } catch (CpsCallableInvocation e) {
             // execute this closure asynchronously
-            // TODO: does it make sense that the new thread shares the same head?
-            // this problem is captured as https://trello.com/c/v6Pbwqxj/70-allowing-steps-to-build-flownodes
             CpsThread t = currentThread.group.addThread(createContinuable(e, c), currentThread.head,
                     ContextVariableSet.from(currentThread.getContextVariables(),co));
             t.resume(new Outcome(null, null));  // get the new thread going
