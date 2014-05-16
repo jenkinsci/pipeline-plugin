@@ -58,7 +58,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     public void shellStep() {
         p.definition = new CpsFlowDefinition("""
             with.node {
-              sh(script:"echo hello world")
+              sh("echo hello world")
             }
         """)
 
