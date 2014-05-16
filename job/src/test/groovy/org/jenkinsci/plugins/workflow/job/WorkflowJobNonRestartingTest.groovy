@@ -98,7 +98,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
 
         f.get(); // wait until completion
 
-        assert b.result == Result.SUCCESS
+        assert b.result == Result.SUCCESS : b.log
 
         def log = b.logFile.text
         assert log.contains("Yo!")

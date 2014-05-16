@@ -380,7 +380,7 @@ public final class ExecutorStep extends Step {
             if (s == null) {
                 s = arguments.get("value");
             }
-            return new ExecutorStep(s.toString());
+            return new ExecutorStep(s!=null ? s.toString() : null);
         }
 
         @Override public String getDisplayName() {
