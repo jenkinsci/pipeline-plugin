@@ -125,7 +125,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
      * {@link FlowNode#getId()}s that should become the parents of the {@link BlockEndNode} when
      * we create one. Only used when this context has the body.
      */
-    private final List<String> bodyInvHeads = new ArrayList<String>();
+    final List<String> bodyInvHeads = new ArrayList<String>();
 
     /**
      * If the invocation of the body is requested, this object remembers how to start it.

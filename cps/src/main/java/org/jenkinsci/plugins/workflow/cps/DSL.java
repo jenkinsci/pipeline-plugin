@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
+import com.google.common.util.concurrent.FutureCallback;
 import groovy.lang.Closure;
 import groovy.lang.GroovyObject;
 import groovy.lang.GroovyObjectSupport;
@@ -118,28 +119,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         } else {
             // if it's in progress, suspend it until we get invoked later.
             // when it resumes, the CPS caller behaves as if this method returned with the resume value
-            Continuable.suspend(new ThreadTask() {
-                @Override
-                protected ThreadTaskResult eval(CpsThread t) {
-                    for (BodyInvoker b : context.bodyInvokers) {
-                        b.start(t);
-                    }
-                    context.bodyInvokers.clear();
-
-                    if (!context.switchToAsyncMode()) {
-                        // we have a result now, so just keep executing
-                        // TODO: if this fails with an exception, we need ability to resume by throwing an exception
-                        return resumeWith(context.getOutcome());
-                    } else {
-                        // beyond this point, StepContext can receive a result at any time and
-                        // that would result in a call to scheduleNextChunk(). So we the call to
-                        // switchToAsyncMode to happen inside 'synchronized(lock)', so that
-                        // the 'executing' variable gets set to null before the scheduleNextChunk call starts going.
-
-                        return suspendWith(new Outcome(context,null));
-                    }
-                }
-            });
+            Continuable.suspend(new ThreadTaskImpl(context));
 
             // the above method throws an exception to unwind the call stack, and
             // the control then goes back to CpsFlowExecution.runNextChunk
@@ -209,6 +189,80 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
 
         return new NamedArgsAndClosure(Collections.singletonMap("value",arg),null);
+    }
+
+    /**
+     * If the step starts executing asynchronously, this task
+     * executes at the safe point to switch {@link CpsStepContext} into the async mode.
+     */
+    private static class ThreadTaskImpl extends ThreadTask implements Serializable {
+        private final CpsStepContext context;
+
+        public ThreadTaskImpl(CpsStepContext context) {
+            this.context = context;
+        }
+
+        @Override
+        protected ThreadTaskResult eval(CpsThread t) {
+            invokeBody(t);
+
+            if (!context.switchToAsyncMode()) {
+                // we have a result now, so just keep executing
+                // TODO: if this fails with an exception, we need ability to resume by throwing an exception
+                return resumeWith(context.getOutcome());
+            } else {
+                // beyond this point, StepContext can receive a result at any time and
+                // that would result in a call to scheduleNextChunk(). So we the call to
+                // switchToAsyncMode to happen inside 'synchronized(lock)', so that
+                // the 'executing' variable gets set to null before the scheduleNextChunk call starts going.
+
+                return suspendWith(new Outcome(context,null));
+            }
+        }
+
+        private void invokeBody(CpsThread t) {
+            int count=0;
+            for (BodyInvoker b : context.bodyInvokers) {
+                if (count++==0) {
+                    b.start(t);
+                } else {
+                    FlowHead head = new FlowHead(t.getExecution());
+                    b.start(t, head, new HeadCollector(context,head));
+                }
+            }
+            context.bodyInvokers.clear();
+        }
+
+        /**
+         * When a new {@link CpsThread} that runs the body completes, record
+         * its new head.
+         */
+        private static class HeadCollector implements FutureCallback, Serializable {
+            private final CpsStepContext context;
+            private final FlowHead head;
+
+            public HeadCollector(CpsStepContext context, FlowHead head) {
+                this.context = context;
+                this.head = head;
+            }
+
+            private void onEnd() {
+                context.bodyInvHeads.add(head.get().getId());
+            }
+
+            @Override
+            public void onSuccess(Object result) {
+                onEnd();
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                onEnd();
+            }
+        }
+
+
+        private static final long serialVersionUID = 1L;
     }
 
     private static final long serialVersionUID = 1L;
