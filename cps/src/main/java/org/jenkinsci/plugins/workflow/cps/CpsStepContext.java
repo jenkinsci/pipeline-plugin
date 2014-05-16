@@ -44,6 +44,7 @@ import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
+import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
@@ -55,6 +56,8 @@ import javax.annotation.CheckForNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -109,6 +112,19 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
      * @see #getNode()
      */
     /*package*/ transient FlowNode node;
+
+    /*
+
+        TODO: parallel step implementation
+
+        when forking off another branch of parallel, call the 3-arg version of the start() method,
+        and have its callback insert the ID of the new head at the end of the thread
+     */
+    /**
+     * {@link FlowNode#getId()}s that should become the parents of the {@link BlockEndNode} when
+     * we create one. Only used when this context has the body.
+     */
+    private final List<String> bodyInvHeads = new ArrayList<String>();
 
     /**
      * If the invocation of the body is requested, this object remembers how to start it.
@@ -304,6 +320,11 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
                 final FlowNode n = getNode();
                 final CpsFlowExecution flow = getFlowExecution();
 
+                final List<FlowNode> parents = new ArrayList<FlowNode>();
+                for (String head : bodyInvHeads) {
+                    parents.add(flow.getNode(head));
+                }
+
                 Futures.addCallback(flow.programPromise, new FutureCallback<CpsThreadGroup>() {
                     @Override
                     public void onSuccess(CpsThreadGroup g) {
@@ -312,8 +333,15 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
                         CpsThread thread = getThread(g);
                         if (thread != null) {
                             if (n instanceof StepStartNode) {
-                                thread.head.setNewHead(new StepEndNode(flow, (StepStartNode)n,
-                                        thread.head.get()));
+                                FlowNode tip = thread.head.get();
+                                if (parents.isEmpty()) {
+                                    parents.add(tip);
+                                } else
+                                if (tip!=n) {
+                                    parents.add(tip);
+                                }
+
+                                thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
                             }
                             thread.resume(getOutcome());
                         }

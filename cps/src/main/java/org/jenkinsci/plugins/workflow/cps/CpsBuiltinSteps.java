@@ -22,7 +22,7 @@ public class CpsBuiltinSteps {
     }
 
     private static DSL dsl() {
-        return new DSL(CpsThread.current().group.getExecution().getOwner());
+        return new DSL(CpsThread.current().getExecution().getOwner());
     }
 
     private static Object[] asArray(Object... args) {

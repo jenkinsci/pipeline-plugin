@@ -25,7 +25,6 @@
 package org.jenkinsci.plugins.workflow.cps.nodes;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
@@ -39,7 +38,7 @@ public class StepAtomNode extends AtomNode {
     private final String stepName;
 
     public StepAtomNode(CpsFlowExecution exec, String stepName, FlowNode parent) {
-        super(exec, exec.iota(), parent);
+        super(exec, exec.iotaStr(), parent);
         this.stepName = stepName;
     }
 

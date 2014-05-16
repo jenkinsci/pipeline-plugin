@@ -101,6 +101,10 @@ public final class CpsThread implements Serializable {
         return group;
     }
 
+    public CpsFlowExecution getExecution() {
+        return group.getExecution();
+    }
+
     <T> T getContextVariable(Class<T> type) {
         if (contextVariables==null)     return null;
         return contextVariables.get(type);

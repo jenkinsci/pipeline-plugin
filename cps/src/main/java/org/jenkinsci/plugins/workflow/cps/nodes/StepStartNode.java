@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.workflow.cps.nodes;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
@@ -14,7 +13,7 @@ public class StepStartNode extends BlockStartNode {
     private final String stepName;
 
     public StepStartNode(CpsFlowExecution exec, String stepName, FlowNode parent) {
-        super(exec, exec.iota(), parent);
+        super(exec, exec.iotaStr(), parent);
         this.stepName = stepName;
     }
 

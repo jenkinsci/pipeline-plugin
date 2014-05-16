@@ -33,6 +33,7 @@ import com.cloudbees.groovy.cps.impl.CpsCallableInvocation;
 import com.cloudbees.groovy.cps.impl.FunctionCallEnv;
 import com.cloudbees.groovy.cps.impl.SourceLocation;
 import com.cloudbees.groovy.cps.impl.TryBlockEnv;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
@@ -80,10 +81,11 @@ final class BodyInvoker {
      * @param currentThread
      *      The thread whose context the new thread will inherit.
      */
-    /*package*/ void start(CpsThread currentThread) {
-        // capture variable, and prepare for another invocation
-        final FutureCallback c = bodyCallback;
-        final List<Object> co = contextOverrides;
+    /*package*/ void start(CpsThread currentThread, FlowHead head, FutureCallback callback) {
+        FutureCallback c = bodyCallback;
+
+        if (callback!=null)
+            c = new TeeFutureCallback(c,callback);
 
         try {
             // TODO: handle arguments to closure
@@ -92,13 +94,24 @@ final class BodyInvoker {
             c.onSuccess(x);   // body has completed synchronously
         } catch (CpsCallableInvocation e) {
             // execute this closure asynchronously
-            CpsThread t = currentThread.group.addThread(createContinuable(e, c), currentThread.head,
-                    ContextVariableSet.from(currentThread.getContextVariables(),co));
+            // TODO: does it make sense that the new thread shares the same head?
+            // this problem is captured as https://trello.com/c/v6Pbwqxj/70-allowing-steps-to-build-flownodes
+            CpsThread t = currentThread.group.addThread(createContinuable(e, c), head,
+                    ContextVariableSet.from(currentThread.getContextVariables(), contextOverrides));
             t.resume(new Outcome(null, null));  // get the new thread going
         } catch (Throwable t) {
             // body has completed synchronously and abnormally
             c.onFailure(t);
         }
+    }
+
+    /**
+     * Evaluates the body but grow the {@link FlowNode}s on the same head as the current thread.
+     *
+     * The net effect is as if the body evaluation happens in the same thread as in the caller thread.
+     */
+    /*package*/ void start(CpsThread currentThread) {
+        start(currentThread, currentThread.head, null);
     }
 
     /**

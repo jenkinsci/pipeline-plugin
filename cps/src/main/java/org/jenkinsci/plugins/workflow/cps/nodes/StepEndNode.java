@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class StepEndNode extends BlockEndNode<StepStartNode> {
     public StepEndNode(CpsFlowExecution exec, StepStartNode stepStartNode, List<FlowNode> parents) {
-        super(exec, exec.iota(), stepStartNode, parents);
+        super(exec, exec.iotaStr(), stepStartNode, parents);
     }
 
     public StepEndNode(CpsFlowExecution exec, StepStartNode stepStartNode, FlowNode... parents) {

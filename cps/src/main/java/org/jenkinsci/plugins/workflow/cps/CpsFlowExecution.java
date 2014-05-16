@@ -234,9 +234,9 @@ public class CpsFlowExecution extends FlowExecution {
 
         s.loadEnvironment();
 
-        FlowHead h = new FlowHead(this,iota.incrementAndGet());
+        FlowHead h = new FlowHead(this);
         heads.put(h.getId(),h);
-        h.newStartNode(new FlowStartNode(this, iota()));
+        h.newStartNode(new FlowStartNode(this, iotaStr()));
 
         CpsThreadGroup g = new CpsThreadGroup(this);
         CpsThread t = g.addThread(new Continuable(s),h,null);
@@ -275,8 +275,13 @@ public class CpsFlowExecution extends FlowExecution {
      * Assigns a new ID.
      */
     @Restricted(NoExternalUse.class)
-    public String iota() {
-        return String.valueOf(iota.incrementAndGet());
+    public String iotaStr() {
+        return String.valueOf(iota());
+    }
+
+    @Restricted(NoExternalUse.class)
+    public int iota() {
+        return iota.incrementAndGet();
     }
 
     @Override
@@ -341,9 +346,9 @@ public class CpsFlowExecution extends FlowExecution {
         switch (heads.size()) {
         case 0:
             // something went catastrophically wrong and there's no live head. fake one
-            head = new FlowHead(this,iota.incrementAndGet());
+            head = new FlowHead(this);
             try {
-                head.newStartNode(new FlowStartNode(this, iota()));
+                head.newStartNode(new FlowStartNode(this, iotaStr()));
             } catch (IOException e) {
                 LOGGER.log(Level.FINE, "Failed to persist",e);
             }
@@ -450,7 +455,7 @@ public class CpsFlowExecution extends FlowExecution {
         // run till the end successfully FIXME: failure comes here, too
         // TODO: if program terminates with exception, we need to record it
         // TODO: in the error case, we have to close all the open nodes
-        FlowNode head = new FlowEndNode(this, iota(), (FlowStartNode)startNodes.pop(), result, getCurrentHeads().toArray(new FlowNode[0]));
+        FlowNode head = new FlowEndNode(this, iotaStr(), (FlowStartNode)startNodes.pop(), result, getCurrentHeads().toArray(new FlowNode[0]));
         if (outcome.isFailure())
             head.addAction(new ErrorAction(outcome.getAbnormal()));
 

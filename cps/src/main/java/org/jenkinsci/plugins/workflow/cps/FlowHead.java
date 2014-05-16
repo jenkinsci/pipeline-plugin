@@ -61,6 +61,13 @@ final class FlowHead implements Serializable {
         this.execution = execution;
     }
 
+    /**
+     * Assigns a unique ID.
+     */
+    FlowHead(CpsFlowExecution execution) {
+        this(execution, execution.iota());
+    }
+
     public int getId() {
         return id;
     }
