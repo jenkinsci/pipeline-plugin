@@ -376,11 +376,7 @@ public final class ExecutorStep extends Step {
         }
 
         @Override public Step newInstance(Map<String,Object> arguments) {
-            Object s = arguments.get("label");
-            if (s == null) {
-                s = arguments.get("value");
-            }
-            return new ExecutorStep(s!=null ? s.toString() : null);
+            return new ExecutorStep((String) arguments.get("value"));
         }
 
         @Override public String getDisplayName() {

@@ -241,7 +241,7 @@ public class SegmentStep extends Step {
 
         @Override public Step newInstance(Map<String,Object> arguments) {
             Integer concurrency = (Integer) arguments.get("concurrency");
-            return new SegmentStep((String) arguments.get("name"), concurrency != null ? concurrency : Integer.MAX_VALUE);
+            return new SegmentStep((String) arguments.get("value"), concurrency != null ? concurrency : Integer.MAX_VALUE);
         }
 
         @Override public String getDisplayName() {

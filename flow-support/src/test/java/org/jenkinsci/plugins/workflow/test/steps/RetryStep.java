@@ -102,7 +102,7 @@ public class RetryStep extends Step implements Serializable {
 
         @Override
         public Step newInstance(Map<String, Object> arguments) {
-            return new RetryStep((Integer)arguments.values().iterator().next());
+            return new RetryStep((Integer) arguments.get("value"));
         }
 
         @Override

@@ -125,7 +125,7 @@ public class WatchYourStep extends Step {
 
         @Override
         public Step newInstance(Map<String, Object> arguments) {
-            return new WatchYourStep((File)arguments.values().iterator().next());
+            return new WatchYourStep((File) arguments.get("value"));
         }
 
         @Override

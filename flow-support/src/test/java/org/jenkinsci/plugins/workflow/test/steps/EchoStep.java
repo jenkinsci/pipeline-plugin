@@ -66,7 +66,7 @@ public class EchoStep extends Step {
 
         @Override
         public Step newInstance(Map<String, Object> arguments) {
-            return new EchoStep((String)arguments.values().iterator().next());
+            return new EchoStep((String) arguments.get("value"));
         }
 
         @Override
