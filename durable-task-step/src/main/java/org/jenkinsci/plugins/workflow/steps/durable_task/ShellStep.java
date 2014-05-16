@@ -63,9 +63,7 @@ public final class ShellStep extends DurableTaskStep {
         }
 
         @Override public Step newInstance(Map<String,Object> arguments) {
-            String s = (String) arguments.get("script");
-            if (s==null && arguments.size()==1)    s = (String)arguments.values().iterator().next();
-            return new ShellStep(s);
+            return new ShellStep((String) arguments.get("value"));
         }
 
     }
