@@ -25,9 +25,12 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Outcome;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
+import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
@@ -98,11 +101,14 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
     private final String id;
 
     /**
-     * Keeps an in-memory reference to {@link AtomNode} to speed up the synchronous execution.
+     * Keeps an in-memory reference to {@link FlowNode} to speed up the synchronous execution.
+     *
+     * If there's a body, this field is {@link BlockStartNode}. If there's no body, then this
+     * field is {@link AtomNode}
      *
      * @see #getNode()
      */
-    /*package*/ transient AtomNode node;
+    /*package*/ transient FlowNode node;
 
     /**
      * If the invocation of the body is requested, this object remembers how to start it.
@@ -125,7 +131,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
     private final int threadId;
 
-    CpsStepContext(CpsThread thread, FlowExecutionOwner executionRef, AtomNode node, Closure body) {
+    CpsStepContext(CpsThread thread, FlowExecutionOwner executionRef, FlowNode node, Closure body) {
         this.threadId = thread.id;
         this.executionRef = executionRef;
         this.id = node.getId();
@@ -221,7 +227,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
             }
             return key.cast(listener);
         }
-        if (key==AtomNode.class || key==FlowNode.class) {
+        if (FlowNode.class.isAssignableFrom(key)) {
             return key.cast(getNode());
         }
         {// fallback logic to infer context variable from other sources
@@ -258,9 +264,9 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
         return null;
     }
 
-    private AtomNode getNode() throws IOException {
+    private FlowNode getNode() throws IOException {
         if (node==null)
-            node = (AtomNode)getFlowExecution().getNode(id);
+            node = getFlowExecution().getNode(id);
         return node;
     }
 
@@ -295,17 +301,28 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
     private void scheduleNextRun() {
         if (!syncMode) {
             try {
-                Futures.addCallback(getFlowExecution().programPromise, new FutureCallback<CpsThreadGroup>() {
+                final FlowNode n = getNode();
+                final CpsFlowExecution flow = getFlowExecution();
+
+                Futures.addCallback(flow.programPromise, new FutureCallback<CpsThreadGroup>() {
                     @Override
                     public void onSuccess(CpsThreadGroup g) {
                         g.unexport(body);
                         body = null;
                         CpsThread thread = getThread(g);
                         if (thread != null) {
+                            if (n instanceof StepStartNode) {
+                                thread.head.setNewHead(new StepEndNode(flow, (StepStartNode)n,
+                                        // TODO: where are parents?
+                                        n));
+                            }
                             thread.resume(getOutcome());
                         }
                     }
 
+                    /**
+                     * Program state failed to load.
+                     */
                     @Override
                     public void onFailure(Throwable t) {
                     }

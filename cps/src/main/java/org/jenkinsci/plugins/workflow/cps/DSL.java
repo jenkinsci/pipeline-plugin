@@ -26,15 +26,16 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
+import groovy.lang.Closure;
 import groovy.lang.GroovyObject;
-import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import groovy.lang.GroovyObjectSupport;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import groovy.lang.Closure;
-import groovy.lang.GroovyObjectSupport;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -74,19 +75,28 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             throw new Error(e); // TODO
         }
 
-        StepDescriptor d = StepDescriptor.getByFunctionName(name);
+        final StepDescriptor d = StepDescriptor.getByFunctionName(name);
         if (d==null)
             throw new NoSuchMethodError("No such DSL method exists: "+name);
 
+        final NamedArgsAndClosure ps = parseArgs(args);
+
         CpsThread thread = CpsThread.current();
 
-        AtomNode a = new AtomNodeImpl(exec, exec.iota(), thread.head.get());
-        a.addAction(new LabelAction("Step: "+name));    // TODO: use CPS call stack to obtain the current call site source location
+        FlowNode an;
 
-        NamedArgsAndClosure ps = parseArgs(args);
+        if (ps.body==null) {
+            an = new StepAtomNode(exec, name, thread.head.get());
+            // TODO: use CPS call stack to obtain the current call site source location. See JENKINS-23013
+            thread.head.setNewHead(an);
+        } else {
+            an = new StepStartNode(exec, name, thread.head.get());
+            thread.head.setNewHead(an);
+        }
+
         Step s = d.newInstance(ps.namedArgs);
 
-        final CpsStepContext context = new CpsStepContext(thread,handle,a,ps.body);
+        final CpsStepContext context = new CpsStepContext(thread,handle,an,ps.body);
         boolean sync;
         try {
             sync = s.start(context);
@@ -100,17 +110,22 @@ public class DSL extends GroovyObjectSupport implements Serializable {
 
             // if the execution has finished synchronously inside the start method
             // we just move on accordingly
-            setNewHead(thread,a);
+            if (an instanceof StepStartNode) {
+                // no body invoked, so EndNode follows StartNode immediately.
+                thread.head.setNewHead(new StepEndNode(exec, (StepStartNode)an, an));
+            }
             return context.replay();
         } else {
-            // let the world know that we have a new node that's running
-            setNewHead(thread,a);
-
             // if it's in progress, suspend it until we get invoked later.
             // when it resumes, the CPS caller behaves as if this method returned with the resume value
             Continuable.suspend(new ThreadTask() {
                 @Override
                 protected ThreadTaskResult eval(CpsThread t) {
+                    if (context.bodyInvoker!=null) {
+                        // step is requesting invocation of the body
+                        context.bodyInvoker.start(t);
+                    }
+
                     if (!context.switchToAsyncMode()) {
                         // we have a result now, so just keep executing
                         // TODO: if this fails with an exception, we need ability to resume by throwing an exception
@@ -130,15 +145,6 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             // the control then goes back to CpsFlowExecution.runNextChunk
             // so the execution will never reach here.
             throw new AssertionError();
-        }
-    }
-
-    private void setNewHead(CpsThread thread, FlowNode a) {
-        try {
-            thread.head.setNewHead(a);
-        } catch (IOException e) {
-            // TODO: what's the proper way to report an exception here?
-            throw new Error("Failed to persist new head: "+a,e);
         }
     }
 

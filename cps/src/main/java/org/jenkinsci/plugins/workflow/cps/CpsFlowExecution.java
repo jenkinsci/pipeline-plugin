@@ -445,7 +445,7 @@ public class CpsFlowExecution extends FlowExecution {
         storage.saveActions(node, actions);
     }
 
-    /*packgage*/ synchronized void onProgramEnd(Outcome outcome) throws IOException {
+    /*packgage*/ synchronized void onProgramEnd(Outcome outcome) {
         // end of the program
         // run till the end successfully FIXME: failure comes here, too
         // TODO: if program terminates with exception, we need to record it
