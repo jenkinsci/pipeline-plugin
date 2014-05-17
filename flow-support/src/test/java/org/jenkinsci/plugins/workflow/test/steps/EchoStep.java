@@ -49,6 +49,7 @@ public class EchoStep extends Step {
     @Override
     public boolean start(StepContext context) throws Exception {
         context.get(TaskListener.class).getLogger().println(message);
+        context.onSuccess(null);
         return true;
     }
 
