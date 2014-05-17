@@ -157,6 +157,20 @@ public abstract class FlowNode extends Actionable {
         return getExecution().getUrl()+"node/"+getId()+'/';
     }
 
+
+    /**
+     * SPI for subtypes to directly manipulate the actions field.
+     *
+     * When a brand new {@link FlowNode} is created, or when {@link FlowNode} and actions are
+     * stored in close proximity, it is convenient to be able to set the {@link #actions}
+     * so as to eliminate the separate call to {@link FlowActionStorage#loadActions(FlowNode)}.
+     *
+     * This method provides such an opportunity for subtypes.
+     */
+    protected void setActions(List<Action> actions) {
+        this.actions = new CopyOnWriteArrayList<Action>(actions);
+    }
+
 /*
     We can't use Actionable#actions to store actions because they aren't transient,
     and we need to store actions elsewhere because this is the only mutable pat of FlowNode.
