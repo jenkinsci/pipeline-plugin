@@ -140,14 +140,14 @@ public class SegmentStep extends Step {
             if (segment.waitingBuild < build) {
                 // Cancel the older one.
                 try {
-                    cancel(segment.waitingContext.get(FlowExecution.class), segment.waitingContext.get(Run.class));
+                    cancel(segment.waitingContext, segment.waitingContext.get(FlowExecution.class), segment.waitingContext.get(Run.class));
                 } catch (Exception x) {
                     LOGGER.log(Level.WARNING, "could not cancel an older flow (perhaps since deleted?)", x);
                 }
             } else if (segment.waitingBuild > build) {
                 // Cancel this one. And work with the older one below, instead of the one initiating this call.
                 try {
-                    cancel(context.get(FlowExecution.class), r);
+                    cancel(context, context.get(FlowExecution.class), r);
                 } catch (Exception x) {
                     LOGGER.log(Level.WARNING, "could not cancel the current flow", x);
                 }
@@ -164,6 +164,7 @@ public class SegmentStep extends Step {
             Segment segment2 = entry.getValue();
             // If we were holding another segment in the same job, release it, unlocking its waiter to proceed.
             if (segment2.holding.remove(build) && segment2.waitingContext != null) {
+                println(segment2.waitingContext, "Unblocked since " + r.getDisplayName() + " is moving into segment " + name);
                 segment2.waitingContext.onSuccess(null);
                 segment2.waitingContext = null;
             }
@@ -171,10 +172,12 @@ public class SegmentStep extends Step {
         if (segment.holding.size() < segment.concurrency) {
             segment.waitingContext = null;
             segment.holding.add(build);
+            println(context, "Proceeding");
             context.onSuccess(null);
         } else {
             segment.waitingBuild = build;
             segment.waitingContext = context;
+            println(context, "Waiting for builds " + segment.holding);
         }
         save();
     }
@@ -192,6 +195,7 @@ public class SegmentStep extends Step {
             if (segment.holding.remove(r.number)) {
                 modified = true;
                 if (segment.waitingContext != null) {
+                    println(segment.waitingContext, "Unblocked since " + r.getDisplayName() + " finished");
                     segment.waitingContext.onSuccess(null);
                     segment.waitingContext = null;
                 }
@@ -202,7 +206,16 @@ public class SegmentStep extends Step {
         }
     }
 
-    private static void cancel(FlowExecution exec, Run<?,?> run) throws IOException, InterruptedException {
+    private static void println(StepContext context, String message) {
+        try {
+            context.get(TaskListener.class).getLogger().println(message);
+        } catch (Exception x) {
+            LOGGER.log(Level.WARNING, null, x);
+        }
+    }
+
+    private static void cancel(StepContext context, FlowExecution exec, Run<?,?> run) throws IOException, InterruptedException {
+        println(context, "Canceled since a newer build got here");
         CauseOfInterruption coi = new CauseOfInterruption.UserInterruption("TODO define a new type");
         run.addAction(new InterruptedBuildAction(Collections.singleton(coi)));
         exec.abort();
@@ -232,6 +245,7 @@ public class SegmentStep extends Step {
             r.add(Run.class);
             r.add(FlowExecution.class);
             r.add(FlowNode.class);
+            r.add(TaskListener.class);
             return r;
         }
 
