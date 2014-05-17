@@ -109,6 +109,10 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         if (sync) {
             assert context.bodyInvokers.isEmpty() : "If a step claims synchronous completion, it shouldn't invoke body";
 
+            if (context.getOutcome()==null) {
+                context.onFailure(new AssertionError("Step "+s+" claimed to have ended synchronously, but didn't set the result via StepContext.onSuccess/onFailure"));
+            }
+
             // if the execution has finished synchronously inside the start method
             // we just move on accordingly
             if (an instanceof StepStartNode) {
