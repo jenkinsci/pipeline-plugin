@@ -24,74 +24,102 @@
 
 package org.jenkinsci.plugins.workflow.test.steps;
 
+import hudson.Extension;
+import java.util.Collections;
+import java.util.HashMap;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Step that blocks until signaled.
  */
 public final class SemaphoreStep extends Step {
 
-    private StepContext context;
-    private Object returnValue;
-    private Throwable error;
+    private static final Map<String,Integer> iota = new HashMap<String,Integer>();
+    private static final Map<String,StepContext> contexts = new HashMap<String,StepContext>();
+    private static final Map<String,Object> returnValues = new HashMap<String,Object>();
+    private static final Map<String,Throwable> errors = new HashMap<String,Throwable>();
+
+    public final String k;
+
+    public SemaphoreStep() {
+        this(UUID.randomUUID().toString());
+    }
+
+    public SemaphoreStep(String id) {
+        Integer old = iota.get(id);
+        if (old == null) {
+            old = 0;
+        }
+        int number = old + 1;
+        iota.put(id, number);
+        k = id + "/" + number;
+    }
 
     /** Starts running and waits for {@link #success} or {@link #failure} to be called, if they have not been already. */
     @Override public boolean start(StepContext context) throws Exception {
-        if (returnValue != null) {
-            context.onSuccess(returnValue);
+        if (returnValues.containsKey(k)) {
+            context.onSuccess(returnValues.get(k));
             return true;
-        } else if (error != null) {
-            // TODO or should it throw that out of this method? Step.start seems underspecified.
-            context.onFailure(error);
+        } else if (errors.containsKey(k)) {
+            context.onFailure(errors.get(k));
             return true;
         } else {
-            this.context = context;
+            contexts.put(k, context);
             return false;
         }
     }
 
     /** Marks the step as having successfully completed; or, if not yet started, makes it do so synchronously when started. */
     public void success(Object returnValue) {
-        if (context != null) {
-            context.onSuccess(returnValue);
+        success(k, returnValue);
+    }
+
+    public static void success(String k, Object returnValue) {
+        if (contexts.containsKey(k)) {
+            contexts.get(k).onSuccess(returnValue);
         } else {
-            this.returnValue = returnValue;
+            returnValues.put(k, returnValue);
         }
     }
 
     /** Marks the step as having failed; or, if not yet started, makes it do so synchronously when started. */
     public void failure(Throwable error) {
-        if (context != null) {
-            context.onFailure(error);
+        failure(k, error);
+    }
+
+    public static void failure(String k, Throwable error) {
+        if (contexts.containsKey(k)) {
+            contexts.get(k).onFailure(error);
         } else {
-            this.error = error;
+            errors.put(k, error);
         }
     }
     
     public StepContext getContext() {
-        return context;
+        return contexts.get(k);
     }
 
     @Override public StepDescriptor getDescriptor() {
         return new DescriptorImpl();
     }
 
-    /* not an @Extension */ private static final class DescriptorImpl extends StepDescriptor {
+    @Extension public static final class DescriptorImpl extends StepDescriptor {
 
         @Override public Set<Class<?>> getRequiredContext() {
-            throw new UnsupportedOperationException();
+            return Collections.emptySet();
         }
 
         @Override public String getFunctionName() {
-            throw new UnsupportedOperationException();
+            return "semaphore";
         }
 
         @Override public Step newInstance(Map<String,Object> arguments) {
-            throw new UnsupportedOperationException();
+            return new SemaphoreStep((String) arguments.get("value"));
         }
 
         @Override public String getDisplayName() {
