@@ -65,6 +65,8 @@ import org.jenkinsci.plugins.workflow.support.pickles.serialization.PickleResolv
 import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverReader;
 import org.jenkinsci.plugins.workflow.support.storage.FlowNodeStorage;
 import org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -232,9 +234,9 @@ public class CpsFlowExecution extends FlowExecution {
 
         s.loadEnvironment();
 
-        FlowHead h = new FlowHead(this,iota.incrementAndGet());
+        FlowHead h = new FlowHead(this);
         heads.put(h.getId(),h);
-        h.newStartNode(new FlowStartNode(this, iota()));
+        h.newStartNode(new FlowStartNode(this, iotaStr()));
 
         CpsThreadGroup g = new CpsThreadGroup(this);
         CpsThread t = g.addThread(new Continuable(s),h,null);
@@ -272,8 +274,14 @@ public class CpsFlowExecution extends FlowExecution {
     /**
      * Assigns a new ID.
      */
-    /*package*/ String iota() {
-        return String.valueOf(iota.incrementAndGet());
+    @Restricted(NoExternalUse.class)
+    public String iotaStr() {
+        return String.valueOf(iota());
+    }
+
+    @Restricted(NoExternalUse.class)
+    public int iota() {
+        return iota.incrementAndGet();
     }
 
     @Override
@@ -338,9 +346,9 @@ public class CpsFlowExecution extends FlowExecution {
         switch (heads.size()) {
         case 0:
             // something went catastrophically wrong and there's no live head. fake one
-            head = new FlowHead(this,iota.incrementAndGet());
+            head = new FlowHead(this);
             try {
-                head.newStartNode(new FlowStartNode(this, iota()));
+                head.newStartNode(new FlowStartNode(this, iotaStr()));
             } catch (IOException e) {
                 LOGGER.log(Level.FINE, "Failed to persist",e);
             }
@@ -398,6 +406,15 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     @Override
+    public boolean isCurrentHead(FlowNode n) {
+        for (FlowHead h : heads.values()) {
+            if (h.get().equals(n))
+                return true;
+        }
+        return false;
+    }
+
+    @Override
     public synchronized void addListener(GraphListener listener) {
         if (listeners == null) {
             listeners = new ArrayList<GraphListener>();
@@ -433,12 +450,12 @@ public class CpsFlowExecution extends FlowExecution {
         storage.saveActions(node, actions);
     }
 
-    /*packgage*/ synchronized void onProgramEnd(Outcome outcome) throws IOException {
+    /*packgage*/ synchronized void onProgramEnd(Outcome outcome) {
         // end of the program
         // run till the end successfully FIXME: failure comes here, too
         // TODO: if program terminates with exception, we need to record it
         // TODO: in the error case, we have to close all the open nodes
-        FlowNode head = new FlowEndNode(this, iota(), (FlowStartNode)startNodes.pop(), result, getCurrentHeads().toArray(new FlowNode[0]));
+        FlowNode head = new FlowEndNode(this, iotaStr(), (FlowStartNode)startNodes.pop(), result, getCurrentHeads().toArray(new FlowNode[0]));
         if (outcome.isFailure())
             head.addAction(new ErrorAction(outcome.getAbnormal()));
 

@@ -71,9 +71,12 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
         Thread.sleep(1000)  // give a bit of time for shell script to complete
         checker.doRun()     // and let us notice that right away
 
-        assert e.isComplete()
+        e.waitForSuspension()   // let the workflow run to the completion
+
+        assert e.isComplete() : b.log
         assert b.result==Result.SUCCESS : b.log
-        AtomNode atom = e.currentHeads[0].parents[0]
+        // currentHeads[0] is FlowEndNode, whose parent is BlockEndNode for "with.node", whose parent is AtomNode
+        AtomNode atom = e.currentHeads[0].parents[0].parents[0]
         LogActionImpl la = atom.getAction(LogAction)
         assert la.logFile.text.contains("hello world")
     }
@@ -127,8 +130,22 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
 
         f.get(); // wait until completion
 
-        println b.log
+        def log = b.log
+        println log;
         assert b.result == Result.SUCCESS
-        assert b.log.contains("Trying!\nTrying!\nTrying!\nDone!\nOver!\n")
+
+        def idx = 0;
+        [
+            "Running: retry : Start",
+            "Trying!",
+            "Trying!",
+            "Trying!",
+            "Done!",
+            "Running: retry : End",
+            "Over!",
+        ].each { msg ->
+            idx = log.indexOf(msg,idx+1);
+            assert idx!=-1 : msg+" not found";
+        }
     }
 }

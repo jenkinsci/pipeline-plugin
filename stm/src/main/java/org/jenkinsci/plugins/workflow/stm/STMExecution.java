@@ -286,7 +286,12 @@ final class STMExecution extends FlowExecution {
         }
         return r;
     }
-    
+
+    @Override
+    public boolean isCurrentHead(FlowNode n) {
+        return heads.values().contains(n.getId());
+    }
+
     @Override public void addListener(GraphListener listener) {
         listeners.add(listener);
     }

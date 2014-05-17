@@ -64,7 +64,7 @@ public final class StepState extends LinearState {
         } catch (Exception x) {
             context.onFailure(x);
         }
-        return new AtomNode(exec, nodeId, /* TODO what if synchronous? */true, prior) {
+        return new AtomNode(exec, nodeId, /* TODO what if synchronous? */ prior) {
             @Override protected String getTypeDisplayName() {
                 return step.getDescriptor().getDisplayName();
             }

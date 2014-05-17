@@ -34,27 +34,7 @@ import org.jenkinsci.plugins.workflow.steps.Step;
  * @author Jesse Glick
  */
 public abstract class AtomNode extends FlowNode {
-    /**
-     * Transient flag that indicates if this node is currently actively executing something.
-     * (As opposed to something that has finished but pending the child node creation, like
-     * in when one of the fork branches has finished before the other and waiting for the join
-     * node to be created.)
-     *
-     * This can only go from true to false. It can be only true for {@link FlowNode}s
-     * that are returned from {@link FlowExecution#getCurrentHeads()}.
-     */
-    private transient boolean isRunning;
-
-    protected AtomNode(FlowExecution exec, String id, boolean runningState, FlowNode... parents) {
+    protected AtomNode(FlowExecution exec, String id, FlowNode... parents) {
         super(exec, id, parents);
-        this.isRunning = runningState;
-    }
-
-    public void markAsCompleted() {
-        isRunning = false;
-    }
-
-    public boolean isRunning() {
-        return isRunning;
     }
 }

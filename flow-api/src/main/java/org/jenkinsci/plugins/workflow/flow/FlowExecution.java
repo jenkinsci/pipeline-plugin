@@ -74,6 +74,8 @@ public abstract class FlowExecution implements FlowActionStorage {
     // TODO: values are snapshot in time
     public abstract List<FlowNode> getCurrentHeads();
 
+    public abstract boolean isCurrentHead(FlowNode n);
+
     /**
      * Returns the URL of this {@link FlowExecution}, relative to the context root of Jenkins.
      *

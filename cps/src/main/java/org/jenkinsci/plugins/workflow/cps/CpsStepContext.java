@@ -25,14 +25,6 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Outcome;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import org.jenkinsci.plugins.workflow.graph.AtomNode;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl;
-import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import groovy.lang.Closure;
@@ -47,14 +39,29 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.util.StreamTaskListener;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.jenkinsci.plugins.workflow.graph.AtomNode;
+import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
+import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.Step;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl;
+import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
+import javax.annotation.CheckForNull;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.CheckForNull;
 
 /**
  * {@link StepContext} implementation for CPS.
@@ -98,11 +105,27 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
     private final String id;
 
     /**
-     * Keeps an in-memory reference to {@link AtomNode} to speed up the synchronous execution.
+     * Keeps an in-memory reference to {@link FlowNode} to speed up the synchronous execution.
+     *
+     * If there's a body, this field is {@link BlockStartNode}. If there's no body, then this
+     * field is {@link AtomNode}
      *
      * @see #getNode()
      */
-    /*package*/ transient AtomNode node;
+    /*package*/ transient FlowNode node;
+
+    /*
+
+        TODO: parallel step implementation
+
+        when forking off another branch of parallel, call the 3-arg version of the start() method,
+        and have its callback insert the ID of the new head at the end of the thread
+     */
+    /**
+     * {@link FlowNode#getId()}s that should become the parents of the {@link BlockEndNode} when
+     * we create one. Only used when this context has the body.
+     */
+    final List<String> bodyInvHeads = new ArrayList<String>();
 
     /**
      * If the invocation of the body is requested, this object remembers how to start it.
@@ -111,7 +134,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
      * Only used in the synchronous mode while {@link CpsFlowExecution} is in the RUNNABLE state,
      * so this need not be persisted.
      */
-    transient BodyInvoker bodyInvoker;
+    transient List<BodyInvoker> bodyInvokers = Collections.synchronizedList(new ArrayList<BodyInvoker>());
 
     /**
      * While {@link CpsStepContext} has not received teh response, maintains the body closure.
@@ -125,7 +148,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
     private final int threadId;
 
-    CpsStepContext(CpsThread thread, FlowExecutionOwner executionRef, AtomNode node, Closure body) {
+    CpsStepContext(CpsThread thread, FlowExecutionOwner executionRef, FlowNode node, Closure body) {
         this.threadId = thread.id;
         this.executionRef = executionRef;
         this.id = node.getId();
@@ -173,9 +196,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
         if (syncMode) {
             // we process this in CpsThread#runNextChunk
-            if (bodyInvoker!=null)
-                throw new IllegalStateException("Trying to call invokeBodyLater twice");
-            bodyInvoker = b;
+            bodyInvokers.add(b);
         } else {
             try {
                 Futures.addCallback(getExecution().programPromise, new FutureCallback<CpsThreadGroup>() {
@@ -221,7 +242,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
             }
             return key.cast(listener);
         }
-        if (key==AtomNode.class || key==FlowNode.class) {
+        if (FlowNode.class.isAssignableFrom(key)) {
             return key.cast(getNode());
         }
         {// fallback logic to infer context variable from other sources
@@ -258,9 +279,9 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
         return null;
     }
 
-    private AtomNode getNode() throws IOException {
+    private FlowNode getNode() throws IOException {
         if (node==null)
-            node = (AtomNode)getFlowExecution().getNode(id);
+            node = getFlowExecution().getNode(id);
         return node;
     }
 
@@ -295,19 +316,39 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
     private void scheduleNextRun() {
         if (!syncMode) {
             try {
-                if (node!=null) // TODO: if node is null I think we need to bring it back from the disk
-                    node.markAsCompleted();
-                Futures.addCallback(getFlowExecution().programPromise, new FutureCallback<CpsThreadGroup>() {
+                final FlowNode n = getNode();
+                final CpsFlowExecution flow = getFlowExecution();
+
+                final List<FlowNode> parents = new ArrayList<FlowNode>();
+                for (String head : bodyInvHeads) {
+                    parents.add(flow.getNode(head));
+                }
+
+                Futures.addCallback(flow.programPromise, new FutureCallback<CpsThreadGroup>() {
                     @Override
                     public void onSuccess(CpsThreadGroup g) {
                         g.unexport(body);
                         body = null;
                         CpsThread thread = getThread(g);
                         if (thread != null) {
+                            if (n instanceof StepStartNode) {
+                                FlowNode tip = thread.head.get();
+                                if (parents.isEmpty()) {
+                                    parents.add(tip);
+                                } else
+                                if (tip!=n) {
+                                    parents.add(tip);
+                                }
+
+                                thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
+                            }
                             thread.resume(getOutcome());
                         }
                     }
 
+                    /**
+                     * Program state failed to load.
+                     */
                     @Override
                     public void onFailure(Throwable t) {
                     }

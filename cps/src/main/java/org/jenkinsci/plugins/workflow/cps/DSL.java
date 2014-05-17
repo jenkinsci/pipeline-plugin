@@ -25,26 +25,33 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
+import com.cloudbees.groovy.cps.Outcome;
+import com.google.common.util.concurrent.FutureCallback;
+import groovy.lang.Closure;
 import groovy.lang.GroovyObject;
-import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import groovy.lang.GroovyObjectSupport;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import org.jenkinsci.plugins.workflow.graph.AtomNode;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import groovy.lang.Closure;
-import groovy.lang.GroovyObjectSupport;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
+
 /**
  * Scaffolding to experiment with the call into {@link Step}.
+ *
+ * Serialized as a part of the program state.
  *
  * @author Kohsuke Kawaguchi
  */
@@ -69,19 +76,28 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             throw new Error(e); // TODO
         }
 
-        StepDescriptor d = StepDescriptor.getByFunctionName(name);
+        final StepDescriptor d = StepDescriptor.getByFunctionName(name);
         if (d==null)
             throw new NoSuchMethodError("No such DSL method exists: "+name);
 
+        final NamedArgsAndClosure ps = parseArgs(args);
+
         CpsThread thread = CpsThread.current();
 
-        AtomNode a = new AtomNodeImpl(exec, exec.iota(), true, thread.head.get());
-        a.addAction(new LabelAction("Step: "+name));    // TODO: use CPS call stack to obtain the current call site source location
+        FlowNode an;
 
-        NamedArgsAndClosure ps = parseArgs(args);
+        if (ps.body==null) {
+            an = new StepAtomNode(exec, name, thread.head.get());
+            // TODO: use CPS call stack to obtain the current call site source location. See JENKINS-23013
+            thread.head.setNewHead(an);
+        } else {
+            an = new StepStartNode(exec, name, thread.head.get());
+            thread.head.setNewHead(an);
+        }
+
         Step s = d.newInstance(ps.namedArgs);
 
-        CpsStepContext context = new CpsStepContext(thread,handle,a,ps.body);
+        final CpsStepContext context = new CpsStepContext(thread,handle,an,ps.body);
         boolean sync;
         try {
             sync = s.start(context);
@@ -91,34 +107,28 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
 
         if (sync) {
-            assert context.bodyInvoker==null : "If a step claims synchronous completion, it shouldn't invoke body";
+            assert context.bodyInvokers.isEmpty() : "If a step claims synchronous completion, it shouldn't invoke body";
+
+            if (context.getOutcome()==null) {
+                context.onFailure(new AssertionError("Step "+s+" claimed to have ended synchronously, but didn't set the result via StepContext.onSuccess/onFailure"));
+            }
 
             // if the execution has finished synchronously inside the start method
             // we just move on accordingly
-            a.markAsCompleted();
-            setNewHead(thread,a);
+            if (an instanceof StepStartNode) {
+                // no body invoked, so EndNode follows StartNode immediately.
+                thread.head.setNewHead(new StepEndNode(exec, (StepStartNode)an, an));
+            }
             return context.replay();
         } else {
-            // let the world know that we have a new node that's running
-            setNewHead(thread,a);
-
             // if it's in progress, suspend it until we get invoked later.
             // when it resumes, the CPS caller behaves as if this method returned with the resume value
-            Continuable.suspend(context);
+            Continuable.suspend(new ThreadTaskImpl(context));
 
             // the above method throws an exception to unwind the call stack, and
             // the control then goes back to CpsFlowExecution.runNextChunk
             // so the execution will never reach here.
             throw new AssertionError();
-        }
-    }
-
-    private void setNewHead(CpsThread thread, AtomNode a) {
-        try {
-            thread.head.setNewHead(a);
-        } catch (IOException e) {
-            // TODO: what's the proper way to report an exception here?
-            throw new Error("Failed to persist new head: "+a,e);
         }
     }
 
@@ -183,6 +193,80 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
 
         return new NamedArgsAndClosure(Collections.singletonMap("value",arg),null);
+    }
+
+    /**
+     * If the step starts executing asynchronously, this task
+     * executes at the safe point to switch {@link CpsStepContext} into the async mode.
+     */
+    private static class ThreadTaskImpl extends ThreadTask implements Serializable {
+        private final CpsStepContext context;
+
+        public ThreadTaskImpl(CpsStepContext context) {
+            this.context = context;
+        }
+
+        @Override
+        protected ThreadTaskResult eval(CpsThread t) {
+            invokeBody(t);
+
+            if (!context.switchToAsyncMode()) {
+                // we have a result now, so just keep executing
+                // TODO: if this fails with an exception, we need ability to resume by throwing an exception
+                return resumeWith(context.getOutcome());
+            } else {
+                // beyond this point, StepContext can receive a result at any time and
+                // that would result in a call to scheduleNextChunk(). So we the call to
+                // switchToAsyncMode to happen inside 'synchronized(lock)', so that
+                // the 'executing' variable gets set to null before the scheduleNextChunk call starts going.
+
+                return suspendWith(new Outcome(context,null));
+            }
+        }
+
+        private void invokeBody(CpsThread t) {
+            int count=0;
+            for (BodyInvoker b : context.bodyInvokers) {
+                if (count++==0) {
+                    b.start(t);
+                } else {
+                    FlowHead head = new FlowHead(t.getExecution());
+                    b.start(t, head, new HeadCollector(context,head));
+                }
+            }
+            context.bodyInvokers.clear();
+        }
+
+        /**
+         * When a new {@link CpsThread} that runs the body completes, record
+         * its new head.
+         */
+        private static class HeadCollector implements FutureCallback, Serializable {
+            private final CpsStepContext context;
+            private final FlowHead head;
+
+            public HeadCollector(CpsStepContext context, FlowHead head) {
+                this.context = context;
+                this.head = head;
+            }
+
+            private void onEnd() {
+                context.bodyInvHeads.add(head.get().getId());
+            }
+
+            @Override
+            public void onSuccess(Object result) {
+                onEnd();
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                onEnd();
+            }
+        }
+
+
+        private static final long serialVersionUID = 1L;
     }
 
     private static final long serialVersionUID = 1L;

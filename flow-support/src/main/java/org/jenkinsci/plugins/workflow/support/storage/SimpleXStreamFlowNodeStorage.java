@@ -103,6 +103,7 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
      * Just stores this one node
      */
     public void saveActions(FlowNode node, List<Action> actions) throws IOException {
+        get().references.put(node.getId(),new Tag(node,actions));
         getNodeFile(node.getId()).write(new Tag(node,actions));
     }
 

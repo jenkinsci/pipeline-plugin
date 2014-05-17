@@ -22,24 +22,36 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.cps;
+package org.jenkinsci.plugins.workflow.cps.nodes;
 
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import hudson.model.Action;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.Step;
+
+import java.util.Collections;
 
 /**
- * FIXME: we need to build these nodes in a lot more granular fashion
+ * {@link AtomNode} for executing {@link Step} without body closure.
  *
  * @author Kohsuke Kawaguchi
  */
-public class AtomNodeImpl extends AtomNode {
-    public AtomNodeImpl(FlowExecution exec, String id, boolean runningState, FlowNode parent) {
-        super(exec, id, runningState, parent);
+public class StepAtomNode extends AtomNode {
+    private final String stepName;
+
+    public StepAtomNode(CpsFlowExecution exec, String stepName, FlowNode parent) {
+        super(exec, exec.iotaStr(), parent);
+        this.stepName = stepName;
+
+        // we use SimpleXStreamFlowNodeStorage, which uses XStream, so
+        // constructor call is always for brand-new FlowNode that has not existed anywhere.
+        // such nodes always have empty actions
+        setActions(Collections.<Action>emptyList());
     }
 
     @Override
     protected String getTypeDisplayName() {
-        return "Atom Node";
+        return stepName;
     }
 }

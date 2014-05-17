@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Growing tip of the node graph.
@@ -59,6 +61,13 @@ final class FlowHead implements Serializable {
         this.execution = execution;
     }
 
+    /**
+     * Assigns a unique ID.
+     */
+    FlowHead(CpsFlowExecution execution) {
+        this(execution, execution.iota());
+    }
+
     public int getId() {
         return id;
     }
@@ -72,11 +81,15 @@ final class FlowHead implements Serializable {
         execution.storage.storeNode(head);
     }
 
-    void setNewHead(FlowNode v) throws IOException {
-        this.head = v;
-        execution.storage.storeNode(head);
+    void setNewHead(FlowNode v) {
+        try {
+            this.head = v;
+            execution.storage.storeNode(head);
 
-        execution.notifyListeners(v);
+            execution.notifyListeners(v);
+        } catch (IOException e) {
+            LOGGER.log(Level.FINE, "Failed to record new head: " + v, e);
+        }
     }
 
     FlowNode get() {
@@ -105,6 +118,6 @@ final class FlowHead implements Serializable {
             return this;
     }
 
-
+    private static final Logger LOGGER = Logger.getLogger(FlowHead.class.getName());
     private static final long serialVersionUID = 1L;
 }
