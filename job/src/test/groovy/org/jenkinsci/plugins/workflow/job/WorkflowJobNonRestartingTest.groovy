@@ -130,17 +130,22 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
 
         f.get(); // wait until completion
 
-        println b.log
+        def log = b.log
+        println log;
         assert b.result == Result.SUCCESS
-        assert b.log.contains(
-            [
-                "Running: retry : Start",
-                "Trying!",
-                "Trying!",
-                "Trying!",
-                "Done!",
-                "Running: retry : End",
-                "Over!",
-            ].join("\n"))
+
+        def idx = 0;
+        [
+            "Running: retry : Start",
+            "Trying!",
+            "Trying!",
+            "Trying!",
+            "Done!",
+            "Running: retry : End",
+            "Over!",
+        ].each { msg ->
+            idx = log.indexOf(msg,idx+1);
+            assert idx!=-1 : msg+" not found";
+        }
     }
 }
