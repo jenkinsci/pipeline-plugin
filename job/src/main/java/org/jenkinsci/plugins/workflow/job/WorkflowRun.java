@@ -33,6 +33,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
@@ -258,7 +259,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         // TODO set duration
         RunListener.fireCompleted(WorkflowRun.this, listener);
         Throwable t = execution.getCauseOfFailure();
-        if (t != null) {
+        if (t instanceof AbortException) {
+            listener.error(t.getMessage());
+        } else if (t != null) {
             t.printStackTrace(listener.getLogger());
         }
         listener.finished(result);
