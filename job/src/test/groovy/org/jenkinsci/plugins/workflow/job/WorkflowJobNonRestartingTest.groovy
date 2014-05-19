@@ -119,7 +119,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
             retry(3) {
                 println 'Trying!'
                 if (i++<2)
-                    throw new NoSuchElementException();
+                    throw new SimulatedFailureForRetry();
                 println 'Done!'
             }
                 println 'Over!'

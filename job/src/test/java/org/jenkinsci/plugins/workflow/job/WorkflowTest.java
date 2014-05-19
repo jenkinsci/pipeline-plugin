@@ -283,7 +283,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     "    steps.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))\n" +
 
                     "    if (count++ < 2) {\n" + // forcing retry
-                    "        throw new IllegalArgumentException();\n" +
+                    "        throw new SimulatedFailureForRetry();\n" +
                     "    }\n" +
                     "}"));
 
