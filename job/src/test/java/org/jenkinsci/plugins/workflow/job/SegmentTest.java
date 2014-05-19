@@ -29,7 +29,6 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.test.RestartableJenkinsRule;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
@@ -39,7 +38,6 @@ public class SegmentTest {
 
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
-    @Ignore("WiP")
     @Test public void basics() throws Exception {
         // Timeline (A has concurrency 2, B 1):
         // #1 o-A--------------B----------------o
@@ -51,7 +49,14 @@ public class SegmentTest {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("steps.segment(value: 'A', concurrency: 2);\nsteps.echo('in A');\nsteps.semaphore(value: 'B', concurrency: 1);\nsteps.echo('in B');\nsteps.semaphore('X');\nsteps.echp('done')"));
+                p.setDefinition(new CpsFlowDefinition(
+                        "steps.segment(value: 'A', concurrency: 2);\n" +
+                        "steps.echo('in A');\n" +
+                        "steps.semaphore('B');\n" +
+                        "steps.segment(value: 'B', concurrency: 1);\n" +
+                        "steps.echo('in B');\n" +
+                        "steps.semaphore('X');\n" +
+                        "steps.echo('done')"));
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
                 e1.waitForSuspension();
@@ -64,55 +69,62 @@ public class SegmentTest {
                 CpsFlowExecution e3 = (CpsFlowExecution) b3.getExecutionPromise().get();
                 e3.waitForSuspension();
                 assertTrue(b3.isBuilding());
-                story.j.assertLogContains("in A", b1);
-                story.j.assertLogNotContains("in B", b1);
-                story.j.assertLogContains("in A", b2);
-                story.j.assertLogNotContains("in B", b2);
-                story.j.assertLogNotContains("in A", b3);
-                SemaphoreStep.success("B/1", null);
-                e1.waitForSuspension();
-                assertTrue(b1.isBuilding());
-                e2.waitForSuspension();
-                assertTrue(b2.isBuilding());
-                e3.waitForSuspension();
-                assertTrue(b3.isBuilding());
-                story.j.assertLogContains("in B", b1);
-                story.j.assertLogNotContains("done", b1);
-                story.j.assertLogNotContains("in B", b2);
-                story.j.assertLogContains("in A", b3);
-                story.j.assertLogNotContains("in B", b3);
-                SemaphoreStep.success("B/2", null);
-                e1.waitForSuspension();
-                assertTrue(b1.isBuilding());
-                e2.waitForSuspension();
-                assertTrue(b2.isBuilding());
-                e3.waitForSuspension();
-                assertTrue(b3.isBuilding());
-                story.j.assertLogNotContains("done", b1);
-                story.j.assertLogNotContains("in B", b2);
-                story.j.assertLogNotContains("in B", b3);
-                SemaphoreStep.success("B/3", null);
-                e1.waitForSuspension();
-                assertTrue(b1.isBuilding());
-                e2.waitForSuspension();
-                assertFalse(b2.isBuilding());
-                e3.waitForSuspension();
-                assertTrue(b3.isBuilding());
-                story.j.assertLogNotContains("done", b1);
-                story.j.assertLogNotContains("in B", b2);
-                story.j.assertLogNotContains("in B", b3);
-                SemaphoreStep.success("X/1", null);
-                e1.waitForSuspension();
-                assertFalse(b1.isBuilding());
-                e3.waitForSuspension();
-                assertTrue(b3.isBuilding());
-                story.j.assertLogContains("done", b1);
-                story.j.assertLogContains("in B", b3);
-                story.j.assertLogNotContains("done", b3);
-                SemaphoreStep.success("X/2", null);
-                e3.waitForSuspension();
-                assertFalse(b3.isBuilding());
-                story.j.assertLogContains("done", b3);
+                try {
+                    story.j.assertLogContains("in A", b1);
+                    story.j.assertLogNotContains("in B", b1);
+                    story.j.assertLogContains("in A", b2);
+                    story.j.assertLogNotContains("in B", b2);
+                    story.j.assertLogNotContains("in A", b3);
+                    SemaphoreStep.success("B/1", null);
+                    e1.waitForSuspension();
+                    assertTrue(b1.isBuilding());
+                    e2.waitForSuspension();
+                    assertTrue(b2.isBuilding());
+                    e3.waitForSuspension();
+                    assertTrue(b3.isBuilding());
+                    story.j.assertLogContains("in B", b1);
+                    story.j.assertLogNotContains("done", b1);
+                    story.j.assertLogNotContains("in B", b2);
+                    story.j.assertLogContains("in A", b3);
+                    story.j.assertLogNotContains("in B", b3);
+                    SemaphoreStep.success("B/2", null);
+                    e1.waitForSuspension();
+                    assertTrue(b1.isBuilding());
+                    e2.waitForSuspension();
+                    assertTrue(b2.isBuilding());
+                    e3.waitForSuspension();
+                    assertTrue(b3.isBuilding());
+                    story.j.assertLogNotContains("done", b1);
+                    story.j.assertLogNotContains("in B", b2);
+                    story.j.assertLogNotContains("in B", b3);
+                    SemaphoreStep.success("B/3", null);
+                    e1.waitForSuspension();
+                    assertTrue(b1.isBuilding());
+                    e2.waitForSuspension();
+                    e3.waitForSuspension();
+                    Thread.sleep(1000); // TODO why is this necessary?
+                    assertFalse(b2.isBuilding());
+                    assertTrue(b3.isBuilding());
+                    story.j.assertLogNotContains("done", b1);
+                    story.j.assertLogNotContains("in B", b2);
+                    story.j.assertLogNotContains("in B", b3);
+                    SemaphoreStep.success("X/1", null);
+                    e1.waitForSuspension();
+                    assertFalse(b1.isBuilding());
+                    e3.waitForSuspension();
+                    assertTrue(b3.isBuilding());
+                    story.j.assertLogContains("done", b1);
+                    story.j.assertLogContains("in B", b3);
+                    story.j.assertLogNotContains("done", b3);
+                    SemaphoreStep.success("X/2", null);
+                    e3.waitForSuspension();
+                    assertFalse(b3.isBuilding());
+                    story.j.assertLogContains("done", b3);
+                } finally {
+                    System.out.println(JenkinsRule.getLog(b1));
+                    System.out.println(JenkinsRule.getLog(b2));
+                    System.out.println(JenkinsRule.getLog(b3));
+                }
             }
         });
     }
