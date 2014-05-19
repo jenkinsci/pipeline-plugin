@@ -121,6 +121,7 @@ public class SegmentStep extends Step {
     }
 
     private static synchronized void enter(Run<?,?> r, StepContext context, String name, int concurrency) {
+        println(context, "Entering segment " + name);
         load();
         Job<?,?> job = r.getParent();
         String jobName = job.getFullName();
