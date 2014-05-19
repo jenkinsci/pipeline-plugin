@@ -63,12 +63,15 @@ public final class SemaphoreStep extends Step {
     /** Starts running and waits for {@link #success} or {@link #failure} to be called, if they have not been already. */
     @Override public boolean start(StepContext context) throws Exception {
         if (returnValues.containsKey(k)) {
+            System.err.println("Immediately running " + k);
             context.onSuccess(returnValues.get(k));
             return true;
         } else if (errors.containsKey(k)) {
+            System.err.println("Immediately failing " + k);
             context.onFailure(errors.get(k));
             return true;
         } else {
+            System.err.println("Blocking " + k);
             contexts.put(k, context);
             return false;
         }
@@ -81,8 +84,10 @@ public final class SemaphoreStep extends Step {
 
     public static void success(String k, Object returnValue) {
         if (contexts.containsKey(k)) {
+            System.err.println("Unblocking " + k + " as success");
             contexts.get(k).onSuccess(returnValue);
         } else {
+            System.err.println("Planning to unblock " + k + " as success");
             returnValues.put(k, returnValue);
         }
     }
@@ -94,8 +99,10 @@ public final class SemaphoreStep extends Step {
 
     public static void failure(String k, Throwable error) {
         if (contexts.containsKey(k)) {
+            System.err.println("Unblocking " + k + " as failure");
             contexts.get(k).onFailure(error);
         } else {
+            System.err.println("Planning to unblock " + k + " as failure");
             errors.put(k, error);
         }
     }
