@@ -33,13 +33,21 @@ import com.cloudbees.groovy.cps.impl.CpsCallableInvocation;
 import com.cloudbees.groovy.cps.impl.FunctionCallEnv;
 import com.cloudbees.groovy.cps.impl.SourceLocation;
 import com.cloudbees.groovy.cps.impl.TryBlockEnv;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.steps.Step;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
+import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction;
+import org.jenkinsci.plugins.workflow.actions.ErrorAction;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
+import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.Step;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Encapsulates how to evaluate the body closure of {@link CpsStepContext},
@@ -60,8 +68,11 @@ final class BodyInvoker {
 
     private final BodyReference body;
 
-    BodyInvoker(BodyReference body, FutureCallback c, Object... contextOverrides) {
+    private final CpsStepContext owner;
+
+    BodyInvoker(CpsStepContext owner, BodyReference body, FutureCallback c, Object... contextOverrides) {
         this.body = body;
+        this.owner = owner;
 
         if (!(c instanceof Serializable))
             throw new IllegalStateException("Callback must be persistable");
@@ -87,6 +98,8 @@ final class BodyInvoker {
         if (callback!=null)
             c = new TeeFutureCallback(c,callback);
 
+        StepStartNode sn = addBodyStartFlowNode(head);
+
         try {
             // TODO: handle arguments to closure
             Object x = body.getBody(currentThread).call();
@@ -96,13 +109,26 @@ final class BodyInvoker {
             // execute this closure asynchronously
             // TODO: does it make sense that the new thread shares the same head?
             // this problem is captured as https://trello.com/c/v6Pbwqxj/70-allowing-steps-to-build-flownodes
-            CpsThread t = currentThread.group.addThread(createContinuable(e, c), head,
+            CpsThread t = currentThread.group.addThread(createContinuable(e, c, sn), head,
                     ContextVariableSet.from(currentThread.getContextVariables(), contextOverrides));
             t.resume(new Outcome(null, null));  // get the new thread going
         } catch (Throwable t) {
             // body has completed synchronously and abnormally
             c.onFailure(t);
         }
+    }
+
+    /**
+     * Inserts the flow node that indicates the beginning of the body invocation.
+     *
+     * @see Adapter#addBodyEndFlowNode()
+     */
+    private StepStartNode addBodyStartFlowNode(FlowHead head) {
+        StepStartNode start = new StepStartNode(head.getExecution(),
+                owner.getDisplayName() + " : start body", head.get());
+        start.addAction(new BodyInvocationAction());
+        head.setNewHead(start);
+        return start;
     }
 
     /**
@@ -121,30 +147,63 @@ final class BodyInvoker {
      * execution a failure if any of the threads fail, so this behaviour ensures that a problem in the closure
      * body won't terminate the workflow.
      */
-    private Continuable createContinuable(CpsCallableInvocation inv, final FutureCallback callback) {
+    private Continuable createContinuable(CpsCallableInvocation inv, final FutureCallback callback, BlockStartNode sn) {
         // we need FunctionCallEnv that acts as the back drop of try/catch block.
         // TODO: we need to capture the surrounding calling context to capture variables, and switch to ClosureCallEnv
-        Env caller = new FunctionCallEnv(null, new SuccessAdapter(callback), null, null);
+        Env caller = new FunctionCallEnv(null, new SuccessAdapter(callback,sn), null, null);
 
         // catch an exception thrown from body and treat that as a failure
         TryBlockEnv env = new TryBlockEnv(caller, null);
-        env.addHandler(Throwable.class, new FailureAdapter(callback));
+        env.addHandler(Throwable.class, new FailureAdapter(callback,sn));
 
         return new Continuable(
             // this source location is a place holder for the step implementation.
             // perhaps at some point in the future we'll let the Step implementation control this.
-            inv.invoke(env, SourceLocation.UNKNOWN, new SuccessAdapter(callback)));
+            inv.invoke(env, SourceLocation.UNKNOWN, new SuccessAdapter(callback,sn)));
     }
 
-    private static class FailureAdapter implements Continuation {
-        private final FutureCallback callback;
+    private static abstract class Adapter implements Continuation {
+        final FutureCallback callback;
+        final String startNodeId;
 
-        public FailureAdapter(FutureCallback callback) {
+        public Adapter(FutureCallback callback, BlockStartNode startNode) {
             this.callback = callback;
+            this.startNodeId = startNode.getId();
+        }
+
+        /**
+         * Inserts the flow node that indicates the beginning of the body invocation.
+         *
+         * @see BodyInvoker#addBodyStartFlowNode(FlowHead)
+         */
+        StepEndNode addBodyEndFlowNode() {
+            try {
+                FlowHead head = CpsThread.current().head;
+
+                StepEndNode end = new StepEndNode(head.getExecution(),
+                        (StepStartNode) head.getExecution().getNode(startNodeId),
+                        head.get());
+                end.addAction(new BodyInvocationAction());
+                head.setNewHead(end);
+
+                return end;
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Failed to grow the flow graph", e);
+                throw new Error(e);
+            }
+        }
+
+        private static final long serialVersionUID = 1L;
+    }
+
+    private static class FailureAdapter extends Adapter {
+        private FailureAdapter(FutureCallback callback, BlockStartNode startNode) {
+            super(callback, startNode);
         }
 
         @Override
         public Next receive(Object o) {
+            addBodyEndFlowNode().addAction(new ErrorAction((Throwable)o));
             callback.onFailure((Throwable)o);
             return Next.terminate(null);
         }
@@ -152,19 +211,20 @@ final class BodyInvoker {
         private static final long serialVersionUID = 1L;
     }
 
-    private static class SuccessAdapter implements Continuation {
-        private final FutureCallback callback;
-
-        public SuccessAdapter(FutureCallback callback) {
-            this.callback = callback;
+    private static class SuccessAdapter extends Adapter {
+        private SuccessAdapter(FutureCallback callback, BlockStartNode startNode) {
+            super(callback, startNode);
         }
 
         @Override
         public Next receive(Object o) {
+            addBodyEndFlowNode();
             callback.onSuccess(o);
             return Next.terminate(null);
         }
 
         private static final long serialVersionUID = 1L;
     }
+
+    private static final Logger LOGGER = Logger.getLogger(BodyInvoker.class.getName());
 }

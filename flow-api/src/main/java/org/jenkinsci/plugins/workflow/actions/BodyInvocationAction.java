@@ -13,19 +13,12 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
  * @author Kohsuke Kawaguchi
  */
 public class BodyInvocationAction extends InvisibleAction implements FlowNodeAction {
-    private final String parentId;
-
-    /**
+    /*
      * @param stepBlock
      *      Reference to the block that signifies the enclosing block (which corresponds
      *      to the invocation of the step itself.)
      */
-    public BodyInvocationAction(BlockStartNode stepBlock) {
-        this.parentId = stepBlock.getId();
-    }
-
-    public String getParentId() {
-        return parentId;
+    public BodyInvocationAction() {
     }
 
     @Override

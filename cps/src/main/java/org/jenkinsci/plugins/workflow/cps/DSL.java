@@ -87,17 +87,17 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         FlowNode an;
 
         if (ps.body==null) {
-            an = new StepAtomNode(exec, name, thread.head.get());
+            an = new StepAtomNode(exec, d.getDisplayName(), thread.head.get());
             // TODO: use CPS call stack to obtain the current call site source location. See JENKINS-23013
             thread.head.setNewHead(an);
         } else {
-            an = new StepStartNode(exec, name, thread.head.get());
+            an = new StepStartNode(exec, d.getDisplayName(), thread.head.get());
             thread.head.setNewHead(an);
         }
 
         Step s = d.newInstance(ps.namedArgs);
 
-        final CpsStepContext context = new CpsStepContext(thread,handle,an,ps.body);
+        final CpsStepContext context = new CpsStepContext(d,thread,handle,an,ps.body);
         boolean sync;
         try {
             sync = s.start(context);
