@@ -188,6 +188,8 @@ public abstract class FlowExecution implements FlowActionStorage {
                     w.printf("%s -> %s [style=dotted]\n",
                             sn.getStartNode().getId(), n.getId());
                 }
+
+                w.printf("%s [label=\"%s: %s\"]\n", n.getId(), n.getId(), n.getDisplayName());
             }
 
             w.println("}");
