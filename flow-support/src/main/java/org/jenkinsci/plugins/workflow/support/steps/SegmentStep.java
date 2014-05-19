@@ -29,6 +29,7 @@ import hudson.Extension;
 import hudson.Util;
 import hudson.XmlFile;
 import hudson.model.Job;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
@@ -248,6 +249,7 @@ public class SegmentStep extends Step {
         /* TODO not yet implemented
         context.get(FlowExecution.class).abort();
         */
+        context.setResult(Result.NOT_BUILT);
         context.onFailure(new AbortException("Aborting flow"));
     }
 

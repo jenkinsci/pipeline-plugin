@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import hudson.model.Result;
 import java.util.List;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
@@ -108,6 +109,7 @@ public class SegmentTest {
                     e3.waitForSuspension();
                     Thread.sleep(1000); // TODO why is this necessary?
                     assertFalse(b2.isBuilding());
+                    assertEquals(Result.NOT_BUILT, b2.getResult());
                     InterruptedBuildAction iba = b2.getAction(InterruptedBuildAction.class);
                     assertNotNull(iba);
                     List<CauseOfInterruption> causes = iba.getCauses();
@@ -121,6 +123,7 @@ public class SegmentTest {
                     SemaphoreStep.success("X/1", null);
                     e1.waitForSuspension();
                     assertFalse(b1.isBuilding());
+                    assertEquals(Result.SUCCESS, b1.getResult());
                     e3.waitForSuspension();
                     assertTrue(b3.isBuilding());
                     story.j.assertLogContains("done", b1);
@@ -129,6 +132,7 @@ public class SegmentTest {
                     SemaphoreStep.success("X/2", null);
                     e3.waitForSuspension();
                     assertFalse(b3.isBuilding());
+                    assertEquals(Result.SUCCESS, b3.getResult());
                     story.j.assertLogContains("done", b3);
                 } finally {
                     System.out.println(JenkinsRule.getLog(b1));
