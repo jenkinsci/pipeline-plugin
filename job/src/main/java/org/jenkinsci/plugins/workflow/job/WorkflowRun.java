@@ -204,19 +204,17 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 AnnotatedLargeText<? extends FlowNode> logText = la.getLogText();
                 try {
                     entry.setValue(logText.writeLogTo(entry.getValue(), listener.getLogger()));
-                    if (logText.isComplete()) { // currently same as !entry.getKey().isRunning()
+                    if (logText.isComplete()) {
                         logText.writeLogTo(entry.getValue(), listener.getLogger()); // defend against race condition?
-                        // TODO !CpsFlowExecution.getNode(id).running even after it is done, since running is deserialized as false!
-                        //it.remove();
+                        assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
+                        it.remove();
                     }
                 } catch (IOException x) {
                     LOGGER.log(Level.WARNING, null, x);
                     it.remove();
                 }
-                /* TODO see above
             } else if (!node.isRunning()) {
                 it.remove();
-                */
             }
         }
     }

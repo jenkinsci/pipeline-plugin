@@ -41,11 +41,4 @@ public abstract class BlockStartNode extends FlowNode {
         super(exec, id, parents);
     }
 
-    /**
-     * {@link BlockStartNode} is for adding structures and they normally do not take any time to run.
-     */
-    @Override
-    public boolean isRunning() {
-        return false;
-    }
 }

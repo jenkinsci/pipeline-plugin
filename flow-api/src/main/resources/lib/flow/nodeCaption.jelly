@@ -34,23 +34,6 @@ THE SOFTWARE.
   </st:documentation>
 
 	<h1 class="build-caption page-headline">
-	  <j:if test="${node.running}">
-	    <div class="build-caption-progress-container" style="float:right">
-	      <table class="middle-align"><tr>
-	        <td>
-	          ${%Progress}:
-	        </td><td class="build-caption-progress-bar">
-            <!-- TODO: is progress bar doable? -->
-	          <t:buildProgressBar build="${node}"/>
-	        </td><td>
-            <j:if test="${it.parent.hasAbortPermission()}">
-              <l:stopButton href="stop" alt="[${%cancel}]"/>
-            </j:if>
-	        </td>
-	      </tr></table>
-	    </div>
-	  </j:if>
-
 	  <img class="build-caption-status-icon" src="${imagesURL}/48x48/${node.iconColor.image}" width="48" height="48"
          alt="${node.iconColor.description}" tooltip="${node.iconColor.description}" />
 	  <d:invokeBody />
