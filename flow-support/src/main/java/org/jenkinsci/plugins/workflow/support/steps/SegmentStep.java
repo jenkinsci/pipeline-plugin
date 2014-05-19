@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.support.steps;
 
+import hudson.AbortException;
 import hudson.Extension;
 import hudson.Util;
 import hudson.XmlFile;
@@ -140,14 +141,14 @@ public class SegmentStep extends Step {
             if (segment.waitingBuild < build) {
                 // Cancel the older one.
                 try {
-                    cancel(segment.waitingContext, segment.waitingContext.get(FlowExecution.class), segment.waitingContext.get(Run.class));
+                    cancel(segment.waitingContext, context);
                 } catch (Exception x) {
                     LOGGER.log(Level.WARNING, "could not cancel an older flow (perhaps since deleted?)", x);
                 }
             } else if (segment.waitingBuild > build) {
                 // Cancel this one. And work with the older one below, instead of the one initiating this call.
                 try {
-                    cancel(context, context.get(FlowExecution.class), r);
+                    cancel(context, segment.waitingContext);
                 } catch (Exception x) {
                     LOGGER.log(Level.WARNING, "could not cancel the current flow", x);
                 }
@@ -214,11 +215,15 @@ public class SegmentStep extends Step {
         }
     }
 
-    private static void cancel(StepContext context, FlowExecution exec, Run<?,?> run) throws IOException, InterruptedException {
-        println(context, "Canceled since a newer build got here");
+    private static void cancel(StepContext context, StepContext newer) throws IOException, InterruptedException {
+        println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
+        println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
         CauseOfInterruption coi = new CauseOfInterruption.UserInterruption("TODO define a new type");
-        run.addAction(new InterruptedBuildAction(Collections.singleton(coi)));
-        exec.abort();
+        context.get(Run.class).addAction(new InterruptedBuildAction(Collections.singleton(coi)));
+        /* TODO not yet implemented
+        context.get(FlowExecution.class).abort();
+        */
+        context.onFailure(new AbortException("Aborting flow"));
     }
 
     private static final class Segment {
