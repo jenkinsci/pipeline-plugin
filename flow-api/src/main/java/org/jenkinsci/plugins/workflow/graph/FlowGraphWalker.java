@@ -1,7 +1,6 @@
-package org.jenkinsci.plugins.workflow.support;
+package org.jenkinsci.plugins.workflow.graph;
 
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
 import java.util.Collection;
 import java.util.HashSet;

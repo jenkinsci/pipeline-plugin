@@ -4,6 +4,7 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
+import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.visualization.table.FlowNodeViewColumn;
 import org.jenkinsci.plugins.workflow.visualization.table.FlowNodeViewColumnDescriptor;
 
@@ -22,6 +23,11 @@ import java.util.Stack;
  */
 public class FlowGraphTable {
     private final FlowExecution execution;
+    /**
+     * Point in time snapshot of all the active heads.
+     */
+    private List<FlowNode> heads;
+
     private List<Row> rows;
     private List<FlowNodeViewColumn> columns;
 
@@ -59,22 +65,17 @@ public class FlowGraphTable {
      * Creates a {@link Row} for each reachable {@link FlowNode}
      */
     private Map<FlowNode, Row> createAllRows() {
-        // queue of nodes to visit.
-        // it's a stack and not queue to visit nodes in DFS
-        Stack<FlowNode> q = new Stack<FlowNode>();
-        q.addAll(execution.getCurrentHeads());
+        heads = execution.getCurrentHeads();
+        FlowGraphWalker walker = new FlowGraphWalker();
+        walker.addHeads(heads);
 
         // nodes that we've visited
         Map<FlowNode,Row> rows = new LinkedHashMap<FlowNode, Row>();
 
-        while (!q.isEmpty()) {
-            FlowNode n = q.pop();
-            if (rows.containsKey(n)) continue;
-
+        FlowNode n;
+        while ((n=walker.next())!=null) {
             Row row = new Row(n);
             rows.put(n, row);
-
-            q.addAll(n.getParents());
         }
         return rows;
     }
@@ -284,6 +285,4 @@ public class FlowGraphTable {
             s.nextTreeSibling = r;
         }
     }
-    
-
 }
