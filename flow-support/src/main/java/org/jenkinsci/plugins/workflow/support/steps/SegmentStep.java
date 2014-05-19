@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -43,6 +44,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
 import jenkins.model.Jenkins;
@@ -65,9 +67,9 @@ public class SegmentStep extends Step {
     private static final Logger LOGGER = Logger.getLogger(SegmentStep.class.getName());
 
     public final String name;
-    private final int concurrency;
+    private final @CheckForNull Integer concurrency;
 
-    private SegmentStep(String name, int concurrency) {
+    private SegmentStep(String name, @CheckForNull Integer concurrency) {
         if (name == null) {
             throw new IllegalArgumentException("must specify name");
         }
@@ -76,11 +78,11 @@ public class SegmentStep extends Step {
     }
 
     @DataBoundConstructor public SegmentStep(String name, String concurrency) {
-        this(Util.fixEmpty(name), Util.fixEmpty(concurrency) != null ? Integer.parseInt(concurrency) : Integer.MAX_VALUE);
+        this(Util.fixEmpty(name), Util.fixEmpty(concurrency) != null ? Integer.parseInt(concurrency) : null);
     }
 
     public String getConcurrency() {
-        return concurrency == Integer.MAX_VALUE ? "" : Integer.toString(concurrency);
+        return concurrency == null ? "" : Integer.toString(concurrency);
     }
 
     @Override public boolean start(StepContext context) throws Exception {
@@ -120,7 +122,7 @@ public class SegmentStep extends Step {
         }
     }
 
-    private static synchronized void enter(Run<?,?> r, StepContext context, String name, int concurrency) {
+    private static synchronized void enter(Run<?,?> r, StepContext context, String name, Integer concurrency) {
         println(context, "Entering segment " + name);
         load();
         Job<?,?> job = r.getParent();
@@ -165,13 +167,17 @@ public class SegmentStep extends Step {
             }
             Segment segment2 = entry.getValue();
             // If we were holding another segment in the same job, release it, unlocking its waiter to proceed.
-            if (segment2.holding.remove(build) && segment2.waitingContext != null) {
-                println(segment2.waitingContext, "Unblocked since " + r.getDisplayName() + " is moving into segment " + name);
-                segment2.waitingContext.onSuccess(null);
-                segment2.waitingContext = null;
+            if (segment2.holding.remove(build)) {
+                if (segment2.waitingContext != null) {
+                    println(segment2.waitingContext, "Unblocked since " + r.getDisplayName() + " is moving into segment " + name);
+                    segment2.waitingContext.onSuccess(null);
+                    segment2.waitingBuild = null;
+                    segment2.waitingContext = null;
+                }
             }
         }
-        if (segment.holding.size() < segment.concurrency) {
+        if (segment.concurrency == null || segment.holding.size() < segment.concurrency) {
+            segment.waitingBuild = null;
             segment.waitingContext = null;
             segment.holding.add(build);
             println(context, "Proceeding");
@@ -181,6 +187,7 @@ public class SegmentStep extends Step {
             segment.waitingContext = context;
             println(context, "Waiting for builds " + segment.holding);
         }
+        cleanUp(jobName);
         save();
     }
 
@@ -200,11 +207,29 @@ public class SegmentStep extends Step {
                     println(segment.waitingContext, "Unblocked since " + r.getDisplayName() + " finished");
                     segment.waitingContext.onSuccess(null);
                     segment.waitingContext = null;
+                    segment.waitingBuild = null;
                 }
             }
         }
         if (modified) {
+            cleanUp(jobName);
             save();
+        }
+    }
+
+    private static void cleanUp(String jobName) {
+        Map<String,Segment> segmentsByName = segmentsByNameByJob.get(jobName);
+        assert segmentsByName != null;
+        Iterator<Map.Entry<String,Segment>> it = segmentsByName.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String,Segment> entry = it.next();
+            if (entry.getValue().holding.isEmpty()) {
+                assert entry.getValue().waitingContext == null;
+                it.remove();
+            }
+        }
+        if (segmentsByName.isEmpty()) {
+            segmentsByNameByJob.remove(jobName);
         }
     }
 
@@ -251,11 +276,11 @@ public class SegmentStep extends Step {
         /** number of builds current in this segment */
         final Set<Integer> holding = new TreeSet<Integer>();
         /** maximum permitted size of {@link #holding} */
-        int concurrency;
+        @CheckForNull Integer concurrency;
         /** context of the build currently waiting to enter this segment, if any */
         @CheckForNull StepContext waitingContext;
         /** number of the waiting build, if any */
-        int waitingBuild;
+        @Nullable Integer waitingBuild;
     }
 
     @Extension public static final class Listener extends RunListener<Run<?,?>> {
@@ -280,8 +305,7 @@ public class SegmentStep extends Step {
         }
 
         @Override public Step newInstance(Map<String,Object> arguments) {
-            Integer concurrency = (Integer) arguments.get("concurrency");
-            return new SegmentStep((String) arguments.get("value"), concurrency != null ? concurrency : Integer.MAX_VALUE);
+            return new SegmentStep((String) arguments.get("value"), (Integer) arguments.get("concurrency"));
         }
 
         @Override public String getDisplayName() {
