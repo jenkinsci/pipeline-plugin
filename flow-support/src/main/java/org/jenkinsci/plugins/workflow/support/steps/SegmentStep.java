@@ -218,12 +218,32 @@ public class SegmentStep extends Step {
     private static void cancel(StepContext context, StepContext newer) throws IOException, InterruptedException {
         println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
         println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
-        CauseOfInterruption coi = new CauseOfInterruption.UserInterruption("TODO define a new type");
-        context.get(Run.class).addAction(new InterruptedBuildAction(Collections.singleton(coi)));
+        context.get(Run.class).addAction(new InterruptedBuildAction(Collections.singleton(new CanceledCause(newer.get(Run.class)))));
         /* TODO not yet implemented
         context.get(FlowExecution.class).abort();
         */
         context.onFailure(new AbortException("Aborting flow"));
+    }
+
+    /**
+     * Records that a flow was canceled while waiting in a segment step because a newer flow entered that segment instead.
+     */
+    public static final class CanceledCause extends CauseOfInterruption {
+
+        private final String newerBuild;
+
+        CanceledCause(Run<?,?> newerBuild) {
+            this.newerBuild = newerBuild.getExternalizableId();
+        }
+
+        public Run<?,?> getNewerBuild() {
+            return Run.fromExternalizableId(newerBuild);
+        }
+
+        @Override public String getShortDescription() {
+            return "Superseded by " + getNewerBuild().getDisplayName();
+        }
+
     }
 
     private static final class Segment {

@@ -24,8 +24,12 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import java.util.List;
+import jenkins.model.CauseOfInterruption;
+import jenkins.model.InterruptedBuildAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
+import org.jenkinsci.plugins.workflow.support.steps.SegmentStep;
 import org.jenkinsci.plugins.workflow.test.RestartableJenkinsRule;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
@@ -104,6 +108,12 @@ public class SegmentTest {
                     e3.waitForSuspension();
                     Thread.sleep(1000); // TODO why is this necessary?
                     assertFalse(b2.isBuilding());
+                    InterruptedBuildAction iba = b2.getAction(InterruptedBuildAction.class);
+                    assertNotNull(iba);
+                    List<CauseOfInterruption> causes = iba.getCauses();
+                    assertEquals(1, causes.size());
+                    assertEquals(SegmentStep.CanceledCause.class, causes.get(0).getClass());
+                    assertEquals(b3, ((SegmentStep.CanceledCause) causes.get(0)).getNewerBuild());
                     assertTrue(b3.isBuilding());
                     story.j.assertLogNotContains("done", b1);
                     story.j.assertLogNotContains("in B", b2);
