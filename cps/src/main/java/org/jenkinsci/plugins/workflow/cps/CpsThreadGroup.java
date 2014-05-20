@@ -27,6 +27,8 @@ package org.jenkinsci.plugins.workflow.cps;
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
+import org.jenkinsci.plugins.workflow.flow.GraphListener;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverWriter;
 import groovy.lang.Closure;
 import hudson.model.Result;
@@ -35,7 +37,9 @@ import jenkins.util.Timer;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -81,6 +85,7 @@ public final class CpsThreadGroup implements Serializable {
      */
     public final Map<Integer,Closure> closures = new HashMap<Integer,Closure>();
 
+    private transient List<FlowNode> newHeadQueue;
 
     CpsThreadGroup(CpsFlowExecution execution) {
         this.execution = execution;
@@ -103,6 +108,7 @@ public final class CpsThreadGroup implements Serializable {
                 @Override
                 public Void call() throws Exception {
                     run();
+                    notifyListeners();
                     return null;
                 }
             });
@@ -137,43 +143,78 @@ public final class CpsThreadGroup implements Serializable {
     /**
      * Run all runnable threads as much as possible.
      *
-     * This method gets executed sequentially through {@link #scheduleRun()}
+     * This method must be executed sequentially through {@link #scheduleRun()}.
      */
     private synchronized void run() throws IOException {
-        boolean doneSomeWork = false;
-        boolean changed;    // used to see if we need to loop over
-        do {
-            changed = false;
-            for (CpsThread t : threads.values().toArray(new CpsThread[threads.size()])) {
-                if (t.isRunnable()) {
-                    Outcome o = t.runNextChunk();
-                    if (o.isFailure()) {
-                        assert !t.isAlive();    // failed thread is non-resumable
+        final CpsThreadGroup old = CURRENT.get();
+        CURRENT.set(this);
+        try {
+            boolean doneSomeWork = false;
+            boolean changed;    // used to see if we need to loop over
+            do {
+                changed = false;
+                for (CpsThread t : threads.values().toArray(new CpsThread[threads.size()])) {
+                    if (t.isRunnable()) {
+                        Outcome o = t.runNextChunk();
+                        if (o.isFailure()) {
+                            assert !t.isAlive();    // failed thread is non-resumable
 
-                        // workflow produced an exception
-                        execution.setResult(Result.FAILURE);
-                        t.head.get().addAction(new ErrorAction(o.getAbnormal()));
-                    }
-
-                    if (!t.isAlive()) {
-                        LOGGER.fine("completed "+t);
-
-                        threads.remove(t.id);
-                        if (threads.isEmpty()) {
-                            execution.onProgramEnd(o);
+                            // workflow produced an exception
+                            execution.setResult(Result.FAILURE);
+                            t.head.get().addAction(new ErrorAction(o.getAbnormal()));
                         }
+
+                        if (!t.isAlive()) {
+                            LOGGER.fine("completed " + t);
+
+                            threads.remove(t.id);
+                            if (threads.isEmpty()) {
+                                execution.onProgramEnd(o);
+                            }
+                        }
+
+                        changed = true;
                     }
-
-                    changed = true;
                 }
+
+                doneSomeWork |= changed;
+            } while (changed);
+
+            if (doneSomeWork) {
+                saveProgram();
+                LOGGER.log(FINE, "program state saved");
             }
+        } finally {
+            CURRENT.set(old);
+        }
+    }
 
-            doneSomeWork |= changed;
-        } while(changed);
+    /**
+     * Used to queue up notifications to {@link GraphListener}s.
+     * They will be notified at the very end, so that notification happens
+     * in a predictable safe point from a thread that doesn't own any locks.
+     */
+    /*package*/ void queueNewHead(FlowNode head) {
+        assert CpsThreadGroup.current()!=null : "Must be invoked from within the program executing thread";
+        if (newHeadQueue==null) {
+            newHeadQueue = new ArrayList<FlowNode>();
+        }
+        newHeadQueue.add(head);
+    }
 
-        if (doneSomeWork) {
-            saveProgram();
-            LOGGER.log(FINE, "program state saved");
+    /**
+     * After {@link #run()} method, fire the notification to all the new heads queued in
+     * {@link #queueNewHead(FlowNode)}.
+     *
+     * We do this from a place who owns no lock on any of the CPS objects to avoid deadlock.
+     * See https://trello.com/c/7aTFYWM5/26-intermittent-deadlock
+     */
+    private void notifyListeners() {
+        if (newHeadQueue!=null) {
+            for (FlowNode head : newHeadQueue) {
+                execution.notifyListeners(head);
+            }
+            newHeadQueue = null;
         }
     }
 
@@ -204,4 +245,14 @@ public final class CpsThreadGroup implements Serializable {
     private static final Logger LOGGER = Logger.getLogger(CpsThreadGroup.class.getName());
 
     private static final long serialVersionUID = 1L;
+
+    private static ThreadLocal<CpsThreadGroup> CURRENT = new ThreadLocal<CpsThreadGroup>();
+
+    /**
+     * CPS transformed program runs entirely inside a program execution thread.
+     * If we are in that thread executing {@link CpsThreadGroup}, this method returns non-null.
+     */
+    /*package*/ static CpsThreadGroup current() {
+        return CURRENT.get();
+    }
 }

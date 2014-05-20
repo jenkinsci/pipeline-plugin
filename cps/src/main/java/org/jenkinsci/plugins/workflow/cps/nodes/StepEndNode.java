@@ -10,6 +10,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Pairs up with {@link StepStartNode} to designate the end of a step execution
+ * that has the body.
+ *
  * @author Kohsuke Kawaguchi
  */
 public class StepEndNode extends BlockEndNode<StepStartNode> {
