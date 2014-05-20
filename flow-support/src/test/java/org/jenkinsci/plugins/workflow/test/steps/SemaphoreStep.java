@@ -33,6 +33,7 @@ import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import jenkins.model.Jenkins;
 
 /**
  * Step that blocks until signaled.
@@ -40,7 +41,8 @@ import java.util.UUID;
 public final class SemaphoreStep extends Step {
 
     private static final Map<String,Integer> iota = new HashMap<String,Integer>();
-    private static final Map<String,StepContext> contexts = new HashMap<String,StepContext>();
+    /** map from {@link #k} to serial form of {@link StepContext} */
+    private static final Map<String,String> contexts = new HashMap<String,String>();
     private static final Map<String,Object> returnValues = new HashMap<String,Object>();
     private static final Map<String,Throwable> errors = new HashMap<String,Throwable>();
 
@@ -72,7 +74,7 @@ public final class SemaphoreStep extends Step {
             return true;
         } else {
             System.err.println("Blocking " + k);
-            contexts.put(k, context);
+            contexts.put(k, Jenkins.XSTREAM.toXML(context));
             return false;
         }
     }
@@ -85,7 +87,7 @@ public final class SemaphoreStep extends Step {
     public static void success(String k, Object returnValue) {
         if (contexts.containsKey(k)) {
             System.err.println("Unblocking " + k + " as success");
-            contexts.get(k).onSuccess(returnValue);
+            getContext(k).onSuccess(returnValue);
         } else {
             System.err.println("Planning to unblock " + k + " as success");
             returnValues.put(k, returnValue);
@@ -100,7 +102,7 @@ public final class SemaphoreStep extends Step {
     public static void failure(String k, Throwable error) {
         if (contexts.containsKey(k)) {
             System.err.println("Unblocking " + k + " as failure");
-            contexts.get(k).onFailure(error);
+            getContext(k).onFailure(error);
         } else {
             System.err.println("Planning to unblock " + k + " as failure");
             errors.put(k, error);
@@ -108,7 +110,11 @@ public final class SemaphoreStep extends Step {
     }
     
     public StepContext getContext() {
-        return contexts.get(k);
+        return getContext(k);
+    }
+
+    private static StepContext getContext(String k) {
+        return (StepContext) Jenkins.XSTREAM.fromXML(contexts.get(k));
     }
 
     @Override public StepDescriptor getDescriptor() {
