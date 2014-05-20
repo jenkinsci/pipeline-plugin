@@ -116,6 +116,8 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     @Test
     public void testRetry() {
         p.definition = new CpsFlowDefinition("""
+            import org.jenkinsci.plugins.workflow.job.SimulatedFailureForRetry;
+
             int i = 0;
             retry(3) {
                 println 'Trying!'
@@ -137,12 +139,18 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
 
         def idx = 0;
         [
-            "Running: retry : Start",
+            "Running: Retry the body up to N times : Start",
+            "Running: Retry the body up to N times : start body : Start",
             "Trying!",
+            "Running: Retry the body up to N times : start body : End",
+            "Running: Retry the body up to N times : start body : Start",
             "Trying!",
+            "Running: Retry the body up to N times : start body : End",
+            "Running: Retry the body up to N times : start body : Start",
             "Trying!",
             "Done!",
-            "Running: retry : End",
+            "Running: Retry the body up to N times : start body : End",
+            "Running: Retry the body up to N times : End",
             "Over!",
         ].each { msg ->
             idx = log.indexOf(msg,idx+1);
