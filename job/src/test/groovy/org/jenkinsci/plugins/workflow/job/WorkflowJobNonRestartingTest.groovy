@@ -138,20 +138,27 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
         assert b.result == Result.SUCCESS
 
         def idx = 0;
+
+        [
+            "Trying!",
+            "Trying!",
+            "Trying!",
+            "Done!",
+            "Over!",
+        ].each { msg ->
+            idx = log.indexOf(msg,idx+1);
+            assert idx!=-1 : msg+" not found";
+        }
+
         [
             "Running: Retry the body up to N times : Start",
             "Running: Retry the body up to N times : start body : Start",
-            "Trying!",
             "Running: Retry the body up to N times : start body : End",
             "Running: Retry the body up to N times : start body : Start",
-            "Trying!",
             "Running: Retry the body up to N times : start body : End",
             "Running: Retry the body up to N times : start body : Start",
-            "Trying!",
-            "Done!",
             "Running: Retry the body up to N times : start body : End",
             "Running: Retry the body up to N times : End",
-            "Over!",
         ].each { msg ->
             idx = log.indexOf(msg,idx+1);
             assert idx!=-1 : msg+" not found";
