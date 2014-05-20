@@ -1,10 +1,10 @@
 package org.jenkinsci.plugins.workflow.support.visualization.table;
 
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
+import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
+import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.visualization.table.FlowNodeViewColumn;
 import org.jenkinsci.plugins.workflow.visualization.table.FlowNodeViewColumnDescriptor;
 
@@ -102,7 +102,7 @@ public class FlowGraphTable {
             }
 
             if (r.isEnd()) {
-                FlowEndNode en = (FlowEndNode) r.node;
+                BlockEndNode en = (BlockEndNode) r.node;
                 Row sr = rows.get(en.getStartNode());
 
                 assert sr.endNode==null : "start/end mapping should be 1:1";
@@ -125,11 +125,11 @@ public class FlowGraphTable {
         we do that translation.
 
         The general strategy is that
-        FlowStartNode has its graph children turned into tree children
+        BlockStartNode has its graph children turned into tree children
         (for example so that a fork start node can have all its branches as tree children.)
 
         FlowEndNode gets dropped from the tree (and logically thought of as a part of the start node),
-        but graph children of FlowEndNode become tree siblings of FlowStartNode.
+        but graph children of FlowEndNode become tree siblings of BlockStartNode.
         (TODO: what if the end node wants to show information, such as in the case of validated merge?)
         addTreeSibling/addTreeChild handles the logic of dropping end node from the tree.
 
@@ -143,7 +143,7 @@ public class FlowGraphTable {
                 }
             } else
             if (r.isEnd()) {
-                FlowEndNode en = (FlowEndNode) r.node;
+                BlockEndNode en = (BlockEndNode) r.node;
                 Row sr = rows.get(en.getStartNode());
 
                 for (Row c=r.firstGraphChild; c!=null; c=c.nextGraphSibling) {
@@ -211,11 +211,11 @@ public class FlowGraphTable {
         private final FlowNode node;
 
         /**
-         * We collapse {@link FlowStartNode} and {@link FlowEndNode} into one row.
-         * When it happens, this field refers to {@link FlowEndNode} while
-         * {@link #node} refers to {@link FlowStartNode}.
+         * We collapse {@link BlockStartNode} and {@link BlockEndNode} into one row.
+         * When it happens, this field refers to {@link BlockEndNode} while
+         * {@link #node} refers to {@link BlockStartNode}.
          */
-        private FlowEndNode endNode;
+        private BlockEndNode endNode;
 
         // reverse edges of node.parents, which forms DAG
         private Row firstGraphChild;
@@ -244,11 +244,11 @@ public class FlowGraphTable {
         }
 
         boolean isStart() {
-            return node instanceof FlowStartNode;
+            return node instanceof BlockStartNode;
         }
 
         boolean isEnd() {
-            return node instanceof FlowEndNode;
+            return node instanceof BlockEndNode;
         }
 
         void addGraphChild(Row r) {
