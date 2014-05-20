@@ -383,7 +383,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
         }
         @Override public String getUrl() {
-            return run.getUrl();
+            return run.getUrl(); // TODO NPE?
+        }
+        @Override public String toString() {
+            return "Owner[" + job + "/" + id + ":" + run + "]";
         }
     }
 

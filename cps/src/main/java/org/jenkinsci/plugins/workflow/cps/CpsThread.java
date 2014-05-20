@@ -217,4 +217,10 @@ public final class CpsThread implements Serializable {
     /*package*/ static CpsThread current() {
         return CURRENT.get();
     }
+
+    @Override public String toString() {
+        // getExecution().getOwner() would be useful but seems problematic.
+        return "Thread #" + id + String.format(" @%h", this);
+    }
+
 }
