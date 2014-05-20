@@ -26,7 +26,7 @@ THE SOFTWARE.
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
   <td>
-    <a href="./execution/node/${node.id}/console">
+    <a href="./execution/node/${node.id}/log/">
       <img src="${resURL}/plugin/flow-support/images/32x32/terminal.png" alt="Console Output" class="icon32x32"/>
     </a>
   </td>

@@ -32,6 +32,7 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Computer;
+import hudson.model.Descriptor;
 import hudson.model.Job;
 import hudson.model.Node;
 import hudson.model.Result;
@@ -39,6 +40,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.util.StreamTaskListener;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -49,6 +51,7 @@ import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
@@ -148,12 +151,41 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
     private final int threadId;
 
-    CpsStepContext(CpsThread thread, FlowExecutionOwner executionRef, FlowNode node, Closure body) {
+    /**
+     * {@linkplain Descriptor#getId() step descriptor ID}.
+     */
+    private final String stepDescriptorId;
+
+    /**
+     * Resolved result of {@link #stepDescriptorId} to make the look up faster.
+     */
+    private transient volatile StepDescriptor stepDescriptor;
+
+    CpsStepContext(StepDescriptor step, CpsThread thread, FlowExecutionOwner executionRef, FlowNode node, Closure body) {
         this.threadId = thread.id;
         this.executionRef = executionRef;
         this.id = node.getId();
         this.node = node;
         this.body = thread.group.export(body);
+        this.stepDescriptorId = step.getId();
+    }
+
+    /**
+     * Obtains {@link StepDescriptor} that represents the step this context is invoking.
+     *
+     * @return
+     *      This method returns null if the step descriptor used is not recoverable in the current VM session,
+     *      such as when the plugin that implements this was removed. So the caller should defend against null.
+     */
+    public @CheckForNull StepDescriptor getStepDescriptor() {
+        if (stepDescriptor==null)
+            stepDescriptor = (StepDescriptor) Jenkins.getInstance().getDescriptor(stepDescriptorId);
+        return stepDescriptor;
+    }
+
+    public String getDisplayName() {
+        StepDescriptor d = getStepDescriptor();
+        return d!=null ? d.getDisplayName() : stepDescriptorId;
     }
 
     private CpsFlowExecution getExecution() throws IOException {
@@ -192,7 +224,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
         if (body==null)
             throw new IllegalStateException("There's no body to invoke");
 
-        final BodyInvoker b = new BodyInvoker(body,callback,contextOverrides);
+        final BodyInvoker b = new BodyInvoker(this,body,callback,contextOverrides);
 
         if (syncMode) {
             // we process this in CpsThread#runNextChunk

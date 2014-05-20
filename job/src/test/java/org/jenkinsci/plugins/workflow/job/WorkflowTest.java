@@ -277,13 +277,14 @@ public class WorkflowTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
+                    "import org.jenkinsci.plugins.workflow.job.SimulatedFailureForRetry;\n"+
                     "int count=0;\n" +
                     "retry(3) {\n" +
                         // we'll suspend the execution here
                     "    steps.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))\n" +
 
                     "    if (count++ < 2) {\n" + // forcing retry
-                    "        throw new IllegalArgumentException();\n" +
+                    "        throw new SimulatedFailureForRetry();\n" +
                     "    }\n" +
                     "}"));
 
