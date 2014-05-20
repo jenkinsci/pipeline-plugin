@@ -90,9 +90,9 @@ public abstract class FlowExecutionOwner implements Serializable {
      * @return
      *      String like "job/foo/32/" with trailing slash but no leading slash.
      */
-    public abstract String getUrl();
+    public abstract String getUrl() throws IOException;
 
-    public String getUrlOfExecution() {
+    public String getUrlOfExecution() throws IOException {
         return getUrl()+"execution/";
     }
 }

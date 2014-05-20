@@ -152,7 +152,7 @@ public abstract class FlowNode extends Actionable {
      * @return
      *      String like "job/foo/32/execution/node/abcde/" with no leading slash but trailing slash.
      */
-    public String getUrl() {
+    public String getUrl() throws IOException {
         return getExecution().getUrl()+"node/"+getId()+'/';
     }
 

@@ -335,7 +335,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     private static final class Owner extends FlowExecutionOwner {
         private final String job;
         private final String id;
-        private transient WorkflowRun run;
+        private transient @CheckForNull WorkflowRun run;
         Owner(WorkflowRun run) {
             job = run.getParent().getFullName();
             id = run.getId();
@@ -382,8 +382,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 return System.out;  // fallback
             }
         }
-        @Override public String getUrl() {
-            return run.getUrl(); // TODO NPE?
+        @Override public String getUrl() throws IOException {
+            return run().getUrl();
         }
         @Override public String toString() {
             return "Owner[" + job + "/" + id + ":" + run + "]";

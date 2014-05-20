@@ -82,7 +82,7 @@ public abstract class FlowExecution implements FlowActionStorage {
      * @return
      *      String like "job/foo/32/execution/" with trailing slash but no leading slash.
      */
-    public String getUrl() {
+    public String getUrl() throws IOException {
         return getOwner().getUrlOfExecution();
     }
 
