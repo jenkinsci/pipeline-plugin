@@ -100,6 +100,11 @@ public class SegmentStep extends Step {
 
     private static Map<String,Map<String,Segment>> segmentsByNameByJob;
 
+    // TODO or delete and make this an instance field in DescriptorImpl
+    public static void clear() {
+        segmentsByNameByJob = null;
+    }
+
     @SuppressWarnings("unchecked")
     private static synchronized void load() {
         if (segmentsByNameByJob == null) {
@@ -124,6 +129,7 @@ public class SegmentStep extends Step {
     }
 
     private static synchronized void enter(Run<?,?> r, StepContext context, String name, Integer concurrency) {
+        LOGGER.log(Level.FINE, "enter {0} {1}", new Object[] {r, name});
         println(context, "Entering segment " + name);
         load();
         Job<?,?> job = r.getParent();

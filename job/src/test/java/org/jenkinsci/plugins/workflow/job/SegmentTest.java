@@ -45,11 +45,12 @@ public class SegmentTest {
 
     @Test public void basics() throws Exception {
         // Timeline (A has concurrency 2, B 1):
-        // #1 o-A--------------B----------------o
+        // #1 o-A--------------B-----------------o
         // #2        o-A-------------B     x
-        // #3             o-A  ------------B    -------o
-        //                     ^     ^     ^    ^      ^
-        //                    B/1   B/2   B/3  X/1    X/2
+        // #3             o-A  ------------B     -------o
+        //                     ^     ^     ^     ^      ^
+        //                    B/1   B/2   B/3 ^ X/1    X/2
+        //                                (restart)
         // (above are the semaphores we must signal)
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -120,6 +121,28 @@ public class SegmentTest {
                     story.j.assertLogNotContains("done", b1);
                     story.j.assertLogNotContains("in B", b2);
                     story.j.assertLogNotContains("in B", b3);
+                } finally {
+                    System.out.println(JenkinsRule.getLog(b1));
+                    System.out.println(JenkinsRule.getLog(b2));
+                    System.out.println(JenkinsRule.getLog(b3));
+                }
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                SegmentStep.clear();
+                WorkflowJob p = story.j.jenkins.getItemByFullName("demo", WorkflowJob.class);
+                WorkflowRun b1 = p.getBuildByNumber(1);
+                WorkflowRun b3 = p.getBuildByNumber(3);
+                try {
+                    assertTrue(b1.isBuilding());
+                    story.j.assertLogNotContains("done", b1);
+                    CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
+                    e1.waitForSuspension();
+                    assertTrue(b3.isBuilding());
+                    story.j.assertLogNotContains("in B", b3);
+                    CpsFlowExecution e3 = (CpsFlowExecution) b3.getExecutionPromise().get();
+                    e3.waitForSuspension();
                     SemaphoreStep.success("X/1", null);
                     e1.waitForSuspension();
                     assertFalse(b1.isBuilding());
@@ -136,7 +159,6 @@ public class SegmentTest {
                     story.j.assertLogContains("done", b3);
                 } finally {
                     System.out.println(JenkinsRule.getLog(b1));
-                    System.out.println(JenkinsRule.getLog(b2));
                     System.out.println(JenkinsRule.getLog(b3));
                 }
             }
