@@ -49,11 +49,4 @@ public abstract class BlockEndNode<START extends BlockStartNode> extends FlowNod
         return start;
     }
 
-    /**
-     * {@link BlockEndNode} is for adding structures and they normally do not take any time to run.
-     */
-    @Override
-    public boolean isRunning() {
-        return false;
-    }
 }

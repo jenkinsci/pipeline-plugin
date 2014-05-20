@@ -73,11 +73,15 @@ public class RetryStep extends Step implements Serializable {
             try {
                 // TODO: here we want to access TaskListener that belongs to the body invocation end node.
                 // how should we do that?
+                /* TODO not currently legal:
                 TaskListener l = context.get(TaskListener.class);
                 t.printStackTrace(l.error("Execution failed"));
+                */
                 left--;
                 if (left>0) {
+                    /*
                     l.getLogger().println("Retrying");
+                    */
                     context.invokeBodyLater(this);
                 } else {
                     context.onFailure(t);

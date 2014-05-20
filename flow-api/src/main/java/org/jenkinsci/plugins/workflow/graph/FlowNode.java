@@ -74,14 +74,12 @@ public abstract class FlowNode extends Actionable {
 
     /**
      * Transient flag that indicates if this node is currently actively executing something.
-     * (As opposed to something that has finished but pending the child node creation, like
-     * in when one of the fork branches has finished before the other and waiting for the join
-     * node to be created.)
-     *
-     * This can only go from true to false. It can be only true for {@link FlowNode}s
-     * that are returned from {@link FlowExecution#getCurrentHeads()}.
+     * <p>It will be false for a node which still has active children, like a step with a running body.
+     * It will also be false for something that has finished but is pending child node creation,
+     * such as a completed fork branch which is waiting for the join node to be created.
+     * <p>This can only go from true to false and is a shortcut for {@link FlowExecution#isCurrentHead}.
      */
-    public boolean isRunning() {
+    public final boolean isRunning() {
         return getExecution().isCurrentHead(this);
     }
 
@@ -136,6 +134,7 @@ public abstract class FlowNode extends Actionable {
      */
     public BallColor getIconColor() {
         BallColor c = getError()!=null ? BallColor.RED : BallColor.BLUE;
+        // TODO this should probably also be _anime in case this is a step node with a body and the body is still running (try FlowGraphTable for example)
         if (isRunning())        c = c.anime();
         return c;
     }

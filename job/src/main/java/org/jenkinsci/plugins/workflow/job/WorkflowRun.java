@@ -33,6 +33,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
@@ -204,19 +205,17 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 AnnotatedLargeText<? extends FlowNode> logText = la.getLogText();
                 try {
                     entry.setValue(logText.writeLogTo(entry.getValue(), listener.getLogger()));
-                    if (logText.isComplete()) { // currently same as !entry.getKey().isRunning()
+                    if (logText.isComplete()) {
                         logText.writeLogTo(entry.getValue(), listener.getLogger()); // defend against race condition?
-                        // TODO !CpsFlowExecution.getNode(id).running even after it is done, since running is deserialized as false!
-                        //it.remove();
+                        assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
+                        it.remove();
                     }
                 } catch (IOException x) {
                     LOGGER.log(Level.WARNING, null, x);
                     it.remove();
                 }
-                /* TODO see above
             } else if (!node.isRunning()) {
                 it.remove();
-                */
             }
         }
     }
@@ -260,7 +259,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         // TODO set duration
         RunListener.fireCompleted(WorkflowRun.this, listener);
         Throwable t = execution.getCauseOfFailure();
-        if (t != null) {
+        if (t instanceof AbortException) {
+            listener.error(t.getMessage());
+        } else if (t != null) {
             t.printStackTrace(listener.getLogger());
         }
         listener.finished(result);
