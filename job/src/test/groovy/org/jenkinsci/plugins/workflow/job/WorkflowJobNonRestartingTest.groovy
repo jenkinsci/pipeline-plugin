@@ -75,8 +75,9 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
 
         assert e.isComplete() : b.log
         assert b.result==Result.SUCCESS : b.log
-        // currentHeads[0] is FlowEndNode, whose parent is BlockEndNode for "with.node", whose parent is AtomNode
-        AtomNode atom = e.currentHeads[0].parents[0].parents[0]
+        // currentHeads[0] is FlowEndNode, whose parent is BlockEndNode for "with.node",
+        // whose parent is BlockEndNode for body invocation, whose parent is AtomNode
+        AtomNode atom = e.currentHeads[0].parents[0].parents[0].parents[0]
         LogActionImpl la = atom.getAction(LogAction)
         assert la.logFile.text.contains("hello world")
     }
