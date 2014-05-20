@@ -248,6 +248,7 @@ public class SegmentStep extends Step {
         }
     }
 
+    // TODO record the segment it got to and display that
     private static void cancel(StepContext context, StepContext newer) throws IOException, InterruptedException {
         println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
         println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
