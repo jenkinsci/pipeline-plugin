@@ -32,7 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 /**
- * TODO: post 1.562 we can use the version in the core.
+ * TODO 1.562+ https://trello.com/c/WCMEn3VO/35-atmostonetaskexecutor
  */
 class AtmostOneTaskExecutor<V> {
     /**

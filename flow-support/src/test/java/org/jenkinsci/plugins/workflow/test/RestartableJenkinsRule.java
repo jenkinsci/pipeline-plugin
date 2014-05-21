@@ -49,7 +49,7 @@ import java.util.List;
  * The rule will evaluate your test method to collect all steps, then execute them in turn and restart
  * Jenkins in between.
  *
- * TODO: move this into the core at some point
+ * TODO: move this into the core at some point: https://trello.com/c/dPiJzFMT/34-restartablejenkinsrule
  *
  * @author Kohsuke Kawaguchi
  */

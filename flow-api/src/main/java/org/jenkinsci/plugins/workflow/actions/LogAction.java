@@ -39,7 +39,7 @@ public abstract class LogAction implements Action {
     /**
      * Access the log file and expose it to the UI with the progressive logging functionality
      */
-    // TODO: make Source and Session in LargeText publicly accessible
+    // TODO make Source and Session in LargeText publicly accessible: https://trello.com/c/ZS9ufdXc/36-largetext-source-session
     public abstract AnnotatedLargeText<? extends FlowNode> getLogText();
 
     @Override

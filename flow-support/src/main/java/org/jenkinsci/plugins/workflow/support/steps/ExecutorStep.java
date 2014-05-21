@@ -169,7 +169,7 @@ public final class ExecutorStep extends Step {
         @Override public void checkAbortPermission() {
             AccessControlled ac = accessControlled();
             if (ac != null) {
-                ac.checkPermission(AbstractProject.ABORT); // TODO why is this defined in AbstractProject?
+                ac.checkPermission(AbstractProject.ABORT); // TODO https://trello.com/c/78J5G2zx/37-abstractproject-abort why is this defined in AbstractProject?
             }
         }
 
@@ -192,7 +192,7 @@ public final class ExecutorStep extends Step {
         }
 
         @Override public String getUrl() {
-            // TODO ideally this would be found via FlowExecution.owner.executable, but how do we check for something with a URL? There is no marker interface for it.
+            // TODO ideally this would be found via FlowExecution.owner.executable, but how do we check for something with a URL? There is no marker interface for it: https://trello.com/c/g6MDbyHJ/38-marker-interface-for-things-with-url
             Run<?,?> r = run();
             return r != null ? r.getUrl() : "";
         }
@@ -334,7 +334,7 @@ public final class ExecutorStep extends Step {
                 return -1;
             }
 
-            // TODO extract this from Run to a utility method in Executables
+            // TODO extract this from Run to a utility method in Executables: https://trello.com/c/6FVhT94X/39-executables-getexecutor
             @Restricted(DoNotUse.class) // for Jelly
             public @CheckForNull Executor getExecutor() {
                 Jenkins j = Jenkins.getInstance();

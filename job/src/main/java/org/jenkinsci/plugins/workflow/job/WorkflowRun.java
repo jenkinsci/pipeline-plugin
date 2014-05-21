@@ -131,8 +131,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     }
 
     @Override public void run() {
-        // TODO how to set startTime? reflection?
-        // TODO lots here copied from execute(RunExecution)
+        // TODO how to set startTime? reflection? https://trello.com/c/Gbg8I3pl/41-run-starttime
+        // Some code here copied from execute(RunExecution), but subsequently modified quite a bit.
         try {
             OutputStream logger = new FileOutputStream(getLogFile());
             listener = new StreamBuildListener(logger, Charset.defaultCharset());
@@ -296,12 +296,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return executionPromise;
     }
 
-    /* TODO: is Stapler-binding nodes useful?
-    public FlowNode getNode(String id) throws IOException {
-        return execution == null ? null : execution.getNode(id);
-    }
-    */
-
     @Override
     public boolean hasntStartedYet() {
         return execution==null;
@@ -321,7 +315,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     @Override public EnvVars getEnvironment(TaskListener listener) throws IOException, InterruptedException {
         EnvVars env = super.getEnvironment(listener);
-        // TODO of what use is this? Should it rather be inlined into FlowExecution constructors?
         ParametersAction a = getAction(ParametersAction.class);
         if (a != null) {
             for (ParameterValue v : a) {

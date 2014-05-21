@@ -69,7 +69,6 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      *
      * @param arguments
      *      Named arguments and values, ala Ant task or Maven mojos.
-     *      TODO: add corresponding static inference on {@link StepDescriptor}.
      */
     public abstract Step newInstance(Map<String,Object> arguments);
 

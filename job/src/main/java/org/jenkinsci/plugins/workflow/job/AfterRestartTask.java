@@ -35,8 +35,8 @@ import java.io.IOException;
 
 /**
  * Represents a {@link WorkflowRun} still running after a Jenkins restart.
+ * Could be a {@link PrioritizedTask}, though not really necessary since it is a {@link FlyweightTask} which would never be blocked anyway.
  */
-// TODO could be a PrioritizedTask, though not really necessary since it is a FlyweightTask which would never be blocked anyway
 class AfterRestartTask extends AbstractQueueTask implements Queue.FlyweightTask, Queue.TransientTask {
 
     private final WorkflowRun run;
