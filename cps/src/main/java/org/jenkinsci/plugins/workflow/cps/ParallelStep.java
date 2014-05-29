@@ -113,7 +113,7 @@ public class ParallelStep extends Step {
                 // all done
                 if (failure!=null) {
                     // wrap the exception so that the call stack leading up to parallel is visible
-                    context.onFailure(new Exception("Parallel step " + failure.getKey() + " failed", failure.getValue().getAbnormal()));
+                    context.onFailure(new ParallelStepException(failure.getKey(), failure.getValue().getAbnormal()));
                 } else {
                     context.onSuccess(success);
                 }
