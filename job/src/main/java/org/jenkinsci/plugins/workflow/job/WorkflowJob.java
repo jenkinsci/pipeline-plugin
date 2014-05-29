@@ -50,8 +50,10 @@ import hudson.model.queue.CauseOfBlockage;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.model.queue.SubTask;
 import hudson.scm.PollingResult;
+import hudson.scm.SCM;
 import hudson.search.SearchIndexBuilder;
 import hudson.security.ACL;
+import hudson.triggers.SCMTrigger;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.AlternativeUiTextProvider;
@@ -60,6 +62,7 @@ import hudson.widgets.HistoryWidget;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.CheckForNull;
@@ -216,7 +219,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return createParameterizedJobMixIn().scheduleBuild(quietPeriod, c);
     }
 
-    @CheckForNull public QueueTaskFuture<WorkflowRun> scheduleBuild2(int quietPeriod, Action... actions) {
+    @Override public @CheckForNull QueueTaskFuture<WorkflowRun> scheduleBuild2(int quietPeriod, Action... actions) {
         return createParameterizedJobMixIn().scheduleBuild2(quietPeriod, actions);
     }
 
@@ -350,6 +353,14 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return this;
     }
 
+    @Override public SCMTrigger getSCMTrigger() {
+        return triggers.get(SCMTrigger.class);
+    }
+
+    @Override public Collection<? extends SCM> getSCMs() {
+        return Collections.emptySet(); // TODO
+    }
+
     @Initializer(before=InitMilestone.EXTENSIONS_AUGMENTED)
     public static void alias() {
         Items.XSTREAM2.alias("flow-definition", WorkflowJob.class);
@@ -358,10 +369,6 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
 
     @Override public PollingResult poll(TaskListener listener) {
         return PollingResult.NO_CHANGES; // TODO
-    }
-
-    @Override public String getSCMDisplayName() {
-        return "<TODO>";
     }
 
     @Extension public static final class DescriptorImpl extends TopLevelItemDescriptor {
