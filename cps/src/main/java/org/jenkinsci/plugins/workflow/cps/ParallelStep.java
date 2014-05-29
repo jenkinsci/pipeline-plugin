@@ -38,12 +38,17 @@ public class ParallelStep extends Step {
 
     @Override
     public boolean start(StepContext context) throws Exception {
+        // TODO: we need to take over the flow node creation for a single StepStart/End pair that wraps
+        // around all the subflows (and not let DSL.invokeMethod creates AtomNode)
+        // see the corresponding hack in DSL.invokeMethod
+
         CpsStepContext cps = (CpsStepContext) context;
         CpsThread t = CpsThread.current();
 
         ResultHandler r = new ResultHandler(context);
 
         for (Entry<String,Closure> e : closures.entrySet()) {
+            // TODO: we want to set the name to StepStart
             cps.invokeBodyLater(
                 t.group.export(e.getValue()),
                 r.callbackFor(e.getKey())

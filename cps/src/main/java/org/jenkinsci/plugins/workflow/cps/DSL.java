@@ -94,7 +94,11 @@ public class DSL extends GroovyObjectSupport implements Serializable {
 
         FlowNode an;
 
-        if (ps.body==null) {
+        // TODO: generalize the notion of Step taking over the FlowNode creation.
+        // see https://trello.com/c/v6Pbwqxj/13-allowing-steps-to-build-flownodes
+        boolean hack = d instanceof ParallelStep.DescriptorImpl;
+
+        if (ps.body == null && !hack) {
             an = new StepAtomNode(exec, d.getDisplayName(), thread.head.get());
             // TODO: use CPS call stack to obtain the current call site source location. See JENKINS-23013
             thread.head.setNewHead(an);
