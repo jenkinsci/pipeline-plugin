@@ -25,44 +25,51 @@
 package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.Extension;
+import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
+import hudson.plugins.git.SubmoduleConfig;
+import hudson.plugins.git.UserRemoteConfig;
+import hudson.scm.SCM;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Runs Git using {@link GitSCM}.
  */
-public final class GitStep extends Step {
+public final class GitStep extends SCMStep {
 
     private final String url;
-    private final boolean poll;
+    private final String branch;
 
-    @DataBoundConstructor public GitStep(String url, boolean poll) {
+    @DataBoundConstructor public GitStep(String url, String branch, boolean poll) {
+        super(poll);
         this.url = url;
-        this.poll = poll;
+        this.branch = branch;
     }
 
-    @Override public boolean start(StepContext context) throws Exception {
-        return true; // TODO
+    @Override protected SCM createSCM() {
+        return new GitSCM(createRepoList(url), Collections.singletonList(new BranchSpec("*/" + branch)), false, Collections.<SubmoduleConfig>emptyList(), null, null, null);
     }
 
-    @Extension public static final class DescriptorImpl extends StepDescriptor {
+    // copied from GitSCM
+    static private List<UserRemoteConfig> createRepoList(String url) {
+        List<UserRemoteConfig> repoList = new ArrayList<UserRemoteConfig>();
+        repoList.add(new UserRemoteConfig(url, null, null, null));
+        return repoList;
+    }
 
-        @Override public Set<Class<?>> getRequiredContext() {
-            return Collections.emptySet(); // TODO
-        }
+    @Extension public static final class DescriptorImpl extends SCMStepDescriptor {
 
         @Override public String getFunctionName() {
             return "git";
         }
 
         @Override public Step newInstance(Map<String,Object> arguments) {
-            return new GitStep((String) arguments.get("url"), Boolean.TRUE.equals(arguments.get("poll")));
+            return new GitStep((String) arguments.get("url"), (String) arguments.get("branch"), Boolean.TRUE.equals(arguments.get("poll")));
         }
 
         @Override public String getDisplayName() {
