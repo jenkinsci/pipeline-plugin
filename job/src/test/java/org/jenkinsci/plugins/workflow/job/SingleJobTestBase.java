@@ -91,10 +91,11 @@ public abstract class SingleJobTestBase {
     /**
      * Gets the build going and waits for the workflow to be fully running
      */
-    public void startBuilding() throws Exception {
+    public QueueTaskFuture<WorkflowRun> startBuilding() throws Exception {
         QueueTaskFuture<WorkflowRun> f = p.scheduleBuild2(0);
         b = f.waitForStart();
         e = (CpsFlowExecution) b.getExecutionPromise().get();
+        return f;
     }
 
     public DumbSlave createSlave(JenkinsRule j) throws Exception {
