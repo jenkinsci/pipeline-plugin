@@ -28,7 +28,8 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.556</version>
+        <!-- TODO SCM-Job branch -->
+        <version>1.567-SNAPSHOT</version>
     </parent>
     <groupId>org.jenkinsci.plugins.workflow</groupId>
     <artifactId>workflow-all</artifactId>
@@ -49,6 +50,7 @@
         <module>flow-api</module>
         <module>flow-support</module>
         <module>durable-task-step</module>
+        <module>scm-step</module>
         <module>cps</module>
         <module>stm</module>
         <module>job</module>
@@ -79,12 +81,6 @@
                 <artifactId>gmaven-plugin</artifactId>
                 <configuration>
                     <providerSelection>1.8</providerSelection>
-                </configuration>
-            </plugin>
-            <plugin> <!-- TODO until fix to test/pom.xml made in 1.559 is ported to plugins/pom.xml and we use it: -->
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <redirectTestOutputToFile>false</redirectTestOutputToFile>
                 </configuration>
             </plugin>
             <plugin>

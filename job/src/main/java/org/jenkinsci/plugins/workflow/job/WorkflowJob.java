@@ -43,11 +43,13 @@ import hudson.model.PermalinkProjectAction;
 import hudson.model.Queue;
 import hudson.model.ResourceList;
 import hudson.model.RunMap;
+import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.model.TopLevelItemDescriptor;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.model.queue.SubTask;
+import hudson.scm.PollingResult;
 import hudson.search.SearchIndexBuilder;
 import hudson.security.ACL;
 import hudson.triggers.Trigger;
@@ -66,6 +68,7 @@ import jenkins.model.Jenkins;
 import jenkins.model.ModelObjectWithChildren;
 import jenkins.model.ParameterizedJobMixIn;
 import jenkins.model.lazy.LazyBuildMixIn;
+import jenkins.triggers.SCMTriggerItem;
 import jenkins.util.TimeDuration;
 import org.acegisecurity.Authentication;
 import org.kohsuke.stapler.QueryParameter;
@@ -74,7 +77,7 @@ import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements BuildableItem, ModelObjectWithChildren, LazyBuildMixIn.LazyLoadingJob<WorkflowJob,WorkflowRun>, ParameterizedJobMixIn.ParameterizedJob, TopLevelItem, Queue.FlyweightTask {
+public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements BuildableItem, ModelObjectWithChildren, LazyBuildMixIn.LazyLoadingJob<WorkflowJob,WorkflowRun>, ParameterizedJobMixIn.ParameterizedJob, TopLevelItem, Queue.FlyweightTask, SCMTriggerItem {
 
     private FlowDefinition definition;
     private DescribableList<Trigger<?>,TriggerDescriptor> triggers = new DescribableList<Trigger<?>,TriggerDescriptor>(this);
@@ -343,10 +346,22 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return actions;
     }
 
+    @Override public Item asItem() {
+        return this;
+    }
+
     @Initializer(before=InitMilestone.EXTENSIONS_AUGMENTED)
     public static void alias() {
         Items.XSTREAM2.alias("flow-definition", WorkflowJob.class);
         WorkflowRun.alias();
+    }
+
+    @Override public PollingResult poll(TaskListener listener) {
+        return PollingResult.NO_CHANGES; // TODO
+    }
+
+    @Override public String getSCMDisplayName() {
+        return "<TODO>";
     }
 
     @Extension public static final class DescriptorImpl extends TopLevelItemDescriptor {
