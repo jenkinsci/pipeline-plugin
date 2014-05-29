@@ -263,6 +263,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             }
 
             private void onEnd() {
+                head.getExecution().removeHead(head);
                 context.bodyInvHeads.add(head.get().getId());
             }
 

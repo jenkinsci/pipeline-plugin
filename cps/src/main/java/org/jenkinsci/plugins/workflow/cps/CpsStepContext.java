@@ -237,7 +237,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
         final BodyInvoker b = new BodyInvoker(this,body,callback,contextOverrides);
 
         if (syncMode) {
-            // we process this in CpsThread#runNextChunk
+            // we process this in ThreadTaskImpl
             bodyInvokers.add(b);
         } else {
             try {

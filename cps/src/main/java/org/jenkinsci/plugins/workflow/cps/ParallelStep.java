@@ -50,8 +50,8 @@ public class ParallelStep extends Step {
         for (Entry<String,Closure> e : closures.entrySet()) {
             // TODO: we want to set the name to StepStart
             cps.invokeBodyLater(
-                t.group.export(e.getValue()),
-                r.callbackFor(e.getKey())
+                    t.group.export(e.getValue()),
+                    r.callbackFor(e.getKey())
             );
         }
 
@@ -96,13 +96,27 @@ public class ParallelStep extends Step {
             }
 
             private void checkAllDone() {
-                for (Outcome o : outcomes.values()) {
+                Map<String,Object> success = new HashMap<String, Object>();
+                Entry<String,Outcome> failure = null;
+                for (Entry<String,Outcome> e : outcomes.entrySet()) {
+                    Outcome o = e.getValue();
+
                     if (o==null)
                         return; // some of the results are not yet ready
+                    if (o.isFailure()) {
+                        failure= e;
+                    } else {
+                        success.put(e.getKey(), o.getNormal());
+                    }
                 }
 
                 // all done
-                context.onSuccess(outcomes);
+                if (failure!=null) {
+                    // wrap the exception so that the call stack leading up to parallel is visible
+                    context.onFailure(new Exception("Parallel step " + failure.getKey() + " failed", failure.getValue().getAbnormal()));
+                } else {
+                    context.onSuccess(success);
+                }
             }
 
             private static final long serialVersionUID = 1L;

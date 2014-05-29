@@ -78,6 +78,7 @@ final class FlowHead implements Serializable {
     public FlowHead fork() {
         FlowHead h = new FlowHead(execution);
         h.head = this.head;
+        execution.addHead(h);
         return h;
     }
 
