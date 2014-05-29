@@ -246,5 +246,10 @@ public abstract class FlowNode extends Actionable {
         return this.id.hashCode();
     }
 
+    @Override
+    public String toString() {
+        return getClass().getName() + "[id=" + id + "]";
+    }
+
     private static final Logger LOGGER = Logger.getLogger(FlowNode.class.getName());
 }
