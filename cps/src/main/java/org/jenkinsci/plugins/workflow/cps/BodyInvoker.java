@@ -103,7 +103,7 @@ final class BodyInvoker {
         FutureCallback c = bodyCallback;
 
         if (callback!=null)
-            c = new TeeFutureCallback(c,callback);
+            c = new TeeFutureCallback(callback,c);
 
         StepStartNode sn = addBodyStartFlowNode(head);
 
