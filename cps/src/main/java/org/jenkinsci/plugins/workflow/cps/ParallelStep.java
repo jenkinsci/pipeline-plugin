@@ -40,8 +40,10 @@ public class ParallelStep extends Step {
         ResultHandler r = new ResultHandler(context);
 
         for (Entry<String,Closure> e : closures.entrySet()) {
-            BodyInvoker bi = new BodyInvoker(cps, t.group.export(e.getValue()), r.callbackFor(e.getKey()));
-            bi.start(t,null/*TODO*/,null);
+            cps.invokeBodyLater(
+                t.group.export(e.getValue()),
+                r.callbackFor(e.getKey())
+            );
         }
 
         return false;

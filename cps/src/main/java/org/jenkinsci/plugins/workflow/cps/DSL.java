@@ -208,8 +208,8 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
 
         @Override
-        protected ThreadTaskResult eval(CpsThread t) {
-            invokeBody(t);
+        protected ThreadTaskResult eval(CpsThread cur) {
+            invokeBody(cur);
 
             if (!context.switchToAsyncMode()) {
                 // we have a result now, so just keep executing
@@ -225,14 +225,14 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             }
         }
 
-        private void invokeBody(CpsThread t) {
-            int count=0;
+        private void invokeBody(CpsThread cur) {
+            int idx=context.bodyInvokers.size();
             for (BodyInvoker b : context.bodyInvokers) {
-                if (count++==0) {
-                    b.start(t);
+                if (--idx==0) {
+                    b.start(cur);
                 } else {
-                    FlowHead head = new FlowHead(t.getExecution());
-                    b.start(t, head, new HeadCollector(context,head));
+                    FlowHead h = cur.head.fork();
+                    b.start(cur, h, new HeadCollector(context,h));
                 }
             }
             context.bodyInvokers.clear();
