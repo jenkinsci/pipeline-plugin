@@ -30,6 +30,7 @@ import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.slaves.DumbSlave;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -40,7 +41,7 @@ import javax.inject.Inject;
  *
  * @author Kohsuke Kawaguchi
  */
-public abstract class SingleJobTestBase {
+public abstract class SingleJobTestBase extends Assert {
     @Rule
     public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
