@@ -68,6 +68,13 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         return this;
     }
 
+    /**
+     * Executes the {@link Step} implementation specified by the name argument.
+     *
+     * @return
+     *      If the step completes execution synchronously, the result will be
+     *      returned. Otherwise this method {@linkplain Continuable#suspend(Object) suspends}.
+     */
     @Override
     public Object invokeMethod(String name, Object args) {
         try {

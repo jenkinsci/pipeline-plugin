@@ -20,6 +20,10 @@ import java.util.Set;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
+ * CPS-specific {@link Step} implementation that executes multiple closures in parallel.
+ *
+ * TODO: somehow needs to declare that this only works with CpsFlowExecution.
+ *
  * @author Kohsuke Kawaguchi
  */
 public class ParallelStep extends Step {
