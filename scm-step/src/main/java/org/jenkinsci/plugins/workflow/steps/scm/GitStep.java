@@ -32,11 +32,20 @@ import java.util.Set;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Runs Git using {@link GitSCM}.
  */
 public final class GitStep extends Step {
+
+    private final String url;
+    private final boolean poll;
+
+    @DataBoundConstructor public GitStep(String url, boolean poll) {
+        this.url = url;
+        this.poll = poll;
+    }
 
     @Override public boolean start(StepContext context) throws Exception {
         return true; // TODO
@@ -52,8 +61,8 @@ public final class GitStep extends Step {
             return "git";
         }
 
-        @Override public Step newInstance(Map<String, Object> arguments) {
-            return new GitStep(); // TODO
+        @Override public Step newInstance(Map<String,Object> arguments) {
+            return new GitStep((String) arguments.get("url"), Boolean.TRUE.equals(arguments.get("poll")));
         }
 
         @Override public String getDisplayName() {
