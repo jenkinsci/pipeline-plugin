@@ -113,6 +113,7 @@ public abstract class SingleJobTestBase {
 
     public void assertBuildCompletedSuccessfully(WorkflowRun b) throws Exception {
         assert !b.isBuilding(): JenkinsRule.getLog(b);
-        assert b.getResult() == Result.SUCCESS: JenkinsRule.getLog(b);
+        Result r = b.getResult();
+        assert r == Result.SUCCESS: "Result is "+r+"\n"+JenkinsRule.getLog(b);
     }
 }
