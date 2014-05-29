@@ -95,6 +95,9 @@ public class WatchYourStep extends Step {
             save();
         }
 
+        /**
+         * Checks presence of files synchronously.
+         */
         public synchronized void watchUpdate() {
             boolean changed = false;
             for (Iterator<Tag> itr = activeWatches.iterator(); itr.hasNext(); ) {

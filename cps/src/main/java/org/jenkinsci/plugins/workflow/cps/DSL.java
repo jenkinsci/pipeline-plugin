@@ -99,7 +99,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         boolean hack = d instanceof ParallelStep.DescriptorImpl;
 
         if (ps.body == null && !hack) {
-            an = new StepAtomNode(exec, d.getDisplayName(), thread.head.get());
+            an = new StepAtomNode(exec, d, thread.head.get());
             // TODO: use CPS call stack to obtain the current call site source location. See JENKINS-23013
             thread.head.setNewHead(an);
         } else {
