@@ -39,6 +39,7 @@ import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
@@ -49,12 +50,15 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+
 /**
  * Encapsulates how to evaluate the body closure of {@link CpsStepContext},
  * and schedules async evaluation of them.
  *
  * @author Kohsuke Kawaguchi
  */
+@PersistIn(NONE)
 final class BodyInvoker {
     /**
      * If {@link Step} requests an invocation of body, the target address is set here.

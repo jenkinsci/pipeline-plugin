@@ -25,11 +25,15 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.google.common.util.concurrent.FutureCallback;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext;
 
 import javax.annotation.concurrent.Immutable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.NONE;
 
 /**
  *
@@ -38,6 +42,7 @@ import java.util.List;
  * @see CpsStepContext#invokeBodyLater(FutureCallback, Object...)
  */
 @Immutable
+@PersistIn(NONE)
 final class ContextVariableSet implements Serializable {
     private final ContextVariableSet parent;
     private final List<Object> values = new ArrayList<Object>();

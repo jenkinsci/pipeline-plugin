@@ -28,6 +28,7 @@ import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.SettableFuture;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,6 +38,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.*;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
 
 /**
  * Represents a {@link Continuable} that is either runnable or suspended (that waits for an
@@ -44,6 +46,7 @@ import static java.util.logging.Level.*;
  *
  * @author Kohsuke Kawaguchi
  */
+@PersistIn(PROGRAM)
 public final class CpsThread implements Serializable {
     /**
      * Owner object. A thread always belong to a {@link CpsThreadGroup}

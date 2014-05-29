@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
@@ -33,6 +34,8 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
 
 /**
  * Growing tip of the node graph.
@@ -50,6 +53,7 @@ import java.util.logging.Logger;
  *
  * @author Kohsuke Kawaguchi
  */
+@PersistIn(PROGRAM)
 final class FlowHead implements Serializable {
     private /*almost final except for serialization*/ int id;
     private /*almost final except for serialization*/ transient CpsFlowExecution execution;

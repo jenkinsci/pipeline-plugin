@@ -30,15 +30,19 @@ import hudson.EnvVars;
 import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.util.StreamTaskListener;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 
 import java.io.IOException;
 import java.io.PrintStream;
+
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
  * {@link SerializableScript} that overrides target of the output.
  *
  * @author Kohsuke Kawaguchi
  */
+@PersistIn(PROGRAM)
 public abstract class CpsScript extends SerializableScript {
     transient CpsFlowExecution execution;
 

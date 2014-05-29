@@ -25,8 +25,11 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import groovy.lang.Closure;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 
 import java.io.Serializable;
+
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
  * Holder of {@link Closure} for {@link CpsStepContext}
@@ -34,6 +37,7 @@ import java.io.Serializable;
  * @author Kohsuke Kawaguchi
  * @see CpsStepContext#body
  */
+@PersistIn(ANYWHERE)
 abstract class BodyReference implements Serializable {
     protected final int id;
 

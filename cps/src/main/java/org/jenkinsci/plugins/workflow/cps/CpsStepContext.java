@@ -43,6 +43,7 @@ import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
@@ -66,6 +67,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+
 /**
  * {@link StepContext} implementation for CPS.
  *
@@ -85,6 +88,7 @@ import java.util.logging.Logger;
  *
  * @author Kohsuke Kawaguchi
  */
+@PersistIn(ANYWHERE)
 public class CpsStepContext extends StepContext { // TODO add XStream class mapper
 
     private static final Logger LOGGER = Logger.getLogger(CpsStepContext.class.getName());

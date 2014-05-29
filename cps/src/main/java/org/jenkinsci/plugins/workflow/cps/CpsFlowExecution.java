@@ -51,6 +51,7 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.jboss.marshalling.Unmarshaller;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
@@ -85,6 +86,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.thoughtworks.xstream.io.ExtendedHierarchicalStreamWriterHelper.*;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
  * {@link FlowExecution} implemented with Groovy CPS.
@@ -166,6 +168,7 @@ import static com.thoughtworks.xstream.io.ExtendedHierarchicalStreamWriterHelper
  *
  * @author Kohsuke Kawaguchi
  */
+@PersistIn(RUN)
 public class CpsFlowExecution extends FlowExecution {
     private final String script;
     private /*almost final*/ FlowExecutionOwner owner;

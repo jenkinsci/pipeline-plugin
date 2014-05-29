@@ -24,20 +24,24 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import hudson.Extension;
+import hudson.model.Action;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinitionDescriptor;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import hudson.Extension;
-import hudson.model.Action;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+
 /**
  * @author Kohsuke Kawaguchi
  */
+@PersistIn(JOB)
 public class CpsFlowDefinition extends FlowDefinition {
     private final String script;
 

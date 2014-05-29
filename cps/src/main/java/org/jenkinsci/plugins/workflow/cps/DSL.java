@@ -33,6 +33,7 @@ import groovy.lang.GroovyObjectSupport;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
@@ -47,14 +48,14 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
 
 /**
  * Scaffolding to experiment with the call into {@link Step}.
  *
- * Serialized as a part of the program state.
- *
  * @author Kohsuke Kawaguchi
  */
+@PersistIn(PROGRAM)
 public class DSL extends GroovyObjectSupport implements Serializable {
     private final FlowExecutionOwner handle;
     private transient CpsFlowExecution exec;
