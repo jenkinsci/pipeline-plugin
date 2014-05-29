@@ -44,6 +44,7 @@ import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
@@ -95,8 +96,10 @@ final class BodyInvoker {
      *
      * @param currentThread
      *      The thread whose context the new thread will inherit.
+     * @param callback
+     *      If non-null, this gets called back in addition to {@link #bodyCallback}
      */
-    /*package*/ void start(CpsThread currentThread, FlowHead head, FutureCallback callback) {
+    /*package*/ void start(CpsThread currentThread, FlowHead head, @Nullable FutureCallback callback) {
         FutureCallback c = bodyCallback;
 
         if (callback!=null)

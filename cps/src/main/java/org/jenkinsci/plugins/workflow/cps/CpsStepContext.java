@@ -145,6 +145,8 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
     /**
      * While {@link CpsStepContext} has not received teh response, maintains the body closure.
+     *
+     * This is the implicit closure block passed to the step invocation.
      */
     private BodyReference body;
 
@@ -225,6 +227,10 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
     @Override
     public void invokeBodyLater(final FutureCallback callback, Object... contextOverrides) {
+        invokeBodyLater(body,callback,contextOverrides);
+    }
+
+    public void invokeBodyLater(BodyReference body, final FutureCallback callback, Object... contextOverrides) {
         if (body==null)
             throw new IllegalStateException("There's no body to invoke");
 
