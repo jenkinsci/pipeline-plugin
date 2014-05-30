@@ -60,7 +60,7 @@ public class ParallelStep extends Step {
     }
 
     @PersistIn(FLOW_NODE)
-    static class ParallelLabelAction extends LabelAction {
+    public static class ParallelLabelAction extends LabelAction {
         private final String branchName;
 
         ParallelLabelAction(String branchName) {
@@ -71,6 +71,10 @@ public class ParallelStep extends Step {
         @Override
         public String getDisplayName() {
             return "Parallel branch: "+branchName;
+        }
+
+        public String getBranchName() {
+            return branchName;
         }
     }
 

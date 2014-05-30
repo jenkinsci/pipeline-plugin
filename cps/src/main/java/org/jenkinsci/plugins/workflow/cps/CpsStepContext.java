@@ -64,6 +64,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -130,10 +132,10 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
         and have its callback insert the ID of the new head at the end of the thread
      */
     /**
-     * {@link FlowNode#getId()}s that should become the parents of the {@link BlockEndNode} when
-     * we create one. Only used when this context has the body.
+     * {@link FlowNode#getId()}s keyed by {@link FlowHead#getId()} that should become
+     * the parents of the {@link BlockEndNode} when we create one. Only used when this context has the body.
      */
-    final List<String> bodyInvHeads = new ArrayList<String>();
+    final Map<Integer,String> bodyInvHeads = new TreeMap<Integer,String>();
 
     /**
      * If the invocation of the body is requested, this object remembers how to start it.
@@ -366,6 +368,9 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
         scheduleNextRun();
     }
 
+    /**
+     * When this step context has completed execution (successful or otherwise), plan the next action.
+     */
     private void scheduleNextRun() {
         if (!syncMode) {
             try {
@@ -373,7 +378,8 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
                 final CpsFlowExecution flow = getFlowExecution();
 
                 final List<FlowNode> parents = new ArrayList<FlowNode>();
-                for (String head : bodyInvHeads) {
+                parents.add(null);      // make room for the primary head
+                for (String head : bodyInvHeads.values()) {
                     parents.add(flow.getNode(head));
                 }
 
@@ -386,12 +392,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
                         if (thread != null) {
                             if (n instanceof StepStartNode) {
                                 FlowNode tip = thread.head.get();
-                                if (parents.isEmpty()) {
-                                    parents.add(tip);
-                                } else
-                                if (tip!=n) {
-                                    parents.add(tip);
-                                }
+                                parents.set(0,tip);
 
                                 thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
                             }

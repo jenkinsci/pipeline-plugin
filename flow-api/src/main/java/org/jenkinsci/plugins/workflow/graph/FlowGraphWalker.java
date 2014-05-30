@@ -4,6 +4,8 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 import java.util.Stack;
 
@@ -32,8 +34,10 @@ public class FlowGraphWalker {
         q.add(head);
     }
 
-    public void addHeads(Collection<FlowNode> heads) {
-        q.addAll(heads);
+    public void addHeads(List<FlowNode> heads) {
+        ListIterator<FlowNode> itr = heads.listIterator(heads.size());
+        while (itr.hasPrevious())
+            q.add(itr.previous());
     }
 
     /**
@@ -46,7 +50,7 @@ public class FlowGraphWalker {
             if (visited.contains(n))
                 continue;
 
-            q.addAll(n.getParents());
+            addHeads(n.getParents());
             return n;
         }
         return null;

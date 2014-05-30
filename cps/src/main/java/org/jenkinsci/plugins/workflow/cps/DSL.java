@@ -48,7 +48,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
-import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
  * Scaffolding to experiment with the call into {@link Step}.
@@ -237,15 +237,23 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
 
         private void invokeBody(CpsThread cur) {
-            int idx=context.bodyInvokers.size();
-            for (BodyInvoker b : context.bodyInvokers) {
-                if (--idx==0) {
-                    b.start(cur);
-                } else {
-                    FlowHead h = cur.head.fork();
-                    b.start(cur, h, new HeadCollector(context,h));
-                }
+            // prepare enough heads for all the bodies
+            // the first one can reuse the current thread, but other ones need to create new heads
+            // we want to do this first before starting body so that the order of heads preserve
+            // natural ordering.
+            FlowHead[] heads = new FlowHead[context.bodyInvokers.size()];
+            for (int i = 0; i < heads.length; i++) {
+                heads[i] = i==0 ? cur.head : cur.head.fork();
             }
+
+            int idx=0;
+            for (BodyInvoker b : context.bodyInvokers) {
+                // don't collect the first head, which is what we borrowed from our parent.
+                FlowHead h = heads[idx];
+                b.start(cur, h, idx>0 ?  new HeadCollector(context, h) : null);
+                idx++;
+            }
+
             context.bodyInvokers.clear();
         }
 
@@ -264,7 +272,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
 
             private void onEnd() {
                 head.getExecution().removeHead(head);
-                context.bodyInvHeads.add(head.get().getId());
+                context.bodyInvHeads.put(head.getId(),head.get().getId());
             }
 
             @Override

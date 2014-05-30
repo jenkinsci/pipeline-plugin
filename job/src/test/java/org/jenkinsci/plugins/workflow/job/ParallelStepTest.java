@@ -5,6 +5,7 @@ import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.ParallelStep;
+import org.jenkinsci.plugins.workflow.cps.ParallelStep.ParallelLabelAction;
 import org.jenkinsci.plugins.workflow.cps.ParallelStepException;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -15,6 +16,10 @@ import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import static java.util.Arrays.*;
 import static java.util.concurrent.TimeUnit.*;
 
@@ -24,6 +29,9 @@ import static java.util.concurrent.TimeUnit.*;
  * @author Kohsuke Kawaguchi
  */
 public class ParallelStepTest extends SingleJobTestBase {
+
+    private FlowGraphTable t;
+
     /**
      * The first baby step.
      */
@@ -40,8 +48,11 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "}"
                 )));
 
-                startBuilding().get(15, SECONDS);
+                startBuilding().get(); // 15, SECONDS);
                 assertBuildCompletedSuccessfully();
+
+                buildTable();
+                shouldHaveParalelStepsInTheOrder("a", "b");
             }
         });
     }
@@ -61,14 +72,14 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "with.node {",
                     "  try {",
                     "    parallel(",
-                    "      a: { throw new SimulatedFailureForRetry(); },",
+                    "      b: { throw new SimulatedFailureForRetry(); },",
 
                         // make sure this branch takes longer than a
-                    "      b: { sh('sleep 3'); sh('touch b.done'); }",
+                    "      a: { sh('sleep 3'); sh('touch b.done'); }",
                     "    )",
                     "    assert false;",
                     "  } catch (ParallelStepException e) {",
-                    "    assert e.name=='a'",
+                    "    assert e.name=='b'",
                     "    assert e.cause instanceof SimulatedFailureForRetry",
                     "  }",
                     "}"
@@ -77,6 +88,9 @@ public class ParallelStepTest extends SingleJobTestBase {
                 startBuilding().get(15, SECONDS);
                 assertBuildCompletedSuccessfully();
                 assert jenkins().getWorkspaceFor(p).child("b.done").exists();
+
+                buildTable();
+                shouldHaveParalelStepsInTheOrder("b","a");
             }
         });
     }
@@ -116,6 +130,9 @@ public class ParallelStepTest extends SingleJobTestBase {
                 assert watchDescriptor().getActiveWatches().size()==3;
                 assert e.getCurrentHeads().size()==3;
                 assert b.isBuilding();
+
+                buildTable();
+                shouldHaveParalelStepsInTheOrder("a","b","c");
             }
         });
         story.addStep(new Statement() {
@@ -153,15 +170,15 @@ public class ParallelStepTest extends SingleJobTestBase {
                 }
 
                 // check the shape of the graph
-                FlowGraphTable t = new FlowGraphTable(e);
-                t.build();
-                shouldHaveWatchSteps(t, ShellStep.DescriptorImpl.class, 3);
-                shouldHaveWatchSteps(t, WatchYourStep.DescriptorImpl.class, 3);
+                buildTable();
+                shouldHaveWatchSteps(ShellStep.DescriptorImpl.class, 3);
+                shouldHaveWatchSteps(WatchYourStep.DescriptorImpl.class, 3);
+                shouldHaveParalelStepsInTheOrder("a","b","c");
             }
         });
     }
 
-    private void shouldHaveWatchSteps(FlowGraphTable t, Class<? extends StepDescriptor> d, int n) {
+    private void shouldHaveWatchSteps(Class<? extends StepDescriptor> d, int n) {
         int count=0;
         for (Row row : t.getRows()) {
             if (row.getNode() instanceof StepAtomNode) {
@@ -173,6 +190,25 @@ public class ParallelStepTest extends SingleJobTestBase {
         assertEquals(n,count);
     }
 
+    /**
+     * Builds {@link FlowGraphTable}. Convenient for inspecting a shape of the flow nodes.
+     */
+    private FlowGraphTable buildTable() {
+        t = new FlowGraphTable(e);
+        t.build();
+        return t;
+    }
+    private void shouldHaveParalelStepsInTheOrder(String... expected) {
+        List<String> actual = new ArrayList<String>();
+
+        for (Row row : t.getRows()) {
+            ParallelLabelAction a = row.getNode().getAction(ParallelLabelAction.class);
+            if (a!=null)
+                actual.add(a.getBranchName());
+        }
+
+        assertEquals(Arrays.asList(expected),actual);
+    }
 
     private Jenkins jenkins() {
         return story.j.jenkins;
