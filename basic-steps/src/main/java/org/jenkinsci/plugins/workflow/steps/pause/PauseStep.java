@@ -25,6 +25,7 @@ public class PauseStep extends Step {
 
     @Override
     public boolean start(StepContext context) throws Exception {
+        return true;
     }
 
     @Override

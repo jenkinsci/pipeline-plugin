@@ -14,8 +14,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.inject.Inject;
-import java.beans.Introspector;
-import java.lang.reflect.AnnotatedElement;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -34,8 +33,89 @@ import java.util.Set;
 public abstract class AbstractStepImpl extends Step {
     @Override
     public boolean start(StepContext context) throws Exception {
-        inject(context);
+        prepareInjector(context).injectMembers(this);
         return doStart(context);
+    }
+
+    /**
+     * Creates an {@link Injector} that performs injection to {@link Inject} and {@link StepContextParameter}.
+     */
+    protected Injector prepareInjector(final StepContext context) {
+        return Jenkins.getInstance().getInjector().createChildInjector(new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bindListener(Matchers.any(),new TypeListener() {
+                            @Override
+                            public <I> void hear(TypeLiteral<I> type, TypeEncounter<I> encounter) {
+                                for (Field f : type.getRawType().getDeclaredFields()) {
+                                    if (f.isAnnotationPresent(StepContextParameter.class)) {
+                                        encounter.register(new FieldInjector<I>(f));
+                                    }
+                                }
+                                for (Method m : type.getRawType().getDeclaredMethods()) {
+                                    if (m.isAnnotationPresent(StepContextParameter.class)) {
+                                        encounter.register(new MethodInjector<I>(m));
+                                    }
+                                }
+                            }
+
+                            abstract class ParameterInjector<T> implements MembersInjector<T> {
+                                Object value(Class type) throws IOException, InterruptedException {
+                                    return context.get(type);
+                                }
+                            }
+
+                            class FieldInjector<T> extends ParameterInjector<T> {
+                                final Field f;
+                                FieldInjector(Field f) {
+                                    this.f = f;
+                                    f.setAccessible(true);
+                                }
+
+                                @Override
+                                public void injectMembers(T instance) {
+                                    try {
+                                        f.set(instance,context.get(f.getType()));
+                                    } catch (IllegalAccessException e) {
+                                        throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
+                                    } catch (InterruptedException e) {
+                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                    } catch (IOException e) {
+                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                    }
+                                }
+                            }
+
+                            class MethodInjector<T> extends ParameterInjector<T> {
+                                final Method m;
+                                MethodInjector(Method m) {
+                                    this.m = m;
+                                    m.setAccessible(true);
+                                }
+
+                                @Override
+                                public void injectMembers(T instance) {
+                                    try {
+                                        Class<?>[] types = m.getParameterTypes();
+                                        Object[] args = new Object[types.length];
+                                        for (int i = 0; i < args.length; i++) {
+                                            args[i] = context.get(types[i]);
+                                        }
+                                        m.invoke(instance, args);
+                                    } catch (IllegalAccessException e) {
+                                        throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
+                                    } catch (InvocationTargetException e) {
+                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                    } catch (InterruptedException e) {
+                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                    } catch (IOException e) {
+                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
     }
 
     /**
@@ -70,13 +150,12 @@ public abstract class AbstractStepImpl extends Step {
         }
 
         /**
-         * Instantiate a new object via
+         * Instantiate a new object via DataBoundConstructor and DataBoundSetter.
          */
         @Override
         public Step newInstance(final Map<String, Object> arguments) {
             Step step = instantiate(arguments);
-            Injector i = prepareInjector(arguments);
-            i.injectMembers(step);
+            injectSetters(step, arguments);
             return step;
         }
 
@@ -88,10 +167,7 @@ public abstract class AbstractStepImpl extends Step {
 
             String[] names = d.loadConstructorParamNames();
             Constructor c = findConstructor(names.length);
-            Object[] args = new Object[names.length];
-            for (int i = 0; i < args.length; i++) {
-                args[i] = arguments.get(names[i]);
-            }
+            Object[] args = buildArguments(arguments, names);
 
             try {
                 return (Step) c.newInstance(args);
@@ -105,79 +181,43 @@ public abstract class AbstractStepImpl extends Step {
         }
 
         /**
-         * Performs injection via Guice to {@link Inject}, {@link StepParameter}, {@link StepContextParameter}.
+         * Injects via {@link DataBoundSetter}
          */
-        protected Injector prepareInjector(final Map<String, Object> arguments) {
-            return Jenkins.getInstance().getInjector().createChildInjector(new AbstractModule() {
-                        @Override
-                        protected void configure() {
-                            bindListener(Matchers.any(),new TypeListener() {
-                                @Override
-                                public <I> void hear(TypeLiteral<I> type, TypeEncounter<I> encounter) {
-                                    for (Field f : type.getRawType().getDeclaredFields()) {
-                                        if (f.isAnnotationPresent(DataBoundSetter.class)) {
-                                            encounter.register(new FieldInjector<I>(f));
-                                        }
-                                    }
-                                    for (Method m : type.getRawType().getDeclaredMethods()) {
-                                        if (m.isAnnotationPresent(DataBoundSetter.class)) {
-                                            encounter.register(new MethodInjector<I>(m));
-                                        }
-                                    }
-                                }
-
-                                abstract class ParameterInjector<T> implements MembersInjector<T> {
-                                    final String name;
-                                    ParameterInjector(String name) {
-                                        this.name = name;
-                                    }
-
-                                    Object value() {
-                                        return arguments.get(name);
-                                    }
-                                }
-
-                                class FieldInjector<T> extends ParameterInjector<T> {
-                                    final Field f;
-                                    FieldInjector(Field f) {
-                                        super(f.getName());
-                                        this.f = f;
-                                        f.setAccessible(true);
-                                    }
-
-                                    @Override
-                                    public void injectMembers(T instance) {
-                                        try {
-                                            f.set(instance,value());
-                                        } catch (IllegalAccessException e) {
-                                            throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
-                                        }
-                                    }
-                                }
-
-                                class MethodInjector<T> extends ParameterInjector<T> {
-                                    final Method m;
-                                    MethodInjector(Method m) {
-                                        super(m);
-                                        Introspector.get
-                                        this.m = m;
-                                        m.setAccessible(true);
-                                    }
-
-                                    @Override
-                                    public void injectMembers(T instance) {
-                                        try {
-                                            m.invoke(instance, value());
-                                        } catch (IllegalAccessException e) {
-                                            throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
-                                        } catch (InvocationTargetException e) {
-                                            throw new ProvisionException("Failed to set the parameter",e);
-                                        }
-                                    }
-                                }
-                            });
+        private void injectSetters(Step step, Map<String, Object> arguments) {
+            for (Class c = step.getClass(); c!=null; c=c.getSuperclass()) {
+                for (Field f : c.getDeclaredFields()) {
+                    if (f.isAnnotationPresent(DataBoundSetter.class)) {
+                        f.setAccessible(true);
+                        try {
+                            f.set(step,arguments.get(f.getName()));
+                        } catch (IllegalAccessException e) {
+                            throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
                         }
-                    });
+                    }
+                }
+                for (Method m : c.getDeclaredMethods()) {
+                    if (m.isAnnotationPresent(DataBoundSetter.class)) {
+                        String[] names = ClassDescriptor.loadParameterNames(m);
+
+                        m.setAccessible(true);
+                        try {
+                            m.invoke(step, buildArguments(arguments, names));
+                        } catch (IllegalAccessException e) {
+                            throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
+                        } catch (InvocationTargetException e) {
+                            throw (Error)new InstantiationError(e.getMessage()).initCause(e);
+                        }
+                    }
+                }
+            }
+        }
+
+        private Object[] buildArguments(Map<String, Object> arguments, String[] names) {
+            Object[] args = new Object[names.length];
+            for (int i = 0; i < args.length; i++) {
+                args[i] = arguments.get(names[i]);
+            }
+            return args;
         }
 
         /**
