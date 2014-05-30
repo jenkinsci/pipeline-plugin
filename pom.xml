@@ -49,6 +49,7 @@
         <module>flow-api</module>
         <module>flow-support</module>
         <module>durable-task-step</module>
+        <module>basic-steps</module>
         <module>cps</module>
         <module>stm</module>
         <module>job</module>
