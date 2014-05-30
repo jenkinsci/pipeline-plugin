@@ -24,9 +24,6 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import hudson.Extension;
 import hudson.model.TaskListener;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -74,7 +71,6 @@ public class EchoStep extends Step {
         public Set<Class<?>> getRequiredContext() {
             return Collections.<Class<?>>singleton(TaskListener.class);
         }
-
 
         @Override
         public String getDisplayName() {

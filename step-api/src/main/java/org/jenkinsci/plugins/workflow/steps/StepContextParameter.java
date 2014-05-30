@@ -13,5 +13,4 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD,ElementType.FIELD})
 @Documented
 public @interface StepContextParameter {
-    String value();
 }
