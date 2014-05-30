@@ -145,6 +145,8 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
     /**
      * While {@link CpsStepContext} has not received teh response, maintains the body closure.
+     *
+     * This is the implicit closure block passed to the step invocation.
      */
     private BodyReference body;
 
@@ -225,13 +227,17 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
     @Override
     public void invokeBodyLater(final FutureCallback callback, Object... contextOverrides) {
+        invokeBodyLater(body,callback,contextOverrides);
+    }
+
+    public void invokeBodyLater(BodyReference body, final FutureCallback callback, Object... contextOverrides) {
         if (body==null)
             throw new IllegalStateException("There's no body to invoke");
 
         final BodyInvoker b = new BodyInvoker(this,body,callback,contextOverrides);
 
         if (syncMode) {
-            // we process this in CpsThread#runNextChunk
+            // we process this in ThreadTaskImpl
             bodyInvokers.add(b);
         } else {
             try {
@@ -285,8 +291,11 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
             // TODO: this logic should be consistent across StepContext impls, so it should be promoted to somewhere
             if (key==Node.class) {
                 Computer c = get(Computer.class);
-                if (c==null)    return null;
-                return key.cast(c.getNode());
+                Node n = null;
+                if (c!=null)    n = c.getNode();
+                if (n==null)
+                    throw new IllegalStateException("There's no current node. Perhaps you forgot to call with.node?");
+                return key.cast(n);
             }
             if (key==Run.class)
                 return key.cast(getExecution().getOwner().getExecutable());
@@ -294,8 +303,11 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
                 return key.cast(get(Run.class).getParent());
             if (key==FilePath.class) {
                 Node n = get(Node.class);
-                if (n==null)    return null;
-                return key.cast(n.getWorkspaceFor((TopLevelItem) get(Job.class)));
+                FilePath fp = null;
+                if (n!=null)    fp = n.getWorkspaceFor((TopLevelItem) get(Job.class));
+                if (fp==null)
+                    throw new IllegalStateException("There's no current directory. Perhaps you forgot to call with.ws?");
+                return key.cast(fp);
             }
             if (key==Launcher.class) {
                 Node n = get(Node.class);

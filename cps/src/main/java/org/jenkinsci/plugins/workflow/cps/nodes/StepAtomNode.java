@@ -25,10 +25,12 @@
 package org.jenkinsci.plugins.workflow.cps.nodes;
 
 import hudson.model.Action;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 
 import java.util.Collections;
 
@@ -38,11 +40,13 @@ import java.util.Collections;
  * @author Kohsuke Kawaguchi
  */
 public class StepAtomNode extends AtomNode {
-    private final String stepName;
+    private final String descriptorId;
 
-    public StepAtomNode(CpsFlowExecution exec, String stepName, FlowNode parent) {
+    private transient StepDescriptor descriptor;
+
+    public StepAtomNode(CpsFlowExecution exec, StepDescriptor d, FlowNode parent) {
         super(exec, exec.iotaStr(), parent);
-        this.stepName = stepName;
+        this.descriptorId = d.getId();
 
         // we use SimpleXStreamFlowNodeStorage, which uses XStream, so
         // constructor call is always for brand-new FlowNode that has not existed anywhere.
@@ -50,8 +54,15 @@ public class StepAtomNode extends AtomNode {
         setActions(Collections.<Action>emptyList());
     }
 
+    public StepDescriptor getDescriptor() {
+        if (descriptor==null)
+            descriptor = (StepDescriptor) Jenkins.getInstance().getDescriptor(descriptorId);
+        return descriptor;
+    }
+
     @Override
     protected String getTypeDisplayName() {
-        return stepName;
+        StepDescriptor d = getDescriptor();
+        return d!=null ? d.getDisplayName() : descriptorId;
     }
 }

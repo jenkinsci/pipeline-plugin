@@ -68,6 +68,13 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         return this;
     }
 
+    /**
+     * Executes the {@link Step} implementation specified by the name argument.
+     *
+     * @return
+     *      If the step completes execution synchronously, the result will be
+     *      returned. Otherwise this method {@linkplain Continuable#suspend(Object) suspends}.
+     */
     @Override
     public Object invokeMethod(String name, Object args) {
         try {
@@ -87,8 +94,12 @@ public class DSL extends GroovyObjectSupport implements Serializable {
 
         FlowNode an;
 
-        if (ps.body==null) {
-            an = new StepAtomNode(exec, d.getDisplayName(), thread.head.get());
+        // TODO: generalize the notion of Step taking over the FlowNode creation.
+        // see https://trello.com/c/v6Pbwqxj/13-allowing-steps-to-build-flownodes
+        boolean hack = d instanceof ParallelStep.DescriptorImpl;
+
+        if (ps.body == null && !hack) {
+            an = new StepAtomNode(exec, d, thread.head.get());
             // TODO: use CPS call stack to obtain the current call site source location. See JENKINS-23013
             thread.head.setNewHead(an);
         } else {
@@ -208,8 +219,8 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
 
         @Override
-        protected ThreadTaskResult eval(CpsThread t) {
-            invokeBody(t);
+        protected ThreadTaskResult eval(CpsThread cur) {
+            invokeBody(cur);
 
             if (!context.switchToAsyncMode()) {
                 // we have a result now, so just keep executing
@@ -225,14 +236,14 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             }
         }
 
-        private void invokeBody(CpsThread t) {
-            int count=0;
+        private void invokeBody(CpsThread cur) {
+            int idx=context.bodyInvokers.size();
             for (BodyInvoker b : context.bodyInvokers) {
-                if (count++==0) {
-                    b.start(t);
+                if (--idx==0) {
+                    b.start(cur);
                 } else {
-                    FlowHead head = new FlowHead(t.getExecution());
-                    b.start(t, head, new HeadCollector(context,head));
+                    FlowHead h = cur.head.fork();
+                    b.start(cur, h, new HeadCollector(context,h));
                 }
             }
             context.bodyInvokers.clear();
@@ -252,6 +263,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             }
 
             private void onEnd() {
+                head.getExecution().removeHead(head);
                 context.bodyInvHeads.add(head.get().getId());
             }
 

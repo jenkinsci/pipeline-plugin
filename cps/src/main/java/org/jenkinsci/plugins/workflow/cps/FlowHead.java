@@ -72,6 +72,16 @@ final class FlowHead implements Serializable {
         this(execution, execution.iota());
     }
 
+    /**
+     * Creates a new {@link FlowHead} that points to the same node.
+     */
+    public FlowHead fork() {
+        FlowHead h = new FlowHead(execution);
+        h.head = this.head;
+        execution.addHead(h);
+        return h;
+    }
+
     public int getId() {
         return id;
     }

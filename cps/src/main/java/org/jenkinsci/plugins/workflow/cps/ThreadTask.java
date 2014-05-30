@@ -54,8 +54,8 @@ import com.cloudbees.groovy.cps.Outcome;
  */
 public abstract class ThreadTask {
     /**
-     * @param t
-     *      the thread that requested this task.
+     * @param cur
+     *      the current thread that requested this task.
      */
-    protected abstract ThreadTaskResult eval(CpsThread t);
+    protected abstract ThreadTaskResult eval(CpsThread cur);
 }

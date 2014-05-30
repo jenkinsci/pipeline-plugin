@@ -81,6 +81,9 @@ public abstract class FlowExecution implements FlowActionStorage {
     // TODO: values are snapshot in time
     public abstract List<FlowNode> getCurrentHeads();
 
+    /**
+     * Short for {@code getCurrentHeads().contains(n)} but more efficient.
+     */
     public abstract boolean isCurrentHead(FlowNode n);
 
     /**
