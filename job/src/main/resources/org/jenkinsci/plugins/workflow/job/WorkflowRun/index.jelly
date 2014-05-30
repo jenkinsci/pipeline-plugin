@@ -48,6 +48,7 @@
                 ${%Build} ${it.displayName}
                 (<i:formatDate value="${it.timestamp.time}" type="both" dateStyle="medium" timeStyle="medium"/>)
             </t:buildCaption>
+            <!-- TODO look at AbstractBuild/index.jelly for how to display changelog -->
             <div>
                 <t:editableDescription permission="${it.UPDATE}"/>
             </div>

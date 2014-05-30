@@ -384,6 +384,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     }
 
     @Override public PollingResult poll(TaskListener listener) {
+        // TODO call SCMPollListener
         WorkflowRun b = getLastCompletedBuild();
         if (b == null) {
             listener.getLogger().println("no previous build to compare to");
