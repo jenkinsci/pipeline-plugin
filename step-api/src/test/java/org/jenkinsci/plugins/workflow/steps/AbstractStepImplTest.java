@@ -80,7 +80,7 @@ public class AbstractStepImplTest extends Assert {
         }
 
         @Extension
-        public static class DescriptorImpl extends AbstractStepImpl.DescriptorImpl {
+        public static class DescriptorImpl extends AbstractStepDescriptorImpl {
             @Override
             public String getFunctionName() {
                 return "fff";

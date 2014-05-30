@@ -28,24 +28,25 @@ import hudson.Extension;
 import hudson.model.TaskListener;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-
 /**
+ * A simple echo back statement.
+ *
  * @author Kohsuke Kawaguchi
  */
-public class EchoStep extends Step {
+public class EchoStep extends AbstractStepImpl {
     private final String message;
 
+    @StepContextParameter
+    private transient TaskListener listener;
+
     @DataBoundConstructor
-    public EchoStep(String message) {
-        this.message = message;
+    public EchoStep(String value) {
+        this.message = value;
     }
 
     @Override
-    public boolean start(StepContext context) throws Exception {
-        context.get(TaskListener.class).getLogger().println(message);
+    public boolean doStart(StepContext context) throws Exception {
+        listener.getLogger().println(message);
         context.onSuccess(null);
         return true;
     }
@@ -56,20 +57,10 @@ public class EchoStep extends Step {
     }
 
     @Extension
-    public static class DescriptorImpl extends StepDescriptor {
+    public static class DescriptorImpl extends AbstractStepDescriptorImpl {
         @Override
         public String getFunctionName() {
             return "echo";
-        }
-
-        @Override
-        public Step newInstance(Map<String, Object> arguments) {
-            return new EchoStep((String) arguments.get("value"));
-        }
-
-        @Override
-        public Set<Class<?>> getRequiredContext() {
-            return Collections.<Class<?>>singleton(TaskListener.class);
         }
 
         @Override
