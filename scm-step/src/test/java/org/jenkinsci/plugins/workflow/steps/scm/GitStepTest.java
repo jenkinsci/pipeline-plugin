@@ -39,7 +39,6 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -88,7 +87,6 @@ public class GitStepTest {
         r.assertLogContains("PRESENT: nextfile", b);
     }
 
-    @Ignore("WiP")
     @Test public void changelogAndPolling() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         p.addTrigger(new SCMTrigger("")); // no schedule, use notifyCommit only

@@ -358,14 +358,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     }
 
     private void onCheckout(SCM scm, FilePath workspace, @CheckForNull File changelogFile, @CheckForNull SCMRevisionState pollingBaseline) throws Exception {
-        if (changelogFile != null) {
+        if (changelogFile != null && changelogFile.isFile()) {
             ChangeLogSet<?> cls = scm.createChangeLogParser().parse(this, changelogFile);
             getChangeLogs().add(cls);
-            Jenkins j = Jenkins.getInstance();
-            if (j != null) {
-                for (SCMListener l : j.getSCMListeners()) {
-                    l.onChangeLogParsed(this, scm, listener, cls);
-                }
+            for (SCMListener l : SCMListener.all()) {
+                l.onChangeLogParsed(this, scm, listener, cls);
             }
         }
         String node = null;
