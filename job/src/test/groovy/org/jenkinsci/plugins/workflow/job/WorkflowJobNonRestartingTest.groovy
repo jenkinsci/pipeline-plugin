@@ -111,7 +111,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     }
 
     /**
-     * Test the {@link org.jenkinsci.plugins.workflow.test.steps.RetryStep}.
+     * Test the {@link RetryStep}.
      */
     @Test
     public void testRetry() {

@@ -22,76 +22,35 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.test.steps;
+package org.jenkinsci.plugins.workflow.steps;
 
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import com.google.common.util.concurrent.FutureCallback;
 import hudson.Extension;
 import hudson.model.TaskListener;
+import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Executes the body up to N times.
- *
  * @author Kohsuke Kawaguchi
  */
-public class RetryStep extends Step implements Serializable {
-    private final int count;
+public class EchoStep extends Step {
+    private final String message;
 
-    public RetryStep(int count) {
-        this.count = count;
+    @DataBoundConstructor
+    public EchoStep(String message) {
+        this.message = message;
     }
 
     @Override
-    public boolean start(StepContext context) {
-        context.invokeBodyLater(new Callback(context));
-        return false;   // execution is asynchronous
-    }
-
-    private class Callback implements FutureCallback, Serializable {
-        private final StepContext context;
-        private int left;
-
-        public Callback(StepContext context) {
-            this.context = context;
-            left = count;
-        }
-
-        @Override
-        public void onSuccess(Object result) {
-            context.onSuccess(result);
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-            try {
-                // TODO: here we want to access TaskListener that belongs to the body invocation end node.
-                // how should we do that?
-                /* TODO not currently legal:
-                TaskListener l = context.get(TaskListener.class);
-                t.printStackTrace(l.error("Execution failed"));
-                */
-                left--;
-                if (left>0) {
-                    /*
-                    l.getLogger().println("Retrying");
-                    */
-                    context.invokeBodyLater(this);
-                } else {
-                    context.onFailure(t);
-                }
-            } catch (Throwable p) {
-                context.onFailure(p);
-            }
-        }
-
-        private static final long serialVersionUID = 1L;
+    public boolean start(StepContext context) throws Exception {
+        context.get(TaskListener.class).getLogger().println(message);
+        context.onSuccess(null);
+        return true;
     }
 
     @Override
@@ -103,12 +62,12 @@ public class RetryStep extends Step implements Serializable {
     public static class DescriptorImpl extends StepDescriptor {
         @Override
         public String getFunctionName() {
-            return "retry";
+            return "echo";
         }
 
         @Override
         public Step newInstance(Map<String, Object> arguments) {
-            return new RetryStep((Integer) arguments.get("value"));
+            return new EchoStep((String) arguments.get("value"));
         }
 
         @Override
@@ -116,16 +75,10 @@ public class RetryStep extends Step implements Serializable {
             return Collections.<Class<?>>singleton(TaskListener.class);
         }
 
-        @Override
-        public boolean takesImplicitBlockArgument() {
-            return true;
-        }
 
         @Override
         public String getDisplayName() {
-            return "Retry the body up to N times";
+            return "Print Message";
         }
     }
-
-    private static final long serialVersionUID = 1L;
 }
