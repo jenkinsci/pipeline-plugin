@@ -28,11 +28,14 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.model.listeners.SCMListener;
 import hudson.scm.SCM;
+import hudson.scm.SCMRevisionState;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -53,11 +56,28 @@ abstract class SCMStep extends Step {
     protected abstract @Nonnull SCM createSCM();
 
     @Override public boolean start(StepContext context) throws Exception {
-        Run run = context.get(Run.class);
-        File changeLogFile = changelog ? new File(run.getRootDir(), "changelog.xml") : null; // TODO allow >1 per run
-        createSCM().checkout(run, context.get(Launcher.class), context.get(FilePath.class), context.get(TaskListener.class), changeLogFile);
-        // TODO record changelog in WorkflowRun, like AbstractBuild.getChangeSet, calling onChangeLogParsed along the way
-        // TODO tell the WorkflowRun we ran this SCM
+        Run<?,?> run = context.get(Run.class);
+        File changelogFile = changelog ? new File(run.getRootDir(), "changelog.xml") : null; // TODO allow >1 per run
+        SCM scm = createSCM();
+        FilePath workspace = context.get(FilePath.class);
+        TaskListener listener = context.get(TaskListener.class);
+        Launcher launcher = context.get(Launcher.class);
+        scm.checkout(run, launcher, workspace, listener, changelogFile);
+        Jenkins j = Jenkins.getInstance();
+        if (j != null) {
+            for (SCMListener l : j.getSCMListeners()) {
+                SCMRevisionState pollingBaseline = null;
+                if (poll) {
+                    if (!scm.supportsPolling()) {
+                        throw new IllegalStateException(scm + " does not support polling");
+                    }
+                    pollingBaseline = scm.calcRevisionsFromBuild(run, workspace, launcher, listener);
+                }
+                l.onCheckout(run, scm, workspace, listener, changelogFile, pollingBaseline);
+            }
+        }
+        scm.postCheckout(run, launcher, workspace, listener);
+        // TODO should we call buildEnvVars and return the result?
         context.onSuccess(null);
         return true;
     }

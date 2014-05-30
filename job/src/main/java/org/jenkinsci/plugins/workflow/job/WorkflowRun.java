@@ -24,19 +24,15 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
-import org.jenkinsci.plugins.workflow.actions.LogAction;
-import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import org.jenkinsci.plugins.workflow.flow.GraphListener;
-import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import hudson.AbortException;
 import hudson.EnvVars;
+import hudson.Extension;
+import hudson.FilePath;
 import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
+import hudson.model.Computer;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
@@ -45,6 +41,10 @@ import hudson.model.Run;
 import hudson.model.StreamBuildListener;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
+import hudson.model.listeners.SCMListener;
+import hudson.scm.ChangeLogSet;
+import hudson.scm.SCM;
+import hudson.scm.SCMRevisionState;
 import hudson.util.NullStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -52,9 +52,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -66,6 +69,13 @@ import javax.annotation.concurrent.GuardedBy;
 import jenkins.model.Jenkins;
 import jenkins.model.lazy.BuildReference;
 import jenkins.model.lazy.LazyBuildMixIn;
+import org.jenkinsci.plugins.workflow.actions.LogAction;
+import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.jenkinsci.plugins.workflow.flow.GraphListener;
+import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
@@ -90,6 +100,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     private transient Object completionLock;
     /** map from node IDs to log positions from which we should copy text */
     private Map<String,Long> logsToCopy;
+
+    List<SCMCheckout> checkouts;
+    // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally
+    private transient List<ChangeLogSet<?>> changeLogs;
 
     public WorkflowRun(WorkflowJob job) throws IOException {
         super(job);
@@ -148,6 +162,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             execution.addListener(new GraphL());
             completionLock = new Object();
             logsToCopy = new LinkedHashMap<String,Long>();
+            checkouts = new LinkedList<SCMCheckout>();
             execution.start();
             executionPromise.set(execution);
             waitForCompletion();
@@ -326,6 +341,64 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return env;
     }
 
+    public synchronized List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeLogs() {
+        if (changeLogs == null) {
+            changeLogs = new ArrayList<ChangeLogSet<?>>();
+            for (SCMCheckout co : checkouts) {
+                if (co.changelogFile != null) {
+                    try {
+                        co.scm.createChangeLogParser().parse(this, co.changelogFile);
+                    } catch (Exception x) {
+                        LOGGER.log(Level.WARNING, "could not parse " + co.changelogFile, x);
+                    }
+                }
+            }
+        }
+        return changeLogs;
+    }
+
+    private void onCheckout(SCM scm, FilePath workspace, @CheckForNull File changelogFile, @CheckForNull SCMRevisionState pollingBaseline) throws Exception {
+        if (changelogFile != null) {
+            ChangeLogSet<?> cls = scm.createChangeLogParser().parse(this, changelogFile);
+            getChangeLogs().add(cls);
+            Jenkins j = Jenkins.getInstance();
+            if (j != null) {
+                for (SCMListener l : j.getSCMListeners()) {
+                    l.onChangeLogParsed(this, scm, listener, cls);
+                }
+            }
+        }
+        String node = null;
+        Jenkins j = Jenkins.getInstance();
+        if (j != null) {
+            for (Computer c : j.getComputers()) {
+                if (workspace.getChannel() == c.getChannel()) {
+                    node = c.getName();
+                    break;
+                }
+            }
+        }
+        if (node == null) {
+            throw new IllegalStateException();
+        }
+        checkouts.add(new SCMCheckout(scm, node, workspace.getRemote(), changelogFile, pollingBaseline));
+    }
+
+    static final class SCMCheckout {
+        final SCM scm;
+        final String node;
+        final String workspace;
+        final @CheckForNull File changelogFile;
+        final @CheckForNull SCMRevisionState pollingBaseline;
+        SCMCheckout(SCM scm, String node, String workspace, File changelogFile, SCMRevisionState pollingBaseline) {
+            this.scm = scm;
+            this.node = node;
+            this.workspace = workspace;
+            this.changelogFile = changelogFile;
+            this.pollingBaseline = pollingBaseline;
+        }
+    }
+
     private static final class Owner extends FlowExecutionOwner {
         private final String job;
         private final String id;
@@ -408,4 +481,13 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         new XmlFile(null).getXStream().aliasType("flow-owner", Owner.class); // hack! but how else to set it for arbitrary Descriptor’s?
         Run.XSTREAM2.aliasType("flow-owner", Owner.class);
     }
+
+    @Extension public static final class SCMListenerImpl extends SCMListener {
+        @Override public void onCheckout(Run<?,?> build, SCM scm, FilePath workspace, TaskListener listener, File changelogFile, SCMRevisionState pollingBaseline) throws Exception {
+            if (build instanceof WorkflowRun) {
+                ((WorkflowRun) build).onCheckout(scm, workspace, changelogFile, pollingBaseline);
+            }
+        }
+    }
+
 }

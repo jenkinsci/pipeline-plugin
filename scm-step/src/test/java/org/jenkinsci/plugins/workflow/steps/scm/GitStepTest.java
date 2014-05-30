@@ -25,11 +25,13 @@
 package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.model.Label;
+import hudson.scm.ChangeLogSet;
 import hudson.triggers.SCMTrigger;
 import java.io.File;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
@@ -107,9 +109,17 @@ public class GitStepTest {
         b = p.getLastBuild();
         assertEquals(2, b.number);
         r.assertLogContains("Fetching changes from the remote Git repository", b);
-        // TODO check its changelog
+        List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeLogs = b.getChangeLogs();
+        assertEquals(1, changeLogs.size());
+        ChangeLogSet<? extends ChangeLogSet.Entry> changeLog = changeLogs.get(0);
+        assertEquals(b, changeLog.getBuild());
+        assertEquals("git", changeLog.getKind());
+        Iterator<? extends ChangeLogSet.Entry> iterator = changeLog.iterator();
+        assertTrue(iterator.hasNext());
+        ChangeLogSet.Entry entry = iterator.next();
+        assertEquals("[nextfile]", entry.getAffectedPaths().toString());
+        assertFalse(iterator.hasNext());
     }
 
-    // TODO test multiple SCMs
 
 }

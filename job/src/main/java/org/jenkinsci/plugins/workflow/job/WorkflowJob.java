@@ -24,13 +24,15 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
-import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
+import hudson.AbortException;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
 import hudson.model.Cause;
+import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
@@ -63,6 +65,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.CheckForNull;
@@ -74,6 +77,7 @@ import jenkins.model.lazy.LazyBuildMixIn;
 import jenkins.triggers.SCMTriggerItem;
 import jenkins.util.TimeDuration;
 import org.acegisecurity.Authentication;
+import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -368,17 +372,62 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     }
 
     @Override public Collection<? extends SCM> getSCMs() {
-        return Collections.emptySet(); // TODO
+        WorkflowRun b = getLastCompletedBuild();
+        if (b == null) {
+            return Collections.emptySet();
+        }
+        List<SCM> scms = new LinkedList<SCM>();
+        for (WorkflowRun.SCMCheckout co : b.checkouts) {
+            scms.add(co.scm);
+        }
+        return scms;
+    }
+
+    @Override public PollingResult poll(TaskListener listener) {
+        WorkflowRun b = getLastCompletedBuild();
+        if (b == null) {
+            listener.getLogger().println("no previous build to compare to");
+            return PollingResult.NO_CHANGES;
+        }
+        for (WorkflowRun.SCMCheckout co : b.checkouts) {
+            if (co.pollingBaseline == null) {
+                listener.getLogger().println("no polling from " + co.workspace + " on " + co.node);
+                continue;
+            }
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                listener.error("Jenkins is shutting down");
+                continue;
+            }
+            Computer c = j.getComputer(co.node);
+            if (c == null) {
+                listener.error("no such computer " + co.node);
+                continue;
+            }
+            FilePath workspace = new FilePath(c.getChannel(), co.workspace);
+            try {
+                PollingResult r = co.scm.compareRemoteRevisionWith(this, workspace.createLauncher(listener), workspace, listener, co.pollingBaseline);
+                if (r.hasChanges()) {
+                    return r;
+                }
+            } catch (AbortException x) {
+                listener.error("polling failed in " + co.workspace + " on " + co.node + ": " + x.getMessage());
+            } catch (Exception x) {
+                x.printStackTrace(listener.error("polling failed in " + co.workspace + " on " + co.node));
+            }
+        }
+        return PollingResult.NO_CHANGES;
+    }
+
+    @Override protected void performDelete() throws IOException, InterruptedException {
+        super.performDelete();
+        // TODO call SCM.processWorkspaceBeforeDeletion
     }
 
     @Initializer(before=InitMilestone.EXTENSIONS_AUGMENTED)
     public static void alias() {
         Items.XSTREAM2.alias("flow-definition", WorkflowJob.class);
         WorkflowRun.alias();
-    }
-
-    @Override public PollingResult poll(TaskListener listener) {
-        return PollingResult.NO_CHANGES; // TODO
     }
 
     @Extension public static final class DescriptorImpl extends TopLevelItemDescriptor {
