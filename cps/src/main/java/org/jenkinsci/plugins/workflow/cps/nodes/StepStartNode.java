@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.workflow.cps.nodes;
 
 import hudson.model.Action;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -38,7 +39,11 @@ public class StepStartNode extends BlockStartNode implements StepNode {
 
     @Override
     protected String getTypeDisplayName() {
-        return getStepName() +" : Start";
+        return getStepName() + (isBody() ?" : Body":"") + " : Start";
+    }
+
+    public boolean isBody() {
+        return getAction(BodyInvocationAction.class)!=null;
     }
 
     public String getStepName() {

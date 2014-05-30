@@ -152,12 +152,12 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
 
         [
             "Running: Retry the body up to N times : Start",
-            "Running: Retry the body up to N times : start body : Start",
-            "Running: Retry the body up to N times : start body : End",
-            "Running: Retry the body up to N times : start body : Start",
-            "Running: Retry the body up to N times : start body : End",
-            "Running: Retry the body up to N times : start body : Start",
-            "Running: Retry the body up to N times : start body : End",
+            "Running: Retry the body up to N times : Body : Start",
+            "Running: Retry the body up to N times : Body : End",
+            "Running: Retry the body up to N times : Body : Start",
+            "Running: Retry the body up to N times : Body : End",
+            "Running: Retry the body up to N times : Body : Start",
+            "Running: Retry the body up to N times : Body : End",
             "Running: Retry the body up to N times : End",
         ].each { msg ->
             idx = log.indexOf(msg,idx+1);
