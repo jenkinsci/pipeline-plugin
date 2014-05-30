@@ -45,8 +45,8 @@ public final class GitStep extends SCMStep {
     private final String url;
     private final String branch;
 
-    @DataBoundConstructor public GitStep(String url, String branch, boolean poll) {
-        super(poll);
+    @DataBoundConstructor public GitStep(String url, String branch, boolean poll, boolean changelog) {
+        super(poll, changelog);
         this.url = url;
         this.branch = branch;
     }
@@ -69,7 +69,11 @@ public final class GitStep extends SCMStep {
         }
 
         @Override public Step newInstance(Map<String,Object> arguments) {
-            return new GitStep((String) arguments.get("url"), (String) arguments.get("branch"), Boolean.TRUE.equals(arguments.get("poll")));
+            String branch = (String) arguments.get("branch");
+            if (branch == null) {
+                branch = "master";
+            }
+            return new GitStep((String) arguments.get("url"), branch, !Boolean.FALSE.equals(arguments.get("poll")), !Boolean.FALSE.equals(arguments.get("changelog")));
         }
 
         @Override public String getDisplayName() {

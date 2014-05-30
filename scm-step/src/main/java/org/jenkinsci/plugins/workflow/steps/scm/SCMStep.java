@@ -43,18 +43,20 @@ import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 abstract class SCMStep extends Step {
 
     private final boolean poll;
+    private final boolean changelog;
 
-    protected SCMStep(boolean poll) {
+    protected SCMStep(boolean poll, boolean changelog) {
         this.poll = poll;
+        this.changelog = changelog;
     }
 
     protected abstract @Nonnull SCM createSCM();
 
     @Override public boolean start(StepContext context) throws Exception {
         Run run = context.get(Run.class);
-        File changelog = new File(run.getRootDir(), "changelog.xml"); // TODO allow >1 per run
-        createSCM().checkout(run, context.get(Launcher.class), context.get(FilePath.class), context.get(TaskListener.class), changelog);
-        // TODO record changelog in WorkflowRun
+        File changeLogFile = changelog ? new File(run.getRootDir(), "changelog.xml") : null; // TODO allow >1 per run
+        createSCM().checkout(run, context.get(Launcher.class), context.get(FilePath.class), context.get(TaskListener.class), changeLogFile);
+        // TODO record changelog in WorkflowRun, like AbstractBuild.getChangeSet, calling onChangeLogParsed along the way
         // TODO tell the WorkflowRun we ran this SCM
         context.onSuccess(null);
         return true;

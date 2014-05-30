@@ -340,6 +340,16 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return triggers.toMap();
     }
 
+    public void addTrigger(Trigger trigger) {
+        Trigger old = triggers.get(trigger.getDescriptor());
+        if (old != null) {
+            old.stop();
+            triggers.remove(old);
+        }
+        triggers.add(trigger);
+        trigger.start(this, true);
+    }
+
     @SuppressWarnings("deprecation")
     @Override public List<Action> getActions() {
         List<Action> actions = new ArrayList<Action>(super.getActions());

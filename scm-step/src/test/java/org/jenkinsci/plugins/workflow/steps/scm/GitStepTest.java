@@ -25,7 +25,9 @@
 package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.model.Label;
+import hudson.triggers.SCMTrigger;
 import java.io.File;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,6 +37,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -68,7 +71,7 @@ public class GitStepTest {
         p.setDefinition(new CpsFlowDefinition(
             "with.node('remote') {\n" +
             "    with.ws {\n" +
-            "        steps.git(url: '" + sampleRepo + "', branch: 'master')\n" +
+            "        steps.git(url: '" + sampleRepo + "', poll: false, changelog: false)\n" +
             "        sh 'for f in *; do echo PRESENT: $f; done'\n" +
             "    }\n" +
             "}"));
@@ -82,5 +85,31 @@ public class GitStepTest {
         r.assertLogContains("Fetching changes from the remote Git repository", b); // GitSCM.retrieveChanges
         r.assertLogContains("PRESENT: nextfile", b);
     }
+
+    @Ignore("WiP")
+    @Test public void changelogAndPolling() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
+        p.addTrigger(new SCMTrigger("")); // no schedule, use notifyCommit only
+        r.createOnlineSlave(Label.get("remote"));
+        p.setDefinition(new CpsFlowDefinition(
+            "with.node('remote') {\n" +
+            "    with.ws {\n" +
+            "        steps.git(url: '" + sampleRepo + "')\n" +
+            "    }\n" +
+            "}"));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        r.assertLogContains("Cloning the remote Git repository", b);
+        FileUtils.touch(new File(sampleRepo, "nextfile"));
+        git("add", "nextfile");
+        git("commit", "--message=next");
+        System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
+        r.waitUntilNoActivity();
+        b = p.getLastBuild();
+        assertEquals(2, b.number);
+        r.assertLogContains("Fetching changes from the remote Git repository", b);
+        // TODO check its changelog
+    }
+
+    // TODO test multiple SCMs
 
 }
