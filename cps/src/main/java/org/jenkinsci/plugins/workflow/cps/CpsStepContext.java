@@ -31,6 +31,7 @@ import groovy.lang.Closure;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.model.Action;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Job;
@@ -227,14 +228,18 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
     @Override
     public void invokeBodyLater(final FutureCallback callback, Object... contextOverrides) {
-        invokeBodyLater(body,callback,contextOverrides);
+        invokeBodyLater(body,callback,Collections.<Action>emptyList(),contextOverrides);
     }
 
-    public void invokeBodyLater(BodyReference body, final FutureCallback callback, Object... contextOverrides) {
+    /**
+     * @param startNodeActions
+     *      actions to be added to {@link StepStartNode} that indicates the beginning of a body invocation.
+     */
+    public void invokeBodyLater(BodyReference body, final FutureCallback callback, List<? extends Action> startNodeActions, Object... contextOverrides) {
         if (body==null)
             throw new IllegalStateException("There's no body to invoke");
 
-        final BodyInvoker b = new BodyInvoker(this,body,callback,contextOverrides);
+        final BodyInvoker b = new BodyInvoker(this,body,callback,startNodeActions,contextOverrides);
 
         if (syncMode) {
             // we process this in ThreadTaskImpl

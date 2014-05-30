@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import groovy.lang.Closure;
 import hudson.Extension;
 import hudson.model.TaskListener;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
@@ -48,11 +49,10 @@ public class ParallelStep extends Step {
         ResultHandler r = new ResultHandler(context);
 
         for (Entry<String,Closure> e : closures.entrySet()) {
-            // TODO: we want to set the name to StepStart
-            // node created by BodyInvoker.addBodyStartFlowNode
             cps.invokeBodyLater(
                     t.group.export(e.getValue()),
-                    r.callbackFor(e.getKey())
+                    r.callbackFor(e.getKey()),
+                    Collections.singletonList(new LabelAction(e.getKey()))
             );
         }
 

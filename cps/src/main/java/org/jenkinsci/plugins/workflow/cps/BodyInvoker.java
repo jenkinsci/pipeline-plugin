@@ -35,6 +35,7 @@ import com.cloudbees.groovy.cps.impl.SourceLocation;
 import com.cloudbees.groovy.cps.impl.TryBlockEnv;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
+import hudson.model.Action;
 import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
@@ -75,9 +76,12 @@ final class BodyInvoker {
 
     private final CpsStepContext owner;
 
-    BodyInvoker(CpsStepContext owner, BodyReference body, FutureCallback c, Object... contextOverrides) {
+    private final List<? extends Action> startNodeActions;
+
+    BodyInvoker(CpsStepContext owner, BodyReference body, FutureCallback c, List<? extends Action> startNodeActions, Object... contextOverrides) {
         this.body = body;
         this.owner = owner;
+        this.startNodeActions = startNodeActions;
 
         if (!(c instanceof Serializable))
             throw new IllegalStateException("Callback must be persistable");
@@ -134,6 +138,10 @@ final class BodyInvoker {
         StepStartNode start = new StepStartNode(head.getExecution(),
                 owner.getStepDescriptor(), head.get());
         start.addAction(new BodyInvocationAction());
+        for (Action a : startNodeActions) {
+            if (a!=null)
+                start.addAction(a);
+        }
         head.setNewHead(start);
         return start;
     }
