@@ -39,14 +39,14 @@ import java.util.Collections;
  *
  * @author Kohsuke Kawaguchi
  */
-public class StepAtomNode extends AtomNode {
+public class StepAtomNode extends AtomNode implements StepNode {
     private final String descriptorId;
 
     private transient StepDescriptor descriptor;
 
     public StepAtomNode(CpsFlowExecution exec, StepDescriptor d, FlowNode parent) {
         super(exec, exec.iotaStr(), parent);
-        this.descriptorId = d.getId();
+        this.descriptorId = d!=null ? d.getId() : null;
 
         // we use SimpleXStreamFlowNodeStorage, which uses XStream, so
         // constructor call is always for brand-new FlowNode that has not existed anywhere.

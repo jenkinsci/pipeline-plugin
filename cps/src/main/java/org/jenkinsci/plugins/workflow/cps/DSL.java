@@ -103,7 +103,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             // TODO: use CPS call stack to obtain the current call site source location. See JENKINS-23013
             thread.head.setNewHead(an);
         } else {
-            an = new StepStartNode(exec, d.getDisplayName(), thread.head.get());
+            an = new StepStartNode(exec, d, thread.head.get());
             thread.head.setNewHead(an);
         }
 

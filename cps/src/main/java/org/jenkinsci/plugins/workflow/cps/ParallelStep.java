@@ -49,6 +49,7 @@ public class ParallelStep extends Step {
 
         for (Entry<String,Closure> e : closures.entrySet()) {
             // TODO: we want to set the name to StepStart
+            // node created by BodyInvoker.addBodyStartFlowNode
             cps.invokeBodyLater(
                     t.group.export(e.getValue()),
                     r.callbackFor(e.getKey())

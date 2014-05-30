@@ -132,7 +132,7 @@ final class BodyInvoker {
      */
     private StepStartNode addBodyStartFlowNode(FlowHead head) {
         StepStartNode start = new StepStartNode(head.getExecution(),
-                owner.getDisplayName() + " : start body", head.get());
+                owner.getStepDescriptor(), head.get());
         start.addAction(new BodyInvocationAction());
         head.setNewHead(start);
         return start;

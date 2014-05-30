@@ -4,6 +4,7 @@ import hudson.model.Action;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,7 +16,7 @@ import java.util.List;
  *
  * @author Kohsuke Kawaguchi
  */
-public class StepEndNode extends BlockEndNode<StepStartNode> {
+public class StepEndNode extends BlockEndNode<StepStartNode> implements StepNode {
     public StepEndNode(CpsFlowExecution exec, StepStartNode stepStartNode, List<FlowNode> parents) {
         super(exec, exec.iotaStr(), stepStartNode, parents);
 
@@ -32,5 +33,10 @@ public class StepEndNode extends BlockEndNode<StepStartNode> {
     @Override
     protected String getTypeDisplayName() {
         return getStartNode().getStepName() +" : End";
+    }
+
+    @Override
+    public StepDescriptor getDescriptor() {
+        return getStartNode().getDescriptor();
     }
 }
