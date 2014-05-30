@@ -8,10 +8,14 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
 import org.kohsuke.stapler.ClassDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.StaplerRequest;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -25,8 +29,18 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Partial step implementation that uses annotations to
- * inject context variables and parameters.
+ * Partial convenient step implementation.
+ *
+ * <h2>Parameter injection</h2>
+ * <p>
+ * {@link Step} implementations are expected to follow the usual GUI-instantiable {@link Describable} pattern.
+ * {@link AbstractStepImpl} comes with {@linkplain DescriptorImpl a partial implementation of StepDescriptor}
+ * that automatically instantiate a Step subtype and perform {@link DataBoundConstructor}/{@link DataBoundSetter}
+ * injections just like {@link Descriptor#newInstance(StaplerRequest, JSONObject)} does from JSON.
+ *
+ * <p>
+ * In addition, fields and setter methods annotated with {@link StepContextParameter} will get its value
+ * injected from {@link StepContext}.
  *
  * @author Kohsuke Kawaguchi
  */
