@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.workflow.cps.persistence;
 import hudson.model.Job;
 import hudson.model.Run;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 
 /**
@@ -34,6 +35,10 @@ public enum PersistenceContext {
      * The persistence is through JBoss river protocol, which is a variant of Java serialization.
      */
     PROGRAM,
+    /**
+     * A class gets persisted through {@link FlowNode} (for example in action) via XStream.
+     */
+    FLOW_NODE,
     /**
      * A class does not get persisted anywhere. It's only used in memory.
      */

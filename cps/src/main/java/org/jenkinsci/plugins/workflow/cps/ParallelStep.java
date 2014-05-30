@@ -52,11 +52,26 @@ public class ParallelStep extends Step {
             cps.invokeBodyLater(
                     t.group.export(e.getValue()),
                     r.callbackFor(e.getKey()),
-                    Collections.singletonList(new LabelAction(e.getKey()))
+                    Collections.singletonList(new ParallelLabelAction(e.getKey()))
             );
         }
 
         return false;
+    }
+
+    @PersistIn(FLOW_NODE)
+    static class ParallelLabelAction extends LabelAction {
+        private final String branchName;
+
+        ParallelLabelAction(String branchName) {
+            super(null);
+            this.branchName = branchName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Parallel branch: "+branchName;
+        }
     }
 
     @PersistIn(PROGRAM)
