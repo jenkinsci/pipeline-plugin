@@ -49,6 +49,7 @@
         <module>step-api</module>
         <module>flow-api</module>
         <module>flow-support</module>
+        <module>basic-steps</module>
         <module>durable-task-step</module>
         <module>scm-step</module>
         <module>cps</module>

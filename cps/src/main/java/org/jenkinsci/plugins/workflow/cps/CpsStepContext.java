@@ -31,6 +31,7 @@ import groovy.lang.Closure;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.model.Action;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Job;
@@ -63,6 +64,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -129,10 +132,10 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
         and have its callback insert the ID of the new head at the end of the thread
      */
     /**
-     * {@link FlowNode#getId()}s that should become the parents of the {@link BlockEndNode} when
-     * we create one. Only used when this context has the body.
+     * {@link FlowNode#getId()}s keyed by {@link FlowHead#getId()} that should become
+     * the parents of the {@link BlockEndNode} when we create one. Only used when this context has the body.
      */
-    final List<String> bodyInvHeads = new ArrayList<String>();
+    final Map<Integer,String> bodyInvHeads = new TreeMap<Integer,String>();
 
     /**
      * If the invocation of the body is requested, this object remembers how to start it.
@@ -145,6 +148,8 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
     /**
      * While {@link CpsStepContext} has not received teh response, maintains the body closure.
+     *
+     * This is the implicit closure block passed to the step invocation.
      */
     private BodyReference body;
 
@@ -225,13 +230,21 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
 
     @Override
     public void invokeBodyLater(final FutureCallback callback, Object... contextOverrides) {
+        invokeBodyLater(body,callback,Collections.<Action>emptyList(),contextOverrides);
+    }
+
+    /**
+     * @param startNodeActions
+     *      actions to be added to {@link StepStartNode} that indicates the beginning of a body invocation.
+     */
+    public void invokeBodyLater(BodyReference body, final FutureCallback callback, List<? extends Action> startNodeActions, Object... contextOverrides) {
         if (body==null)
             throw new IllegalStateException("There's no body to invoke");
 
-        final BodyInvoker b = new BodyInvoker(this,body,callback,contextOverrides);
+        final BodyInvoker b = new BodyInvoker(this,body,callback,startNodeActions,contextOverrides);
 
         if (syncMode) {
-            // we process this in CpsThread#runNextChunk
+            // we process this in ThreadTaskImpl
             bodyInvokers.add(b);
         } else {
             try {
@@ -285,8 +298,11 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
             // TODO: this logic should be consistent across StepContext impls, so it should be promoted to somewhere
             if (key==Node.class) {
                 Computer c = get(Computer.class);
-                if (c==null)    return null;
-                return key.cast(c.getNode());
+                Node n = null;
+                if (c!=null)    n = c.getNode();
+                if (n==null)
+                    throw new IllegalStateException("There's no current node. Perhaps you forgot to call with.node?");
+                return key.cast(n);
             }
             if (key==Run.class)
                 return key.cast(getExecution().getOwner().getExecutable());
@@ -294,8 +310,11 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
                 return key.cast(get(Run.class).getParent());
             if (key==FilePath.class) {
                 Node n = get(Node.class);
-                if (n==null)    return null;
-                return key.cast(n.getWorkspaceFor((TopLevelItem) get(Job.class)));
+                FilePath fp = null;
+                if (n!=null)    fp = n.getWorkspaceFor((TopLevelItem) get(Job.class));
+                if (fp==null)
+                    throw new IllegalStateException("There's no current directory. Perhaps you forgot to call with.ws?");
+                return key.cast(fp);
             }
             if (key==Launcher.class) {
                 Node n = get(Node.class);
@@ -349,6 +368,9 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
         scheduleNextRun();
     }
 
+    /**
+     * When this step context has completed execution (successful or otherwise), plan the next action.
+     */
     private void scheduleNextRun() {
         if (!syncMode) {
             try {
@@ -356,7 +378,8 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
                 final CpsFlowExecution flow = getFlowExecution();
 
                 final List<FlowNode> parents = new ArrayList<FlowNode>();
-                for (String head : bodyInvHeads) {
+                parents.add(null);      // make room for the primary head
+                for (String head : bodyInvHeads.values()) {
                     parents.add(flow.getNode(head));
                 }
 
@@ -369,12 +392,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
                         if (thread != null) {
                             if (n instanceof StepStartNode) {
                                 FlowNode tip = thread.head.get();
-                                if (parents.isEmpty()) {
-                                    parents.add(tip);
-                                } else
-                                if (tip!=n) {
-                                    parents.add(tip);
-                                }
+                                parents.set(0,tip);
 
                                 thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
                             }

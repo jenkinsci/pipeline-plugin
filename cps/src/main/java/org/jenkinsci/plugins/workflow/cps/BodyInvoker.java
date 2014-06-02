@@ -35,6 +35,7 @@ import com.cloudbees.groovy.cps.impl.SourceLocation;
 import com.cloudbees.groovy.cps.impl.TryBlockEnv;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
+import hudson.model.Action;
 import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
@@ -44,6 +45,7 @@ import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
@@ -74,9 +76,12 @@ final class BodyInvoker {
 
     private final CpsStepContext owner;
 
-    BodyInvoker(CpsStepContext owner, BodyReference body, FutureCallback c, Object... contextOverrides) {
+    private final List<? extends Action> startNodeActions;
+
+    BodyInvoker(CpsStepContext owner, BodyReference body, FutureCallback c, List<? extends Action> startNodeActions, Object... contextOverrides) {
         this.body = body;
         this.owner = owner;
+        this.startNodeActions = startNodeActions;
 
         if (!(c instanceof Serializable))
             throw new IllegalStateException("Callback must be persistable");
@@ -95,12 +100,14 @@ final class BodyInvoker {
      *
      * @param currentThread
      *      The thread whose context the new thread will inherit.
+     * @param callback
+     *      If non-null, this gets called back in addition to {@link #bodyCallback}
      */
-    /*package*/ void start(CpsThread currentThread, FlowHead head, FutureCallback callback) {
+    /*package*/ void start(CpsThread currentThread, FlowHead head, @Nullable FutureCallback callback) {
         FutureCallback c = bodyCallback;
 
         if (callback!=null)
-            c = new TeeFutureCallback(c,callback);
+            c = new TeeFutureCallback(callback,c);
 
         StepStartNode sn = addBodyStartFlowNode(head);
 
@@ -129,8 +136,12 @@ final class BodyInvoker {
      */
     private StepStartNode addBodyStartFlowNode(FlowHead head) {
         StepStartNode start = new StepStartNode(head.getExecution(),
-                owner.getDisplayName() + " : start body", head.get());
+                owner.getStepDescriptor(), head.get());
         start.addAction(new BodyInvocationAction());
+        for (Action a : startNodeActions) {
+            if (a!=null)
+                start.addAction(a);
+        }
         head.setNewHead(start);
         return start;
     }

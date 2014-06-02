@@ -22,14 +22,12 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.test.steps;
+package org.jenkinsci.plugins.workflow.steps;
 
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.Extension;
 import hudson.model.TaskListener;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -41,15 +39,16 @@ import java.util.Set;
  *
  * @author Kohsuke Kawaguchi
  */
-public class RetryStep extends Step implements Serializable {
+public class RetryStep extends AbstractStepImpl implements Serializable {
     private final int count;
 
-    public RetryStep(int count) {
-        this.count = count;
+    @DataBoundConstructor
+    public RetryStep(int value) {
+        this.count = value;
     }
 
     @Override
-    public boolean start(StepContext context) {
+    public boolean doStart(StepContext context) {
         context.invokeBodyLater(new Callback(context));
         return false;   // execution is asynchronous
     }
@@ -100,20 +99,10 @@ public class RetryStep extends Step implements Serializable {
     }
 
     @Extension
-    public static class DescriptorImpl extends StepDescriptor {
+    public static class DescriptorImpl extends AbstractStepDescriptorImpl {
         @Override
         public String getFunctionName() {
             return "retry";
-        }
-
-        @Override
-        public Step newInstance(Map<String, Object> arguments) {
-            return new RetryStep((Integer) arguments.get("value"));
-        }
-
-        @Override
-        public Set<Class<?>> getRequiredContext() {
-            return Collections.<Class<?>>singleton(TaskListener.class);
         }
 
         @Override

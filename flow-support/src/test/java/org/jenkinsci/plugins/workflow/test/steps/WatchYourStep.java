@@ -24,21 +24,18 @@
 
 package org.jenkinsci.plugins.workflow.test.steps;
 
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import hudson.Extension;
 import hudson.model.PeriodicWork;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,16 +43,16 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Kohsuke Kawaguchi
  */
-public class WatchYourStep extends Step {
+public class WatchYourStep extends AbstractStepImpl {
     private final File watch;
 
     @DataBoundConstructor
-    public WatchYourStep(File watch) {
-        this.watch = watch;
+    public WatchYourStep(File value) {
+        this.watch = value;
     }
 
     @Override
-    public boolean start(StepContext context) {
+    public boolean doStart(StepContext context) {
         if (watch.exists()) {
             // synchronous case. Sometimes async steps can complete synchronously
             context.onSuccess(null);
@@ -83,7 +80,7 @@ public class WatchYourStep extends Step {
     }
 
     @Extension
-    public static class DescriptorImpl extends StepDescriptor {
+    public static class DescriptorImpl extends AbstractStepDescriptorImpl {
         private List<Tag> activeWatches = new ArrayList<Tag>();
 
         public DescriptorImpl() {
@@ -95,6 +92,9 @@ public class WatchYourStep extends Step {
             save();
         }
 
+        /**
+         * Checks presence of files synchronously.
+         */
         public synchronized void watchUpdate() {
             boolean changed = false;
             for (Iterator<Tag> itr = activeWatches.iterator(); itr.hasNext(); ) {
@@ -114,18 +114,8 @@ public class WatchYourStep extends Step {
         }
 
         @Override
-        public Set<Class<?>> getRequiredContext() {
-            return Collections.emptySet();
-        }
-
-        @Override
         public String getFunctionName() {
             return "watch";
-        }
-
-        @Override
-        public Step newInstance(Map<String, Object> arguments) {
-            return new WatchYourStep((File) arguments.get("value"));
         }
 
         @Override

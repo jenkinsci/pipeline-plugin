@@ -30,6 +30,7 @@ import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.slaves.DumbSlave;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -40,7 +41,7 @@ import javax.inject.Inject;
  *
  * @author Kohsuke Kawaguchi
  */
-public abstract class SingleJobTestBase {
+public abstract class SingleJobTestBase extends Assert {
     @Rule
     public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
@@ -91,10 +92,11 @@ public abstract class SingleJobTestBase {
     /**
      * Gets the build going and waits for the workflow to be fully running
      */
-    public void startBuilding() throws Exception {
+    public QueueTaskFuture<WorkflowRun> startBuilding() throws Exception {
         QueueTaskFuture<WorkflowRun> f = p.scheduleBuild2(0);
         b = f.waitForStart();
         e = (CpsFlowExecution) b.getExecutionPromise().get();
+        return f;
     }
 
     public DumbSlave createSlave(JenkinsRule j) throws Exception {
@@ -112,6 +114,7 @@ public abstract class SingleJobTestBase {
 
     public void assertBuildCompletedSuccessfully(WorkflowRun b) throws Exception {
         assert !b.isBuilding(): JenkinsRule.getLog(b);
-        assert b.getResult() == Result.SUCCESS: JenkinsRule.getLog(b);
+        Result r = b.getResult();
+        assert r == Result.SUCCESS: "Result is "+r+"\n"+JenkinsRule.getLog(b);
     }
 }

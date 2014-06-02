@@ -417,6 +417,16 @@ public class CpsFlowExecution extends FlowExecution {
         return false;
     }
 
+    // called by FlowHead to add a new head
+    void addHead(FlowHead h) {
+        heads.put(h.getId(),h);
+    }
+
+    void removeHead(FlowHead h) {
+        heads.remove(h.getId());
+    }
+
+
     @Override
     public synchronized void addListener(GraphListener listener) {
         if (listeners == null) {

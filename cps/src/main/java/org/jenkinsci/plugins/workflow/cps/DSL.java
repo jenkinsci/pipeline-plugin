@@ -48,7 +48,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
-import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
  * Scaffolding to experiment with the call into {@link Step}.
@@ -68,6 +68,13 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         return this;
     }
 
+    /**
+     * Executes the {@link Step} implementation specified by the name argument.
+     *
+     * @return
+     *      If the step completes execution synchronously, the result will be
+     *      returned. Otherwise this method {@linkplain Continuable#suspend(Object) suspends}.
+     */
     @Override
     public Object invokeMethod(String name, Object args) {
         try {
@@ -87,12 +94,16 @@ public class DSL extends GroovyObjectSupport implements Serializable {
 
         FlowNode an;
 
-        if (ps.body==null) {
-            an = new StepAtomNode(exec, d.getDisplayName(), thread.head.get());
+        // TODO: generalize the notion of Step taking over the FlowNode creation.
+        // see https://trello.com/c/v6Pbwqxj/13-allowing-steps-to-build-flownodes
+        boolean hack = d instanceof ParallelStep.DescriptorImpl;
+
+        if (ps.body == null && !hack) {
+            an = new StepAtomNode(exec, d, thread.head.get());
             // TODO: use CPS call stack to obtain the current call site source location. See JENKINS-23013
             thread.head.setNewHead(an);
         } else {
-            an = new StepStartNode(exec, d.getDisplayName(), thread.head.get());
+            an = new StepStartNode(exec, d, thread.head.get());
             thread.head.setNewHead(an);
         }
 
@@ -208,8 +219,8 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
 
         @Override
-        protected ThreadTaskResult eval(CpsThread t) {
-            invokeBody(t);
+        protected ThreadTaskResult eval(CpsThread cur) {
+            invokeBody(cur);
 
             if (!context.switchToAsyncMode()) {
                 // we have a result now, so just keep executing
@@ -225,16 +236,24 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             }
         }
 
-        private void invokeBody(CpsThread t) {
-            int count=0;
-            for (BodyInvoker b : context.bodyInvokers) {
-                if (count++==0) {
-                    b.start(t);
-                } else {
-                    FlowHead head = new FlowHead(t.getExecution());
-                    b.start(t, head, new HeadCollector(context,head));
-                }
+        private void invokeBody(CpsThread cur) {
+            // prepare enough heads for all the bodies
+            // the first one can reuse the current thread, but other ones need to create new heads
+            // we want to do this first before starting body so that the order of heads preserve
+            // natural ordering.
+            FlowHead[] heads = new FlowHead[context.bodyInvokers.size()];
+            for (int i = 0; i < heads.length; i++) {
+                heads[i] = i==0 ? cur.head : cur.head.fork();
             }
+
+            int idx=0;
+            for (BodyInvoker b : context.bodyInvokers) {
+                // don't collect the first head, which is what we borrowed from our parent.
+                FlowHead h = heads[idx];
+                b.start(cur, h, idx>0 ?  new HeadCollector(context, h) : null);
+                idx++;
+            }
+
             context.bodyInvokers.clear();
         }
 
@@ -252,7 +271,8 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             }
 
             private void onEnd() {
-                context.bodyInvHeads.add(head.get().getId());
+                head.getExecution().removeHead(head);
+                context.bodyInvHeads.put(head.getId(),head.get().getId());
             }
 
             @Override
