@@ -102,7 +102,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     private Map<String,Long> logsToCopy;
 
     List<SCMCheckout> checkouts;
-    // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally
+    // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally; perhaps keep a List<WeakReference<ChangeLogSet<?>>>
     private transient List<ChangeLogSet<?>> changeLogs;
 
     public WorkflowRun(WorkflowJob job) throws IOException {
@@ -345,7 +345,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (changeLogs == null) {
             changeLogs = new ArrayList<ChangeLogSet<?>>();
             for (SCMCheckout co : checkouts) {
-                if (co.changelogFile != null) {
+                if (co.changelogFile != null && co.changelogFile.isFile()) {
                     try {
                         co.scm.createChangeLogParser().parse(this, co.changelogFile);
                     } catch (Exception x) {
@@ -379,6 +379,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             throw new IllegalStateException();
         }
         checkouts.add(new SCMCheckout(scm, node, workspace.getRemote(), changelogFile, pollingBaseline));
+        // TODO setting changeLogs=null would seem to make sense here, but breaks GitStepTest
     }
 
     static final class SCMCheckout {
