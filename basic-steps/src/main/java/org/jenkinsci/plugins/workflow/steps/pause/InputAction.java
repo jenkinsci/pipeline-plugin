@@ -37,17 +37,19 @@ public class InputAction implements RunAction2 {
 
     @Override
     public String getIconFileName() {
-        return "help.png";
+        if (steps.isEmpty())    return null;
+        else                    return "help.png";
     }
 
     @Override
     public String getDisplayName() {
-        return "Paused for Input";
+        if (steps.isEmpty())    return null;
+        else                    return "Paused for Input";
     }
 
     @Override
     public String getUrlName() {
-        return "pause";
+        return "input";
     }
 
     public synchronized void add(InputStep step) throws IOException {
@@ -73,5 +75,12 @@ public class InputAction implements RunAction2 {
     public synchronized void remove(InputStep step) throws IOException {
         steps.remove(step);
         run.save();
+    }
+
+    /**
+     * Bind steps just by their ID names.
+     */
+    public InputStep getDynamic(String token) {
+        return getStep(token);
     }
 }
