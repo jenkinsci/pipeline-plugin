@@ -36,7 +36,7 @@ import java.util.Map;
  *
  * @author Kohsuke Kawaguchi
  */
-public class PauseStep extends AbstractStepImpl implements ModelObject {
+public class InputStep extends AbstractStepImpl implements ModelObject {
     private final String message;
 
     /**
@@ -49,7 +49,7 @@ public class PauseStep extends AbstractStepImpl implements ModelObject {
      * Optional user/group name who can approve this.
      */
     @DataBoundSetter
-    private String approveBy;
+    private String submitter;
 
 
     /**
@@ -78,7 +78,7 @@ public class PauseStep extends AbstractStepImpl implements ModelObject {
     private Outcome outcome;
 
     @DataBoundConstructor
-    public PauseStep(String message) {
+    public InputStep(String message) {
         if (message==null)
             message = "Workflow has paused and needs your input before proceeding";
         this.message = message;
@@ -139,31 +139,59 @@ public class PauseStep extends AbstractStepImpl implements ModelObject {
     }
 
     /**
-     * Gets the {@link PauseAction} that this step should be attached to.
+     * Gets the {@link InputAction} that this step should be attached to.
      */
-    private PauseAction getPauseAction() {
-        PauseAction a = run.getAction(PauseAction.class);
+    private InputAction getPauseAction() {
+        InputAction a = run.getAction(InputAction.class);
         if (a==null)
-            run.addAction(a=new PauseAction());
+            run.addAction(a=new InputAction());
         return a;
     }
 
-    public HttpResponse doProceed(StaplerRequest request, @QueryParameter boolean redirect) throws IOException, ServletException {
-        preSettlementCheck();
+    /**
+     * Called from the form via browser to submit/abort this input step.
+     */
+    public HttpResponse doSubmit(StaplerRequest request) throws IOException, ServletException {
+        preSubmissionCheck();
 
         if (request.getParameter("proceed")!=null) {
-            Object v = parseValue(request);
-            outcome = new Outcome(v, null);
-            context.onSuccess(v);
+            doProceed(request);
         } else {
-            RejectionException e = new RejectionException(User.current());
-            outcome = new Outcome(null,e);
-            context.onFailure(e);
+            doAbort();
         }
+
+        // go back to the Run page
+        return HttpResponses.redirectTo("../../");
+    }
+
+    /**
+     * REST endpoint to submit the input.
+     */
+    public HttpResponse doProceed(StaplerRequest request) throws IOException, ServletException {
+        preSubmissionCheck();
+
+        Object v = parseValue(request);
+        outcome = new Outcome(v, null);
+        context.onSuccess(v);
 
         // TODO: record this decision to FlowNode
 
-        return postSettlement(redirect);
+        return HttpResponses.ok();
+    }
+
+    /**
+     * REST endpoint to abort the workflow.
+     */
+    public HttpResponse doAbort() throws IOException, ServletException {
+        preSubmissionCheck();
+
+        RejectionException e = new RejectionException(User.current());
+        outcome = new Outcome(null,e);
+        context.onFailure(e);
+
+        // TODO: record this decision to FlowNode
+
+        return HttpResponses.ok();
     }
 
     /**
@@ -202,24 +230,23 @@ public class PauseStep extends AbstractStepImpl implements ModelObject {
     }
 
     /**
-     * Common check to run enforce we approve/deny the outcome of the settlement.
+     * Check if the current user can submit the input.
      */
-    private void preSettlementCheck() {
+    private void preSubmissionCheck() {
         if (isSettled())
-            throw new Failure("This pause step has been already decided");
+            throw new Failure("This input has been already given");
         // TODO: permission check
-        if (approveBy!=null && !canSettle()) {
-            throw new Failure("You need to be "+approveBy+" to approve this");
+        if (submitter !=null && !canSubmit()) {
+            throw new Failure("You need to be "+ submitter +" to submit this");
         }
     }
 
-    private HttpResponse postSettlement(boolean redirect) throws IOException {
+    private void postSettlement(boolean redirect) throws IOException {
         getPauseAction().remove(this);
         run.save();
-        return redirect ? HttpResponses.forwardToPreviousPage() : HttpResponses.ok();
     }
 
-    private boolean canSettle() {
+    private boolean canSubmit() {
         Authentication a = Jenkins.getAuthentication();
         return canSettle(a);
     }
@@ -228,10 +255,10 @@ public class PauseStep extends AbstractStepImpl implements ModelObject {
      * Checks if the given user can settle this pause.
      */
     public boolean canSettle(Authentication a) {
-        if (a.getName().equals(approveBy))
+        if (a.getName().equals(submitter))
             return true;
         for (GrantedAuthority ga : a.getAuthorities()) {
-            if (ga.getAuthority().equals(approveBy))
+            if (ga.getAuthority().equals(submitter))
                 return true;
         }
         return false;
@@ -252,7 +279,7 @@ public class PauseStep extends AbstractStepImpl implements ModelObject {
 
         @Override
         public String getDisplayName() {
-            return "Human Input";
+            return "Input";
         }
     }
 }

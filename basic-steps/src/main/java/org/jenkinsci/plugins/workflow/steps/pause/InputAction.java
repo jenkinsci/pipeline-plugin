@@ -12,9 +12,9 @@ import java.util.List;
  *
  * @author Kohsuke Kawaguchi
  */
-public class PauseAction implements RunAction2 {
+public class InputAction implements RunAction2 {
 
-    private final List<PauseStep> steps = new ArrayList<PauseStep>();
+    private final List<InputStep> steps = new ArrayList<InputStep>();
 
     private transient Run<?,?> run;
 
@@ -26,7 +26,7 @@ public class PauseAction implements RunAction2 {
     @Override
     public void onLoad(Run<?, ?> r) {
         this.run = r;
-        for (PauseStep step : steps) {
+        for (InputStep step : steps) {
             step.run = run;
         }
     }
@@ -50,27 +50,27 @@ public class PauseAction implements RunAction2 {
         return "pause";
     }
 
-    public synchronized void add(PauseStep step) throws IOException {
+    public synchronized void add(InputStep step) throws IOException {
         this.steps.add(step);
         run.save();
     }
 
-    public synchronized PauseStep getStep(String id) {
-        for (PauseStep step : steps) {
+    public synchronized InputStep getStep(String id) {
+        for (InputStep step : steps) {
             if (step.getId().equals(id))
                 return step;
         }
         return null;
     }
 
-    public synchronized List<PauseStep> getSteps() {
-        return new ArrayList<PauseStep>(steps);
+    public synchronized List<InputStep> getSteps() {
+        return new ArrayList<InputStep>(steps);
     }
 
     /**
-     * Called when {@link PauseStep} is completed to remove it from the active pause list.
+     * Called when {@link InputStep} is completed to remove it from the active pause list.
      */
-    public synchronized void remove(PauseStep step) throws IOException {
+    public synchronized void remove(InputStep step) throws IOException {
         steps.remove(step);
         run.save();
     }

@@ -1,12 +1,12 @@
 <!--
-  Show the pause in the PauseAction/index.jelly
+  Show the pause in the InputAction/index.jelly
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form">
 
   <h1>${it.message}</h1>
   <j:if test="${!it.completed}">
-    <f:form method="post" action="steps/${it.id}/proceed?redirect=true" name="${it.id}">
+    <f:form method="post" action="${it.id}/submit?redirect=true" name="${it.id}">
       <j:forEach var="param" items="${it.parameters}">
         <st:include page="index.jelly" it="${param}"/>
       </j:forEach>
