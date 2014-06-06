@@ -1,5 +1,5 @@
 <!--
-  Show the pause in the InputAction/index.jelly
+  Show the input in the InputAction/index.jelly
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form">

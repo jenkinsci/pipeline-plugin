@@ -1,9 +1,9 @@
-package org.jenkinsci.plugins.workflow.steps.pause;
+package org.jenkinsci.plugins.workflow.steps.input;
 
 import hudson.model.User;
 
 /**
- * Indicates that the pause step was rejected by the user.
+ * Indicates that the input step was rejected by the user.
  *
  * @author Kohsuke Kawaguchi
  */

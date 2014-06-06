@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.steps.pause;
+package org.jenkinsci.plugins.workflow.steps.input;
 
 import hudson.Extension;
 import hudson.FilePath;
@@ -46,7 +46,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     private final String message;
 
     /**
-     * Optional ID that uniquely identifies this pause from all others.
+     * Optional ID that uniquely identifies this input from all others.
      */
     private String id;
 
@@ -78,7 +78,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /*package*/ transient Run run;
 
     /**
-     * Result of the pause.
+     * Result of the input.
      */
     private Outcome outcome;
 
@@ -147,7 +147,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     }
 
     /**
-     * If this pause step has been decided one way or the other.
+     * If this input step has been decided one way or the other.
      */
     public boolean isSettled() {
         return outcome!=null;
@@ -157,7 +157,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     public boolean doStart(StepContext context) throws Exception {
         this.context = context;
 
-        // record this pause
+        // record this input
         getPauseAction().add(this);
 
         return false;
@@ -313,7 +313,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     }
 
     /**
-     * Checks if the given user can settle this pause.
+     * Checks if the given user can settle this input.
      */
     public boolean canSettle(Authentication a) {
         if (a.getName().equals(submitter))

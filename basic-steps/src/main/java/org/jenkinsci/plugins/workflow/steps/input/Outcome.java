@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.steps.pause;
+package org.jenkinsci.plugins.workflow.steps.input;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
