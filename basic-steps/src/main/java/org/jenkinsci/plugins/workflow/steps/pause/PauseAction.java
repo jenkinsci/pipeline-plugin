@@ -66,4 +66,12 @@ public class PauseAction implements RunAction2 {
     public synchronized List<PauseStep> getSteps() {
         return new ArrayList<PauseStep>(steps);
     }
+
+    /**
+     * Called when {@link PauseStep} is completed to remove it from the active pause list.
+     */
+    public synchronized void remove(PauseStep step) throws IOException {
+        steps.remove(step);
+        run.save();
+    }
 }

@@ -6,26 +6,9 @@
   <l:layout title="${it.displayName} : ${it.run}">
     <st:include it="${it.run}" page="sidepanel.jelly" />
     <l:main-panel>
-      <ul id="pauses">
-        <j:forEach var="s" items="${it.steps}">
-          <li>
-            <a href="step/${s.id}/">
-              ${s.message}
-            </a>
-          </li>
-        </j:forEach>
-      </ul>
-      <style>
-        #pauses LI {
-          font-size: 2em;
-          list-style: none;
-          background-image: url('${imagesURL}/48x48/help.png');
-          background-repeat: no-repeat;
-          background-position: left center;
-          padding-left: 64px;
-          line-height: 48px;
-        }
-      </style>
+      <j:forEach var="s" items="${it.steps}">
+        <st:include page="index.jelly" it="${s}"/>
+      </j:forEach>
     </l:main-panel>
   </l:layout>
 </st:compress>

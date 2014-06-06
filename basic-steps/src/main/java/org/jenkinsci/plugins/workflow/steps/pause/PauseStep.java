@@ -58,6 +58,12 @@ public class PauseStep extends AbstractStepImpl implements ModelObject {
     @DataBoundSetter
     private Object params;
 
+    /**
+     * Caption of the OK button.
+     */
+    @DataBoundSetter
+    private String ok;
+
     private StepContext context;
 
     /**
@@ -74,8 +80,15 @@ public class PauseStep extends AbstractStepImpl implements ModelObject {
     @DataBoundConstructor
     public PauseStep(String message) {
         if (message==null)
-            message = "Workflow has paused and needs your confirmation before proceeding";
+            message = "Workflow has paused and needs your input before proceeding";
         this.message = message;
+    }
+
+    /**
+     * Caption of the OK button.
+     */
+    public String getOk() {
+        return ok!=null ? ok : "Proceed";
     }
 
     @Override
@@ -135,12 +148,20 @@ public class PauseStep extends AbstractStepImpl implements ModelObject {
         return a;
     }
 
-    public HttpResponse doApprove(StaplerRequest request, @QueryParameter boolean redirect) throws IOException, ServletException {
+    public HttpResponse doProceed(StaplerRequest request, @QueryParameter boolean redirect) throws IOException, ServletException {
         preSettlementCheck();
 
-        Object v = parseValue(request);
-        outcome = new Outcome(v,null);
-        context.onSuccess(v);
+        if (request.getParameter("proceed")!=null) {
+            Object v = parseValue(request);
+            outcome = new Outcome(v, null);
+            context.onSuccess(v);
+        } else {
+            RejectionException e = new RejectionException(User.current());
+            outcome = new Outcome(null,e);
+            context.onFailure(e);
+        }
+
+        // TODO: record this decision to FlowNode
 
         return postSettlement(redirect);
     }
@@ -180,16 +201,6 @@ public class PauseStep extends AbstractStepImpl implements ModelObject {
         }
     }
 
-    public HttpResponse doReject(@QueryParameter boolean redirect) throws IOException {
-        preSettlementCheck();
-
-        RejectionException e = new RejectionException(User.current());
-        outcome = new Outcome(null,e);
-        context.onFailure(e);
-
-        return postSettlement(redirect);
-    }
-
     /**
      * Common check to run enforce we approve/deny the outcome of the settlement.
      */
@@ -203,6 +214,7 @@ public class PauseStep extends AbstractStepImpl implements ModelObject {
     }
 
     private HttpResponse postSettlement(boolean redirect) throws IOException {
+        getPauseAction().remove(this);
         run.save();
         return redirect ? HttpResponses.forwardToPreviousPage() : HttpResponses.ok();
     }
