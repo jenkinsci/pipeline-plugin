@@ -32,7 +32,7 @@
     </parent>
     <artifactId>basic-steps</artifactId>
     <packaging>hpi</packaging>
-    <name>Workflow: Pack of basic step implementations</name>
+    <name>Workflow: Basic Steps</name>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
