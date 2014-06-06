@@ -25,7 +25,9 @@
 package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.model.Label;
+import hudson.plugins.git.GitSCM;
 import hudson.scm.ChangeLogSet;
+import hudson.scm.SCM;
 import hudson.triggers.SCMTrigger;
 import java.io.File;
 import java.net.URLEncoder;
@@ -51,19 +53,19 @@ public class GitStepTest {
 
     private File sampleRepo;
 
-    private void git(String... cmds) throws Exception {
+    private static void git(File repo, String... cmds) throws Exception {
         List<String> args = new ArrayList<String>();
         args.add("git");
         args.addAll(Arrays.asList(cmds));
-        assertEquals(0, new ProcessBuilder(args).inheritIO().directory(sampleRepo).start().waitFor());
+        assertEquals(0, new ProcessBuilder(args).inheritIO().directory(repo).start().waitFor());
     }
 
     @Before public void sampleRepo() throws Exception {
         sampleRepo = tmp.newFolder();
-        git("init");
+        git(sampleRepo, "init");
         FileUtils.touch(new File(sampleRepo, "file"));
-        git("add", "file");
-        git("commit", "--message=init");
+        git(sampleRepo, "add", "file");
+        git(sampleRepo, "commit", "--message=init");
     }
     
     @Test public void basicCloneAndUpdate() throws Exception {
@@ -80,8 +82,8 @@ public class GitStepTest {
         r.assertLogContains("Cloning the remote Git repository", b); // GitSCM.retrieveChanges
         r.assertLogContains("PRESENT: file", b);
         FileUtils.touch(new File(sampleRepo, "nextfile"));
-        git("add", "nextfile");
-        git("commit", "--message=next");
+        git(sampleRepo, "add", "nextfile");
+        git(sampleRepo, "commit", "--message=next");
         b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("Fetching changes from the remote Git repository", b); // GitSCM.retrieveChanges
         r.assertLogContains("PRESENT: nextfile", b);
@@ -100,8 +102,8 @@ public class GitStepTest {
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("Cloning the remote Git repository", b);
         FileUtils.touch(new File(sampleRepo, "nextfile"));
-        git("add", "nextfile");
-        git("commit", "--message=next");
+        git(sampleRepo, "add", "nextfile");
+        git(sampleRepo, "commit", "--message=next");
         System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
         r.waitUntilNoActivity();
         b = p.getLastBuild();
@@ -119,5 +121,65 @@ public class GitStepTest {
         assertFalse(iterator.hasNext());
     }
 
+    @Test public void multipleSCMs() throws Exception {
+        File otherRepo = tmp.newFolder();
+        git(otherRepo, "init");
+        FileUtils.touch(new File(otherRepo, "otherfile"));
+        git(otherRepo, "add", "otherfile");
+        git(otherRepo, "commit", "--message=init");
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
+        p.addTrigger(new SCMTrigger(""));
+        p.setQuietPeriod(3); // so it only does one build
+        p.setDefinition(new CpsFlowDefinition(
+            "with.node {\n" +
+            "    with.ws {\n" +
+            "        with.dir('main') {\n" +
+            "            steps.git(url: '" + sampleRepo + "')\n" +
+            "        }\n" +
+            "        with.dir('other') {\n" +
+            "            steps.git(url: '" + otherRepo + "')\n" +
+            "        }\n" +
+            "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +
+            "    }\n" +
+            "}"));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        r.assertLogContains("PRESENT: main/file", b);
+        r.assertLogContains("PRESENT: other/otherfile", b);
+        FileUtils.touch(new File(sampleRepo, "file2"));
+        git(sampleRepo, "add", "file2");
+        git(sampleRepo, "commit", "--message=file2");
+        FileUtils.touch(new File(otherRepo, "otherfile2"));
+        git(otherRepo, "add", "otherfile2");
+        git(otherRepo, "commit", "--message=otherfile2");
+        System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
+        System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(otherRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
+        r.waitUntilNoActivity();
+        b = p.getLastBuild();
+        assertEquals(2, b.number);
+        r.assertLogContains("PRESENT: main/file2", b);
+        r.assertLogContains("PRESENT: other/otherfile2", b);
+        Iterator<? extends SCM> scms = p.getSCMs().iterator();
+        assertTrue(scms.hasNext());
+        assertEquals(sampleRepo.getAbsolutePath(), ((GitSCM) scms.next()).getRepositories().get(0).getURIs().get(0).toString());
+        assertTrue(scms.hasNext());
+        assertEquals(otherRepo.getAbsolutePath(), ((GitSCM) scms.next()).getRepositories().get(0).getURIs().get(0).toString());
+        assertFalse(scms.hasNext());
+        List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = b.getChangeSets();
+        assertEquals(2, changeSets.size());
+        ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = changeSets.get(0);
+        assertEquals(b, changeSet.getBuild());
+        assertEquals("git", changeSet.getKind());
+        Iterator<? extends ChangeLogSet.Entry> iterator = changeSet.iterator();
+        assertTrue(iterator.hasNext());
+        ChangeLogSet.Entry entry = iterator.next();
+        assertEquals("[file2]", entry.getAffectedPaths().toString());
+        assertFalse(iterator.hasNext());
+        changeSet = changeSets.get(1);
+        iterator = changeSet.iterator();
+        assertTrue(iterator.hasNext());
+        entry = iterator.next();
+        assertEquals("[otherfile2]", entry.getAffectedPaths().toString());
+        assertFalse(iterator.hasNext());
+    }
 
 }
