@@ -1,0 +1,26 @@
+<!--
+  Displays the console output
+-->
+<?jelly escape-by-default='true'?>
+<st:compress xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:flow="/lib/flow">
+  <l:layout title="${it.displayName} : ${it.run}">
+    <st:include it="${it.run}" page="sidepanel.jelly" />
+    <l:main-panel>
+      <h1>Workflow needs approval</h1><!-- ??? -->
+
+      <p>
+        ${it.message}
+      </p>
+
+      <f:form method="post" action="approve" name="approve">
+        <j:forEach var="param" items="${it.parameters}">
+          <st:include page="index.jelly" it="${param}"/>
+        </j:forEach>
+        <f:block>
+          <f:submit value="${%Proceed}" name="proceed"/>
+          <f:submit value="${%Abort}" name="abort"/>
+        </f:block>
+      </f:form>
+    </l:main-panel>
+  </l:layout>
+</st:compress>

@@ -83,6 +83,9 @@ public class PauseStep extends AbstractStepImpl {
         throw new IllegalStateException("Unexpected parameters: "+params);
     }
 
+    public String getMessage() {
+        return message;
+    }
 
     public String getId() {
         if (id==null)

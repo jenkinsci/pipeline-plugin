@@ -6,11 +6,15 @@
   <l:layout title="${it.displayName} : ${it.run}">
     <st:include it="${it.run}" page="sidepanel.jelly" />
     <l:main-panel>
-      <j:forEach var="pause" items="${it.pauses}">
-        <div>
-          ${pause}
-        </div>
-      </j:forEach>
+      <ul id="pauses">
+        <j:forEach var="pause" items="${it.pauses}">
+          <li>
+            <a href="step/${pause.id}/">
+              ${pause.message}
+            </a>
+          </li>
+        </j:forEach>
+      </ul>
     </l:main-panel>
   </l:layout>
 </st:compress>
