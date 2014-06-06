@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.workflow.steps.pause;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Failure;
+import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.Run;
@@ -35,7 +36,7 @@ import java.util.Map;
  *
  * @author Kohsuke Kawaguchi
  */
-public class PauseStep extends AbstractStepImpl {
+public class PauseStep extends AbstractStepImpl implements ModelObject {
     private final String message;
 
     /**
@@ -75,6 +76,12 @@ public class PauseStep extends AbstractStepImpl {
         if (message==null)
             message = "Workflow has paused and needs your confirmation before proceeding";
         this.message = message;
+    }
+
+    @Override
+    public String getDisplayName() {
+        if (message.length()<32)    return message;
+        return message.substring(0,32)+"...";
     }
 
     public Map<String,ParameterDefinition> getParameters() {
