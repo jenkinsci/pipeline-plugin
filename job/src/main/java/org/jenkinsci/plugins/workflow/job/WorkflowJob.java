@@ -78,6 +78,8 @@ import jenkins.triggers.SCMTriggerItem;
 import jenkins.util.TimeDuration;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -88,6 +90,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
 
     private FlowDefinition definition;
     private DescribableList<Trigger<?>,TriggerDescriptor> triggers = new DescribableList<Trigger<?>,TriggerDescriptor>(this);
+    private volatile Integer quietPeriod;
     @SuppressWarnings("deprecation")
     private hudson.model.BuildAuthorizationToken authToken;
     private transient LazyBuildMixIn<WorkflowJob,WorkflowRun> buildMixIn;
@@ -152,6 +155,11 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         authToken = hudson.model.BuildAuthorizationToken.create(req);
         for (Trigger t : triggers) {
             t.stop();
+        }
+        if (req.getParameter("hasCustomQuietPeriod") != null) {
+            quietPeriod = Integer.parseInt(req.getParameter("quiet_period"));
+        } else {
+            quietPeriod = null;
         }
         triggers.rebuild(req, req.getSubmittedForm(), Trigger.for_(this));
         for (Trigger t : triggers) {
@@ -253,7 +261,17 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     }
 
     @Override public int getQuietPeriod() {
-        return Jenkins.getInstance().getQuietPeriod();
+        return quietPeriod != null ? quietPeriod : Jenkins.getInstance().getQuietPeriod();
+    }
+
+    @Restricted(DoNotUse.class) // for config-quietPeriod.jelly
+    public boolean getHasCustomQuietPeriod() {
+        return quietPeriod!=null;
+    }
+
+    public void setQuietPeriod(Integer seconds) throws IOException {
+        this.quietPeriod = seconds;
+        save();
     }
 
     @Override public String getBuildNowText() {
