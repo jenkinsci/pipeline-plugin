@@ -29,8 +29,8 @@ THE SOFTWARE.
         <st:include page="sidepanel.jelly"/>
         <l:main-panel>
             <t:buildCaption>${%Changes}</t:buildCaption>
-            <j:forEach var="changeLog" items="${it.changeLogs}">
-                <st:include page="index.jelly" it="${changeLog}"/>
+            <j:forEach var="changeSet" items="${it.changeSets}">
+                <st:include page="index.jelly" it="${changeSet}"/>
             </j:forEach>
         </l:main-panel>
     </l:layout>

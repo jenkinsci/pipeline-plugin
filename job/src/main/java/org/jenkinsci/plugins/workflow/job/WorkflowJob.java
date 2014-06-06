@@ -383,6 +383,18 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return scms;
     }
 
+    public @CheckForNull SCM getTypicalSCM() {
+        SCM typical = null;
+        for (SCM scm : getSCMs()) {
+            if (typical == null) {
+                typical = scm;
+            } else if (typical.getDescriptor() != scm.getDescriptor()) {
+                return null;
+            }
+        }
+        return typical;
+    }
+
     @Override public PollingResult poll(TaskListener listener) {
         // TODO call SCMPollListener
         WorkflowRun b = getLastCompletedBuild();

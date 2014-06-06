@@ -36,9 +36,15 @@ THE SOFTWARE.
                 <j:if test="${to!=null}">&#160;${%to.label(to)}</j:if>
             </h1>
             <j:set var="builds" value="${h.filter(it.buildsAsMap,from,to).values()}"/>
-            <!-- TODO setting ${browser} globally makes no sense here, and project-changes.jelly expects a single changeSet per build -->
-            <!-- could be done if all the SCMs are of the same type -->
-            <em>not yet implemented</em>
+            <j:set var="scm" value="${it.typicalSCM}"/>
+            <j:choose>
+                <j:when test="${scm != null}">
+                    <st:include it="${scm}" page="project-changes.jelly"/>
+                </j:when>
+                <j:otherwise>
+                    ${%No changes in any of the builds, or multiple SCMs in use.}
+                </j:otherwise>
+            </j:choose>
         </l:main-panel>
     </l:layout>
 </j:jelly>

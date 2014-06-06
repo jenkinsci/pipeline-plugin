@@ -103,7 +103,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     List<SCMCheckout> checkouts;
     // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally; perhaps keep a List<WeakReference<ChangeLogSet<?>>>
-    private transient List<ChangeLogSet<?>> changeLogs;
+    private transient List<ChangeLogSet<?>> changeSets;
 
     public WorkflowRun(WorkflowJob job) throws IOException {
         super(job);
@@ -341,26 +341,26 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return env;
     }
 
-    public synchronized List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeLogs() {
-        if (changeLogs == null) {
-            changeLogs = new ArrayList<ChangeLogSet<?>>();
+    public synchronized List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets() {
+        if (changeSets == null) {
+            changeSets = new ArrayList<ChangeLogSet<?>>();
             for (SCMCheckout co : checkouts) {
                 if (co.changelogFile != null && co.changelogFile.isFile()) {
                     try {
-                        changeLogs.add(co.scm.createChangeLogParser().parse(this, co.scm.getEffectiveBrowser(), co.changelogFile));
+                        changeSets.add(co.scm.createChangeLogParser().parse(this, co.scm.getEffectiveBrowser(), co.changelogFile));
                     } catch (Exception x) {
                         LOGGER.log(Level.WARNING, "could not parse " + co.changelogFile, x);
                     }
                 }
             }
         }
-        return changeLogs;
+        return changeSets;
     }
 
     private void onCheckout(SCM scm, FilePath workspace, @CheckForNull File changelogFile, @CheckForNull SCMRevisionState pollingBaseline) throws Exception {
         if (changelogFile != null && changelogFile.isFile()) {
             ChangeLogSet<?> cls = scm.createChangeLogParser().parse(this, scm.getEffectiveBrowser(), changelogFile);
-            getChangeLogs().add(cls);
+            getChangeSets().add(cls);
             for (SCMListener l : SCMListener.all()) {
                 l.onChangeLogParsed(this, scm, listener, cls);
             }

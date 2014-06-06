@@ -107,12 +107,12 @@ public class GitStepTest {
         b = p.getLastBuild();
         assertEquals(2, b.number);
         r.assertLogContains("Fetching changes from the remote Git repository", b);
-        List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeLogs = b.getChangeLogs();
-        assertEquals(1, changeLogs.size());
-        ChangeLogSet<? extends ChangeLogSet.Entry> changeLog = changeLogs.get(0);
-        assertEquals(b, changeLog.getBuild());
-        assertEquals("git", changeLog.getKind());
-        Iterator<? extends ChangeLogSet.Entry> iterator = changeLog.iterator();
+        List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = b.getChangeSets();
+        assertEquals(1, changeSets.size());
+        ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = changeSets.get(0);
+        assertEquals(b, changeSet.getBuild());
+        assertEquals("git", changeSet.getKind());
+        Iterator<? extends ChangeLogSet.Entry> iterator = changeSet.iterator();
         assertTrue(iterator.hasNext());
         ChangeLogSet.Entry entry = iterator.next();
         assertEquals("[nextfile]", entry.getAffectedPaths().toString());
