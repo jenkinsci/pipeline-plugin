@@ -42,7 +42,6 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /**
      * Optional ID that uniquely identifies this pause from all others.
      */
-    @DataBoundSetter
     private String id;
 
     /**
@@ -84,6 +83,28 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         this.message = message;
     }
 
+    @DataBoundSetter
+    public void setId(String id) {
+        this.id = capitalize(id);
+    }
+
+    public String getId() {
+        if (id==null)
+            id = capitalize(Util.getDigestOf(message));
+        return id;
+    }
+
+
+    private String capitalize(String id) {
+        if (id.length()==0)
+            throw new IllegalArgumentException();
+        // a-z as the first char is reserved for InputAction
+        char ch = id.charAt(0);
+        if ('a'<=ch && ch<='z')
+            id = ((char)(ch-'a'+'A')) + id.substring(1);
+        return id;
+    }
+
     /**
      * Caption of the OK button.
      */
@@ -113,12 +134,6 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
 
     public String getMessage() {
         return message;
-    }
-
-    public String getId() {
-        if (id==null)
-            id = Util.getDigestOf(message);
-        return id;
     }
 
     /**
