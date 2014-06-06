@@ -298,11 +298,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     @Override
     public boolean hasntStartedYet() {
-        return execution==null;
+        return result == null && execution==null;
     }
 
     @Override public boolean isBuilding() {
-        return execution == null || !execution.isComplete();
+        return result == null || isInProgress();
     }
 
     @Override protected boolean isInProgress() {
