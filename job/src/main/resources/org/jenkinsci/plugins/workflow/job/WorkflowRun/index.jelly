@@ -48,12 +48,19 @@
                 ${%Build} ${it.displayName}
                 (<i:formatDate value="${it.timestamp.time}" type="both" dateStyle="medium" timeStyle="medium"/>)
             </t:buildCaption>
-            <!-- TODO look at AbstractBuild/index.jelly for how to display changelog -->
             <div>
                 <t:editableDescription permission="${it.UPDATE}"/>
             </div>
             <table style="margin-top: 1em; margin-left:1em;">
                 <t:artifactList build="${it}" caption="${%Build Artifacts}" permission="${it.ARTIFACTS}"/>
+                <j:set var="changeLogs" value="${it.changeLogs}"/>
+                <j:if test="${!changeLogs.isEmpty()}">
+                    <t:summary icon="notepad.png">
+                        <j:forEach var="changeLog" items="${changeLogs}">
+                            <st:include it="${changeLog}" page="digest.jelly"/>
+                        </j:forEach>
+                    </t:summary>
+                </j:if>
                 <j:forEach var="a" items="${it.allActions}">
                     <st:include page="summary.jelly" from="${a}" optional="true" it="${a}"/>
                 </j:forEach>

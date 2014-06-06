@@ -347,7 +347,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             for (SCMCheckout co : checkouts) {
                 if (co.changelogFile != null && co.changelogFile.isFile()) {
                     try {
-                        co.scm.createChangeLogParser().parse(this, co.changelogFile);
+                        changeLogs.add(co.scm.createChangeLogParser().parse(this, co.scm.getEffectiveBrowser(), co.changelogFile));
                     } catch (Exception x) {
                         LOGGER.log(Level.WARNING, "could not parse " + co.changelogFile, x);
                     }
@@ -359,7 +359,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     private void onCheckout(SCM scm, FilePath workspace, @CheckForNull File changelogFile, @CheckForNull SCMRevisionState pollingBaseline) throws Exception {
         if (changelogFile != null && changelogFile.isFile()) {
-            ChangeLogSet<?> cls = scm.createChangeLogParser().parse(this, changelogFile);
+            ChangeLogSet<?> cls = scm.createChangeLogParser().parse(this, scm.getEffectiveBrowser(), changelogFile);
             getChangeLogs().add(cls);
             for (SCMListener l : SCMListener.all()) {
                 l.onChangeLogParsed(this, scm, listener, cls);
@@ -379,13 +379,13 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             throw new IllegalStateException();
         }
         checkouts.add(new SCMCheckout(scm, node, workspace.getRemote(), changelogFile, pollingBaseline));
-        // TODO setting changeLogs=null would seem to make sense here, but breaks GitStepTest
     }
 
     static final class SCMCheckout {
         final SCM scm;
         final String node;
         final String workspace;
+        // TODO make this a String and relativize to Run.rootDir if possible
         final @CheckForNull File changelogFile;
         final @CheckForNull SCMRevisionState pollingBaseline;
         SCMCheckout(SCM scm, String node, String workspace, File changelogFile, SCMRevisionState pollingBaseline) {
