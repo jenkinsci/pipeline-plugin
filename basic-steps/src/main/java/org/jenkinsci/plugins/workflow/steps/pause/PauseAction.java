@@ -26,6 +26,9 @@ public class PauseAction implements RunAction2 {
     @Override
     public void onLoad(Run<?, ?> r) {
         this.run = r;
+        for (PauseStep step : steps) {
+            step.run = run;
+        }
     }
 
     public Run<?, ?> getRun() {
