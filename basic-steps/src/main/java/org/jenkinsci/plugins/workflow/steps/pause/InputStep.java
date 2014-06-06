@@ -1,8 +1,10 @@
 package org.jenkinsci.plugins.workflow.steps.pause;
 
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Util;
 import hudson.model.Failure;
+import hudson.model.FileParameterValue;
 import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
@@ -26,6 +28,9 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -171,7 +176,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /**
      * Called from the form via browser to submit/abort this input step.
      */
-    public HttpResponse doSubmit(StaplerRequest request) throws IOException, ServletException {
+    public HttpResponse doSubmit(StaplerRequest request) throws IOException, ServletException, InterruptedException {
         preSubmissionCheck();
 
         if (request.getParameter("proceed")!=null) {
@@ -187,7 +192,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /**
      * REST endpoint to submit the input.
      */
-    public HttpResponse doProceed(StaplerRequest request) throws IOException, ServletException {
+    public HttpResponse doProceed(StaplerRequest request) throws IOException, ServletException, InterruptedException {
         preSubmissionCheck();
 
         Object v = parseValue(request);
@@ -217,7 +222,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /**
      * Parse the submitted {@link ParameterValue}s
      */
-    private Object parseValue(StaplerRequest request) throws ServletException {
+    private Object parseValue(StaplerRequest request) throws ServletException, IOException, InterruptedException {
         Map<String, Object> mapResult = new HashMap<String, Object>();
         List<ParameterDefinition> defs = getParameters();
 
@@ -236,8 +241,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
                     throw new IllegalArgumentException("No such parameter definition: " + name);
 
                 ParameterValue v = d.createValue(request, jo);
-                // TODO: we want v.getValueObject() kind of method
-                mapResult.put(name, v);
+                mapResult.put(name, convert(name, v));
             }
         }
 
@@ -251,6 +255,39 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         default:
             return mapResult;
         }
+    }
+
+    private Object convert(String name, ParameterValue v) throws IOException, InterruptedException {
+        if (v instanceof FileParameterValue) {
+            FileParameterValue fv = (FileParameterValue) v;
+            FilePath fp = new FilePath(run.getRootDir()).child(name);
+            fp.copyFrom(fv.getFile());
+            return fp;
+        }
+
+        // TODO: post
+        try {
+            Method m = v.getClass().getMethod("getValue");
+            return m.invoke(v);
+        } catch (NoSuchMethodException e) {
+            // fall through
+        } catch (IllegalAccessException e) {
+            // fall through
+        } catch (InvocationTargetException e) {
+            throw new IOException("Failed to convert value: "+v,e);
+        }
+
+        try {
+            Field f = v.getClass().getField("value");
+            return f.get(v);
+        } catch (IllegalAccessException e) {
+            // fall through
+        } catch (NoSuchFieldException e) {
+            // fall through
+        }
+
+        // not sure what to do
+        return null;
     }
 
     /**
