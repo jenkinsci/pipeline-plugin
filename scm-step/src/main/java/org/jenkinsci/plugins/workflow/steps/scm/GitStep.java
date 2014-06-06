@@ -52,6 +52,7 @@ public final class GitStep extends SCMStep {
     }
 
     @Override protected SCM createSCM() {
+        // TODO could set an ScmName to differentiate multiple checkouts in the same build (matters for example for sidebar links)
         return new GitSCM(createRepoList(url), Collections.singletonList(new BranchSpec("*/" + branch)), false, Collections.<SubmoduleConfig>emptyList(), null, null, null);
     }
 
