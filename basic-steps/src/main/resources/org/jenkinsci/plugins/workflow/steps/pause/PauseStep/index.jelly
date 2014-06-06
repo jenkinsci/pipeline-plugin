@@ -8,19 +8,34 @@
     <l:main-panel>
       <h1>Workflow needs approval</h1><!-- ??? -->
 
-      <p>
-        ${it.message}
-      </p>
+      <j:choose>
+        <j:when test="${it.settled}">
+          <!-- TODO: show the values and outcomes, who did it etc -->
+          <p>
+            This pause has completed.
+            <b>TODO</b>: when, who, values, etc.
+          </p>
+          <p>
+            <a href="../../../">Go back</a>
+          </p>
+        </j:when>
+        <j:otherwise>
+          <p>
+            ${it.message}
+          </p>
 
-      <f:form method="post" action="approve?redirect=true" name="approve">
-        <j:forEach var="param" items="${it.parameters}">
-          <st:include page="index.jelly" it="${param}"/>
-        </j:forEach>
-        <f:block>
-          <f:submit value="${%Proceed}" name="proceed"/>
-          <f:submit value="${%Abort}" name="abort"/>
-        </f:block>
-      </f:form>
+          <f:form method="post" action="approve?redirect=true" name="approve">
+            <j:forEach var="param" items="${it.parameters}">
+              <st:include page="index.jelly" it="${param}"/>
+            </j:forEach>
+            <f:block>
+              <f:submit value="${%Proceed}" name="proceed"/>
+              <f:submit value="${%Abort}" name="abort"/>
+            </f:block>
+          </f:form>
+        </j:otherwise>
+      </j:choose>
+
     </l:main-panel>
   </l:layout>
 </st:compress>
