@@ -56,7 +56,15 @@ abstract class SCMStep extends Step {
 
     @Override public boolean start(StepContext context) throws Exception {
         Run<?,?> run = context.get(Run.class);
-        File changelogFile = changelog ? new File(run.getRootDir(), "changelog.xml") : null; // TODO allow >1 per run
+        File changelogFile = null;
+        if (changelog) {
+            for (int i = 0; ; i++) {
+                changelogFile = new File(run.getRootDir(), "changelog" + i + ".xml");
+                if (!changelogFile.exists()) {
+                    break;
+                }
+            }
+        }
         SCM scm = createSCM();
         FilePath workspace = context.get(FilePath.class);
         TaskListener listener = context.get(TaskListener.class);
