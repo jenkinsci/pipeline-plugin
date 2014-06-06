@@ -22,13 +22,14 @@ import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,7 +53,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
 
 
     /**
-     * Either a single {@link ParameterDefinition} or a map of them.
+     * Either a single {@link ParameterDefinition} or a list of them.
      */
     @DataBoundSetter
     private Object params;
@@ -96,6 +97,8 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
 
 
     private String capitalize(String id) {
+        if (id==null)
+            return null;
         if (id.length()==0)
             throw new IllegalArgumentException();
         // a-z as the first char is reserved for InputAction
@@ -118,13 +121,15 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         return message.substring(0,32)+"...";
     }
 
-    public Map<String,ParameterDefinition> getParameters() {
+    public List<ParameterDefinition> getParameters() {
         if (params instanceof ParameterDefinition)
-            return Collections.singletonMap("value",(ParameterDefinition)params);
-        if (params instanceof Map)
-            return (Map)params;
+            return Collections.singletonList((ParameterDefinition)params);
+        if (params instanceof ParameterDefinition[])
+            return Arrays.asList((ParameterDefinition[]) params);
+        if (params instanceof List)
+            return (List)params;
         if (params==null)
-            return Collections.emptyMap();
+            return Collections.emptyList();
         throw new IllegalStateException("Unexpected parameters: "+params);
     }
 
@@ -214,7 +219,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
      */
     private Object parseValue(StaplerRequest request) throws ServletException {
         Map<String, Object> mapResult = new HashMap<String, Object>();
-        Map<String, ParameterDefinition> defs = getParameters();
+        List<ParameterDefinition> defs = getParameters();
 
         JSONArray a = request.getSubmittedForm().optJSONArray("parameter");
         if (a!=null) {
@@ -222,7 +227,11 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
                 JSONObject jo = (JSONObject) o;
                 String name = jo.getString("name");
 
-                ParameterDefinition d = defs.get(name);
+                ParameterDefinition d=null;
+                for (ParameterDefinition def : defs) {
+                    if (def.getName().equals(name))
+                        d = def;
+                }
                 if (d == null)
                     throw new IllegalArgumentException("No such parameter definition: " + name);
 
