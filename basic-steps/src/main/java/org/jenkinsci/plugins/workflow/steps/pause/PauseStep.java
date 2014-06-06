@@ -3,10 +3,14 @@ package org.jenkinsci.plugins.workflow.steps.pause;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Failure;
+import hudson.model.ParameterDefinition;
+import hudson.model.ParameterValue;
 import hudson.model.Run;
 import hudson.model.User;
 import hudson.util.HttpResponses;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.GrantedAuthority;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
@@ -18,8 +22,13 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 
+import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * {@link Step} that pauses for human input.
@@ -41,6 +50,13 @@ public class PauseStep extends AbstractStepImpl {
     @DataBoundSetter
     private String approveBy;
 
+
+    /**
+     * Either a single {@link ParameterDefinition} or a map of them.
+     */
+    @DataBoundSetter
+    private Object params;
+
     private StepContext context;
 
     /**
@@ -58,6 +74,15 @@ public class PauseStep extends AbstractStepImpl {
     public PauseStep(String message) {
         this.message = message;
     }
+
+    public Map<String,ParameterDefinition> getParameters() {
+        if (params instanceof ParameterDefinition)
+            return Collections.singletonMap("value",(ParameterDefinition)params);
+        if (params instanceof Map)
+            return (Map)params;
+        throw new IllegalStateException("Unexpected parameters: "+params);
+    }
+
 
     public String getId() {
         if (id==null)
@@ -92,14 +117,47 @@ public class PauseStep extends AbstractStepImpl {
         return a;
     }
 
-    public HttpResponse doApprove(@QueryParameter boolean redirect) throws IOException {
+    public HttpResponse doApprove(StaplerRequest request, @QueryParameter boolean redirect) throws IOException, ServletException {
         preSettlementCheck();
 
-        // TODO: pass in a value
-        outcome = new Outcome(null,null);
-        context.onSuccess(null);
+        Object v = parseValue(request);
+        outcome = new Outcome(v,null);
+        context.onSuccess(v);
 
         return postSettlement(redirect);
+    }
+
+    /**
+     * Parse the submitted {@link ParameterValue}s
+     */
+    private Object parseValue(StaplerRequest request) throws ServletException {
+        Map<String, Object> mapResult = new HashMap<String, Object>();
+        Map<String, ParameterDefinition> defs = getParameters();
+
+        JSONArray a = request.getSubmittedForm().optJSONArray("parameter");
+        for (Object o : a) {
+            JSONObject jo = (JSONObject) o;
+            String name = jo.getString("name");
+
+            ParameterDefinition d = defs.get(name);
+            if(d==null)
+                throw new IllegalArgumentException("No such parameter definition: " + name);
+
+            ParameterValue v = d.createValue(request, jo);
+            // TODO: we want v.getValueObject() kind of method
+            mapResult.put(name, v);
+        }
+
+        // TODO: perhaps we should return a different object to allow the workflow to look up
+        // who approved it, etc?
+        switch (defs.size()) {
+        case 0:
+            return null;    // no value if there's no parameter
+        case 1:
+            return mapResult.values().iterator().next();
+        default:
+            return mapResult;
+        }
     }
 
     public HttpResponse doReject(@QueryParameter boolean redirect) throws IOException {
