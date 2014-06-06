@@ -7,14 +7,25 @@
     <st:include it="${it.run}" page="sidepanel.jelly" />
     <l:main-panel>
       <ul id="pauses">
-        <j:forEach var="pause" items="${it.pauses}">
+        <j:forEach var="s" items="${it.steps}">
           <li>
-            <a href="step/${pause.id}/">
-              ${pause.message}
+            <a href="step/${s.id}/">
+              ${s.message}
             </a>
           </li>
         </j:forEach>
       </ul>
+      <style>
+        #pauses LI {
+          font-size: 2em;
+          list-style: none;
+          background-image: url('${imagesURL}/48x48/help.png');
+          background-repeat: no-repeat;
+          background-position: left center;
+          padding-left: 64px;
+          line-height: 48px;
+        }
+      </style>
     </l:main-panel>
   </l:layout>
 </st:compress>

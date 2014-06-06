@@ -72,6 +72,8 @@ public class PauseStep extends AbstractStepImpl {
 
     @DataBoundConstructor
     public PauseStep(String message) {
+        if (message==null)
+            message = "Workflow has paused and needs your confirmation before proceeding";
         this.message = message;
     }
 
@@ -80,7 +82,13 @@ public class PauseStep extends AbstractStepImpl {
             return Collections.singletonMap("value",(ParameterDefinition)params);
         if (params instanceof Map)
             return (Map)params;
+        if (params==null)
+            return Collections.emptyMap();
         throw new IllegalStateException("Unexpected parameters: "+params);
+    }
+
+    public Run getRun() {
+        return run;
     }
 
     public String getMessage() {
@@ -138,17 +146,19 @@ public class PauseStep extends AbstractStepImpl {
         Map<String, ParameterDefinition> defs = getParameters();
 
         JSONArray a = request.getSubmittedForm().optJSONArray("parameter");
-        for (Object o : a) {
-            JSONObject jo = (JSONObject) o;
-            String name = jo.getString("name");
+        if (a!=null) {
+            for (Object o : a) {
+                JSONObject jo = (JSONObject) o;
+                String name = jo.getString("name");
 
-            ParameterDefinition d = defs.get(name);
-            if(d==null)
-                throw new IllegalArgumentException("No such parameter definition: " + name);
+                ParameterDefinition d = defs.get(name);
+                if (d == null)
+                    throw new IllegalArgumentException("No such parameter definition: " + name);
 
-            ParameterValue v = d.createValue(request, jo);
-            // TODO: we want v.getValueObject() kind of method
-            mapResult.put(name, v);
+                ParameterValue v = d.createValue(request, jo);
+                // TODO: we want v.getValueObject() kind of method
+                mapResult.put(name, v);
+            }
         }
 
         // TODO: perhaps we should return a different object to allow the workflow to look up

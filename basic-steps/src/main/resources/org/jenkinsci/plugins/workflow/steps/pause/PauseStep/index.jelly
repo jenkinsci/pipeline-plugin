@@ -12,7 +12,7 @@
         ${it.message}
       </p>
 
-      <f:form method="post" action="approve" name="approve">
+      <f:form method="post" action="approve?redirect=true" name="approve">
         <j:forEach var="param" items="${it.parameters}">
           <st:include page="index.jelly" it="${param}"/>
         </j:forEach>
