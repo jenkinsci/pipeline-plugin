@@ -221,9 +221,9 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         Map<String, Object> mapResult = new HashMap<String, Object>();
         List<ParameterDefinition> defs = getParameters();
 
-        JSONArray a = request.getSubmittedForm().optJSONArray("parameter");
-        if (a!=null) {
-            for (Object o : a) {
+        Object params = request.getSubmittedForm().get("parameter");
+        if (params!=null) {
+            for (Object o : JSONArray.fromObject(params)) {
                 JSONObject jo = (JSONObject) o;
                 String name = jo.getString("name");
 
@@ -243,7 +243,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
 
         // TODO: perhaps we should return a different object to allow the workflow to look up
         // who approved it, etc?
-        switch (defs.size()) {
+        switch (mapResult.size()) {
         case 0:
             return null;    // no value if there's no parameter
         case 1:
