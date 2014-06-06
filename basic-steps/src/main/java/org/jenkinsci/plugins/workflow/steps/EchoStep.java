@@ -51,11 +51,6 @@ public class EchoStep extends AbstractStepImpl {
         return true;
     }
 
-    @Override
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
-    }
-
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
         @Override
