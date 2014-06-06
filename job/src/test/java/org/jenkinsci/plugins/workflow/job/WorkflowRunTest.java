@@ -26,13 +26,22 @@ package org.jenkinsci.plugins.workflow.job;
 
 import hudson.FilePath;
 import hudson.model.BallColor;
+import hudson.model.Item;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
+import hudson.model.Result;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
+import hudson.model.User;
 import hudson.model.queue.QueueTaskFuture;
+import hudson.security.ACL;
+import hudson.security.GlobalMatrixAuthorizationStrategy;
+import hudson.security.Permission;
 import java.io.IOException;
+import java.util.Set;
 import javax.inject.Inject;
+import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
@@ -144,6 +153,31 @@ public class WorkflowRunTest {
         // and the color should be now solid blue
         assertFalse(b2.hasntStartedYet());
         assertColor(b2, BallColor.BLUE);
+    }
+
+    @Test public void scriptApproval() throws Exception {
+        r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
+        GlobalMatrixAuthorizationStrategy gmas = new GlobalMatrixAuthorizationStrategy();
+        gmas.add(Jenkins.READ, "devel");
+        for (Permission p : Item.PERMISSIONS.getPermissions()) {
+            gmas.add(p, "devel");
+        }
+        r.jenkins.setAuthorizationStrategy(gmas);
+        final String groovy = "println 'hello'";
+        ACL.impersonate(User.get("devel").impersonate(), new Runnable() {
+            @Override public void run() {
+                p.setDefinition(new CpsFlowDefinition(groovy));
+            }
+        });
+        r.assertLogContains("UnapprovedUsageException", r.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get()));
+        Set<ScriptApproval.PendingScript> pendingScripts = ScriptApproval.get().getPendingScripts();
+        assertEquals(1, pendingScripts.size());
+        ScriptApproval.PendingScript pendingScript = pendingScripts.iterator().next();
+        assertEquals(groovy, pendingScript.script);
+        // only works if configured via WebClient: assertEquals(p, pendingScript.getContext().getItem());
+        assertEquals("devel", pendingScript.getContext().getUser());
+        ScriptApproval.get().approveScript(pendingScript.getHash());
+        r.assertLogContains("hello", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
 
     private void assertColor(WorkflowRun b, BallColor color) throws IOException {

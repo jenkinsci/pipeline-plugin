@@ -24,8 +24,11 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import groovy.lang.GroovyShell;
 import hudson.Extension;
 import hudson.model.Action;
+import hudson.model.Item;
+import hudson.util.FormValidation;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinitionDescriptor;
@@ -35,8 +38,16 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import jenkins.model.Jenkins;
+import org.codehaus.groovy.control.CompilationFailedException;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.Stapler;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -47,7 +58,13 @@ public class CpsFlowDefinition extends FlowDefinition {
 
     @DataBoundConstructor
     public CpsFlowDefinition(String script) {
-        this.script = script;
+        StaplerRequest req = Stapler.getCurrentRequest();
+        this.script = ScriptApproval.get().configuring(script, GroovyLanguage.get(), ApprovalContext.create().withCurrentUser().withItemAsKey(req != null ? req.findAncestorObject(Item.class) : null));
+    }
+
+    private Object readResolve() {
+        ScriptApproval.get().configuring(script, GroovyLanguage.get(), ApprovalContext.create());
+        return this;
     }
 
     public String getScript() {
@@ -67,7 +84,7 @@ public class CpsFlowDefinition extends FlowDefinition {
                 return fa.create(this,owner,actions);
             }
         }
-        return new CpsFlowExecution(getScript(),owner);
+        return new CpsFlowExecution(ScriptApproval.get().using(script, GroovyLanguage.get()), owner);
     }
 
     @Extension
@@ -76,5 +93,15 @@ public class CpsFlowDefinition extends FlowDefinition {
         public String getDisplayName() {
             return "Groovy CPS DSL";
         }
+
+        public FormValidation doCheckScript(@QueryParameter String value) {
+            try {
+                new GroovyShell(Jenkins.getInstance().getPluginManager().uberClassLoader).parse(value);
+            } catch (CompilationFailedException x) {
+                return FormValidation.error(x.getLocalizedMessage());
+            }
+            return ScriptApproval.get().checking(value, GroovyLanguage.get());
+        }
+
     }
 }
