@@ -112,7 +112,7 @@ public class GitStepTest {
         List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = b.getChangeSets();
         assertEquals(1, changeSets.size());
         ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = changeSets.get(0);
-        assertEquals(b, changeSet.getBuild());
+        assertEquals(b, changeSet.getRun());
         assertEquals("git", changeSet.getKind());
         Iterator<? extends ChangeLogSet.Entry> iterator = changeSet.iterator();
         assertTrue(iterator.hasNext());
@@ -167,7 +167,7 @@ public class GitStepTest {
         List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = b.getChangeSets();
         assertEquals(2, changeSets.size());
         ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = changeSets.get(0);
-        assertEquals(b, changeSet.getBuild());
+        assertEquals(b, changeSet.getRun());
         assertEquals("git", changeSet.getKind());
         Iterator<? extends ChangeLogSet.Entry> iterator = changeSet.iterator();
         assertTrue(iterator.hasNext());
