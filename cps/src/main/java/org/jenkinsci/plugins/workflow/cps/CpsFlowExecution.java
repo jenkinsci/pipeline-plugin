@@ -251,6 +251,7 @@ public class CpsFlowExecution extends FlowExecution {
     private GroovyShell buildShell() {
         ImportCustomizer ic = new ImportCustomizer();
         ic.addStarImports(WorkflowMethod.class.getPackage().getName());
+        ic.addStarImports("hudson.model","jenkins.model");
         ic.addStaticStars(CpsBuiltinSteps.class.getName());
 
         CompilerConfiguration cc = new CompilerConfiguration();

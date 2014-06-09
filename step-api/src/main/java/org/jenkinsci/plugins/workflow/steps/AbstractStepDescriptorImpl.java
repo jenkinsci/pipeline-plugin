@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.steps;
 
+import org.codehaus.groovy.reflection.ReflectionCache;
 import org.kohsuke.stapler.ClassDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -60,7 +61,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
 
         String[] names = d.loadConstructorParamNames();
         Constructor c = findConstructor(names.length);
-        Object[] args = buildArguments(arguments, names);
+        Object[] args = buildArguments(arguments, c.getParameterTypes(), names);
 
         try {
             return (Step) c.newInstance(args);
@@ -94,7 +95,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
 
                     m.setAccessible(true);
                     try {
-                        m.invoke(step, buildArguments(arguments, names));
+                        m.invoke(step, buildArguments(arguments, m.getParameterTypes(), names));
                     } catch (IllegalAccessException e) {
                         throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
                     } catch (InvocationTargetException e) {
@@ -105,10 +106,13 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
         }
     }
 
-    private Object[] buildArguments(Map<String, Object> arguments, String[] names) {
+    private Object[] buildArguments(Map<String, Object> arguments, Class[] types, String[] names) {
         Object[] args = new Object[names.length];
         for (int i = 0; i < args.length; i++) {
-            args[i] = arguments.get(names[i]);
+            // this coercion handles comes from ParameterTypes.coerceArgumentsToClasses
+            Object a = arguments.get(names[i]);
+            if (a!=null)
+                args[i] = ReflectionCache.getCachedClass(types[i]).coerceArgument(a);
         }
         return args;
     }

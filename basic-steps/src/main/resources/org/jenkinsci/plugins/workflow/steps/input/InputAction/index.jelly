@@ -1,0 +1,14 @@
+<!--
+  Displays the console output
+-->
+<?jelly escape-by-default='true'?>
+<st:compress xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:flow="/lib/flow">
+  <l:layout title="${it.displayName} : ${it.run}">
+    <st:include it="${it.run}" page="sidepanel.jelly" />
+    <l:main-panel>
+      <j:forEach var="s" items="${it.steps}">
+        <st:include page="index.jelly" it="${s}"/>
+      </j:forEach>
+    </l:main-panel>
+  </l:layout>
+</st:compress>

@@ -57,6 +57,15 @@
         <module>job</module>
         <module>demo</module>
     </modules>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>script-security</artifactId>
+                <version>1.4</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
