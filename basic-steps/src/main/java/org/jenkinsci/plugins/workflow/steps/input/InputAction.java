@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.steps.pause;
+package org.jenkinsci.plugins.workflow.steps.input;
 
 import hudson.model.Run;
 import jenkins.model.RunAction2;
@@ -70,7 +70,7 @@ public class InputAction implements RunAction2 {
     }
 
     /**
-     * Called when {@link InputStep} is completed to remove it from the active pause list.
+     * Called when {@link InputStep} is completed to remove it from the active input list.
      */
     public synchronized void remove(InputStep step) throws IOException {
         steps.remove(step);

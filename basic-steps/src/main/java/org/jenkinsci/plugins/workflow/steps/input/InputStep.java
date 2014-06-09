@@ -1,8 +1,10 @@
-package org.jenkinsci.plugins.workflow.steps.pause;
+package org.jenkinsci.plugins.workflow.steps.input;
 
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Util;
 import hudson.model.Failure;
+import hudson.model.FileParameterValue;
 import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
@@ -26,6 +28,9 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,7 +46,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     private final String message;
 
     /**
-     * Optional ID that uniquely identifies this pause from all others.
+     * Optional ID that uniquely identifies this input from all others.
      */
     private String id;
 
@@ -73,7 +78,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /*package*/ transient Run run;
 
     /**
-     * Result of the pause.
+     * Result of the input.
      */
     private Outcome outcome;
 
@@ -142,7 +147,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     }
 
     /**
-     * If this pause step has been decided one way or the other.
+     * If this input step has been decided one way or the other.
      */
     public boolean isSettled() {
         return outcome!=null;
@@ -152,7 +157,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     public boolean doStart(StepContext context) throws Exception {
         this.context = context;
 
-        // record this pause
+        // record this input
         getPauseAction().add(this);
 
         return false;
@@ -171,7 +176,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /**
      * Called from the form via browser to submit/abort this input step.
      */
-    public HttpResponse doSubmit(StaplerRequest request) throws IOException, ServletException {
+    public HttpResponse doSubmit(StaplerRequest request) throws IOException, ServletException, InterruptedException {
         preSubmissionCheck();
 
         if (request.getParameter("proceed")!=null) {
@@ -187,7 +192,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /**
      * REST endpoint to submit the input.
      */
-    public HttpResponse doProceed(StaplerRequest request) throws IOException, ServletException {
+    public HttpResponse doProceed(StaplerRequest request) throws IOException, ServletException, InterruptedException {
         preSubmissionCheck();
 
         Object v = parseValue(request);
@@ -217,13 +222,13 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /**
      * Parse the submitted {@link ParameterValue}s
      */
-    private Object parseValue(StaplerRequest request) throws ServletException {
+    private Object parseValue(StaplerRequest request) throws ServletException, IOException, InterruptedException {
         Map<String, Object> mapResult = new HashMap<String, Object>();
         List<ParameterDefinition> defs = getParameters();
 
-        JSONArray a = request.getSubmittedForm().optJSONArray("parameter");
-        if (a!=null) {
-            for (Object o : a) {
+        Object params = request.getSubmittedForm().get("parameter");
+        if (params!=null) {
+            for (Object o : JSONArray.fromObject(params)) {
                 JSONObject jo = (JSONObject) o;
                 String name = jo.getString("name");
 
@@ -236,14 +241,13 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
                     throw new IllegalArgumentException("No such parameter definition: " + name);
 
                 ParameterValue v = d.createValue(request, jo);
-                // TODO: we want v.getValueObject() kind of method
-                mapResult.put(name, v);
+                mapResult.put(name, convert(name, v));
             }
         }
 
         // TODO: perhaps we should return a different object to allow the workflow to look up
         // who approved it, etc?
-        switch (defs.size()) {
+        switch (mapResult.size()) {
         case 0:
             return null;    // no value if there's no parameter
         case 1:
@@ -251,6 +255,39 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         default:
             return mapResult;
         }
+    }
+
+    private Object convert(String name, ParameterValue v) throws IOException, InterruptedException {
+        if (v instanceof FileParameterValue) {
+            FileParameterValue fv = (FileParameterValue) v;
+            FilePath fp = new FilePath(run.getRootDir()).child(name);
+            fp.copyFrom(fv.getFile());
+            return fp;
+        }
+
+        // TODO: post
+        try {
+            Method m = v.getClass().getMethod("getValue");
+            return m.invoke(v);
+        } catch (NoSuchMethodException e) {
+            // fall through
+        } catch (IllegalAccessException e) {
+            // fall through
+        } catch (InvocationTargetException e) {
+            throw new IOException("Failed to convert value: "+v,e);
+        }
+
+        try {
+            Field f = v.getClass().getField("value");
+            return f.get(v);
+        } catch (IllegalAccessException e) {
+            // fall through
+        } catch (NoSuchFieldException e) {
+            // fall through
+        }
+
+        // not sure what to do
+        return null;
     }
 
     /**
@@ -276,7 +313,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     }
 
     /**
-     * Checks if the given user can settle this pause.
+     * Checks if the given user can settle this input.
      */
     public boolean canSettle(Authentication a) {
         if (a.getName().equals(submitter))
