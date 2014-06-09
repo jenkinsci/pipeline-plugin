@@ -52,7 +52,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                 assertBuildCompletedSuccessfully();
 
                 buildTable();
-                shouldHaveParalelStepsInTheOrder("a", "b");
+                shouldHaveParallelStepsInTheOrder("a", "b");
             }
         });
     }
@@ -90,7 +90,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                 assert jenkins().getWorkspaceFor(p).child("b.done").exists();
 
                 buildTable();
-                shouldHaveParalelStepsInTheOrder("b","a");
+                shouldHaveParallelStepsInTheOrder("b","a");
             }
         });
     }
@@ -127,12 +127,12 @@ public class ParallelStepTest extends SingleJobTestBase {
                     waitForWorkflowToSuspend();
 
                 assert !e.isComplete() : b.getLog();
-                assert watchDescriptor().getActiveWatches().size()==3;
+                assertEquals(3, watchDescriptor().getActiveWatches().size());
                 assert e.getCurrentHeads().size()==3;
                 assert b.isBuilding();
 
                 buildTable();
-                shouldHaveParalelStepsInTheOrder("a","b","c");
+                shouldHaveParallelStepsInTheOrder("a","b","c");
             }
         });
         story.addStep(new Statement() {
@@ -173,7 +173,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                 buildTable();
                 shouldHaveWatchSteps(ShellStep.DescriptorImpl.class, 3);
                 shouldHaveWatchSteps(WatchYourStep.DescriptorImpl.class, 3);
-                shouldHaveParalelStepsInTheOrder("a","b","c");
+                shouldHaveParallelStepsInTheOrder("a","b","c");
             }
         });
     }
@@ -198,7 +198,7 @@ public class ParallelStepTest extends SingleJobTestBase {
         t.build();
         return t;
     }
-    private void shouldHaveParalelStepsInTheOrder(String... expected) {
+    private void shouldHaveParallelStepsInTheOrder(String... expected) {
         List<String> actual = new ArrayList<String>();
 
         for (Row row : t.getRows()) {
