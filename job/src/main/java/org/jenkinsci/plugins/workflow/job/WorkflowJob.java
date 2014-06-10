@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.workflow.job;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.Launcher;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.Action;
@@ -215,6 +216,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return buildMixIn.newBuild();
     }
 
+    @Deprecated
     @Override public boolean scheduleBuild() {
         return createParameterizedJobMixIn().scheduleBuild();
     }
@@ -223,6 +225,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return createParameterizedJobMixIn().scheduleBuild(c);
     }
 
+    @Deprecated
     @Override public boolean scheduleBuild(int quietPeriod) {
         return createParameterizedJobMixIn().scheduleBuild(quietPeriod);
     }
@@ -282,6 +285,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return getCauseOfBlockage() != null;
     }
 
+    @Deprecated
     @Override public String getWhyBlocked() {
         CauseOfBlockage c = getCauseOfBlockage();
         return c != null ? c.getShortDescription() : null;
@@ -421,23 +425,34 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             return PollingResult.NO_CHANGES;
         }
         for (WorkflowRun.SCMCheckout co : b.checkouts) {
+            if (!co.scm.supportsPolling()) {
+                listener.getLogger().println("polling not supported from " + co.workspace + " on " + co.node);
+            }
             if (co.pollingBaseline == null) {
                 listener.getLogger().println("no polling from " + co.workspace + " on " + co.node);
                 continue;
             }
-            Jenkins j = Jenkins.getInstance();
-            if (j == null) {
-                listener.error("Jenkins is shutting down");
-                continue;
-            }
-            Computer c = j.getComputer(co.node);
-            if (c == null) {
-                listener.error("no such computer " + co.node);
-                continue;
-            }
-            FilePath workspace = new FilePath(c.getChannel(), co.workspace);
             try {
-                PollingResult r = co.scm.compareRemoteRevisionWith(this, workspace.createLauncher(listener), workspace, listener, co.pollingBaseline);
+                FilePath workspace;
+                Launcher launcher;
+                if (co.scm.requiresWorkspaceForPolling()) {
+                    Jenkins j = Jenkins.getInstance();
+                    if (j == null) {
+                        listener.error("Jenkins is shutting down");
+                        continue;
+                    }
+                    Computer c = j.getComputer(co.node);
+                    if (c == null) {
+                        listener.error("no such computer " + co.node);
+                        continue;
+                    }
+                    workspace = new FilePath(c.getChannel(), co.workspace);
+                    launcher = workspace.createLauncher(listener);
+                } else {
+                    workspace = null;
+                    launcher = null;
+                }
+                PollingResult r = co.scm.compareRemoteRevisionWith(this, launcher, workspace, listener, co.pollingBaseline);
                 if (r.hasChanges()) {
                     return r;
                 }
