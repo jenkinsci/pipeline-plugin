@@ -52,6 +52,14 @@ abstract class SCMStep extends Step {
         this.changelog = changelog;
     }
 
+    public boolean isPoll() {
+        return poll;
+    }
+    
+    public boolean isChangelog() {
+        return changelog;
+    }
+
     protected abstract @Nonnull SCM createSCM();
 
     @Override public boolean start(StepContext context) throws Exception {
