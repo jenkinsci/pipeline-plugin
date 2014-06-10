@@ -77,13 +77,24 @@ abstract class SCMStep extends Step {
         FilePath workspace = context.get(FilePath.class);
         TaskListener listener = context.get(TaskListener.class);
         Launcher launcher = context.get(Launcher.class);
-        scm.checkout(run, launcher, workspace, listener, changelogFile);
-        SCMRevisionState pollingBaseline = null;
-        if (poll) {
-            if (!scm.supportsPolling()) {
-                throw new IllegalStateException(scm + " does not support polling");
+        SCMRevisionState baseline = null;
+        Run<?,?> prev = run.getPreviousBuild();
+        if (prev != null) {
+            MultiSCMRevisionState state = prev.getAction(MultiSCMRevisionState.class);
+            if (state != null) {
+                baseline = state.get(scm);
             }
+        }
+        scm.checkout(run, launcher, workspace, listener, changelogFile, baseline);
+        SCMRevisionState pollingBaseline = null;
+        if (poll || changelog) {
             pollingBaseline = scm.calcRevisionsFromBuild(run, workspace, launcher, listener);
+            MultiSCMRevisionState state = run.getAction(MultiSCMRevisionState.class);
+            if (state == null) {
+                state = new MultiSCMRevisionState();
+                run.addAction(state);
+            }
+            state.add(scm, pollingBaseline);
         }
         for (SCMListener l : SCMListener.all()) {
             l.onCheckout(run, scm, workspace, listener, changelogFile, pollingBaseline);
