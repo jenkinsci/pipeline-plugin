@@ -22,6 +22,12 @@
             <version>2.2.2-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>mercurial</artifactId>
+            <!-- TODO SCM-Job branch -->
+            <version>1.51-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cps</artifactId>
             <version>${project.version}</version>
