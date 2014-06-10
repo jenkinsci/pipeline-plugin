@@ -56,6 +56,7 @@ import hudson.scm.PollingResult;
 import hudson.scm.SCM;
 import hudson.search.SearchIndexBuilder;
 import hudson.security.ACL;
+import hudson.slaves.WorkspaceList;
 import hudson.triggers.SCMTrigger;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
@@ -435,6 +436,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             try {
                 FilePath workspace;
                 Launcher launcher;
+                WorkspaceList.Lease lease;
                 if (co.scm.requiresWorkspaceForPolling()) {
                     Jenkins j = Jenkins.getInstance();
                     if (j == null) {
@@ -447,12 +449,21 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
                         continue;
                     }
                     workspace = new FilePath(c.getChannel(), co.workspace);
-                    launcher = workspace.createLauncher(listener);
+                    launcher = workspace.createLauncher(listener).decorateByEnv(getEnvironment(c.getNode(), listener));
+                    lease = c.getWorkspaceList().acquire(workspace, !isConcurrentBuild());
                 } else {
                     workspace = null;
                     launcher = null;
+                    lease = null;
                 }
-                PollingResult r = co.scm.compareRemoteRevisionWith(this, launcher, workspace, listener, co.pollingBaseline);
+                PollingResult r;
+                try {
+                    r = co.scm.compareRemoteRevisionWith(this, launcher, workspace, listener, co.pollingBaseline);
+                } finally {
+                    if (lease != null) {
+                        lease.release();
+                    }
+                }
                 if (r.hasChanges()) {
                     return r;
                 }
