@@ -464,6 +464,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
                         lease.release();
                     }
                 }
+                // TODO have to also record r.remote so we do not repoll; better to keep a Map<String,SCMRevisionState> pollingBaseline as a field here, initialized from SCMCheckout.pollingBaseline
                 if (r.hasChanges()) {
                     return r;
                 }
