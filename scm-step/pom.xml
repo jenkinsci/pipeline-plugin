@@ -28,6 +28,12 @@
             <version>1.51-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>subversion</artifactId>
+            <!-- TODO SCM-Job branch -->
+            <version>2.5-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>cps</artifactId>
             <version>${project.version}</version>
