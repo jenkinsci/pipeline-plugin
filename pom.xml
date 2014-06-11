@@ -28,7 +28,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.556</version>
+        <version>1.557</version>
     </parent>
     <groupId>org.jenkinsci.plugins.workflow</groupId>
     <artifactId>workflow-all</artifactId>
