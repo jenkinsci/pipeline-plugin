@@ -141,13 +141,13 @@ public class SubversionStepTest {
         Iterator<? extends ChangeLogSet.Entry> iterator = changeSet.iterator();
         assertTrue(iterator.hasNext());
         ChangeLogSet.Entry entry = iterator.next();
-        assertEquals("[file2]", entry.getAffectedPaths().toString());
+        assertEquals("[/file2]", entry.getAffectedPaths().toString());
         assertFalse(iterator.hasNext());
         changeSet = changeSets.get(1);
         iterator = changeSet.iterator();
         assertTrue(iterator.hasNext());
         entry = iterator.next();
-        assertEquals("[otherfile2]", entry.getAffectedPaths().toString());
+        assertEquals("[/otherfile2]", entry.getAffectedPaths().toString());
         assertFalse(iterator.hasNext());
     }
 
