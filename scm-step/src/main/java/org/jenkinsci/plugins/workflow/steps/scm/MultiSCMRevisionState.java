@@ -28,6 +28,8 @@ import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 
 /**
@@ -43,7 +45,11 @@ final class MultiSCMRevisionState extends SCMRevisionState {
 	}
 
 	public void add(@Nonnull SCM scm, @Nonnull SCMRevisionState scmState) {
-		revisionStates.put(scm.getKey(), scmState);
+        String key = scm.getKey();
+        SCMRevisionState old = revisionStates.put(key, scmState);
+        if (old != null) {
+            Logger.getLogger(MultiSCMRevisionState.class.getName()).log(Level.WARNING, "overriding old revision state {0} from {1}", new Object[] {old, key});
+        }
 	}
 
 	public SCMRevisionState get(@Nonnull SCM scm) {
