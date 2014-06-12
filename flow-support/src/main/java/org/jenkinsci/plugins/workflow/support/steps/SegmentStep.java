@@ -117,6 +117,7 @@ public class SegmentStep extends Step {
                     LOGGER.log(Level.WARNING, null, x);
                 }
             }
+            LOGGER.log(Level.FINE, "load: {0}", segmentsByNameByJob);
         }
     }
 
@@ -126,6 +127,7 @@ public class SegmentStep extends Step {
         } catch (IOException x) {
             LOGGER.log(Level.WARNING, null, x);
         }
+        LOGGER.log(Level.FINE, "save: {0}", segmentsByNameByJob);
     }
 
     private static synchronized void enter(Run<?,?> r, StepContext context, String name, Integer concurrency) {
@@ -200,6 +202,7 @@ public class SegmentStep extends Step {
 
     private static synchronized void exit(Run<?,?> r) {
         load();
+        LOGGER.log(Level.FINE, "exit {0}: {1}", new Object[] {r, segmentsByNameByJob});
         Job<?,?> job = r.getParent();
         String jobName = job.getFullName();
         Map<String,Segment> segmentsByName = segmentsByNameByJob.get(jobName);
@@ -208,7 +211,8 @@ public class SegmentStep extends Step {
         }
         boolean modified = false;
         for (Segment segment : segmentsByName.values()) {
-            if (segment.holding.remove(r.number)) {
+            if (segment.holding.contains(r.number)) {
+                segment.holding.remove(r.number); // XSTR-757: do not rely on return value of TreeSet.remove(Object)
                 modified = true;
                 if (segment.waitingContext != null) {
                     println(segment.waitingContext, "Unblocked since " + r.getDisplayName() + " finished");
@@ -290,6 +294,9 @@ public class SegmentStep extends Step {
         @CheckForNull StepContext waitingContext;
         /** number of the waiting build, if any */
         @Nullable Integer waitingBuild;
+        @Override public String toString() {
+            return "Segment[holding=" + holding + ",waitingBuild=" + waitingBuild + ",concurrency=" + concurrency + "]";
+        }
     }
 
     @Extension public static final class Listener extends RunListener<Run<?,?>> {
