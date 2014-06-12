@@ -126,7 +126,8 @@ public class ParallelStepTest extends SingleJobTestBase {
                 for (int i=0; i<3; i++)
                     waitForWorkflowToSuspend();
 
-                assert !e.isComplete() : b.getLog();
+                System.out.println(b.getLog());
+                assert !e.isComplete();
                 assertEquals(3, watchDescriptor().getActiveWatches().size());
                 assert e.getCurrentHeads().size()==3;
                 assert b.isBuilding();
