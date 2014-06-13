@@ -188,6 +188,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (logsToCopy == null) { // finished
             return;
         }
+        if (Jenkins.getInstance()==null)
+            return; // shutting down
         Iterator<Map.Entry<String,Long>> it = logsToCopy.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String,Long> entry = it.next();
@@ -233,7 +235,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     /** Hack to allow {@link #execution} to use an {@link Owner} referring to this run, even when it has not yet been loaded. */
     @Override public void reload() throws IOException {
         LOADING_RUNS.put(key(), this);
-        super.reload();
+
+        // super.reload() forces result to be FAILURE, so working around that
+        new XmlFile(XSTREAM,new File(getRootDir(),"build.xml")).unmarshal(this);
     }
 
     @Override protected void onLoad() {

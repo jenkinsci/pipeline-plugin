@@ -26,6 +26,8 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
+import com.google.common.util.concurrent.AbstractFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import groovy.lang.Closure;
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -39,10 +41,13 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.*;
@@ -156,12 +161,73 @@ public final class CpsThreadGroup implements Serializable {
      * Schedules the execution of all the runnable threads.
      */
     public Future<?> scheduleRun() {
-        return runner.submit(new Callable<Void>() {
-            public Void call() throws Exception {
+        final Future<Future<?>> f = runner.submit(new Callable<Future<?>>() {
+            public Future<?> call() throws Exception {
                 run();
-                return null;
+                // we ensure any tasks submitted during run() will complete before we declare us complete
+                // those include things like notifying listeners or updating various other states
+                // runner is a single-threaded queue, so running a no-op and waiting for its completion
+                // ensures that everything submitted in front of us has finished.
+
+                return runner.submit(NOOP);
             }
         });
+
+        // unfortunately that means we have to wait for Future of Future,
+        // so we need a rather unusual implementation of Future to hide that behind the scene.
+        return new Future<Object>() {
+            @Override
+            public boolean cancel(boolean mayInterruptIfRunning) {
+                if (!f.isDone())
+                    return f.cancel(mayInterruptIfRunning);
+
+                try {
+                    return f.get().cancel(mayInterruptIfRunning);
+                } catch (InterruptedException e) {
+                    throw new AssertionError(e);
+                } catch (ExecutionException e) {
+                    return false;
+                }
+            }
+
+            @Override
+            public boolean isCancelled() {
+                if (f.isCancelled())    return true;
+                if (!f.isDone())        return false;
+
+                try {
+                    return f.get().isCancelled();
+                } catch (InterruptedException e) {
+                    throw new AssertionError(e);
+                } catch (ExecutionException e) {
+                    return false;
+                }
+            }
+
+            @Override
+            public boolean isDone() {
+                if (!f.isDone())    return false;
+
+                try {
+                    return f.get().isDone();
+                } catch (InterruptedException e) {
+                    throw new AssertionError(e);
+                } catch (ExecutionException e) {
+                    return false;
+                }
+            }
+
+            @Override
+            public Object get() throws InterruptedException, ExecutionException {
+                return f.get().get();
+            }
+
+            @Override
+            public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                // FIXME: this ends up waiting up to 2x
+                return f.get(timeout,unit).get(timeout,unit);
+            }
+        };
     }
 
     /**
@@ -272,4 +338,9 @@ public final class CpsThreadGroup implements Serializable {
     /*package*/ static CpsThreadGroup current() {
         return CpsVmThread.current().threadGroup;
     }
+
+    private static final Runnable NOOP = new Runnable() {
+        public void run() {
+        }
+    };
 }

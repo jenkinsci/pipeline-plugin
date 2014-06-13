@@ -1,10 +1,11 @@
 def notify(msg) {
     sh "echo ${msg}"
+    sh "echo ${msg} 2"
+    sh "echo ${msg} 3"
 }
 
 with.node {
     with.ws {}
-    sh 'echo start'
     def x = []
     for (def i=0; i<1024; i++) {
         def j = i;
@@ -12,5 +13,4 @@ with.node {
     }
 
     parallel(x)
-    sh 'echo end'
 }

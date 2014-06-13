@@ -184,6 +184,17 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 startBuilding().get();
                 assertBuildCompletedSuccessfully();
+
+                // count number of shell steps
+                FlowGraphTable t = buildTable();
+                int shell=0;
+                for (Row r : t.getRows()) {
+                    if (r.getNode() instanceof StepAtomNode) {
+                        if (((StepAtomNode)r.getNode()).getDescriptor() instanceof ShellStep.DescriptorImpl)
+                        shell++;
+                    }
+                }
+                assertEquals(1024*3,shell);
             }
         });
     }

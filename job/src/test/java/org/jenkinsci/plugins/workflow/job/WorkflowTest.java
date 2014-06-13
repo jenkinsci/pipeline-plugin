@@ -34,16 +34,16 @@ import hudson.slaves.DumbSlave;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
-import java.io.File;
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
-import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.JenkinsRule;
+
+import java.io.File;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Tests of workflows that involve restarting Jenkins in the middle.
@@ -55,7 +55,8 @@ public class WorkflowTest extends SingleJobTestBase {
      */
     @Test public void demo() throws Exception {
         story.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
+            @Override
+            public void evaluate() throws Throwable {
                 p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition("steps.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))"));
                 startBuilding();
@@ -65,7 +66,8 @@ public class WorkflowTest extends SingleJobTestBase {
             }
         });
         story.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
+            @Override
+            public void evaluate() throws Throwable {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
                 for (int i = 0; i < 600 && !Queue.getInstance().isEmpty(); i++) {
@@ -221,14 +223,15 @@ public class WorkflowTest extends SingleJobTestBase {
                 p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("FLAG", null)));
                 dir.set(slaveRoot + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
-                    "with.node('slave') {\n" + // this locks the WS
-                    "    sh('echo default=$PWD')\n" +
-                    "    with.ws {\n" + // and this locks a second one
-                    "        sh('echo before=$PWD')\n" +
-                    "        steps.watch(new File('" + story.j.jenkins.getRootDir() + "', FLAG))\n" +
-                    "        sh('echo after=$PWD')\n" +
-                    "    }\n" +
-                    "}"));
+                        "with.node('slave') {\n" + // this locks the WS
+                                "    sh('echo default=$PWD')\n" +
+                                "    with.ws {\n" + // and this locks a second one
+                                "        sh('echo before=$PWD')\n" +
+                                "        steps.watch(new File('" + story.j.jenkins.getRootDir() + "', FLAG))\n" +
+                                "        sh('echo after=$PWD')\n" +
+                                "    }\n" +
+                                "}"
+                ));
                 p.save();
                 WorkflowRun b1 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "one"))).waitForStart();
                 CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
