@@ -279,12 +279,13 @@ public final class ExecutorStep extends Step {
                     }
                     Computer computer = exec.getOwner();
                     // Set up context for other steps inside this one.
-                    PlaceholderTask task = PlaceholderTask.this;
                     Node node = computer.getNode();
                     if (node == null) {
                         throw new IllegalStateException("running computer lacks a node");
                     }
-                    Launcher launcher = node.createLauncher(context.get(TaskListener.class));
+                    TaskListener listener = context.get(TaskListener.class);
+                    listener.getLogger().println("Running on " + computer.getDisplayName()); // TODO hyperlink
+                    Launcher launcher = node.createLauncher(listener);
                     if (cookie == null) {
                         // First time around.
                         cookie = UUID.randomUUID().toString();
