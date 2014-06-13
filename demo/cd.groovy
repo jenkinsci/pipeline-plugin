@@ -11,9 +11,11 @@ def runWithServer(body) {
 }
 
 segment('Dev')
-with.node('heavy') {
+with.node(/*'heavy'*/) {
     with.ws() {
-        steps.git(url: '…')
+        def src = 'https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git'
+        //steps.git(url: src)
+        sh("if [ -d .git ]; then git pull; else git clone ${src} .; fi")
         sh('mvn clean package')
         steps.archive('target/x.war')
         segment('QA')
@@ -33,7 +35,7 @@ with.node('heavy') {
 input(message: "Does http://localhost/staging/ look good?")
 checkpoint() // TODO this must copy artifacts from original to this
 segment(value: 'Production', concurrency: 1)
-with.node('light') {
+with.node(/*'light'*/) {
     with.ws() {
         unarchive(mapping: ['target/x.war' : 'x.war'])
         sh('cp target/x.war /tmp/webapps/production.war')
