@@ -91,7 +91,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         if (d==null)
             throw new NoSuchMethodError("No such DSL method exists: "+name);
 
-        final NamedArgsAndClosure ps = parseArgs(args);
+        final NamedArgsAndClosure ps = parseArgs(d,args);
 
         CpsThread thread = CpsThread.current();
 
@@ -185,11 +185,13 @@ public class DSL extends GroovyObjectSupport implements Serializable {
      * <p>
      * This handling is designed after how Java defines literal syntax for {@link Annotation}.
      */
-    private NamedArgsAndClosure parseArgs(Object arg) {
+    private NamedArgsAndClosure parseArgs(StepDescriptor d, Object arg) {
+        boolean expectsBlock = d.takesImplicitBlockArgument();
+
         if (arg instanceof Map)
             // TODO: convert the key to a string
             return new NamedArgsAndClosure((Map<String,Object>) arg, null);
-        if (arg instanceof Closure)
+        if (arg instanceof Closure && expectsBlock)
             return new NamedArgsAndClosure(Collections.<String,Object>emptyMap(),(Closure)arg);
 
         if (arg instanceof Object[]) {// this is how Groovy appears to pack argument list into one Object for invokeMethod
@@ -200,7 +202,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             Closure c=null;
 
             Object last = a.get(a.size()-1);
-            if (last instanceof Closure) {
+            if (last instanceof Closure && expectsBlock) {
                 c = (Closure)last;
                 a = a.subList(0,a.size()-1);
             }
