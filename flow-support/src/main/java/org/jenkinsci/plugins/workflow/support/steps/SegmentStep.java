@@ -196,7 +196,7 @@ public class SegmentStep extends Step {
             segment.waitingContext = context;
             println(context, "Waiting for builds " + segment.holding);
         }
-        cleanUp(jobName);
+        cleanUp(job, jobName);
         save();
     }
 
@@ -223,18 +223,28 @@ public class SegmentStep extends Step {
             }
         }
         if (modified) {
-            cleanUp(jobName);
+            cleanUp(job, jobName);
             save();
         }
     }
 
-    private static void cleanUp(String jobName) {
+    private static void cleanUp(Job<?,?> job, String jobName) {
         Map<String,Segment> segmentsByName = segmentsByNameByJob.get(jobName);
         assert segmentsByName != null;
         Iterator<Map.Entry<String,Segment>> it = segmentsByName.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String,Segment> entry = it.next();
-            if (entry.getValue().holding.isEmpty()) {
+            Set<Integer> holding = entry.getValue().holding;
+            Iterator<Integer> it2 = holding.iterator();
+            while (it2.hasNext()) {
+                Integer number = it2.next();
+                if (job.getBuildByNumber(number) == null) {
+                    // Deleted at some point but did not properly clean up from exit(…).
+                    LOGGER.log(Level.WARNING, "Cleaning up apparently deleted {0}#{1}", new Object[] {jobName, number});
+                    it2.remove();
+                }
+            }
+            if (holding.isEmpty()) {
                 assert entry.getValue().waitingContext == null;
                 it.remove();
             }
