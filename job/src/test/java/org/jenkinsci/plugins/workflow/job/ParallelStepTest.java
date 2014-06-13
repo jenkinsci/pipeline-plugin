@@ -96,6 +96,32 @@ public class ParallelStepTest extends SingleJobTestBase {
     }
 
     /**
+     * Nameless closures.
+     */
+    @Test
+    public void nameslessBranches() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                FilePath aa = jenkins().getRootPath().child("a");
+                FilePath bb = jenkins().getRootPath().child("b");
+
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(join(
+                    "with.node {",
+                    "  parallel( { sh('touch "+aa+"'); }, { sh('touch "+bb+"'); } )",
+                    "}"
+                )));
+
+                startBuilding().get();
+                assertBuildCompletedSuccessfully();
+
+                assertTrue(aa.exists());
+                assertTrue(bb.exists());
+            }
+        });
+    }
+
+    /**
      * Restarts in the middle of a parallel workflow.
      */
     @Test
