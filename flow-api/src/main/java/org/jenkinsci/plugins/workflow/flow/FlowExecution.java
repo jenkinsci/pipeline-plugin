@@ -145,7 +145,8 @@ public abstract class FlowExecution implements FlowActionStorage {
     }
 
     /**
-     * Mainly for giving each {@link FlowNode} a portion fo the URL space.
+     * Loads a node by its ID.
+     * Also gives each {@link FlowNode} a portion of the URL space.
      *
      * @see FlowNode#getId()
      */
