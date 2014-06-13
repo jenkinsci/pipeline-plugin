@@ -26,8 +26,8 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.CpsTransformer;
+import com.cloudbees.groovy.cps.NonCPS;
 import com.cloudbees.groovy.cps.Outcome;
-import com.cloudbees.groovy.cps.WorkflowMethod;
 import com.cloudbees.groovy.cps.impl.ConstantBlock;
 import com.cloudbees.groovy.cps.impl.ThrowBlock;
 import com.google.common.util.concurrent.FutureCallback;
@@ -250,7 +250,7 @@ public class CpsFlowExecution extends FlowExecution {
 
     private GroovyShell buildShell() {
         ImportCustomizer ic = new ImportCustomizer();
-        ic.addStarImports(WorkflowMethod.class.getPackage().getName());
+        ic.addStarImports(NonCPS.class.getPackage().getName());
         ic.addStarImports("hudson.model","jenkins.model");
         ic.addStaticStars(CpsBuiltinSteps.class.getName());
 

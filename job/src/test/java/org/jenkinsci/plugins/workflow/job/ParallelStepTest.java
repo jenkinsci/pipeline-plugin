@@ -130,7 +130,6 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                    "@WorkflowMethod",
                     "def touch(f) { sh 'touch '+f }",
                     "with.node {",
                     "  parallel( { touch('"+aa+"'); }, { touch('"+bb+"'); } )",
