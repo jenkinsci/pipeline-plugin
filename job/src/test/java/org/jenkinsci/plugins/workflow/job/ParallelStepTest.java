@@ -145,6 +145,34 @@ public class ParallelStepTest extends SingleJobTestBase {
         });
     }
 
+    @Test
+    public void localMethodCallWithinBranch2() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(join(
+                    "def notify(msg) {",
+                    "  sh \"echo ${msg}\"",
+                    "}",
+                    "with.node {",
+                    "  with.ws {",
+                    "    sh 'echo start'",
+                    "    steps.parallel(one: {",
+                    "      notify('one')",
+                    "    }, two: {",
+                    "      notify('two')",
+                    "    })",
+                    "    sh 'echo end'",
+                    "  }",
+                    "}"
+                )));
+
+                startBuilding().get();
+                assertBuildCompletedSuccessfully();
+            }
+        });
+    }
+
 
     /**
      * Restarts in the middle of a parallel workflow.
