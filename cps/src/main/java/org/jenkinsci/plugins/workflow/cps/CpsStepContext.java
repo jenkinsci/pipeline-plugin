@@ -43,7 +43,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
+import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 
 import javax.annotation.CheckForNull;
 import java.io.IOException;
@@ -57,7 +57,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
-import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 
 /**
  * {@link StepContext} implementation for CPS.
@@ -231,7 +230,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
             bodyInvokers.add(b);
         } else {
             try {
-                Futures.addCallback(getExecution().programPromise, new FutureCallback<CpsThreadGroup>() {
+                getExecution().runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
                     @Override
                     public void onSuccess(CpsThreadGroup g) {
                         CpsThread thread = getThread(g);
@@ -322,27 +321,21 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                     parents.add(flow.getNode(head));
                 }
 
-                // first we need to wait for programPromise to fullfil CpsThreadGroup, then we need to run in its runner, phew!
-                Futures.addCallback(flow.programPromise, new FutureCallback<CpsThreadGroup>() {
+                flow.runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
                     @Override
-                    public void onSuccess(final CpsThreadGroup g) {
-                        g.runner.submit(new Runnable() {
-                            @Override
-                            public void run() {
-                                g.unexport(body);
-                                body = null;
-                                CpsThread thread = getThread(g);
-                                if (thread != null) {
-                                    if (n instanceof StepStartNode) {
-                                        FlowNode tip = thread.head.get();
-                                        parents.set(0,tip);
+                    public void onSuccess(CpsThreadGroup g) {
+                        g.unexport(body);
+                        body = null;
+                        CpsThread thread = getThread(g);
+                        if (thread != null) {
+                            if (n instanceof StepStartNode) {
+                                FlowNode tip = thread.head.get();
+                                parents.set(0, tip);
 
-                                        thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
-                                    }
-                                    thread.resume(getOutcome());
-                                }
+                                thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
                             }
-                        });
+                            thread.resume(getOutcome());
+                        }
                     }
 
                     /**

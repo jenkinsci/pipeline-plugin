@@ -179,6 +179,8 @@ public class CpsFlowExecution extends FlowExecution {
      * This object represents a {@link Future} for filling in {@link CpsThreadGroup}.
      *
      * TODO: provide a mechanism to diagnose how far along this process is.
+     *
+     * @see #runInCpsVmThread(FutureCallback)
      */
     @Nonnull
     public transient ListenableFuture<CpsThreadGroup> programPromise;
@@ -393,6 +395,37 @@ public class CpsFlowExecution extends FlowExecution {
     /*package*/ File getProgramDataFile() throws IOException {
         return new File(owner.getRootDir(), "program.dat");
     }
+
+    /**
+     * Execute a task in {@link CpsVmThread} to safely access {@link CpsThreadGroup} internal states.
+     *
+     * <p>
+     * If the {@link CpsThreadGroup} deserializatoin fails, {@link FutureCallback#onFailure(Throwable)} will
+     * be invoked (on a random thread that's not {@link CpsVmThread}, since {@link CpsVmThread} cannot exist.)
+     */
+    void runInCpsVmThread(final FutureCallback<CpsThreadGroup> callback) {
+        // first we need to wait for programPromise to fullfil CpsThreadGroup, then we need to run in its runner, phew!
+        Futures.addCallback(programPromise, new FutureCallback<CpsThreadGroup>() {
+            @Override
+            public void onSuccess(final CpsThreadGroup g) {
+                g.runner.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(g);
+                    }
+                });
+            }
+
+            /**
+             * Program state failed to load.
+             */
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(t);
+            }
+        });
+    }
+
 
     /**
      * Waits for the workflow to move into the SUSPENDED state.
