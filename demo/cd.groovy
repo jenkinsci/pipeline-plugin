@@ -14,33 +14,29 @@ def runWithServer(body) {
 
 steps.segment('Dev')
 with.node(/*'heavy'*/) {
-    with.ws() {
-        def src = 'https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git'
-        // TODO pending SCM-Job merge steps.git(url: src)
-        sh("if [ -d .git ]; then git pull; else git clone ${src} tmp && mv tmp/.git tmp/* . && rmdir tmp; fi")
-        sh('mvn clean package')
-        steps.archive('target/x.war')
-        segment('QA')
-        parallel(sometests: {
-            runWithServer {url ->
-                sh("mvn -f sometests test -Durl=${url}")
-            }
-        }, othertests: {
-            runWithServer {port ->
-                sh("mvn -f othertests test -Durl=${url}")
-            }
-        })
-        steps.segment(value: 'Staging', concurrency: 1)
-        sh('cp target/x.war /tmp/webapps/staging.war')
-    }
+    def src = 'https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git'
+    // TODO pending SCM-Job merge steps.git(url: src)
+    sh("if [ -d .git ]; then git pull; else git clone ${src} tmp && mv tmp/.git tmp/* . && rmdir tmp; fi")
+    sh('mvn clean package')
+    steps.archive('target/x.war')
+    segment('QA')
+    parallel(sometests: {
+        runWithServer {url ->
+            sh("mvn -f sometests test -Durl=${url}")
+        }
+    }, othertests: {
+        runWithServer {port ->
+            sh("mvn -f othertests test -Durl=${url}")
+        }
+    })
+    steps.segment(value: 'Staging', concurrency: 1)
+    sh('cp target/x.war /tmp/webapps/staging.war')
 }
 steps.input(message: "Does http://localhost/staging/ look good?")
 steps.checkpoint() // if have cps-checkpoint plugin installed, else comment out
 steps.segment(value: 'Production', concurrency: 1)
 with.node(/*'light'*/) {
-    with.ws() {
-        steps.unarchive(mapping: ['target/x.war' : 'x.war'])
-        sh('cp target/x.war /tmp/webapps/production.war')
-        steps.echo 'Deployed to http://localhost/production/'
-    }
+    steps.unarchive(mapping: ['target/x.war' : 'x.war'])
+    sh('cp target/x.war /tmp/webapps/production.war')
+    steps.echo 'Deployed to http://localhost/production/'
 }

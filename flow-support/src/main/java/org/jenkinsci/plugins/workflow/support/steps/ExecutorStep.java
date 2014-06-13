@@ -32,21 +32,25 @@ import org.jenkinsci.plugins.workflow.support.PrioritizedTask;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.Executor;
+import hudson.model.Job;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.ResourceList;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.model.TopLevelItem;
 import hudson.model.queue.AbstractQueueTask;
 import hudson.model.queue.SubTask;
 import hudson.remoting.ChannelClosedException;
 import hudson.remoting.RequestAbortedException;
 import hudson.security.AccessControlled;
+import hudson.slaves.WorkspaceList;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
@@ -244,13 +248,16 @@ public final class ExecutorStep extends Step {
         private static final class Callback implements FutureCallback<Object>, Serializable {
 
             private final String cookie;
+            private final WorkspaceList.Lease lease;
 
-            Callback(String cookie) {
+            Callback(String cookie, WorkspaceList.Lease lease) {
                 this.cookie = cookie;
+                this.lease = lease;
             }
 
             @Override public void onSuccess(Object returnValue) {
                 LOGGER.log(Level.FINE, "onSuccess {0}", cookie);
+                lease.release();
                 StepContext context = finish(cookie);
                 if (context != null) {
                     context.onSuccess(returnValue);
@@ -259,6 +266,7 @@ public final class ExecutorStep extends Step {
 
             @Override public void onFailure(Throwable t) {
                 LOGGER.log(Level.FINE, "onFailure {0}", cookie);
+                lease.release();
                 StepContext context = finish(cookie);
                 if (context != null) {
                     context.onFailure(t);
@@ -284,7 +292,6 @@ public final class ExecutorStep extends Step {
                         throw new IllegalStateException("running computer lacks a node");
                     }
                     TaskListener listener = context.get(TaskListener.class);
-                    listener.getLogger().println("Running on " + computer.getDisplayName()); // TODO hyperlink
                     Launcher launcher = node.createLauncher(listener);
                     if (cookie == null) {
                         // First time around.
@@ -296,7 +303,17 @@ public final class ExecutorStep extends Step {
                         synchronized (runningTasks) {
                             runningTasks.put(cookie, context);
                         }
-                        context.invokeBodyLater(new Callback(cookie), exec, computer, computer.getChannel(), env);
+                        // For convenience, automatically a workspace, like WorkspaceStep would:
+                        Run<?,?> r = context.get(Run.class);
+                        Job<?,?> j = r.getParent();
+                        if (!(j instanceof TopLevelItem)) {
+                            throw new Exception(j + " must be a top-level job");
+                        }
+                        FilePath p = node.getWorkspaceFor((TopLevelItem) j);
+                        WorkspaceList.Lease lease = computer.getWorkspaceList().allocate(p);
+                        FilePath workspace = lease.path;
+                        listener.getLogger().println("Running on " + computer.getDisplayName() + " in " + workspace); // TODO hyperlink
+                        context.invokeBodyLater(new Callback(cookie, lease), exec, computer, computer.getChannel(), env, workspace);
                         LOGGER.log(Level.FINE, "started {0}", cookie);
                     } else {
                         // just rescheduled after a restart; wait for task to complete
@@ -366,9 +383,10 @@ public final class ExecutorStep extends Step {
 
         @Override public Set<Class<?>> getRequiredContext() {
             Set<Class<?>> r = new HashSet<Class<?>>();
-            // FlowExecution useful but currently not required (ditto Run, currently)
+            // FlowExecution useful but currently not required
             r.add(TaskListener.class);
             r.add(EnvVars.class);
+            r.add(Run.class);
             return r;
         }
 

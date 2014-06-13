@@ -25,14 +25,12 @@
 package org.jenkinsci.plugins.workflow.support;
 
 import hudson.EnvVars;
-import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Computer;
 import hudson.model.Job;
 import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.TopLevelItem;
 import hudson.util.StreamTaskListener;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -90,19 +88,6 @@ public abstract class DefaultStepContext extends StepContext {
             return key.cast(getExecution().getOwner().getExecutable());
         } else if (key == Job.class) {
             return key.cast(get(Run.class).getParent());
-        } else if (key == FilePath.class) {
-            // TODO this would better be handled by ExecutionStep defaulting to acquiring a workspace lock, as WorkspaceStep does; cf. WorkflowTest.buildShellScriptOnSlave and others
-            Node n = get(Node.class);
-            FilePath fp = null;
-            if (n != null) {
-                fp = n.getWorkspaceFor((TopLevelItem) get(Job.class));
-            }
-            /*
-            if (fp == null) {
-                throw new IllegalStateException("There is no current directory. Perhaps you forgot to call with.ws?");
-            }
-            */
-            return key.cast(fp);
         } else if (key == Launcher.class) {
             Node n = get(Node.class);
             if (n == null) {

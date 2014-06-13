@@ -31,11 +31,9 @@ Executors are not consumed while the flow is waiting.
 ## Example script
 
 ```
-with.node('linux') { // grab a slave
-  with.ws { // allocate a workspace
-    sh('git clone …');
-    sh('mvn verify');
-  }
+with.node('linux') { // grab a slave and allocate a workspace
+  sh('git clone …');
+  sh('mvn verify');
 }
 ```
 
