@@ -1,5 +1,6 @@
 // Prep: mkdir /tmp/webapps && docker run -p 80:8080 -v /tmp/webapps:/opt/jetty/webapps jglick/jetty-demo &
 
+@WorkflowMethod
 def runWithServer(body) {
     def id = UUID.randomUUID().toString()
     sh("cp target/x.war /tmp/webapps/${id}.war")
@@ -14,7 +15,7 @@ segment('Dev')
 with.node(/*'heavy'*/) {
     with.ws() {
         def src = 'https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git'
-        //steps.git(url: src)
+        // TODO pending SCM-Job merge steps.git(url: src)
         sh("if [ -d .git ]; then git pull; else git clone ${src} .; fi")
         sh('mvn clean package')
         steps.archive('target/x.war')
@@ -28,17 +29,17 @@ with.node(/*'heavy'*/) {
                 sh("mvn -f othertests test -Durl=${url}")
             }
         })
-        segment(value: 'Staging', concurrency: 1)
+        steps.segment(value: 'Staging', concurrency: 1)
         sh('cp target/x.war /tmp/webapps/staging.war')
     }
 }
-input(message: "Does http://localhost/staging/ look good?")
-checkpoint() // TODO this must copy artifacts from original to this
-segment(value: 'Production', concurrency: 1)
+steps.input(message: "Does http://localhost/staging/ look good?")
+steps.checkpoint() // if have cps-checkpoint plugin installed, else comment out
+steps.segment(value: 'Production', concurrency: 1)
 with.node(/*'light'*/) {
     with.ws() {
-        unarchive(mapping: ['target/x.war' : 'x.war'])
+        steps.unarchive(mapping: ['target/x.war' : 'x.war'])
         sh('cp target/x.war /tmp/webapps/production.war')
-        echo 'Deployed to http://localhost/production/'
+        steps.echo 'Deployed to http://localhost/production/'
     }
 }
