@@ -1,3 +1,4 @@
+// TODO consider using https://github.com/cloudbees/jenkins-docker-executors to host everything (install graphviz on Jenkins node)
 // Prep: mkdir /tmp/webapps && docker run -p 80:8080 -v /tmp/webapps:/opt/jetty/webapps jglick/jetty-demo &
 
 @WorkflowMethod
@@ -11,7 +12,7 @@ def runWithServer(body) {
     }
 }
 
-segment('Dev')
+steps.segment('Dev')
 with.node(/*'heavy'*/) {
     with.ws() {
         def src = 'https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git'
