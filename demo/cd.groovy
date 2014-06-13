@@ -21,11 +21,11 @@ with.node(/*'heavy'*/) {
         sh('mvn clean package')
         steps.archive('target/x.war')
         segment('QA')
-        parallel({
+        parallel(sometests: {
             runWithServer {url ->
                 sh("mvn -f sometests test -Durl=${url}")
             }
-        }, {
+        }, othertests: {
             runWithServer {port ->
                 sh("mvn -f othertests test -Durl=${url}")
             }
