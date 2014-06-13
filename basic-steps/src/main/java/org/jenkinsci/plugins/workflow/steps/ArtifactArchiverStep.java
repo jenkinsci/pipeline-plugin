@@ -7,7 +7,6 @@ import hudson.Launcher;
 import hudson.Util;
 import hudson.model.BuildListener;
 import hudson.model.Run;
-import hudson.model.StreamBuildListener;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStep;
@@ -29,7 +28,7 @@ import java.util.Map;
  *
  * @author Kohsuke Kawaguchi
  */
-public class ArtifactArchiverStep extends AbstractStepImpl {
+public class ArtifactArchiverStep extends AbstractSynchronousStepImpl<Void> {
 
     @StepContextParameter
     private transient TaskListener listener;
@@ -61,11 +60,11 @@ public class ArtifactArchiverStep extends AbstractStepImpl {
     }
 
     @Override
-    protected boolean doStart(StepContext context) throws Exception {
+    protected Void run(StepContext context) throws Exception {
         String includes = envVars.expand(this.includes);
         Map<String,String> files = ws.act(new ListFiles(includes, excludes));
         build.pickArtifactManager().archive(ws, launcher, fakeBuildListener(), files);
-        return true;
+        return null;
     }
 
     private BuildListener fakeBuildListener() {
