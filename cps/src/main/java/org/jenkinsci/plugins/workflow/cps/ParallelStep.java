@@ -38,6 +38,7 @@ public class ParallelStep extends Step {
     }
 
     @Override
+    @CpsVmThreadOnly("CPS program calls this, which is run by CpsVmThread")
     public boolean start(StepContext context) throws Exception {
         // TODO: we need to take over the flow node creation for a single StepStart/End pair that wraps
         // around all the subflows (and not let DSL.invokeMethod creates AtomNode)

@@ -26,29 +26,28 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
-import org.jenkinsci.plugins.workflow.actions.ErrorAction;
-import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
-import org.jenkinsci.plugins.workflow.flow.GraphListener;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverWriter;
 import groovy.lang.Closure;
 import hudson.model.Result;
-import jenkins.util.Timer;
+import org.jenkinsci.plugins.workflow.actions.ErrorAction;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverWriter;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.logging.Logger;
 
-import static org.jenkinsci.plugins.workflow.cps.CpsFlowExecution.PROGRAM_STATE_SERIALIZATION;
 import static java.util.logging.Level.*;
-import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
+import static org.jenkinsci.plugins.workflow.cps.CpsFlowExecution.*;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
  * List of {@link CpsThread}s that form a single {@link CpsFlowExecution}.
@@ -79,20 +78,19 @@ public final class CpsThreadGroup implements Serializable {
     private int iota;
 
     /**
-     * Ensures only one thread executes {@link #run()} at any given time.
+     * Ensures only one thread updates CPS VM state at any given time
+     * by queueing such tasks in here.
      */
-    private transient AtmostOneTaskExecutor<?> runner;
+    transient ExecutorService runner;
 
     /**
      * "Exported" closures that are referenced by live {@link CpsStepContext}s.
      */
     public final Map<Integer,Closure> closures = new HashMap<Integer,Closure>();
 
-    private transient List<FlowNode> newHeadQueue;
-
     CpsThreadGroup(CpsFlowExecution execution) {
         this.execution = execution;
-        setupRunner();
+        setupTransients();
     }
 
     public CpsFlowExecution getExecution() {
@@ -100,135 +98,142 @@ public final class CpsThreadGroup implements Serializable {
     }
 
     private Object readResolve() {
-        setupRunner();
         execution = CpsFlowExecution.PROGRAM_STATE_SERIALIZATION.get();
+        setupTransients();
         assert execution!=null;
         return this;
     }
 
-    private void setupRunner() {
-        runner = new AtmostOneTaskExecutor<Void>(Timer.get(),new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                    run();
-                    notifyListeners();
-                    return null;
-                }
-            });
+    private void setupTransients() {
+        runner = Executors.newSingleThreadExecutor(
+                new ThreadFactory() {
+                    @Override
+                    public CpsVmThread newThread(Runnable r) {
+                        return new CpsVmThread(CpsThreadGroup.this, r);
+                    }
+                });
     }
 
-    public synchronized CpsThread addThread(Continuable program, FlowHead head, ContextVariableSet contextVariables) {
+    @CpsVmThreadOnly
+    public CpsThread addThread(Continuable program, FlowHead head, ContextVariableSet contextVariables) {
+        assertVmThread();
         CpsThread t = new CpsThread(this, iota++, program, head, contextVariables);
         threads.put(t.id, t);
         return t;
+    }
+
+    /**
+     * Ensures that the current thread is the correct {@link CpsVmThread}
+     *
+     * @see CpsVmThreadOnly
+     */
+    private void assertVmThread() {
+        assert Thread.currentThread() instanceof CpsVmThread;
+        assert ((CpsVmThread)Thread.currentThread()).threadGroup==this;
     }
 
     public CpsThread getThread(int id) {
         return threads.get(id);
     }
 
-    public synchronized BodyReference export(Closure body) {
+    @CpsVmThreadOnly("root")
+    public BodyReference export(Closure body) {
+        assertVmThread();
         if (body==null)     return null;
         int id = iota++;
         closures.put(id, body);
         return new StaticBodyReference(id,body);
     }
 
-    public synchronized void unexport(BodyReference ref) {
+    @CpsVmThreadOnly("root")
+    public void unexport(BodyReference ref) {
+        assertVmThread();
         if (ref==null)      return;
         closures.remove(ref.id);
     }
 
+    /**
+     * Schedules the execution of all the runnable threads.
+     */
     public Future<?> scheduleRun() {
-        return runner.submit();
+        return runner.submit(new Callable<Void>() {
+            public Void call() throws Exception {
+                run();
+                return null;
+            }
+        });
     }
 
     /**
      * Run all runnable threads as much as possible.
-     *
-     * This method must be executed sequentially through {@link #scheduleRun()}.
      */
-    private synchronized void run() throws IOException {
-        final CpsThreadGroup old = CURRENT.get();
-        CURRENT.set(this);
-        try {
-            boolean doneSomeWork = false;
-            boolean changed;    // used to see if we need to loop over
-            do {
-                changed = false;
-                for (CpsThread t : threads.values().toArray(new CpsThread[threads.size()])) {
-                    if (t.isRunnable()) {
-                        Outcome o = t.runNextChunk();
-                        if (o.isFailure()) {
-                            assert !t.isAlive();    // failed thread is non-resumable
+    @CpsVmThreadOnly("root")
+    private void run() throws IOException {
+        boolean doneSomeWork = false;
+        boolean changed;    // used to see if we need to loop over
+        do {
+            changed = false;
+            for (CpsThread t : threads.values().toArray(new CpsThread[threads.size()])) {
+                if (t.isRunnable()) {
+                    Outcome o = t.runNextChunk();
+                    if (o.isFailure()) {
+                        assert !t.isAlive();    // failed thread is non-resumable
 
-                            // workflow produced an exception
-                            execution.setResult(Result.FAILURE);
-                            t.head.get().addAction(new ErrorAction(o.getAbnormal()));
-                        }
-
-                        if (!t.isAlive()) {
-                            LOGGER.fine("completed " + t);
-
-                            threads.remove(t.id);
-                            if (threads.isEmpty()) {
-                                execution.onProgramEnd(o);
-                            }
-                        }
-
-                        changed = true;
+                        // workflow produced an exception
+                        execution.setResult(Result.FAILURE);
+                        t.head.get().addAction(new ErrorAction(o.getAbnormal()));
                     }
+
+                    if (!t.isAlive()) {
+                        LOGGER.fine("completed " + t);
+
+                        threads.remove(t.id);
+                        if (threads.isEmpty()) {
+                            execution.onProgramEnd(o);
+                        }
+                    }
+
+                    changed = true;
                 }
-
-                doneSomeWork |= changed;
-            } while (changed);
-
-            if (doneSomeWork) {
-                saveProgram();
-                LOGGER.log(FINE, "program state saved");
             }
-        } finally {
-            CURRENT.set(old);
+
+            doneSomeWork |= changed;
+        } while (changed);
+
+        if (doneSomeWork) {
+            saveProgram();
+            LOGGER.log(FINE, "program state saved");
         }
     }
 
     /**
-     * Used to queue up notifications to {@link GraphListener}s.
-     * They will be notified at the very end, so that notification happens
-     * in a predictable safe point from a thread that doesn't own any locks.
-     */
-    /*package*/ void queueNewHead(FlowNode head) {
-        assert CpsThreadGroup.current()!=null : "Must be invoked from within the program executing thread";
-        if (newHeadQueue==null) {
-            newHeadQueue = new ArrayList<FlowNode>();
-        }
-        newHeadQueue.add(head);
-    }
-
-    /**
-     * After {@link #run()} method, fire the notification to all the new heads queued in
-     * {@link #queueNewHead(FlowNode)}.
+     * Notifies listeners of the new {@link FlowHead}.
      *
-     * We do this from a place who owns no lock on any of the CPS objects to avoid deadlock.
+     * The actual call happens later from a place who owns no lock on any of the CPS objects to avoid deadlock.
      * See https://trello.com/c/7aTFYWM5/26-intermittent-deadlock
      */
-    private void notifyListeners() {
-        if (newHeadQueue!=null) {
-            for (FlowNode head : newHeadQueue) {
+    @CpsVmThreadOnly
+    /*package*/ void notifyNewHead(final FlowNode head) {
+        assertVmThread();
+        runner.execute(new Runnable() {
+            public void run() {
                 execution.notifyListeners(head);
             }
-            newHeadQueue = null;
-        }
+        });
     }
 
     /**
      * Persists the current state of {@link CpsThreadGroup}.
      */
-    public synchronized void saveProgram() throws IOException {
+    @CpsVmThreadOnly
+    void saveProgram() throws IOException {
         saveProgram(execution.getProgramDataFile());
     }
 
-    public synchronized void saveProgram(File f) throws IOException {
+    @CpsVmThreadOnly
+    void saveProgram(File f) throws IOException {
+        assertVmThread();
+
         CpsFlowExecution old = PROGRAM_STATE_SERIALIZATION.get();
         PROGRAM_STATE_SERIALIZATION.set(execution);
 
@@ -245,17 +250,26 @@ public final class CpsThreadGroup implements Serializable {
         }
     }
 
+    public Future<Void> scheduleSaveProgram() {
+        return runner.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                saveProgram();
+                return null;
+            }
+        });
+    }
+
     private static final Logger LOGGER = Logger.getLogger(CpsThreadGroup.class.getName());
 
     private static final long serialVersionUID = 1L;
-
-    private static ThreadLocal<CpsThreadGroup> CURRENT = new ThreadLocal<CpsThreadGroup>();
 
     /**
      * CPS transformed program runs entirely inside a program execution thread.
      * If we are in that thread executing {@link CpsThreadGroup}, this method returns non-null.
      */
+    @CpsVmThreadOnly
     /*package*/ static CpsThreadGroup current() {
-        return CURRENT.get();
+        return CpsVmThread.current().threadGroup;
     }
 }

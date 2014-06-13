@@ -38,7 +38,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.*;
-import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
  * Represents a {@link Continuable} that is either runnable or suspended (that waits for an
@@ -214,9 +214,10 @@ public final class CpsThread implements Serializable {
     private static final ThreadLocal<CpsThread> CURRENT = new ThreadLocal<CpsThread>();
 
     /**
-     * While {@link Continuable#run0(Outcome)} executes, this method returns {@link CpsThread}
+     * While {@link CpsThreadGroup} executes, this method returns {@link CpsThread}
      * that's running.
      */
+    @CpsVmThreadOnly
     /*package*/ static CpsThread current() {
         return CURRENT.get();
     }

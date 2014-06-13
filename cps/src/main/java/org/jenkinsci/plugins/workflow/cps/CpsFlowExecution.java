@@ -227,7 +227,7 @@ public class CpsFlowExecution extends FlowExecution {
 
     @Override
     public void start() throws IOException {
-        CpsScript s = parseScript();
+        final CpsScript s = parseScript();
         DSL dsl = new DSL(owner);
         s.getBinding().setVariable("steps", dsl);
         // some of the steps that acquire resources look better with 'with', so exposing
@@ -237,15 +237,23 @@ public class CpsFlowExecution extends FlowExecution {
 
         s.loadEnvironment();
 
-        FlowHead h = new FlowHead(this);
+        final FlowHead h = new FlowHead(this);
         heads.put(h.getId(),h);
         h.newStartNode(new FlowStartNode(this, iotaStr()));
 
-        CpsThreadGroup g = new CpsThreadGroup(this);
-        CpsThread t = g.addThread(new Continuable(s),h,null);
+        final CpsThreadGroup g = new CpsThreadGroup(this);
+        final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
+        g.runner.submit(new Runnable() {
+            @Override
+            public void run() {
+                CpsThread t = g.addThread(new Continuable(s),h,null);
+                t.resume(new Outcome(null, null));
+                f.set(g);
+            }
+        });
 
-        programPromise = Futures.immediateFuture(g);
-        t.resume(new Outcome(null, null));
+        programPromise = f;
+
     }
 
     private GroovyShell buildShell() {

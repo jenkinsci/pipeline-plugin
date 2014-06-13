@@ -152,6 +152,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      */
     private transient volatile StepDescriptor stepDescriptor;
 
+    @CpsVmThreadOnly
     CpsStepContext(StepDescriptor step, CpsThread thread, FlowExecutionOwner executionRef, FlowNode node, Closure body) {
         this.threadId = thread.id;
         this.executionRef = executionRef;
@@ -321,21 +322,27 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                     parents.add(flow.getNode(head));
                 }
 
+                // first we need to wait for programPromise to fullfil CpsThreadGroup, then we need to run in its runner, phew!
                 Futures.addCallback(flow.programPromise, new FutureCallback<CpsThreadGroup>() {
                     @Override
-                    public void onSuccess(CpsThreadGroup g) {
-                        g.unexport(body);
-                        body = null;
-                        CpsThread thread = getThread(g);
-                        if (thread != null) {
-                            if (n instanceof StepStartNode) {
-                                FlowNode tip = thread.head.get();
-                                parents.set(0,tip);
+                    public void onSuccess(final CpsThreadGroup g) {
+                        g.runner.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                g.unexport(body);
+                                body = null;
+                                CpsThread thread = getThread(g);
+                                if (thread != null) {
+                                    if (n instanceof StepStartNode) {
+                                        FlowNode tip = thread.head.get();
+                                        parents.set(0,tip);
 
-                                thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
+                                        thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
+                                    }
+                                    thread.resume(getOutcome());
+                                }
                             }
-                            thread.resume(getOutcome());
-                        }
+                        });
                     }
 
                     /**
