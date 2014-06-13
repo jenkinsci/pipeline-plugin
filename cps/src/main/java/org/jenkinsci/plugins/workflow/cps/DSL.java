@@ -45,6 +45,7 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -151,7 +152,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         final Closure body;
 
         private NamedArgsAndClosure(Map<String,Object> namedArgs, Closure body) {
-            this.namedArgs = namedArgs;
+            this.namedArgs = new LinkedHashMap<String, Object>(namedArgs);
             this.body = body;
 
             // coerce GString, to save StepDescriptor.newInstance() from being made aware of that
@@ -161,7 +162,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             //
             // For the reference, Groovy does:
             //   ReflectionCache.getCachedClass(types[i]).coerceArgument(a)
-            for (Entry<String, Object> e : namedArgs.entrySet()) {
+            for (Entry<String, Object> e : this.namedArgs.entrySet()) {
                 if (e.getValue() instanceof GString) {
                     e.setValue(e.getValue().toString());
                 }
