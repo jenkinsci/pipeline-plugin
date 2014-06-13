@@ -16,6 +16,6 @@
     </dependency>
   </dependencies>
   <build>
-    <finalName>demo-war</finalName>
+    <finalName>x</finalName>
   </build>
 </project>
