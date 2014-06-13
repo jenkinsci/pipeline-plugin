@@ -123,12 +123,11 @@ public class ParallelStepTest extends SingleJobTestBase {
                 startBuilding();
 
                 // let the workflow run until all parallel branches settle in the watch()
-                for (int i=0; i<3; i++)
+                while (watchDescriptor().getActiveWatches().size()<3 && !e.isComplete())
                     waitForWorkflowToSuspend();
 
                 System.out.println(b.getLog());
                 assert !e.isComplete();
-                assertEquals(3, watchDescriptor().getActiveWatches().size());
                 assert e.getCurrentHeads().size()==3;
                 assert b.isBuilding();
 

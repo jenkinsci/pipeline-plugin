@@ -28,6 +28,7 @@ import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
 import groovy.lang.Closure;
+import groovy.lang.GString;
 import groovy.lang.GroovyObject;
 import groovy.lang.GroovyObjectSupport;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
@@ -44,8 +45,10 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -149,8 +152,21 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         final Closure body;
 
         private NamedArgsAndClosure(Map<String,Object> namedArgs, Closure body) {
-            this.namedArgs = namedArgs;
+            this.namedArgs = new LinkedHashMap<String, Object>(namedArgs);
             this.body = body;
+
+            // coerce GString, to save StepDescriptor.newInstance() from being made aware of that
+            // this isn't the only type coercion that Groovy does, so this is not very kosher, but
+            // doing a proper coercion like Groovy does require us to know the type that the receiver
+            // expects.
+            //
+            // For the reference, Groovy does:
+            //   ReflectionCache.getCachedClass(types[i]).coerceArgument(a)
+            for (Entry<String, Object> e : this.namedArgs.entrySet()) {
+                if (e.getValue() instanceof GString) {
+                    e.setValue(e.getValue().toString());
+                }
+            }
         }
     }
 

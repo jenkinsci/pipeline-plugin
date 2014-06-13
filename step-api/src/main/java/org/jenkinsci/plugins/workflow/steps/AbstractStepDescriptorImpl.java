@@ -111,11 +111,13 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
         }
     }
 
+    // TODO: this is Groovy specific and should be removed from here
+    // but some kind of type coercion would be useful to fix mismatch between Long vs Integer, etc.
     private Object[] buildArguments(Map<String, Object> arguments, Class[] types, String[] names, boolean callEvenIfNoArgs) {
         Object[] args = new Object[names.length];
         boolean hasArg = callEvenIfNoArgs;
         for (int i = 0; i < args.length; i++) {
-            // this coercion handles comes from ParameterTypes.coerceArgumentsToClasses
+            // this coercion handles comes from Groovy's ParameterTypes.coerceArgumentsToClasses
             hasArg |= arguments.containsKey(names[i]);
             Object a = arguments.get(names[i]);
             if (a!=null)

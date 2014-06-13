@@ -21,7 +21,7 @@ public class ArtifactArchiverStepTest extends Assert {
     public JenkinsRule j = new JenkinsRule();
 
     /**
-     * Archive file.
+     * Archive and unarchive file
      */
     @Test
     public void archive() throws Exception {
@@ -31,13 +31,15 @@ public class ArtifactArchiverStepTest extends Assert {
                 "with.node {",
                 "  sh 'echo hello world > msg'",
                 "  steps.archive 'm*'",
+                "  steps.unarchive(mapping:['msg':'msg.out'])",
+                "  steps.archive 'msg.out'",
                 "}"), "\n")));
 
 
         // get the build going, and wait until workflow pauses
         WorkflowRun b = j.assertBuildStatusSuccess(foo.scheduleBuild2(0).get());
 
-        VirtualFile archivedFile = b.getArtifactManager().root().child("msg");
+        VirtualFile archivedFile = b.getArtifactManager().root().child("msg.out");
         assertTrue(archivedFile.exists());
         assertEquals("hello world\n",IOUtils.toString(archivedFile.open()));
     }
