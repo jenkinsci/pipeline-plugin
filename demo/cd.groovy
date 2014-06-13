@@ -17,7 +17,7 @@ with.node(/*'heavy'*/) {
     with.ws() {
         def src = 'https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git'
         // TODO pending SCM-Job merge steps.git(url: src)
-        sh("if [ -d .git ]; then git pull; else git clone ${src} .; fi")
+        sh("if [ -d .git ]; then git pull; else git clone ${src} tmp && mv tmp/.git tmp/* . && rmdir tmp; fi")
         sh('mvn clean package')
         steps.archive('target/x.war')
         segment('QA')
