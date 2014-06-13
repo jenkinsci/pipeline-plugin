@@ -4,6 +4,8 @@ import com.cloudbees.groovy.cps.Outcome;
 import groovy.lang.Closure;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,9 +50,15 @@ public class CpsBuiltinSteps {
      * The lack of branch name hurts visualization, so it's preferrable to give them if you can.
      */
     public static Map<String,Outcome> parallel(Closure... subflows) {
+        return parallel(Arrays.asList(subflows));
+    }
+
+    public static Map<String,Outcome> parallel(Collection<? extends Closure> subflows) {
         Map<String,Closure> flows = new HashMap<String, Closure>();
-        for (int i=0; i<subflows.length; i++)
-            flows.put("flow"+(i+1),subflows[i]);
+        int i=1;
+        for (Closure c : subflows) {
+            flows.put("flow"+(i++),c);
+        }
         return parallel(flows);
     }
 
