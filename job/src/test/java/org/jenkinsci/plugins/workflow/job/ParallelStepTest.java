@@ -121,6 +121,32 @@ public class ParallelStepTest extends SingleJobTestBase {
         });
     }
 
+    @Test
+    public void localMethodCallWithinBranch() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                FilePath aa = jenkins().getRootPath().child("a");
+                FilePath bb = jenkins().getRootPath().child("b");
+
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(join(
+                    "@WorkflowMethod",
+                    "def touch(f) { sh 'touch '+f }",
+                    "with.node {",
+                    "  parallel( { touch('"+aa+"'); }, { touch('"+bb+"'); } )",
+                    "}"
+                )));
+
+                startBuilding().get();
+                assertBuildCompletedSuccessfully();
+
+                assertTrue(aa.exists());
+                assertTrue(bb.exists());
+            }
+        });
+    }
+
+
     /**
      * Restarts in the middle of a parallel workflow.
      */
