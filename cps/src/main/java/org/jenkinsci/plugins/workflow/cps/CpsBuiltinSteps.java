@@ -4,6 +4,7 @@ import com.cloudbees.groovy.cps.Outcome;
 import groovy.lang.Closure;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -39,6 +40,18 @@ public class CpsBuiltinSteps {
 
     public static Map<String,Outcome> parallel(Map<String,Closure> subflows) {
         return (Map<String,Outcome>)dsl().invokeMethod("parallel", asArray(subflows));
+    }
+
+    /**
+     * Version of {@code parallel} that doesn't have any branch names.
+     *
+     * The lack of branch name hurts visualization, so it's preferrable to give them if you can.
+     */
+    public static Map<String,Outcome> parallel(Closure... subflows) {
+        Map<String,Closure> flows = new HashMap<String, Closure>();
+        for (int i=0; i<subflows.length; i++)
+            flows.put("flow"+(i+1),subflows[i]);
+        return parallel(flows);
     }
 
     private static DSL dsl() {
