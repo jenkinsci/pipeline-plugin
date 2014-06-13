@@ -79,6 +79,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Stack;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -437,9 +438,9 @@ public class CpsFlowExecution extends FlowExecution {
 
 
     @Override
-    public synchronized void addListener(GraphListener listener) {
+    public void addListener(GraphListener listener) {
         if (listeners == null) {
-            listeners = new ArrayList<GraphListener>();
+            listeners = new CopyOnWriteArrayList<GraphListener>();
         }
         listeners.add(listener);
     }
@@ -493,7 +494,7 @@ public class CpsFlowExecution extends FlowExecution {
         return heads.firstEntry().getValue();
     }
 
-    synchronized void notifyListeners(FlowNode node) {
+    void notifyListeners(FlowNode node) {
         if (listeners != null) {
             for (GraphListener listener : listeners) {
                 listener.onNewHead(node);
