@@ -1,7 +1,6 @@
 // TODO consider using https://github.com/cloudbees/jenkins-docker-executors to host everything (install graphviz on Jenkins node)
 // Prep: mkdir /tmp/webapps && docker run -p 80:8080 -v /tmp/webapps:/opt/jetty/webapps jglick/jetty-demo &
 
-@WorkflowMethod
 def runWithServer(body) {
     def id = UUID.randomUUID().toString()
     sh("cp target/x.war /tmp/webapps/${id}.war")
