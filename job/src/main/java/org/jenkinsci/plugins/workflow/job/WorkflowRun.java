@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import hudson.util.OneShotEvent;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -87,7 +88,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     };
     private transient StreamBuildListener listener;
-    private transient Object completionLock;
+    private transient OneShotEvent completionLock;
+    private transient Object copyLogLock;
     /** map from node IDs to log positions from which we should copy text */
     private Map<String,Long> logsToCopy;
 
@@ -146,7 +148,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
             execution = definition.create(new Owner(this), getAllActions());
             execution.addListener(new GraphL());
-            completionLock = new Object();
+            completionLock = new OneShotEvent();
+            copyLogLock = new Object();
             logsToCopy = new LinkedHashMap<String,Long>();
             execution.start();
             executionPromise.set(execution);
@@ -167,23 +170,23 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
      */
     @edu.umd.cs.findbugs.annotations.SuppressWarnings({"ML_SYNC_ON_UPDATED_FIELD", "UW_UNCOND_WAIT"})
     void waitForCompletion() {
-        while (!execution.isComplete()) {
-            synchronized (completionLock) {
+        while (!completionLock.isSignaled()) {
+            try {
+                completionLock.block(1000);
+            } catch (InterruptedException x) {
                 try {
-                    completionLock.wait(1000);
-                } catch (InterruptedException x) {
-                    try {
-                        execution.abort();
-                    } catch (Exception x2) {
-                        LOGGER.log(Level.WARNING, null, x2);
-                    }
+                    execution.abort();
+                } catch (Exception x2) {
+                    LOGGER.log(Level.WARNING, null, x2);
                 }
+            }
+            synchronized (copyLogLock) {
                 copyLogs();
             }
         }
     }
 
-    @GuardedBy("completionLock")
+    @GuardedBy("copyLogsLock")
     private void copyLogs() {
         if (logsToCopy == null) { // finished
             return;
@@ -255,7 +258,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     LOGGER.log(Level.WARNING, null, x);
                     listener = new StreamBuildListener(new NullStream());
                 }
-                completionLock = new Object();
+                completionLock = new OneShotEvent();
+                copyLogLock = new Object();
                 Queue.getInstance().schedule(new AfterRestartTask(this), 0);
             }
         }
@@ -283,9 +287,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
         RunListener.fireFinalized(this);
         assert completionLock != null;
-        synchronized (completionLock) {
-            completionLock.notifyAll();
-        }
+        completionLock.signal();
     }
 
     /**
@@ -393,7 +395,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     private final class GraphL implements GraphListener {
         @Override public void onNewHead(FlowNode node) {
-            synchronized (completionLock) {
+            synchronized (copyLogLock) {
                 copyLogs();
                 logsToCopy.put(node.getId(), 0L);
             }
