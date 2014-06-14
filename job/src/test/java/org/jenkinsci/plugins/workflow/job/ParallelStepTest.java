@@ -194,7 +194,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                         shell++;
                     }
                 }
-                assertEquals(1024*3,shell);
+                assertEquals(128*3,shell);
             }
         });
     }

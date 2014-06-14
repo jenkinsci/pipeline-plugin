@@ -7,7 +7,7 @@ def notify(msg) {
 with.node {
     with.ws {}
     def x = []
-    for (def i=0; i<1024; i++) {
+    for (def i=0; i<128; i++) {
         def j = i;
         x.add({ notify("Hello ${j}") })
     }
