@@ -5,7 +5,7 @@ def runWithServer(body) {
     def id = UUID.randomUUID().toString()
     sh("cp target/x.war /tmp/webapps/${id}.war")
     try {
-        body.run("http://localhost/${id}/");
+        body.call("http://localhost/${id}/");
     } finally {
         sh("rm /tmp/webapps/${id}.war")
     }
@@ -21,11 +21,11 @@ with.node(/*'heavy'*/) {
     segment('QA')
     parallel(sometests: {
         runWithServer {url ->
-            sh("mvn -f sometests test -Durl=${url}")
+            sh("mvn -f sometests/pom.xml test -Durl=${url}")
         }
     }, othertests: {
-        runWithServer {port ->
-            sh("mvn -f othertests test -Durl=${url}")
+        runWithServer {url ->
+            sh("mvn -f sometests/pom.xml test -Durl=${url}") // TODO add other test module
         }
     })
     steps.segment(value: 'Staging', concurrency: 1)
