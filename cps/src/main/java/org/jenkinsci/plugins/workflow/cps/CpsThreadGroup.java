@@ -26,8 +26,6 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
-import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import groovy.lang.Closure;
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -169,7 +167,13 @@ public final class CpsThreadGroup implements Serializable {
                 // runner is a single-threaded queue, so running a no-op and waiting for its completion
                 // ensures that everything submitted in front of us has finished.
 
-                return runner.submit(NOOP);
+                return runner.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (threads.isEmpty())
+                            runner.shutdown();
+                    }
+                });
             }
         });
 
