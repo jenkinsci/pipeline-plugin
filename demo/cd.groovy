@@ -35,6 +35,7 @@ steps.input(message: "Does http://localhost/staging/ look good?")
 steps.checkpoint() // if have cps-checkpoint plugin installed, else comment out
 steps.segment(value: 'Production', concurrency: 1)
 with.node(/*'light'*/) {
+    sh('curl -I http://localhost/staging/')
     steps.unarchive(mapping: ['target/x.war' : 'x.war'])
     sh('cp target/x.war /tmp/webapps/production.war')
     steps.echo 'Deployed to http://localhost/production/'
