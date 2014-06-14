@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import static com.trilead.ssh2.util.IOUtils.*;
+import hudson.AbortException;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -55,7 +56,9 @@ public class ArtifactUnarchiverStep extends AbstractSynchronousStepImpl<List<Fil
             FilePath dst = new FilePath(ws,e.getValue());
 
             String[] all = am.root().list(e.getKey());
-            if (all.length==1 && all[0].equals(e.getKey())) {
+            if (all.length == 0) {
+                throw new AbortException("no artifacts to unarchive");
+            } else if (all.length==1 && all[0].equals(e.getKey())) {
                 // the source is a file
                 if (dst.isDirectory())
                     dst = dst.child(getFileName(all[0]));
