@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.support.pickles.serialization;
 
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.pickles.Pickle;
 import org.jenkinsci.plugins.workflow.pickles.PickleFactory;
 import com.trilead.ssh2.util.IOUtils;
@@ -60,6 +61,12 @@ public class RiverWriter implements Closeable {
     private final File file;
 
     /**
+     * The location of the persisted file implies a {@link FlowExecutionOwner}, so we don't
+     * actually store the owner object.
+     */
+    private final FlowExecutionOwner owner;
+
+    /**
      * Writes to {@link #file}.
      */
     private final DataOutputStream dout;
@@ -79,8 +86,9 @@ public class RiverWriter implements Closeable {
     List<Pickle> pickles = new ArrayList<Pickle>();
 
     // TODO: rename to HibernatingObjectOutputStream?
-    public RiverWriter(File f) throws IOException {
+    public RiverWriter(File f, FlowExecutionOwner _owner) throws IOException {
         file = f;
+        owner = _owner;
         dout = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
         dout.writeLong(HEADER);
         dout.writeShort(VERSION);
@@ -95,13 +103,16 @@ public class RiverWriter implements Closeable {
             }
 
             public Object writeReplace(Object o) {
-                if (!pickling)     return o;
+                if (o==owner)
+                    return new DryOwner();
 
-                for (PickleFactory f : PickleFactory.all()) {
-                    Pickle v = f.writeReplace(o);
-                    if (v != null) {
-                        pickles.add(v);
-                        return new DryCapsule(pickles.size()-1); // let Pickle be serialized into the stream
+                if (pickling) {
+                    for (PickleFactory f : PickleFactory.all()) {
+                        Pickle v = f.writeReplace(o);
+                        if (v != null) {
+                            pickles.add(v);
+                            return new DryCapsule(pickles.size() - 1); // let Pickle be serialized into the stream
+                        }
                     }
                 }
                 return o;
