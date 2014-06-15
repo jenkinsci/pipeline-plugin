@@ -46,6 +46,14 @@ import java.util.List;
 import static org.apache.commons.io.IOUtils.*;
 
 /**
+ * Reads program data file that stores the object graph of the CPS-transformed program.
+ *
+ * <p>
+ * The file consists of two separate object streams. The first stream contains a list of {@link Pickle}s,
+ * which are used to restore stateful objects. The second stream is the main stream that contains
+ * the main program state, which includes references to {@link DryCapsule} (which gets replaced to
+ * their respective stateful objects.
+ *
  * @author Kohsuke Kawaguchi
  */
 public class RiverReader {
