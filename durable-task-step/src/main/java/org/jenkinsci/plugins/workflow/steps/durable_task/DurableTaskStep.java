@@ -40,7 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -131,26 +131,31 @@ public abstract class DurableTaskStep extends Step {
         save();
     }
 
-    private static synchronized void check() {
-        load();
-        boolean changed = false;
-        Iterator<RunningTask> it = runningTasks.iterator();
-        while (it.hasNext()) {
-            RunningTask rt = it.next();
-            switch (rt.check()) {
-            case UPDATED:
-                changed = true;
-                break;
-            case DONE:
-                changed = true;
-                it.remove();
-                break;
-            default:
-                // NO_CHANGE, leave in queue
+    private static void check() {
+        List<RunningTask> done = new LinkedList<RunningTask>();
+        synchronized (DurableTaskStep.class) {
+            load();
+            boolean changed = false;
+            for (RunningTask rt : runningTasks) {
+                switch (rt.check()) {
+                case UPDATED:
+                    changed = true;
+                    break;
+                case DONE:
+                    changed = true;
+                    done.add(rt);
+                    break;
+                default:
+                    // NO_CHANGE, leave in queue
+                }
+            }
+            if (changed) {
+                runningTasks.removeAll(done);
+                save();
             }
         }
-        if (changed) {
-            save();
+        for (RunningTask rt : done) {
+            rt.report();
         }
     }
 
@@ -173,6 +178,8 @@ public abstract class DurableTaskStep extends Step {
         private final Controller controller;
         private final String node;
         private final String remote;
+        private transient Object result;
+        private transient Throwable error;
 
         RunningTask(StepContext context, Controller controller, String node, String remote) {
             this.context = context;
@@ -195,7 +202,7 @@ public abstract class DurableTaskStep extends Step {
                 }
                 FilePath ws = new FilePath(c.getChannel(), remote);
                 if (!ws.isDirectory()) {
-                    context.onFailure(new AbortException("missing workspace " + remote + " on " + node));
+                    error = new AbortException("missing workspace " + remote + " on " + node);
                     return CheckResult.DONE;
                 }
                 TaskListener listener = context.get(TaskListener.class);
@@ -205,18 +212,27 @@ public abstract class DurableTaskStep extends Step {
                     LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
                     return wrote ? CheckResult.UPDATED : CheckResult.NO_CHANGE;
                 } else if (exitCode == 0) {
-                    context.onSuccess(exitCode);
+                    result = exitCode; // TODO could add an option to have this be text output from command
                 } else {
-                    context.onFailure(new AbortException("script returned exit code " + exitCode));
+                    error = new AbortException("script returned exit code " + exitCode);
                 }
                 controller.cleanup(ws);
                 return CheckResult.DONE;
             } catch (IOException x) {
-                context.onFailure(x);
+                error = x;
             } catch (InterruptedException x) {
-                context.onFailure(x);
+                error = x;
             }
             return CheckResult.DONE;
+        }
+
+        /** Reports success or failure of step, outside synchronization block to avoid deadlocks. */
+        void report() {
+            if (error != null) {
+                context.onFailure(error);
+            } else {
+                context.onSuccess(result);
+            }
         }
 
     }

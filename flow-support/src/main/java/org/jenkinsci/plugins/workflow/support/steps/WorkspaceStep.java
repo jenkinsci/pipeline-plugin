@@ -31,6 +31,7 @@ import hudson.model.Computer;
 import hudson.model.Job;
 import hudson.model.Node;
 import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.slaves.WorkspaceList;
 import java.io.Serializable;
@@ -44,6 +45,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Allocates a workspace on the current node and uses that as the default directory for nested steps.
+ * {@link ExecutorStep} already does so, but this may be used to allocate additional workspaces.
  */
 public final class WorkspaceStep extends Step {
 
@@ -62,7 +64,9 @@ public final class WorkspaceStep extends Step {
         }
         FilePath p = n.getWorkspaceFor((TopLevelItem) j);
         WorkspaceList.Lease lease = c.getWorkspaceList().allocate(p);
-        context.invokeBodyLater(new Callback(context, lease), lease.path);
+        FilePath workspace = lease.path;
+        context.get(TaskListener.class).getLogger().println("Running in " + workspace);
+        context.invokeBodyLater(new Callback(context, lease), workspace);
         return false;
     }
 
@@ -94,6 +98,7 @@ public final class WorkspaceStep extends Step {
             Set<Class<?>> r = new HashSet<Class<?>>();
             r.add(Run.class);
             r.add(Computer.class);
+            r.add(TaskListener.class);
             return r;
         }
 

@@ -221,13 +221,15 @@ public class WorkflowTest extends SingleJobTestBase {
                 p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("FLAG", null)));
                 dir.set(slaveRoot + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
-                    "with.node('slave') {\n" +
-                    "    with.ws {\n" +
+                    "with.node('slave') {\n" + // this locks the WS
+                    "    sh('echo default=$PWD')\n" +
+                    "    with.ws {\n" + // and this locks a second one
                     "        sh('echo before=$PWD')\n" +
                     "        steps.watch(new File('" + story.j.jenkins.getRootDir() + "', FLAG))\n" +
                     "        sh('echo after=$PWD')\n" +
                     "    }\n" +
                     "}"));
+                p.save();
                 WorkflowRun b1 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "one"))).waitForStart();
                 CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
                 while (watchDescriptor.getActiveWatches().isEmpty()) {
@@ -261,10 +263,17 @@ public class WorkflowTest extends SingleJobTestBase {
                 }
                 assertBuildCompletedSuccessfully(b1);
                 assertBuildCompletedSuccessfully(b2);
-                story.j.assertLogContains("before=" + dir, b1);
-                story.j.assertLogContains("after=" + dir, b1);
-                story.j.assertLogContains("before=" + dir + "@2", b2);
-                story.j.assertLogContains("after=" + dir + "@2", b2);
+                story.j.assertLogContains("default=" + dir, b1);
+                story.j.assertLogContains("before=" + dir + "@2", b1);
+                story.j.assertLogContains("after=" + dir + "@2", b1);
+                story.j.assertLogContains("default=" + dir + "@3", b2);
+                story.j.assertLogContains("before=" + dir + "@4", b2);
+                story.j.assertLogContains("after=" + dir + "@4", b2);
+                FileUtils.write(new File(story.j.jenkins.getRootDir(), "three"), "here");
+                WorkflowRun b3 = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "three"))));
+                story.j.assertLogContains("default=" + dir, b3);
+                story.j.assertLogContains("before=" + dir + "@2", b3);
+                story.j.assertLogContains("after=" + dir + "@2", b3);
             }
         });
     }

@@ -26,14 +26,15 @@ package org.jenkinsci.plugins.workflow.stm;
 
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Result;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 
-final class STMContext extends StepContext {
+final class STMContext extends DefaultStepContext {
 
     private static final Logger LOG = Logger.getLogger(STMContext.class.getName());
 
@@ -57,7 +58,7 @@ final class STMContext extends StepContext {
         this.thread = thread;
     }
 
-    private STMExecution execution() throws IOException {
+    @Override protected STMExecution getExecution() throws IOException {
         FlowExecution exec = handle.get();
         if (exec instanceof STMExecution) {
             return (STMExecution) exec;
@@ -66,7 +67,15 @@ final class STMContext extends StepContext {
         }
     }
 
-    @Override public <T> T get(Class<T> key) throws IOException, InterruptedException {
+    @Override protected FlowNode getNode() throws IOException {
+        FlowNode node = getExecution().getNode(id);
+        if (node == null) {
+            throw new IOException("no such node " + id);
+        }
+        return node;
+    }
+
+    @Override public <T> T doGet(Class<T> key) throws IOException, InterruptedException {
         return null; // TODO
     }
 
@@ -86,10 +95,10 @@ final class STMContext extends StepContext {
         throw new UnsupportedOperationException("TODO");
     }
 
-    @Override public void invokeBodyLater(FutureCallback callback, Object... contextOverrides) {
+    @Override public void invokeBodyLater(FutureCallback<Object> callback, Object... contextOverrides) {
         STMExecution exec;
         try {
-            exec = execution();
+            exec = getExecution();
         } catch (IOException x) {
             LOG.log(Level.WARNING, "could not resume block step", x);
             return;
@@ -111,7 +120,7 @@ final class STMContext extends StepContext {
 
     @Override public void onSuccess(Object returnValue) {
         try {
-            execution().success(id, returnValue);
+            getExecution().success(id, returnValue);
         } catch (IOException x) {
             LOG.log(Level.WARNING, null, x);
         }

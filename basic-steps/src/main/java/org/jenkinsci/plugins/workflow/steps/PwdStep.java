@@ -22,21 +22,36 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.job;
+package org.jenkinsci.plugins.workflow.steps;
 
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.junit.Test;
-import org.junit.Rule;
-import org.jvnet.hudson.test.JenkinsRule;
+import hudson.Extension;
+import hudson.FilePath;
+import org.kohsuke.stapler.DataBoundConstructor;
 
-public class PushdStepTest {
+/**
+ * Returns the working directory path.
+ */
+public class PwdStep extends AbstractStepImpl {
 
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @StepContextParameter private transient FilePath cwd;
 
-    @Test public void basics() throws Exception {
-        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");;
-        p.setDefinition(new CpsFlowDefinition("with.node {with.dir('subdir') {sh 'pwd'}}"));
-        r.assertLogContains("/subdir", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+    @DataBoundConstructor public PwdStep() {}
+
+    @Override protected boolean doStart(StepContext context) throws Exception {
+        context.onSuccess(cwd.getRemote());
+        return true;
+    }
+
+    @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        @Override public String getFunctionName() {
+            return "pwd";
+        }
+
+        @Override public String getDisplayName() {
+            return "Determine Current Directory";
+        }
+
     }
 
 }

@@ -22,21 +22,22 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.job;
+package org.jenkinsci.plugins.workflow.steps.input;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Test;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
-public class PushdStepTest {
+public class PwdStepTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
     @Test public void basics() throws Exception {
-        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");;
-        p.setDefinition(new CpsFlowDefinition("with.node {with.dir('subdir') {sh 'pwd'}}"));
-        r.assertLogContains("/subdir", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("with.node {def cwd = steps.pwd(); sh \"echo cwd='$cwd'\"}"));
+        r.assertLogContains("cwd=" + r.jenkins.getWorkspaceFor(p), r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
 
 }

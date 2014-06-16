@@ -26,8 +26,12 @@ THE SOFTWARE.
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
   <td>
-    <a href="./execution/node/${node.id}/log/">
-      <img src="${resURL}/plugin/flow-support/images/32x32/terminal.png" alt="Console Output" class="icon32x32"/>
-    </a>
+    <j:forEach var="a" items="${node.allActions}">
+      <j:if test="${a.urlName == 'log'}"> <!-- easier in Jelly than calling getAction(LogAction.class) -->
+        <a href="./execution/node/${node.id}/log/">
+          <img src="${resURL}/plugin/flow-support/images/32x32/terminal.png" alt="Console Output" class="icon32x32"/>
+        </a>
+      </j:if>
+    </j:forEach>
   </td>
 </j:jelly>

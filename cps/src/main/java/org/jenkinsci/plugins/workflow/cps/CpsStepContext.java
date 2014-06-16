@@ -28,24 +28,13 @@ import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import groovy.lang.Closure;
-import hudson.EnvVars;
-import hudson.FilePath;
-import hudson.Launcher;
 import hudson.model.Action;
-import hudson.model.Computer;
 import hudson.model.Descriptor;
-import hudson.model.Job;
-import hudson.model.Node;
 import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import hudson.model.TopLevelItem;
-import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
@@ -54,13 +43,10 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 import javax.annotation.CheckForNull;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,6 +57,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 
 /**
  * {@link StepContext} implementation for CPS.
@@ -92,7 +79,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  * @author Kohsuke Kawaguchi
  */
 @PersistIn(ANYWHERE)
-public class CpsStepContext extends StepContext { // TODO add XStream class mapper
+public class CpsStepContext extends DefaultStepContext { // TODO add XStream class mapper
 
     private static final Logger LOGGER = Logger.getLogger(CpsStepContext.class.getName());
 
@@ -153,11 +140,6 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
      */
     private BodyReference body;
 
-    /**
-     * To prevent double instantiation of task listener, once we create it we keep it here.
-     */
-    private transient TaskListener listener;
-
     private final int threadId;
 
     /**
@@ -197,7 +179,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
         return d!=null ? d.getDisplayName() : stepDescriptorId;
     }
 
-    private CpsFlowExecution getExecution() throws IOException {
+    @Override protected CpsFlowExecution getExecution() throws IOException {
         return (CpsFlowExecution)executionRef.get();
     }
 
@@ -269,7 +251,7 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
     }
 
     @Override
-    public <T> T get(Class<T> key) throws IOException, InterruptedException {
+    protected <T> T doGet(Class<T> key) throws IOException, InterruptedException {
         CpsThread t = getThreadSynchronously();
         if (t == null) {
             throw new IOException("cannot find current thread");
@@ -278,63 +260,19 @@ public class CpsStepContext extends StepContext { // TODO add XStream class mapp
         T v = t.getContextVariable(key);
         if (v!=null)        return v;
 
-        if (key==TaskListener.class) {
-            if (listener==null) {
-                LogActionImpl la = getNode().getAction(LogActionImpl.class);
-                if (la==null) {
-                    // TODO: use the default charset of the contextual Computer object
-                    la = new LogActionImpl(getNode(), Charset.defaultCharset());
-                    getNode().addAction(la);
-                }
-
-                listener = new StreamTaskListener(new FileOutputStream(la.getLogFile(),true));
-            }
-            return key.cast(listener);
-        }
         if (FlowNode.class.isAssignableFrom(key)) {
             return key.cast(getNode());
         }
-        {// fallback logic to infer context variable from other sources
-            // TODO: this logic should be consistent across StepContext impls, so it should be promoted to somewhere
-            if (key==Node.class) {
-                Computer c = get(Computer.class);
-                Node n = null;
-                if (c!=null)    n = c.getNode();
-                if (n==null)
-                    throw new IllegalStateException("There's no current node. Perhaps you forgot to call with.node?");
-                return key.cast(n);
-            }
-            if (key==Run.class)
-                return key.cast(getExecution().getOwner().getExecutable());
-            if (key==Job.class)
-                return key.cast(get(Run.class).getParent());
-            if (key==FilePath.class) {
-                Node n = get(Node.class);
-                FilePath fp = null;
-                if (n!=null)    fp = n.getWorkspaceFor((TopLevelItem) get(Job.class));
-                if (fp==null)
-                    throw new IllegalStateException("There's no current directory. Perhaps you forgot to call with.ws?");
-                return key.cast(fp);
-            }
-            if (key==Launcher.class) {
-                Node n = get(Node.class);
-                if (n==null)    return null;
-                return key.cast(n.createLauncher(get(TaskListener.class)));
-            }
-            if (key==EnvVars.class)
-                return key.cast(get(Run.class).getEnvironment(get(TaskListener.class)));
-            if (key==FlowExecution.class)
-                return key.cast(getExecution());
-            if (key==CpsThread.class)
-                return key.cast(t);
-            if (key==CpsThreadGroup.class)
-                return key.cast(t.group);
+        if (key == CpsThread.class) {
+            return key.cast(t);
         }
-        // unrecognized key
+        if (key == CpsThreadGroup.class) {
+            return key.cast(t.group);
+        }
         return null;
     }
 
-    private FlowNode getNode() throws IOException {
+    @Override protected FlowNode getNode() throws IOException {
         if (node==null)
             node = getFlowExecution().getNode(id);
         return node;

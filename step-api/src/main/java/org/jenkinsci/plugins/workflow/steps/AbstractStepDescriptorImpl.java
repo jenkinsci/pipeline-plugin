@@ -61,7 +61,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
 
         String[] names = d.loadConstructorParamNames();
         Constructor c = findConstructor(names.length);
-        Object[] args = buildArguments(arguments, c.getParameterTypes(), names);
+        Object[] args = buildArguments(arguments, c.getParameterTypes(), names, true);
 
         try {
             return (Step) c.newInstance(args);
@@ -83,7 +83,10 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
                 if (f.isAnnotationPresent(DataBoundSetter.class)) {
                     f.setAccessible(true);
                     try {
-                        f.set(step,arguments.get(f.getName()));
+                        if (arguments.containsKey(f.getName())) {
+                            Object v = arguments.get(f.getName());
+                            f.set(step, v);
+                        }
                     } catch (IllegalAccessException e) {
                         throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
                     }
@@ -95,7 +98,9 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
 
                     m.setAccessible(true);
                     try {
-                        m.invoke(step, buildArguments(arguments, m.getParameterTypes(), names));
+                        Object[] args = buildArguments(arguments, m.getParameterTypes(), names, false);
+                        if (args!=null)
+                            m.invoke(step, args);
                     } catch (IllegalAccessException e) {
                         throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
                     } catch (InvocationTargetException e) {
@@ -106,15 +111,19 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
         }
     }
 
-    private Object[] buildArguments(Map<String, Object> arguments, Class[] types, String[] names) {
+    // TODO: this is Groovy specific and should be removed from here
+    // but some kind of type coercion would be useful to fix mismatch between Long vs Integer, etc.
+    private Object[] buildArguments(Map<String, Object> arguments, Class[] types, String[] names, boolean callEvenIfNoArgs) {
         Object[] args = new Object[names.length];
+        boolean hasArg = callEvenIfNoArgs;
         for (int i = 0; i < args.length; i++) {
-            // this coercion handles comes from ParameterTypes.coerceArgumentsToClasses
+            // this coercion handles comes from Groovy's ParameterTypes.coerceArgumentsToClasses
+            hasArg |= arguments.containsKey(names[i]);
             Object a = arguments.get(names[i]);
             if (a!=null)
                 args[i] = ReflectionCache.getCachedClass(types[i]).coerceArgument(a);
         }
-        return args;
+        return hasArg ? args : null;
     }
 
     /**

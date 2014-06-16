@@ -46,7 +46,6 @@ class CpsFlowDefinitionTest extends AbstractCpsFlowTest {
     @Test
     public void simplestPossibleTest() {
         def flow = new CpsFlowDefinition("""
-@WorkflowMethod
 def sqrt(int x) {
     return Math.sqrt(x);
 }

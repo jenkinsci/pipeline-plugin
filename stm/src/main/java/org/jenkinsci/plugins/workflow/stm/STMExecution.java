@@ -320,6 +320,7 @@ final class STMExecution extends FlowExecution {
     }
 
     private static Object perhapsConvertToValue(Object object) {
+        // TODO this will not work, since various serializable objects (such as WorkspaceStep.Callback) hold references to objects that should be pickled
         for (PickleFactory f : (valueFactories == null ? Jenkins.getInstance().getExtensionList(PickleFactory.class) : valueFactories)) {
             Pickle v = f.writeReplace(object);
             if (v != null) {
