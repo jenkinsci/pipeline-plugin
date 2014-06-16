@@ -151,7 +151,6 @@ public class SegmentTest {
                     e3.waitForSuspension();
                     assertTrue(b3.isBuilding());
                     story.j.assertLogContains("done", b1);
-                    Assume.assumeTrue(JenkinsRule.getLog(b3).contains("in B")); // TODO as of 1.557 this fails, for reasons TBD
                     story.j.assertLogContains("in B", b3);
                     story.j.assertLogNotContains("done", b3);
                     SemaphoreStep.success("X/2", null);
