@@ -32,6 +32,7 @@ import hudson.triggers.SCMTrigger;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -44,6 +45,7 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -55,7 +57,8 @@ public class SubversionStepTest {
     @Rule public TemporaryFolder tmp = new TemporaryFolder();
 
     private static void run(File cwd, String... cmds) throws Exception {
-        assertEquals(0, new ProcessBuilder(cmds).inheritIO().directory(cwd).start().waitFor());
+        int r = new ProcessBuilder(cmds).inheritIO().directory(cwd).start().waitFor();
+        Assume.assumeTrue(Arrays.toString(cmds) + " failed with error code " + r, r == 0);
     }
 
     private static String uuid(String url) throws Exception {
