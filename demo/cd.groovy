@@ -36,6 +36,6 @@ steps.segment(value: 'Production', concurrency: 1)
 with.node(/*'light'*/) {
     sh('curl -I http://localhost/staging/')
     steps.unarchive(mapping: ['target/x.war' : 'x.war'])
-    sh('cp target/x.war /tmp/webapps/production.war')
+    sh('cp x.war /tmp/webapps/production.war')
     steps.echo 'Deployed to http://localhost/production/'
 }
