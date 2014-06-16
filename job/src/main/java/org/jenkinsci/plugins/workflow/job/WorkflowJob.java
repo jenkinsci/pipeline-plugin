@@ -24,13 +24,16 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
-import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
+import hudson.AbortException;
 import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
 import hudson.model.Cause;
+import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
@@ -43,13 +46,18 @@ import hudson.model.PermalinkProjectAction;
 import hudson.model.Queue;
 import hudson.model.ResourceList;
 import hudson.model.RunMap;
+import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.model.TopLevelItemDescriptor;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.model.queue.SubTask;
+import hudson.scm.PollingResult;
+import hudson.scm.SCM;
 import hudson.search.SearchIndexBuilder;
 import hudson.security.ACL;
+import hudson.slaves.WorkspaceList;
+import hudson.triggers.SCMTrigger;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.AlternativeUiTextProvider;
@@ -58,6 +66,8 @@ import hudson.widgets.HistoryWidget;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.CheckForNull;
@@ -66,18 +76,23 @@ import jenkins.model.Jenkins;
 import jenkins.model.ModelObjectWithChildren;
 import jenkins.model.ParameterizedJobMixIn;
 import jenkins.model.lazy.LazyBuildMixIn;
+import jenkins.triggers.SCMTriggerItem;
 import jenkins.util.TimeDuration;
 import org.acegisecurity.Authentication;
+import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements BuildableItem, ModelObjectWithChildren, LazyBuildMixIn.LazyLoadingJob<WorkflowJob,WorkflowRun>, ParameterizedJobMixIn.ParameterizedJob, TopLevelItem, Queue.FlyweightTask {
+public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements BuildableItem, ModelObjectWithChildren, LazyBuildMixIn.LazyLoadingJob<WorkflowJob,WorkflowRun>, ParameterizedJobMixIn.ParameterizedJob, TopLevelItem, Queue.FlyweightTask, SCMTriggerItem {
 
     private FlowDefinition definition;
     private DescribableList<Trigger<?>,TriggerDescriptor> triggers = new DescribableList<Trigger<?>,TriggerDescriptor>(this);
+    private volatile Integer quietPeriod;
     @SuppressWarnings("deprecation")
     private hudson.model.BuildAuthorizationToken authToken;
     private transient LazyBuildMixIn<WorkflowJob,WorkflowRun> buildMixIn;
@@ -143,6 +158,11 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         for (Trigger t : triggers) {
             t.stop();
         }
+        if (req.getParameter("hasCustomQuietPeriod") != null) {
+            quietPeriod = Integer.parseInt(req.getParameter("quiet_period"));
+        } else {
+            quietPeriod = null;
+        }
         triggers.rebuild(req, req.getSubmittedForm(), Trigger.for_(this));
         for (Trigger t : triggers) {
             t.start(this, true);
@@ -197,6 +217,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return buildMixIn.newBuild();
     }
 
+    @Deprecated
     @Override public boolean scheduleBuild() {
         return createParameterizedJobMixIn().scheduleBuild();
     }
@@ -205,6 +226,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return createParameterizedJobMixIn().scheduleBuild(c);
     }
 
+    @Deprecated
     @Override public boolean scheduleBuild(int quietPeriod) {
         return createParameterizedJobMixIn().scheduleBuild(quietPeriod);
     }
@@ -213,7 +235,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return createParameterizedJobMixIn().scheduleBuild(quietPeriod, c);
     }
 
-    @CheckForNull public QueueTaskFuture<WorkflowRun> scheduleBuild2(int quietPeriod, Action... actions) {
+    @Override public @CheckForNull QueueTaskFuture<WorkflowRun> scheduleBuild2(int quietPeriod, Action... actions) {
         return createParameterizedJobMixIn().scheduleBuild2(quietPeriod, actions);
     }
 
@@ -243,7 +265,17 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     }
 
     @Override public int getQuietPeriod() {
-        return Jenkins.getInstance().getQuietPeriod();
+        return quietPeriod != null ? quietPeriod : Jenkins.getInstance().getQuietPeriod();
+    }
+
+    @Restricted(DoNotUse.class) // for config-quietPeriod.jelly
+    public boolean getHasCustomQuietPeriod() {
+        return quietPeriod!=null;
+    }
+
+    public void setQuietPeriod(Integer seconds) throws IOException {
+        this.quietPeriod = seconds;
+        save();
     }
 
     @Override public String getBuildNowText() {
@@ -254,6 +286,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return getCauseOfBlockage() != null;
     }
 
+    @Deprecated
     @Override public String getWhyBlocked() {
         CauseOfBlockage c = getCauseOfBlockage();
         return c != null ? c.getShortDescription() : null;
@@ -334,6 +367,16 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return triggers.toMap();
     }
 
+    public void addTrigger(Trigger trigger) {
+        Trigger old = triggers.get(trigger.getDescriptor());
+        if (old != null) {
+            old.stop();
+            triggers.remove(old);
+        }
+        triggers.add(trigger);
+        trigger.start(this, true);
+    }
+
     @SuppressWarnings("deprecation")
     @Override public List<Action> getActions() {
         List<Action> actions = new ArrayList<Action>(super.getActions());
@@ -341,6 +384,102 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             actions.addAll(trigger.getProjectActions());
         }
         return actions;
+    }
+
+    @Override public Item asItem() {
+        return this;
+    }
+
+    @Override public SCMTrigger getSCMTrigger() {
+        return triggers.get(SCMTrigger.class);
+    }
+
+    @Override public Collection<? extends SCM> getSCMs() {
+        WorkflowRun b = getLastCompletedBuild();
+        if (b == null) {
+            return Collections.emptySet();
+        }
+        List<SCM> scms = new LinkedList<SCM>();
+        for (WorkflowRun.SCMCheckout co : b.checkouts) {
+            scms.add(co.scm);
+        }
+        return scms;
+    }
+
+    public @CheckForNull SCM getTypicalSCM() {
+        SCM typical = null;
+        for (SCM scm : getSCMs()) {
+            if (typical == null) {
+                typical = scm;
+            } else if (typical.getDescriptor() != scm.getDescriptor()) {
+                return null;
+            }
+        }
+        return typical;
+    }
+
+    @Override public PollingResult poll(TaskListener listener) {
+        // TODO call SCMPollListener
+        WorkflowRun b = getLastCompletedBuild();
+        if (b == null) {
+            listener.getLogger().println("no previous build to compare to");
+            return PollingResult.NO_CHANGES;
+        }
+        for (WorkflowRun.SCMCheckout co : b.checkouts) {
+            if (!co.scm.supportsPolling()) {
+                listener.getLogger().println("polling not supported from " + co.workspace + " on " + co.node);
+            }
+            if (co.pollingBaseline == null) {
+                listener.getLogger().println("no polling from " + co.workspace + " on " + co.node);
+                continue;
+            }
+            try {
+                FilePath workspace;
+                Launcher launcher;
+                WorkspaceList.Lease lease;
+                if (co.scm.requiresWorkspaceForPolling()) {
+                    Jenkins j = Jenkins.getInstance();
+                    if (j == null) {
+                        listener.error("Jenkins is shutting down");
+                        continue;
+                    }
+                    Computer c = j.getComputer(co.node);
+                    if (c == null) {
+                        listener.error("no such computer " + co.node);
+                        continue;
+                    }
+                    workspace = new FilePath(c.getChannel(), co.workspace);
+                    launcher = workspace.createLauncher(listener).decorateByEnv(getEnvironment(c.getNode(), listener));
+                    lease = c.getWorkspaceList().acquire(workspace, !isConcurrentBuild());
+                } else {
+                    workspace = null;
+                    launcher = null;
+                    lease = null;
+                }
+                PollingResult r;
+                try {
+                    r = co.scm.compareRemoteRevisionWith(this, launcher, workspace, listener, co.pollingBaseline);
+                } finally {
+                    if (lease != null) {
+                        lease.release();
+                    }
+                }
+                // TODO have to also record r.remote so we do not repoll; better to keep a Map<String,SCMRevisionState> pollingBaseline as a field here, initialized from SCMCheckout.pollingBaseline
+                if (r.hasChanges()) {
+                    return r;
+                }
+            } catch (AbortException x) {
+                listener.error("polling failed in " + co.workspace + " on " + co.node + ": " + x.getMessage());
+            } catch (Exception x) {
+                x.printStackTrace(listener.error("polling failed in " + co.workspace + " on " + co.node));
+            }
+        }
+        return PollingResult.NO_CHANGES;
+    }
+
+    @Override protected void performDelete() throws IOException, InterruptedException {
+        super.performDelete();
+        // TODO call SCM.processWorkspaceBeforeDeletion
     }
 
     @Initializer(before=InitMilestone.EXTENSIONS_AUGMENTED)

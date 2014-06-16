@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014, CloudBees, Inc.
+ * Copyright 2014 Jesse Glick.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,45 +22,49 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.steps;
+package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.Extension;
-import hudson.model.TaskListener;
+import hudson.scm.SCM;
+import hudson.scm.SubversionSCM;
+import java.util.Map;
+import org.jenkinsci.plugins.workflow.steps.Step;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * A simple echo back statement.
- *
- * @author Kohsuke Kawaguchi
+ * Runs Git using {@link SubversionSCM}.
  */
-public class EchoStep extends AbstractStepImpl {
-    private final String message;
+public final class SubversionStep extends SCMStep {
 
-    @StepContextParameter
-    private transient TaskListener listener;
+    private final String url;
 
-    @DataBoundConstructor
-    public EchoStep(String value) {
-        this.message = value;
+    @DataBoundConstructor public SubversionStep(String url, boolean poll, boolean changelog) {
+        super(poll, changelog);
+        this.url = url;
     }
 
-    @Override
-    public boolean doStart(StepContext context) throws Exception {
-        listener.getLogger().println(message);
-        context.onSuccess(null);
-        return true;
+    public String getUrl() {
+        return url;
     }
 
-    @Extension
-    public static class DescriptorImpl extends AbstractStepDescriptorImpl {
-        @Override
-        public String getFunctionName() {
-            return "echo";
+    @Override protected SCM createSCM() {
+        return new SubversionSCM(url); // TODO maybe default to UpdateWithCleanUpdater, etc.
+    }
+
+    @Extension public static final class DescriptorImpl extends SCMStepDescriptor {
+
+        @Override public String getFunctionName() {
+            return "svn";
         }
 
-        @Override
-        public String getDisplayName() {
-            return "Print Message";
+        @Override public Step newInstance(Map<String,Object> arguments) {
+            return new SubversionStep((String) arguments.get("url"), !Boolean.FALSE.equals(arguments.get("poll")), !Boolean.FALSE.equals(arguments.get("changelog")));
         }
+
+        @Override public String getDisplayName() {
+            return "Subversion";
+        }
+
     }
+
 }

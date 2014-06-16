@@ -24,8 +24,16 @@
   ~ THE SOFTWARE.
   -->
 
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:p="/lib/hudson/project">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:p="/lib/hudson/project" xmlns:t="/lib/hudson">
     <p:projectActionFloatingBox/>
+    <table style="margin-top: 1em; margin-left:1em;">
+        <!-- TODO display prominentActions -->
+        <!-- TODO display any workspace(s) if possible -->
+        <t:artifactList caption="${%Last Successful Artifacts}" build="${it.lastSuccessfulBuild}" baseURL="lastSuccessfulBuild/" permission="${it.lastSuccessfulBuild.ARTIFACTS}"/>
+        <t:summary icon="notepad.png" href="changes">
+            ${%Recent Changes}
+        </t:summary>
+    </table>
     <j:forEach var="a" items="${it.allActions}">
         <st:include page="jobMain.jelly" it="${a}" optional="true" />
     </j:forEach>
