@@ -1,18 +1,26 @@
 // TODO consider using https://github.com/cloudbees/jenkins-docker-executors to host everything (install graphviz on Jenkins node)
 // Prep: mkdir /tmp/webapps && docker run -p 80:8080 -v /tmp/webapps:/opt/jetty/webapps jglick/jetty-demo &
 
+def deploy(war, id) {
+    sh("cp ${war} /tmp/webapps/${id}.war")
+}
+
+def undeploy(id) {
+    sh("rm /tmp/webapps/${id}.war")
+}
+
 def runWithServer(body) {
     def id = UUID.randomUUID().toString()
-    sh("cp target/x.war /tmp/webapps/${id}.war")
+    deploy('target/x.war', id)
     try {
         body.call("http://localhost/${id}/");
     } finally {
-        sh("rm /tmp/webapps/${id}.war")
+        undeploy(id)
     }
 }
 
 steps.segment('Dev')
-with.node(/*'heavy'*/) {
+with.node('master') {
     def src = 'https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git'
     steps.git(url: src)
     sh('mvn clean package')
@@ -28,14 +36,14 @@ with.node(/*'heavy'*/) {
         }
     })
     steps.segment(value: 'Staging', concurrency: 1)
-    sh('cp target/x.war /tmp/webapps/staging.war')
+    deploy('target/x.war', 'staging')
 }
 steps.input(message: "Does http://localhost/staging/ look good?")
-steps.checkpoint() // if have cps-checkpoint plugin installed, else comment out
+steps.checkpoint('Before production')
 steps.segment(value: 'Production', concurrency: 1)
-with.node(/*'light'*/) {
+with.node('master') {
     sh('curl -I http://localhost/staging/')
     steps.unarchive(mapping: ['target/x.war' : 'x.war'])
-    sh('cp x.war /tmp/webapps/production.war')
+    deploy('x.war', 'production')
     steps.echo 'Deployed to http://localhost/production/'
 }
