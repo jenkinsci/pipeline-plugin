@@ -18,20 +18,17 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
-            <!-- TODO SCM-Job branch -->
-            <version>2.2.2-SNAPSHOT</version>
+            <version>2.3-beta-1</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>mercurial</artifactId>
-            <!-- TODO SCM-Job branch -->
-            <version>1.51-SNAPSHOT</version>
+            <version>1.51-beta-1</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>subversion</artifactId>
-            <!-- TODO SCM-Job branch -->
-            <version>2.5-SNAPSHOT</version>
+            <version>2.5-beta-2</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
