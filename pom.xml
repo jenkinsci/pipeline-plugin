@@ -103,6 +103,15 @@
                 <artifactId>maven-hpi-plugin</artifactId>
                 <version>1.109</version>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <!-- https://jira.codehaus.org/browse/MRELEASE-271 workaround -->
+                    <preparationGoals>clean install</preparationGoals>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
