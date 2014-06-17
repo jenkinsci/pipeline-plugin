@@ -248,7 +248,7 @@ public final class ExecutorStep extends Step {
         private static final class Callback implements FutureCallback<Object>, Serializable {
 
             private final String cookie;
-            private final WorkspaceList.Lease lease;
+            private WorkspaceList.Lease lease;
 
             Callback(String cookie, WorkspaceList.Lease lease) {
                 this.cookie = cookie;
@@ -258,6 +258,7 @@ public final class ExecutorStep extends Step {
             @Override public void onSuccess(Object returnValue) {
                 LOGGER.log(Level.FINE, "onSuccess {0}", cookie);
                 lease.release();
+                lease = null;
                 StepContext context = finish(cookie);
                 if (context != null) {
                     context.onSuccess(returnValue);
@@ -267,6 +268,7 @@ public final class ExecutorStep extends Step {
             @Override public void onFailure(Throwable t) {
                 LOGGER.log(Level.FINE, "onFailure {0}", cookie);
                 lease.release();
+                lease = null;
                 StepContext context = finish(cookie);
                 if (context != null) {
                     context.onFailure(t);
