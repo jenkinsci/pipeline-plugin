@@ -53,10 +53,12 @@ There is a [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-pl
 While the implementation is divided into a number of plugins, for ease of prototyping they are all kept in one repository using snapshot dependencies.
 
 * `step-api` defines a generic build step interface (not specific to flows) that many plugins could in the future depend on.
+* `basic-steps` add some generic step implementations.
 * `api` defines the essential aspects of flows and their executions. In particular, the engine running a flow is extensible and so could in the future support visual orchestration languages.
 * `support` adds general implementations of some internals needed by flows, such as storing state.
 * `job` provides the actual job type and top-level UI for defining and running flows.
 * `durable-task-step` uses the `durable-task` plugin to define a shell script step that can survive restarts.
+* `scm-step` adds SCM-related steps.
 * `cps` is the flow engine implementation based on the Groovy language, and supporting long-running flows using a _continuation passing style_ transformation of the script.
 * `stm` is a simple engine implementation using a _state transition machine_, less intended for end users than as a reference for how engines can work.
 * `aggregator` is a placeholder plugin allowing you to `mvn hpi:run` and see everything working together.
