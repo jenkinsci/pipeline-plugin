@@ -60,6 +60,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
@@ -97,7 +98,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     };
     private transient StreamBuildListener listener;
-    private transient Object completionLock;
+    private transient AtomicBoolean completed;
     /** map from node IDs to log positions from which we should copy text */
     private Map<String,Long> logsToCopy;
 
@@ -160,7 +161,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
             execution = definition.create(new Owner(this), getAllActions());
             execution.addListener(new GraphL());
-            completionLock = new Object();
+            completed = new AtomicBoolean();
             logsToCopy = new LinkedHashMap<String,Long>();
             checkouts = new LinkedList<SCMCheckout>();
             execution.start();
@@ -180,12 +181,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     /**
      * Sleeps until the run is finished, updating log messages periodically.
      */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings({"ML_SYNC_ON_UPDATED_FIELD", "UW_UNCOND_WAIT"})
     void waitForCompletion() {
-        while (!execution.isComplete()) {
-            synchronized (completionLock) {
+        synchronized (completed) {
+            while (!completed.get()) {
                 try {
-                    completionLock.wait(1000);
+                    completed.wait(1000);
                 } catch (InterruptedException x) {
                     try {
                         execution.abort();
@@ -198,12 +198,13 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     }
 
-    @GuardedBy("completionLock")
+    @GuardedBy("completed")
     private void copyLogs() {
         if (logsToCopy == null) { // finished
             return;
         }
         Iterator<Map.Entry<String,Long>> it = logsToCopy.entrySet().iterator();
+        boolean modified = false;
         while (it.hasNext()) {
             Map.Entry<String,Long> entry = it.next();
             FlowNode node;
@@ -212,11 +213,13 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             } catch (IOException x) {
                 LOGGER.log(Level.WARNING, null, x);
                 it.remove();
+                modified = true;
                 continue;
             }
             if (node == null) {
                 LOGGER.log(Level.WARNING, "no such node {0}", entry.getKey());
                 it.remove();
+                modified = true;
                 continue;
             }
             LogAction la = node.getAction(LogAction.class);
@@ -228,13 +231,23 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                         logText.writeLogTo(entry.getValue(), listener.getLogger()); // defend against race condition?
                         assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
                         it.remove();
+                        modified = true;
                     }
                 } catch (IOException x) {
                     LOGGER.log(Level.WARNING, null, x);
                     it.remove();
+                    modified = true;
                 }
             } else if (!node.isRunning()) {
                 it.remove();
+                modified = true;
+            }
+        }
+        if (modified) {
+            try {
+                save();
+            } catch (IOException x) {
+                LOGGER.log(Level.WARNING, null, x);
             }
         }
     }
@@ -266,7 +279,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     LOGGER.log(Level.WARNING, null, x);
                     listener = new StreamBuildListener(new NullStream());
                 }
-                completionLock = new Object();
+                completed = new AtomicBoolean();
                 Queue.getInstance().schedule(new AfterRestartTask(this), 0);
             }
         }
@@ -294,9 +307,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             LOGGER.log(Level.WARNING, null, x);
         }
         RunListener.fireFinalized(this);
-        assert completionLock != null;
-        synchronized (completionLock) {
-            completionLock.notifyAll();
+        assert completed != null;
+        synchronized (completed) {
+            completed.set(true);
+            completed.notifyAll();
         }
     }
 
@@ -461,7 +475,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     private final class GraphL implements GraphListener {
         @Override public void onNewHead(FlowNode node) {
-            synchronized (completionLock) {
+            synchronized (completed) {
                 copyLogs();
                 logsToCopy.put(node.getId(), 0L);
             }
