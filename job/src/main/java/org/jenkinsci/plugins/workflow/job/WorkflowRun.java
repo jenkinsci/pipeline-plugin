@@ -226,7 +226,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             if (la != null) {
                 AnnotatedLargeText<? extends FlowNode> logText = la.getLogText();
                 try {
-                    entry.setValue(logText.writeLogTo(entry.getValue(), listener.getLogger()));
+                    long old = entry.getValue();
+                    long revised = logText.writeLogTo(old, listener.getLogger());
+                    if (revised != old) {
+                        entry.setValue(revised);
+                        modified = true;
+                    }
                     if (logText.isComplete()) {
                         logText.writeLogTo(entry.getValue(), listener.getLogger()); // defend against race condition?
                         assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
