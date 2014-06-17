@@ -203,6 +203,14 @@ public class CpsFlowExecution extends FlowExecution {
      */
     private Result result = Result.SUCCESS;
 
+    /**
+     * When the program is completed, set to true.
+     *
+     * {@link FlowExecution} gets loaded into memory for the build records that have been completed,
+     * and for those we don't want to load the program state, so that check should be efficient.
+     */
+    private boolean done;
+
     public CpsFlowExecution(String script, FlowExecutionOwner owner) throws IOException {
         this.owner = owner;
         this.script = script;
@@ -291,7 +299,8 @@ public class CpsFlowExecution extends FlowExecution {
     @Override
     public void onLoad() {
         try {
-            loadProgramAsync(getProgramDataFile());
+            if (!isComplete())
+                loadProgramAsync(getProgramDataFile());
         } catch (IOException e) {
             SettableFuture<CpsThreadGroup> p = SettableFuture.create();
             programPromise = p;
@@ -464,6 +473,11 @@ public class CpsFlowExecution extends FlowExecution {
         storage.saveActions(node, actions);
     }
 
+    @Override
+    public boolean isComplete() {
+        return done || super.isComplete();
+    }
+
     /*packgage*/ synchronized void onProgramEnd(Outcome outcome) {
         // end of the program
         // run till the end successfully FIXME: failure comes here, too
@@ -474,6 +488,7 @@ public class CpsFlowExecution extends FlowExecution {
             head.addAction(new ErrorAction(outcome.getAbnormal()));
 
         // shrink everything into a single new head
+        done = true;
         FlowHead first = getFirstHead();
         first.setNewHead(head);
         heads.clear();
