@@ -2,6 +2,8 @@ package org.jenkinsci.plugins.workflow.steps.input;
 
 import hudson.model.User;
 
+// TODO consider deleting this, using InterruptedException, and setting a custom CauseOfInterruption, so that the build appears properly aborted
+
 /**
  * Indicates that the input step was rejected by the user.
  *
