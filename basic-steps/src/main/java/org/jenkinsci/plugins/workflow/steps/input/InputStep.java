@@ -3,12 +3,14 @@ package org.jenkinsci.plugins.workflow.steps.input;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Util;
+import hudson.console.HyperlinkNote;
 import hudson.model.Failure;
 import hudson.model.FileParameterValue;
 import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.model.User;
 import hudson.util.HttpResponses;
 import jenkins.model.Jenkins;
@@ -77,6 +79,8 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
      */
     @StepContextParameter
     /*package*/ transient Run run;
+
+    @StepContextParameter private transient TaskListener listener;
 
     /**
      * Result of the input.
@@ -160,6 +164,15 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
 
         // record this input
         getPauseAction().add(this);
+
+        String baseUrl = '/' + run.getUrl() + getPauseAction().getUrlName() + '/';
+        if (getParameters().isEmpty()) {
+            String thisUrl = baseUrl + Util.rawEncode(getId()) + '/';
+            listener.getLogger().printf("%s%n%s or %s%n", getMessage(), POSTHyperlinkNote.encodeTo(thisUrl + "proceed", getOk()), POSTHyperlinkNote.encodeTo(thisUrl + "abort", "Abort"));
+        } else {
+            // TODO listener.hyperlink(…) does not work; why?
+            listener.getLogger().println(HyperlinkNote.encodeTo(baseUrl, "Input requested"));
+        }
 
         return false;
     }
