@@ -2,17 +2,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.jenkinsci.plugins.workflow</groupId>
-        <artifactId>workflow-all</artifactId>
+        <groupId>org.jenkins-ci.plugins.workflow</groupId>
+        <artifactId>workflow-pom</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>scm-step</artifactId>
+    <artifactId>workflow-scm-step</artifactId>
     <packaging>hpi</packaging>
     <name>Workflow: SCM Step</name>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>step-api</artifactId>
+            <artifactId>workflow-step-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -32,37 +32,37 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cps</artifactId>
+            <artifactId>workflow-cps</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>job</artifactId>
+            <artifactId>workflow-job</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>flow-support</artifactId>
+            <artifactId>workflow-support</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>durable-task-step</artifactId>
+            <artifactId>workflow-durable-task-step</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>basic-steps</artifactId>
+            <artifactId>workflow-basic-steps</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>flow-support</artifactId>
+            <artifactId>workflow-support</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>
             <scope>test</scope>

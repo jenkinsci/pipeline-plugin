@@ -26,57 +26,57 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.jenkinsci.plugins.workflow</groupId>
-        <artifactId>workflow-all</artifactId>
+        <groupId>org.jenkins-ci.plugins.workflow</groupId>
+        <artifactId>workflow-pom</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>demo</artifactId>
+    <artifactId>workflow-aggregator</artifactId>
     <packaging>hpi</packaging>
-    <name>Workflow: Demo</name>
+    <name>Workflow: Aggregator</name>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>step-api</artifactId>
+            <artifactId>workflow-step-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>flow-api</artifactId>
+            <artifactId>workflow-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>flow-support</artifactId>
+            <artifactId>workflow-support</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>durable-task-step</artifactId>
+            <artifactId>workflow-durable-task-step</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>scm-step</artifactId>
+            <artifactId>workflow-scm-step</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>cps</artifactId>
+            <artifactId>workflow-cps</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>stm</artifactId>
+            <artifactId>workflow-stm</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>job</artifactId>
+            <artifactId>workflow-job</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>basic-steps</artifactId>
+            <artifactId>workflow-basic-steps</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
@@ -112,7 +112,7 @@
                                 continue;
                             }
                             def a = dep.artifactId;
-                            def theHpl = new File(new File(basedir.parentFile, a), 'target/test-classes/the.hpl');
+                            def theHpl = new File(new File(basedir.parentFile, a.replaceFirst('^workflow-', '')), 'target/test-classes/the.hpl');
                             if (theHpl.file) {
                                 plugins.mkdirs();
                                 ant.copy(file: theHpl, tofile: new File(plugins, a + '.hpl'), overwrite: true, verbose: true);

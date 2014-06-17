@@ -30,8 +30,8 @@
         <artifactId>plugin</artifactId>
         <version>1.568</version>
     </parent>
-    <groupId>org.jenkinsci.plugins.workflow</groupId>
-    <artifactId>workflow-all</artifactId>
+    <groupId>org.jenkins-ci.plugins.workflow</groupId>
+    <artifactId>workflow-pom</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Workflow: Parent</name>
@@ -46,15 +46,15 @@
     </properties>
     <modules>
         <module>step-api</module>
-        <module>flow-api</module>
-        <module>flow-support</module>
+        <module>api</module>
+        <module>support</module>
         <module>basic-steps</module>
         <module>durable-task-step</module>
         <module>scm-step</module>
         <module>cps</module>
         <module>stm</module>
         <module>job</module>
-        <module>demo</module>
+        <module>aggregator</module>
     </modules>
     <dependencyManagement>
         <dependencies>
