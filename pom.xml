@@ -111,7 +111,7 @@
                 <configuration>
                     <!-- https://jira.codehaus.org/browse/MRELEASE-271 workaround -->
                     <preparationGoals>clean install</preparationGoals>
-                    <tagNameFormat>jenkins-@{project.version}</tagNameFormat>
+                    <tagNameFormat>workflow-@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
         </plugins>
