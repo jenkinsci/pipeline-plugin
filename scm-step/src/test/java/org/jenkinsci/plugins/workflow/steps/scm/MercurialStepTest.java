@@ -94,6 +94,7 @@ public class MercurialStepTest {
         System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
         System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(otherRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
         r.waitUntilNoActivity();
+        FileUtils.copyFile(p.getSCMTrigger().getLogFile(), System.out);
         b = p.getLastBuild();
         assertEquals(2, b.number);
         r.assertLogContains("PRESENT: main/file2", b);
