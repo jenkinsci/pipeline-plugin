@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
  * {@link Step} that pauses for human input.
@@ -154,7 +155,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     }
 
     @Override
-    public boolean doStart(StepContext context) throws Exception {
+    protected boolean doStart(StepContext context) throws Exception {
         this.context = context;
 
         // record this input
@@ -176,6 +177,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /**
      * Called from the form via browser to submit/abort this input step.
      */
+    @RequirePOST
     public HttpResponse doSubmit(StaplerRequest request) throws IOException, ServletException, InterruptedException {
         if (request.getParameter("proceed")!=null) {
             doProceed(request);
@@ -190,6 +192,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /**
      * REST endpoint to submit the input.
      */
+    @RequirePOST
     public HttpResponse doProceed(StaplerRequest request) throws IOException, ServletException, InterruptedException {
         preSubmissionCheck();
 
@@ -205,6 +208,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     /**
      * REST endpoint to abort the workflow.
      */
+    @RequirePOST
     public HttpResponse doAbort() throws IOException, ServletException {
         preSubmissionCheck();
 
