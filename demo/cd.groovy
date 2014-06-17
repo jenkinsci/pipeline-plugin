@@ -7,7 +7,7 @@ with.node('master') {
     steps.git(url: src)
     sh('mvn clean package')
     steps.archive('target/x.war')
-    stage('QA')
+    steps.stage('QA')
     parallel(sometests: {
         runWithServer {url ->
             sh("mvn -f sometests/pom.xml test -Durl=${url}")
