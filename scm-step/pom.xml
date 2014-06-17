@@ -9,6 +9,7 @@
     <artifactId>workflow-scm-step</artifactId>
     <packaging>hpi</packaging>
     <name>Workflow: SCM Step</name>
+    <url>https://github.com/jenkinsci/workflow-plugin</url>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

@@ -33,6 +33,7 @@
     <artifactId>workflow-job</artifactId>
     <packaging>hpi</packaging>
     <name>Workflow: Job</name>
+    <url>https://github.com/jenkinsci/workflow-plugin</url>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

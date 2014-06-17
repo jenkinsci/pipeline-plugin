@@ -35,6 +35,7 @@
     <version>0.1-beta-1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Workflow: Parent</name>
+    <url>https://github.com/jenkinsci/workflow-plugin</url>
     <licenses>
         <license>
             <name>MIT License</name>

@@ -33,6 +33,7 @@
     <artifactId>workflow-aggregator</artifactId>
     <packaging>hpi</packaging>
     <name>Workflow: Aggregator</name>
+    <url>https://github.com/jenkinsci/workflow-plugin</url>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

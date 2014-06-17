@@ -33,6 +33,7 @@
     <artifactId>workflow-basic-steps</artifactId>
     <packaging>hpi</packaging>
     <name>Workflow: Basic Steps</name>
+    <url>https://github.com/jenkinsci/workflow-plugin</url>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
