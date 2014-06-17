@@ -132,7 +132,7 @@ public class SegmentStep extends Step {
 
     private static synchronized void enter(Run<?,?> r, StepContext context, String name, Integer concurrency) {
         LOGGER.log(Level.FINE, "enter {0} {1}", new Object[] {r, name});
-        println(context, "Entering segment " + name);
+        println(context, "Entering stage " + name);
         load();
         Job<?,?> job = r.getParent();
         String jobName = job.getFullName();
@@ -178,7 +178,7 @@ public class SegmentStep extends Step {
             // If we were holding another segment in the same job, release it, unlocking its waiter to proceed.
             if (segment2.holding.remove(build)) {
                 if (segment2.waitingContext != null) {
-                    println(segment2.waitingContext, "Unblocked since " + r.getDisplayName() + " is moving into segment " + name);
+                    println(segment2.waitingContext, "Unblocked since " + r.getDisplayName() + " is moving into stage " + name);
                     segment2.waitingContext.onSuccess(null);
                     segment2.waitingBuild = null;
                     segment2.waitingContext = null;
@@ -327,7 +327,7 @@ public class SegmentStep extends Step {
         }
 
         @Override public String getFunctionName() {
-            return "segment";
+            return "stage";
         }
 
         @Override public Step newInstance(Map<String,Object> arguments) {
@@ -335,7 +335,7 @@ public class SegmentStep extends Step {
         }
 
         @Override public String getDisplayName() {
-            return "Segment";
+            return "Stage";
         }
 
     }

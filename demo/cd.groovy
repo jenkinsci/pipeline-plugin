@@ -1,42 +1,49 @@
 // TODO consider using https://github.com/cloudbees/jenkins-docker-executors to host everything (install graphviz on Jenkins node)
 // Prep: mkdir /tmp/webapps && docker run -p 80:8080 -v /tmp/webapps:/opt/jetty/webapps jglick/jetty-demo &
 
-@WorkflowMethod
-def runWithServer(body) {
-    def id = UUID.randomUUID().toString()
-    sh("cp target/x.war /tmp/webapps/${id}.war")
-    try {
-        body.run("http://localhost/${id}/");
-    } finally {
-        sh("rm /tmp/webapps/${id}.war")
-    }
-}
-
-steps.segment('Dev')
-with.node(/*'heavy'*/) {
+steps.stage('Dev')
+with.node('master') {
     def src = 'https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git'
-    // TODO pending SCM-Job merge steps.git(url: src)
-    sh("if [ -d .git ]; then git pull; else git clone ${src} tmp && mv tmp/.git tmp/* . && rmdir tmp; fi")
+    steps.git(url: src)
     sh('mvn clean package')
     steps.archive('target/x.war')
-    segment('QA')
+    stage('QA')
     parallel(sometests: {
         runWithServer {url ->
-            sh("mvn -f sometests test -Durl=${url}")
+            sh("mvn -f sometests/pom.xml test -Durl=${url}")
         }
     }, othertests: {
-        runWithServer {port ->
-            sh("mvn -f othertests test -Durl=${url}")
+        runWithServer {url ->
+            sh("mvn -f sometests/pom.xml test -Durl=${url}") // TODO add other test module
         }
     })
-    steps.segment(value: 'Staging', concurrency: 1)
-    sh('cp target/x.war /tmp/webapps/staging.war')
+    steps.stage(value: 'Staging', concurrency: 1)
+    deploy('target/x.war', 'staging')
 }
 steps.input(message: "Does http://localhost/staging/ look good?")
-steps.checkpoint() // if have cps-checkpoint plugin installed, else comment out
-steps.segment(value: 'Production', concurrency: 1)
-with.node(/*'light'*/) {
+steps.checkpoint('Before production')
+steps.stage(value: 'Production', concurrency: 1)
+with.node('master') {
+    sh('curl -I http://localhost/staging/')
     steps.unarchive(mapping: ['target/x.war' : 'x.war'])
-    sh('cp target/x.war /tmp/webapps/production.war')
+    deploy('x.war', 'production')
     steps.echo 'Deployed to http://localhost/production/'
+}
+
+def deploy(war, id) {
+    sh("cp ${war} /tmp/webapps/${id}.war")
+}
+
+def undeploy(id) {
+    sh("rm /tmp/webapps/${id}.war")
+}
+
+def runWithServer(body) {
+    def id = UUID.randomUUID().toString()
+    deploy('target/x.war', id)
+    try {
+        body.call("http://localhost/${id}/");
+    } finally {
+        undeploy(id)
+    }
 }

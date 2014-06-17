@@ -38,6 +38,7 @@
                 </j:otherwise>
             </j:choose>
             <l:task icon="images/24x24/search.png"  href="${url}/" title="${%Status}" contextMenu="false"/>
+            <l:task icon="images/24x24/notepad.png" href="${url}/changes" title="${%Changes}"/>
             <p:configurable/>
             <st:include page="actions.jelly"/>
         </l:tasks>

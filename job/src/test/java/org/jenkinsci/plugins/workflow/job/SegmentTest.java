@@ -56,10 +56,10 @@ public class SegmentTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
-                        "steps.segment(value: 'A', concurrency: 2);\n" +
+                        "steps.stage(value: 'A', concurrency: 2);\n" +
                         "steps.echo('in A');\n" +
                         "steps.semaphore('B');\n" +
-                        "steps.segment(value: 'B', concurrency: 1);\n" +
+                        "steps.stage(value: 'B', concurrency: 1);\n" +
                         "steps.echo('in B');\n" +
                         "steps.semaphore('X');\n" +
                         "steps.echo('done')"));

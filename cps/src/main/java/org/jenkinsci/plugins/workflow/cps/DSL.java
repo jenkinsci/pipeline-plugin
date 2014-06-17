@@ -135,6 +135,9 @@ public class DSL extends GroovyObjectSupport implements Serializable {
                 // no body invoked, so EndNode follows StartNode immediately.
                 thread.head.setNewHead(new StepEndNode(exec, (StepStartNode)an, an));
             }
+
+            thread.head.markIfFail(context.getOutcome());
+
             return context.replay();
         } else {
             // if it's in progress, suspend it until we get invoked later.

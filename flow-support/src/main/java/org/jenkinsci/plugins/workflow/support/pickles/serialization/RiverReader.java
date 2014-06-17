@@ -24,16 +24,19 @@
 
 package org.jenkinsci.plugins.workflow.support.pickles.serialization;
 
-import org.jenkinsci.plugins.workflow.pickles.Pickle;
-import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.io.IOUtils;
+import org.jboss.marshalling.ChainingObjectResolver;
 import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
+import org.jboss.marshalling.ObjectResolver;
 import org.jboss.marshalling.SimpleClassResolver;
 import org.jboss.marshalling.Unmarshaller;
 import org.jboss.marshalling.river.RiverMarshallerFactory;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.jenkinsci.plugins.workflow.pickles.Pickle;
+import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -46,15 +49,45 @@ import java.util.List;
 import static org.apache.commons.io.IOUtils.*;
 
 /**
+ * Reads program data file that stores the object graph of the CPS-transformed program.
+ *
+ * <p>
+ * The file consists of two separate object streams. The first stream contains a list of {@link Pickle}s,
+ * which are used to restore stateful objects. The second stream is the main stream that contains
+ * the main program state, which includes references to {@link DryCapsule} (which gets replaced to
+ * their respective stateful objects.
+ *
  * @author Kohsuke Kawaguchi
  */
 public class RiverReader {
     private final File file;
     private final ClassLoader classLoader;
+    /**
+     * {@link DryOwner} in the serialized graph gets replaced by this object.
+     */
+    private final FlowExecutionOwner owner;
 
-    public RiverReader(File f, ClassLoader classLoader) throws IOException {
+    /**
+     * {@link ObjectResolver} that replaces {@link DryOwner} by the actual owner.
+     */
+    private ObjectResolver ownerResolver = new ObjectResolver() {
+        @Override
+        public Object readResolve(Object replacement) {
+            if (replacement instanceof DryOwner)
+                return owner;
+            return replacement;
+        }
+
+        @Override
+        public Object writeReplace(Object original) {
+            throw new IllegalStateException();
+        }
+    };
+
+    public RiverReader(File f, ClassLoader classLoader, FlowExecutionOwner owner) throws IOException {
         this.file = f;
         this.classLoader = classLoader;
+        this.owner = owner;
     }
 
     private int parseHeader(DataInputStream din) throws IOException {
@@ -87,7 +120,7 @@ public class RiverReader {
         MarshallingConfiguration config = new MarshallingConfiguration();
         config.setClassResolver(new SimpleClassResolver(classLoader));
         //config.setSerializabilityChecker(new SerializabilityCheckerImpl());
-        config.setObjectResolver(evr);
+        config.setObjectResolver(combine(evr, ownerResolver));
         final Unmarshaller eu = new RiverMarshallerFactory().createUnmarshaller(config);
         eu.start(Marshalling.createByteInput(din));
 
@@ -104,6 +137,7 @@ public class RiverReader {
         try {
             MarshallingConfiguration config = new MarshallingConfiguration();
             config.setClassResolver(new SimpleClassResolver(classLoader));
+            config.setObjectResolver(ownerResolver);
             Unmarshaller eu = new RiverMarshallerFactory().createUnmarshaller(config);
             try {
                 eu.start(Marshalling.createByteInput(es));
@@ -122,5 +156,9 @@ public class RiverReader {
         InputStream in = new FileInputStream(file);
         IOUtils.skipFully(in, offset);
         return new BufferedInputStream(in);
+    }
+
+    private ObjectResolver combine(ObjectResolver... resolvers) {
+        return new ChainingObjectResolver(resolvers);
     }
 }

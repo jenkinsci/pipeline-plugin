@@ -53,6 +53,14 @@
             </div>
             <table style="margin-top: 1em; margin-left:1em;">
                 <t:artifactList build="${it}" caption="${%Build Artifacts}" permission="${it.ARTIFACTS}"/>
+                <j:set var="changeSets" value="${it.changeSets}"/>
+                <j:if test="${!changeSets.isEmpty()}">
+                    <t:summary icon="notepad.png">
+                        <j:forEach var="changeSet" items="${changeSets}">
+                            <st:include it="${changeSet}" page="digest.jelly"/>
+                        </j:forEach>
+                    </t:summary>
+                </j:if>
                 <j:forEach var="a" items="${it.allActions}">
                     <st:include page="summary.jelly" from="${a}" optional="true" it="${a}"/>
                 </j:forEach>

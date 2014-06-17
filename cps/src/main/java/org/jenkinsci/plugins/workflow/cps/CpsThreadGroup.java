@@ -309,7 +309,7 @@ public final class CpsThreadGroup implements Serializable {
 
         try {
             // TODO: write atomically
-            RiverWriter w = new RiverWriter(f);
+            RiverWriter w = new RiverWriter(f,execution.getOwner());
             try {
                 w.writeObject(this);
             } finally {
