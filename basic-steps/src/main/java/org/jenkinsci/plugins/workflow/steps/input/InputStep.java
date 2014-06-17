@@ -177,8 +177,6 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
      * Called from the form via browser to submit/abort this input step.
      */
     public HttpResponse doSubmit(StaplerRequest request) throws IOException, ServletException, InterruptedException {
-        preSubmissionCheck();
-
         if (request.getParameter("proceed")!=null) {
             doProceed(request);
         } else {
