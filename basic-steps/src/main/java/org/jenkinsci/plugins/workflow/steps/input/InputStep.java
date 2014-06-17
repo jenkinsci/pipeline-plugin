@@ -200,6 +200,8 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         outcome = new Outcome(v, null);
         context.onSuccess(v);
 
+        postSettlement();
+
         // TODO: record this decision to FlowNode
 
         return HttpResponses.ok();
@@ -215,6 +217,8 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         RejectionException e = new RejectionException(User.current());
         outcome = new Outcome(null,e);
         context.onFailure(e);
+
+        postSettlement();
 
         // TODO: record this decision to FlowNode
 
@@ -304,7 +308,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         }
     }
 
-    private void postSettlement(boolean redirect) throws IOException {
+    private void postSettlement() throws IOException {
         getPauseAction().remove(this);
         run.save();
     }

@@ -57,6 +57,7 @@ public class InputStepTest extends Assert {
         // submit the input, and run workflow to the completion
         HtmlPage p = j.createWebClient().getPage(b, a.getUrlName());
         j.submit(p.getFormByName(is.getId()),"proceed");
+        assertEquals(0, a.getSteps().size());
         q.get();
 
         // make sure 'x' gets assigned to false
