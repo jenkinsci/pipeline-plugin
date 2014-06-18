@@ -29,7 +29,7 @@ THE SOFTWARE.
     <j:forEach var="a" items="${node.allActions}">
       <j:if test="${a.urlName == 'log'}"> <!-- easier in Jelly than calling getAction(LogAction.class) -->
         <a href="./execution/node/${node.id}/log/">
-          <img src="${resURL}/plugin/flow-support/images/32x32/terminal.png" alt="Console Output" class="icon32x32"/>
+          <img src="${resURL}/plugin/workflow-support/images/32x32/terminal.png" alt="Console Output" class="icon32x32"/>
         </a>
       </j:if>
     </j:forEach>
