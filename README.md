@@ -5,6 +5,7 @@ You need to mix Parameterized Trigger, Copy Artifact, Promoted Builds, Condition
 This project attempts to make it possible to directly write that script, what people often call a _workflow_ (sometimes abbreviated _flow_), while integrating with Jenkins features like slaves and publishers.
 
 [JUC Boston slides](http://www.cloudbees.com/sites/default/files/juc/juc2014/boston/2014-0618-Boston-Jesse_Glick-Workflow.pdf)
+
 [Early slides](https://docs.google.com/a/cloudbees.com/presentation/d/1ysu71kGpEjvsikKAXdPXTJULadHh9cRbpd0gJaIkVtA)
 
 # Core features
@@ -37,6 +38,13 @@ with.node('linux') { // grab a slave and allocate a workspace
   sh('mvn verify');
 }
 ```
+
+# Installation
+
+If you do not want to build from sources, some early releases (as of this writing `0.1-beta-1`) are available on the Jenkins experimental update center.
+You need to be running a recent Jenkins weekly release, currently 1.568 or newer.
+For OSS Jenkins users, follow [these instructions](http://jenkins-ci.org/content/experimental-plugins-update-center) and install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
+Jenkins Enterprise by CloudBees users can click _Enable access_ under _Access to experimental plugin releases_ in the main Jenkins configuration screen, and then install both _Workflow: Aggregator_ and the proprietary add-on _Workflow: Groovy CPS Execution Checkpoint_.
 
 # Development
 
