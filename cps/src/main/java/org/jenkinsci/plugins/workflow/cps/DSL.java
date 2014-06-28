@@ -79,6 +79,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
      *      returned. Otherwise this method {@linkplain Continuable#suspend(Object) suspends}.
      */
     @Override
+    @CpsVmThreadOnly
     public Object invokeMethod(String name, Object args) {
         try {
             if (exec==null)

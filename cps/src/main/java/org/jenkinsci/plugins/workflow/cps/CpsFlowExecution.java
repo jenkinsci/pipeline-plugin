@@ -79,6 +79,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Stack;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -178,6 +179,8 @@ public class CpsFlowExecution extends FlowExecution {
      * This object represents a {@link Future} for filling in {@link CpsThreadGroup}.
      *
      * TODO: provide a mechanism to diagnose how far along this process is.
+     *
+     * @see #runInCpsVmThread(FutureCallback)
      */
     @Nonnull
     public transient ListenableFuture<CpsThreadGroup> programPromise;
@@ -235,7 +238,7 @@ public class CpsFlowExecution extends FlowExecution {
 
     @Override
     public void start() throws IOException {
-        CpsScript s = parseScript();
+        final CpsScript s = parseScript();
         DSL dsl = new DSL(owner);
         s.getBinding().setVariable("steps", dsl);
         // some of the steps that acquire resources look better with 'with', so exposing
@@ -245,15 +248,23 @@ public class CpsFlowExecution extends FlowExecution {
 
         s.loadEnvironment();
 
-        FlowHead h = new FlowHead(this);
+        final FlowHead h = new FlowHead(this);
         heads.put(h.getId(),h);
         h.newStartNode(new FlowStartNode(this, iotaStr()));
 
-        CpsThreadGroup g = new CpsThreadGroup(this);
-        CpsThread t = g.addThread(new Continuable(s),h,null);
+        final CpsThreadGroup g = new CpsThreadGroup(this);
+        final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
+        g.runner.submit(new Runnable() {
+            @Override
+            public void run() {
+                CpsThread t = g.addThread(new Continuable(s),h,null);
+                t.resume(new Outcome(null, null));
+                f.set(g);
+            }
+        });
 
-        programPromise = Futures.immediateFuture(g);
-        t.resume(new Outcome(null, null));
+        programPromise = f;
+
     }
 
     private GroovyShell buildShell() {
@@ -395,6 +406,37 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     /**
+     * Execute a task in {@link CpsVmThread} to safely access {@link CpsThreadGroup} internal states.
+     *
+     * <p>
+     * If the {@link CpsThreadGroup} deserializatoin fails, {@link FutureCallback#onFailure(Throwable)} will
+     * be invoked (on a random thread that's not {@link CpsVmThread}, since {@link CpsVmThread} cannot exist.)
+     */
+    void runInCpsVmThread(final FutureCallback<CpsThreadGroup> callback) {
+        // first we need to wait for programPromise to fullfil CpsThreadGroup, then we need to run in its runner, phew!
+        Futures.addCallback(programPromise, new FutureCallback<CpsThreadGroup>() {
+            @Override
+            public void onSuccess(final CpsThreadGroup g) {
+                g.runner.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(g);
+                    }
+                });
+            }
+
+            /**
+             * Program state failed to load.
+             */
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(t);
+            }
+        });
+    }
+
+
+    /**
      * Waits for the workflow to move into the SUSPENDED state.
      *
      * @throws Exception
@@ -438,9 +480,9 @@ public class CpsFlowExecution extends FlowExecution {
 
 
     @Override
-    public synchronized void addListener(GraphListener listener) {
+    public void addListener(GraphListener listener) {
         if (listeners == null) {
-            listeners = new ArrayList<GraphListener>();
+            listeners = new CopyOnWriteArrayList<GraphListener>();
         }
         listeners.add(listener);
     }
@@ -500,7 +542,7 @@ public class CpsFlowExecution extends FlowExecution {
         return heads.firstEntry().getValue();
     }
 
-    synchronized void notifyListeners(FlowNode node) {
+    void notifyListeners(FlowNode node) {
         if (listeners != null) {
             for (GraphListener listener : listeners) {
                 listener.onNewHead(node);

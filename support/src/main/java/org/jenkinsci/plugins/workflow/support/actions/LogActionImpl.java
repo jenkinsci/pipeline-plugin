@@ -63,6 +63,9 @@ public class LogActionImpl extends LogAction implements FlowNodeAction {
     public AnnotatedLargeText<? extends FlowNode> getLogText() {
         try {
             getLogFile();
+            if (!log.exists())
+                return new AnnotatedLargeText<FlowNode>(new ByteBuffer(), getCharset(), !parent.isRunning(), parent);
+
             return new AnnotatedLargeText<FlowNode>(log, getCharset(), !parent.isRunning(), parent);
         } catch (IOException e) {
             ByteBuffer buf = new ByteBuffer();

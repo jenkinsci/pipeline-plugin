@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.workflow.job;
 
 import hudson.FilePath;
 import jenkins.model.Jenkins;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.ParallelStep;
@@ -151,24 +152,49 @@ public class ParallelStepTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                    "def notify(msg) {",
-                    "  sh \"echo ${msg}\"",
-                    "}",
-                    "with.node {",
-                    "  with.ws {",
-                    "    sh 'echo start'",
-                    "    steps.parallel(one: {",
-                    "      notify('one')",
-                    "    }, two: {",
-                    "      notify('two')",
-                    "    })",
-                    "    sh 'echo end'",
-                    "  }",
-                    "}"
+                        "def notify(msg) {",
+                        "  sh \"echo ${msg}\"",
+                        "}",
+                        "with.node {",
+                        "  with.ws {",
+                        "    sh 'echo start'",
+                        "    steps.parallel(one: {",
+                        "      notify('one')",
+                        "    }, two: {",
+                        "      notify('two')",
+                        "    })",
+                        "    sh 'echo end'",
+                        "  }",
+                        "}"
                 )));
 
                 startBuilding().get();
                 assertBuildCompletedSuccessfully();
+            }
+        });
+    }
+
+    @Test
+    public void localMethodCallWithinLotsOfBranches() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(
+                        IOUtils.toString(getClass().getResource("localMethodCallWithinLotsOfBranches.groovy"))));
+
+                startBuilding().get();
+                assertBuildCompletedSuccessfully();
+
+                // count number of shell steps
+                FlowGraphTable t = buildTable();
+                int shell=0;
+                for (Row r : t.getRows()) {
+                    if (r.getNode() instanceof StepAtomNode) {
+                        if (((StepAtomNode)r.getNode()).getDescriptor() instanceof ShellStep.DescriptorImpl)
+                        shell++;
+                    }
+                }
+                assertEquals(128*3,shell);
             }
         });
     }

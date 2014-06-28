@@ -44,7 +44,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
+import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 
 import javax.annotation.CheckForNull;
 import java.io.IOException;
@@ -58,7 +58,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
-import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 
 /**
  * {@link StepContext} implementation for CPS.
@@ -153,6 +152,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      */
     private transient volatile StepDescriptor stepDescriptor;
 
+    @CpsVmThreadOnly
     CpsStepContext(StepDescriptor step, CpsThread thread, FlowExecutionOwner executionRef, FlowNode node, Closure body) {
         this.threadId = thread.id;
         this.executionRef = executionRef;
@@ -231,7 +231,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
             bodyInvokers.add(b);
         } else {
             try {
-                Futures.addCallback(getExecution().programPromise, new FutureCallback<CpsThreadGroup>() {
+                getExecution().runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
                     @Override
                     public void onSuccess(CpsThreadGroup g) {
                         CpsThread thread = getThread(g);
@@ -322,7 +322,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                     parents.add(flow.getNode(head));
                 }
 
-                Futures.addCallback(flow.programPromise, new FutureCallback<CpsThreadGroup>() {
+                flow.runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
                     @Override
                     public void onSuccess(CpsThreadGroup g) {
                         g.unexport(body);
@@ -331,7 +331,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                         if (thread != null) {
                             if (n instanceof StepStartNode) {
                                 FlowNode tip = thread.head.get();
-                                parents.set(0,tip);
+                                parents.set(0, tip);
 
                                 thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
                             }

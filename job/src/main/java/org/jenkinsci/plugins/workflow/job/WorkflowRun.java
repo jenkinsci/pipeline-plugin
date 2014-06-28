@@ -24,6 +24,14 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import hudson.util.OneShotEvent;
+import org.jenkinsci.plugins.workflow.actions.LogAction;
+import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.jenkinsci.plugins.workflow.flow.GraphListener;
+import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import hudson.AbortException;
@@ -203,6 +211,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (logsToCopy == null) { // finished
             return;
         }
+        if (Jenkins.getInstance()==null)
+            return; // shutting down
         Iterator<Map.Entry<String,Long>> it = logsToCopy.entrySet().iterator();
         boolean modified = false;
         while (it.hasNext()) {
@@ -266,7 +276,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     /** Hack to allow {@link #execution} to use an {@link Owner} referring to this run, even when it has not yet been loaded. */
     @Override public void reload() throws IOException {
         LOADING_RUNS.put(key(), this);
-        super.reload();
+
+        // super.reload() forces result to be FAILURE, so working around that
+        new XmlFile(XSTREAM,new File(getRootDir(),"build.xml")).unmarshal(this);
     }
 
     @Override protected void onLoad() {
