@@ -40,6 +40,7 @@ public class VirtualChannelPickle extends Pickle {
     String slave;
 
     private VirtualChannelPickle(VirtualChannel ch) {
+        // TODO: switch to FilePath.toComputer in 1.571
         for (Computer c : Jenkins.getInstance().getComputers()) {
             if (c.getChannel()==ch) {
                 slave = c.getName();

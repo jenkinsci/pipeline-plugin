@@ -40,6 +40,7 @@ public class WorkspaceListLeasePickle extends Pickle {
 
     private WorkspaceListLeasePickle(WorkspaceList.Lease lease) {
         Jenkins j = Jenkins.getInstance();
+        // TODO: switch to FilePath.toComputer in 1.571
         if (j != null) {
             for (Computer c : j.getComputers()) {
                 if (lease.path.getChannel() == c.getChannel()) {

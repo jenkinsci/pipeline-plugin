@@ -389,6 +389,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
         }
         String node = null;
+        // TODO: switch to FilePath.toComputer in 1.571
         Jenkins j = Jenkins.getInstance();
         if (j != null) {
             for (Computer c : j.getComputers()) {
