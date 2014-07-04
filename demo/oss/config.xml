@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@0.1-beta-1">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@0.1-beta-1">
+    <script>steps.stage(&apos;Dev&apos;)
+with.node(&apos;master&apos;) {
+    def src = &apos;/var/lib/jenkins/workflow-plugin-pipeline-demo.git&apos;
+    steps.git(url: src)
+    sh(&apos;mvn clean package&apos;)
+    steps.archive(&apos;target/x.war&apos;)
+
+    steps.stage(&apos;QA&apos;)
+
+    parallel(sometests: {
+        runWithServer {url -&gt;
+            sh(&quot;mvn -f sometests/pom.xml test -Durl=${url}&quot;)
+        }
+    }, othertests: {
+        runWithServer {url -&gt;
+            sh(&quot;mvn -f sometests/pom.xml test -Durl=${url}&quot;) // TODO add other test module
+        }
+    })
+    steps.stage(value: &apos;Staging&apos;, concurrency: 1)
+    deploy(&apos;target/x.war&apos;, &apos;staging&apos;)
+}
+steps.input(message: &quot;Does http://localhost:8080/staging/ look good?&quot;)
+steps.stage(value: &apos;Production&apos;, concurrency: 1)
+with.node(&apos;master&apos;) {
+    sh(&apos;curl -I http://localhost:8080/staging/&apos;)
+    steps.unarchive(mapping: [&apos;target/x.war&apos; : &apos;x.war&apos;])
+    deploy(&apos;x.war&apos;, &apos;production&apos;)
+    steps.echo &apos;Deployed to http://localhost:8080/production/&apos;
+}
+
+def deploy(war, id) {
+    sh(&quot;cp ${war} /tmp/webapps/${id}.war&quot;)
+}
+
+def undeploy(id) {
+    sh(&quot;rm /tmp/webapps/${id}.war&quot;)
+}
+
+def runWithServer(body) {
+    def id = UUID.randomUUID().toString()
+    deploy(&apos;target/x.war&apos;, id)
+    try {
+        body.call(&quot;http://localhost:8080/${id}/&quot;);
+    } finally {
+        undeploy(id)
+    }
+}
+</script>
+  </definition>
+  <triggers/>
+</flow-definition>
