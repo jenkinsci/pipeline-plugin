@@ -36,7 +36,6 @@ public class BuildTriggerStepTest extends Assert {
 
         QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
         j.assertBuildStatusSuccess(q);
-        q.get();
     }
 
     @Test
