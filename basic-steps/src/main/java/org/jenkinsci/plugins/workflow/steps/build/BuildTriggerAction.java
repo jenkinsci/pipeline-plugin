@@ -10,8 +10,6 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 public class BuildTriggerAction implements RunAction2 {
     private final StepContext context;
 
-    private Run run;
-
     public BuildTriggerAction(StepContext context) {
         this.context = context;
     }
@@ -22,12 +20,10 @@ public class BuildTriggerAction implements RunAction2 {
 
     @Override
     public void onAttached(Run<?, ?> r) {
-
     }
 
     @Override
     public void onLoad(Run<?, ?> r) {
-        this.run = r;
     }
 
     @Override
@@ -45,7 +41,4 @@ public class BuildTriggerAction implements RunAction2 {
         return null;
     }
 
-    public Run getRun(){
-        return run;
-    }
 }
