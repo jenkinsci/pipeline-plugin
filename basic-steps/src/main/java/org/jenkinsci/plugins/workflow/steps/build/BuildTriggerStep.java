@@ -18,8 +18,6 @@ public class BuildTriggerStep extends AbstractStepImpl {
 
     private final String buildJobPath;
 
-    private StepContext context;
-
     @StepContextParameter
     private transient TaskListener listener;
 
@@ -30,8 +28,6 @@ public class BuildTriggerStep extends AbstractStepImpl {
 
     @Override
     protected boolean doStart(final StepContext context) throws Exception {
-        this.context = context;
-
         listener.getLogger().println("Starting building project: "+buildJobPath);
         AbstractProject project = Jenkins.getInstance().getItem(buildJobPath,context.get(Job.class), AbstractProject.class);
         Jenkins.getInstance().getQueue().schedule(project, project.getQuietPeriod(), new BuildTriggerAction(context));
