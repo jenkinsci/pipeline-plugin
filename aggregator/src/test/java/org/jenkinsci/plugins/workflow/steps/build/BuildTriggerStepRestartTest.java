@@ -33,12 +33,6 @@ public class BuildTriggerStepRestartTest extends Assert {
             @Override
             public void evaluate() throws Throwable {
                 story.j.jenkins.setNumExecutors(0);
-            }
-        });
-
-        story.addStep(new Statement() {
-                          @Override
-                          public void evaluate() throws Throwable {
                               FreeStyleProject p1 = story.j.createFreeStyleProject("test1");
                               p1.getBuildersList().add(new Shell("echo 'Hello World'"));
 
@@ -66,9 +60,13 @@ public class BuildTriggerStepRestartTest extends Assert {
         story.addStep(new Statement() {
                           @Override
                           public void evaluate() throws Throwable {
-                              assertEquals(1,story.j.jenkins.getQueue().getItems().length);
-                              Run r = (Run)story.j.jenkins.getQueue().getItems()[0].getFuture().get();
+                              story.j.waitUntilNoActivity();
+                              FreeStyleProject p1 = story.j.jenkins.getItemByFullName("test1", FreeStyleProject.class);
+                              Run r = p1.getLastBuild();
+                              assertNotNull(r);
+                              assertEquals(1, r.number);
                               assertEquals(Result.SUCCESS, r.getResult());
+                              assertEquals(0, story.j.jenkins.getQueue().getItems().length);
                           }
                       }
         );
