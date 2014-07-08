@@ -17,7 +17,7 @@ RUN echo 'root:root' | chpasswd
 # make a local checkout of the demo workspace
 WORKDIR /var/lib/jenkins
 RUN git clone --bare https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git
-RUN git clone workflow-plugin-pipeline-demo.git workflow-plugin-pipeline-demo; cd workflow-plugin-pipeline-demo; mvn install; cd sometests; mvn install -Dmaven.test.failure.ignore=true
+RUN git clone workflow-plugin-pipeline-demo.git workflow-plugin-pipeline-demo; cd workflow-plugin-pipeline-demo; mvn install; cd sometests; mvn clean install -Dmaven.test.failure.ignore=true
 
 # preseed data
 ADD jenkins.war /var/lib/jenkins/jenkins.war
