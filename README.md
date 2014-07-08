@@ -48,14 +48,12 @@ Jenkins Enterprise by CloudBees users can click _Enable access_ under _Access to
 
 # Development
 
-[Source repository](https://github.com/jenkinsci/workflow-plugin)
-
-Not yet using JIRA; waiting for a more or less stable release first.
-In the meantime we have a [Trello board](https://trello.com/b/u2fJQnDX/workflow) tracking active and proposed tasks.
-
-There is a [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/) with validated merge support.
-
-[![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
+* [Source repository](https://github.com/jenkinsci/workflow-plugin)
+* [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+component+%3D+workflow+ORDER+BY+priority+DESC&mode=hide)
+* [Trello board](https://trello.com/b/u2fJQnDX/workflow) tracking active and proposed tasks.
+* [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/) with validated merge support.
+  [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
+* [Video tutorial on implementing a Step API](http://jenkins-ci.org/content/workflow-plugin-tutorial-writing-step-impl)
 
 # Source organization
 
