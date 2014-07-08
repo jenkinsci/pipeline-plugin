@@ -10,6 +10,10 @@ RUN curl "http://mirrors.ibiblio.org/eclipse/jetty/stable-9/dist/jetty-distribut
 RUN ln -sv jetty-distribution-$VERSION jetty
 RUN cd /tmp; ln -s /opt/jetty/webapps
 
+# install OpenSSH and allow root to login with password 'root'
+RUN apt-get install -y openssh-server
+RUN echo 'root:root' | chpasswd
+
 # make a local checkout of the demo workspace
 WORKDIR /var/lib/jenkins
 RUN git clone --bare https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git
@@ -22,6 +26,7 @@ ADD config.xml  /var/lib/jenkins/jobs/cd/
 RUN find /var/lib/jenkins/plugins/* -type d | xargs rm -rf
 
 ADD run.sh /var/lib/jenkins/run.sh
+ADD sshd_config /etc/ssh/sshd_config
 
 CMD /var/lib/jenkins/run.sh
 EXPOSE 8080
