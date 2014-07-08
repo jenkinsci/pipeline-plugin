@@ -9,3 +9,5 @@ ws/plugins/workflow-aggregator.jpi:	jenkins.war
 jenkins.war:
 	wget -O jenkins.war	https://updates.jenkins-ci.org/download/war/1.570/jenkins.war
 
+clean:
+	rm -rf ws jenkins.war
