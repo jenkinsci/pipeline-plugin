@@ -1,5 +1,5 @@
-ALL:	ws/plugins/workflow-aggregator.jpi
-	docker build -t workflow .
+build:	ws/plugins/workflow-aggregator.jpi
+	docker build -t jenkinsci/workflow-demo .
 
 ws/plugins/workflow-aggregator.jpi:	jenkins.war
 	[ -d ws ] || mkdir ws
@@ -11,3 +11,6 @@ jenkins.war:
 
 clean:
 	rm -rf ws jenkins.war
+
+push: build
+	docker push jenkinsci/workflow-demo
