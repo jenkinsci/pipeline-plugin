@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.workflow.steps;
 import hudson.Extension;
 import hudson.model.TaskListener;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * A simple echo back statement.
