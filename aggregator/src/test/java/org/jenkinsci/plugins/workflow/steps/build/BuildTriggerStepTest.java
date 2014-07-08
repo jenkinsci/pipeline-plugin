@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.workflow.steps.build;
 
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.tasks.Shell;
@@ -100,6 +101,29 @@ public class BuildTriggerStepTest extends Assert {
         while(fb.isBuilding());
 
         assertEquals(Result.ABORTED, fb.getResult());
+        j.assertBuildStatus(Result.FAILURE,q.get());
+    }
+
+    @Test
+    public void cancelBuildQueue() throws Exception {
+        FreeStyleProject p = j.createFreeStyleProject("test1");
+        p.getBuildersList().add(new Shell("sleep 6000"));
+
+        WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
+        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("steps.build('test1');"), "\n")));
+
+        j.jenkins.setNumExecutors(0); //should force freestyle build to remain in the queue?
+
+        QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
+
+        WorkflowRun b = q.getStartCondition().get();
+        CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
+        e.waitForSuspension();
+
+        Queue.Item[] items = j.jenkins.getQueue().getItems();
+        assertEquals(1, items.length);
+        j.jenkins.getQueue().cancel(items[0]);
+
         j.assertBuildStatus(Result.FAILURE,q.get());
     }
 }
