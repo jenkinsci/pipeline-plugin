@@ -12,5 +12,5 @@ jenkins.war:
 clean:
 	rm -rf ws jenkins.war
 
-push: build
+push:
 	docker push jenkinsci/workflow-demo
