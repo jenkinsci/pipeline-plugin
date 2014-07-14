@@ -258,12 +258,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertThatWorkflowIsSuspended(b2, e2);
                 FileUtils.write(new File(story.j.jenkins.getRootDir(), "one"), "here");
                 FileUtils.write(new File(story.j.jenkins.getRootDir(), "two"), "here");
-                while (!e1.isComplete()) {
-                    e1.waitForSuspension();
-                }
-                while (!e2.isComplete()) {
-                    e2.waitForSuspension();
-                }
+                story.j.waitUntilNoActivity();
                 assertBuildCompletedSuccessfully(b1);
                 assertBuildCompletedSuccessfully(b2);
                 story.j.assertLogContains("default=" + dir, b1);
