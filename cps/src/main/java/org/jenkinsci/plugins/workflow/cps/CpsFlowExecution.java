@@ -244,8 +244,6 @@ public class CpsFlowExecution extends FlowExecution {
         // some of the steps that acquire resources look better with 'with', so exposing
         // that name, such as:
         // with.node('linux') { ... }
-        s.getBinding().setVariable("with", dsl);
-
         s.loadEnvironment();
 
         final FlowHead h = new FlowHead(this);
@@ -271,7 +269,6 @@ public class CpsFlowExecution extends FlowExecution {
         ImportCustomizer ic = new ImportCustomizer();
         ic.addStarImports(NonCPS.class.getPackage().getName());
         ic.addStarImports("hudson.model","jenkins.model");
-        ic.addStaticStars(CpsBuiltinSteps.class.getName());
 
         CompilerConfiguration cc = new CompilerConfiguration();
         cc.addCompilationCustomizers(ic);

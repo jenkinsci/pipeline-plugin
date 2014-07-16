@@ -35,7 +35,7 @@ import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
 
 /**
  * {@link SerializableScript} that overrides target of the output.
@@ -65,6 +65,19 @@ public abstract class CpsScript extends SerializableScript {
                 throw new IOException(x);
             }
         }
+    }
+
+
+    /**
+     * We use DSL here to try invoke the step implementation, if there is Step implementation found it's handled or
+     * it's an error
+     */
+    @Override
+    public Object invokeMethod(String name, Object args) {
+        //TODO: should it be using DSL tied to 'steps' property? well it doesn't matter. Let's create a new one for each
+        // unknown function in case steps property is removed entirely
+        DSL dsl = new DSL(execution.getOwner());
+        return dsl.invokeMethod(name,args);
     }
 
     @Override
