@@ -32,7 +32,7 @@ Sample demo scenario
     * Highlight and explain some of the primitives, such as `stage`, `input`, and `with.node`
 * Get one build going, and watch [Jetty top page](http://localhost:8080/) to see ephemeral test instances
   deployed and deleted
-* When it gets to the pause, go to the pause UI in the [build top page](http://localhost:8080/job/cd/1/) and terminate the workflow
+* When it gets to the pause, go to the pause UI in the [build top page](http://localhost:8080/job/cd/1/) (left on the action list) and terminate the workflow
 * Get another build going, but this time restart the Jenkins instance while the workflow is in progress
   via [restart UI](http://localhost:8081/restart). Doing this while the integration test is running,
   as steps like Git checkout will get disrupted by restart.
