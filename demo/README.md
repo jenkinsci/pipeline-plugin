@@ -10,7 +10,7 @@ Run it like:
 
 Jenkins runs on port 8081, and Jetty runs on port 8080. The continuous delivery pipeline consists of the following sequence.
 
-* Checck out source code from a Git repository and build it via Maven with unit testing
+* Check out source code from a Git repository and build it via Maven with unit testing
 * Run two parallel integration tests that involve deploying the app to a PaaS-like ephemeral server instances, which get
   thrown away when tests are done (this is done by using auto-deployment of Jetty)
 * Once integration tests are successful, the webapp gets to the staging server at http://localhost:8080/staging/
@@ -21,6 +21,7 @@ You can login as root in the demo container via `ssh -p 8022 root@localhost`. Th
 (If you have `nsenter`, [you can use nsenter instead of ssh for a smoother demo](http://jpetazzo.github.io/2014/06/23/docker-ssh-considered-evil/)
 This is useful to kill Jetty to simulate a failure in the production deployment (via `pkill -9 -f jetty`) or restart it (via `jetty &`)
 
+If you are running this demo behind a corporate proxy, then please see [Using a http proxy](docs/USING-A-HTTP-PROXY.md)
 
 Sample demo scenario
 --------------------
