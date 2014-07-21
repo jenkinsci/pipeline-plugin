@@ -21,7 +21,6 @@ You can login as root in the demo container via `ssh -p 8022 root@localhost`. Th
 (If you have `nsenter`, [you can use nsenter instead of ssh for a smoother demo](http://jpetazzo.github.io/2014/06/23/docker-ssh-considered-evil/)
 This is useful to kill Jetty to simulate a failure in the production deployment (via `pkill -9 -f jetty`) or restart it (via `jetty &`)
 
-If you are running this demo behind a corporate proxy, then please see [Using a http proxy](docs/USING-A-HTTP-PROXY.md)
 
 Sample demo scenario
 --------------------
