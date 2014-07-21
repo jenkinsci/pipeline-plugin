@@ -29,6 +29,7 @@ import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -91,6 +92,8 @@ public final class CpsThread implements Serializable {
 
     @Nullable
     private final ContextVariableSet contextVariables;
+
+    private StepExecution execution;
 
     CpsThread(CpsThreadGroup group, int id, Continuable program, FlowHead head, ContextVariableSet contextVariables) {
         this.group = group;

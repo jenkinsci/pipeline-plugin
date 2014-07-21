@@ -35,9 +35,12 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
+
+import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 /**
  * A step which uses some kind of {@link SCM}.
@@ -62,47 +65,53 @@ abstract class SCMStep extends Step {
 
     protected abstract @Nonnull SCM createSCM();
 
-    @Override public boolean start(StepContext context) throws Exception {
-        Run<?,?> run = context.get(Run.class);
-        File changelogFile = null;
-        if (changelog) {
-            for (int i = 0; ; i++) {
-                changelogFile = new File(run.getRootDir(), "changelog" + i + ".xml");
-                if (!changelogFile.exists()) {
-                    break;
+    class StepExecutionImpl extends AbstractSynchronousStepExecution<Void> {
+        @Override
+        protected Void run() throws Exception {
+            Run<?,?> run = context.get(Run.class);
+            File changelogFile = null;
+            if (changelog) {
+                for (int i = 0; ; i++) {
+                    changelogFile = new File(run.getRootDir(), "changelog" + i + ".xml");
+                    if (!changelogFile.exists()) {
+                        break;
+                    }
                 }
             }
-        }
-        SCM scm = createSCM();
-        FilePath workspace = context.get(FilePath.class);
-        TaskListener listener = context.get(TaskListener.class);
-        Launcher launcher = context.get(Launcher.class);
-        SCMRevisionState baseline = null;
-        Run<?,?> prev = run.getPreviousBuild();
-        if (prev != null) {
-            MultiSCMRevisionState state = prev.getAction(MultiSCMRevisionState.class);
-            if (state != null) {
-                baseline = state.get(scm);
+            SCM scm = createSCM();
+            FilePath workspace = context.get(FilePath.class);
+            TaskListener listener = context.get(TaskListener.class);
+            Launcher launcher = context.get(Launcher.class);
+            SCMRevisionState baseline = null;
+            Run<?,?> prev = run.getPreviousBuild();
+            if (prev != null) {
+                MultiSCMRevisionState state = prev.getAction(MultiSCMRevisionState.class);
+                if (state != null) {
+                    baseline = state.get(scm);
+                }
             }
-        }
-        scm.checkout(run, launcher, workspace, listener, changelogFile, baseline);
-        SCMRevisionState pollingBaseline = null;
-        if (poll || changelog) {
-            pollingBaseline = scm.calcRevisionsFromBuild(run, workspace, launcher, listener);
-            MultiSCMRevisionState state = run.getAction(MultiSCMRevisionState.class);
-            if (state == null) {
-                state = new MultiSCMRevisionState();
-                run.addAction(state);
+            scm.checkout(run, launcher, workspace, listener, changelogFile, baseline);
+            SCMRevisionState pollingBaseline = null;
+            if (poll || changelog) {
+                pollingBaseline = scm.calcRevisionsFromBuild(run, workspace, launcher, listener);
+                MultiSCMRevisionState state = run.getAction(MultiSCMRevisionState.class);
+                if (state == null) {
+                    state = new MultiSCMRevisionState();
+                    run.addAction(state);
+                }
+                state.add(scm, pollingBaseline);
             }
-            state.add(scm, pollingBaseline);
+            for (SCMListener l : SCMListener.all()) {
+                l.onCheckout(run, scm, workspace, listener, changelogFile, pollingBaseline);
+            }
+            scm.postCheckout(run, launcher, workspace, listener);
+            // TODO should we call buildEnvVars and return the result?
+            return null;
         }
-        for (SCMListener l : SCMListener.all()) {
-            l.onCheckout(run, scm, workspace, listener, changelogFile, pollingBaseline);
-        }
-        scm.postCheckout(run, launcher, workspace, listener);
-        // TODO should we call buildEnvVars and return the result?
-        context.onSuccess(null);
-        return true;
+    }
+
+    @Override public StepExecution start(StepContext context) throws Exception {
+        return new StepExecutionImpl();
     }
 
     protected static abstract class SCMStepDescriptor extends StepDescriptor {

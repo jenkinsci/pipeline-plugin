@@ -32,7 +32,6 @@ import hudson.model.Action;
 import hudson.model.Descriptor;
 import hudson.model.Result;
 import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
@@ -404,6 +403,23 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         if (!syncMode)  throw new AssertionError();
         syncMode = false;
         return !isCompleted();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CpsStepContext that = (CpsStepContext) o;
+
+        return executionRef.equals(that.executionRef) && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = executionRef.hashCode();
+        result = 31 * result + id.hashCode();
+        return result;
     }
 
     private static final long serialVersionUID = 1L;

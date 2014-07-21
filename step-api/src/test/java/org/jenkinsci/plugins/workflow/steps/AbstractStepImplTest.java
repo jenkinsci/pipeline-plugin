@@ -51,7 +51,8 @@ public class AbstractStepImplTest extends Assert {
         StepContext c = mock(StepContext.class);
         when(c.get(Node.class)).thenReturn(j.getInstance());
 
-        step.start(c);
+        BogusStepExecution b = (BogusStepExecution)step.start(c);
+        b.start();
     }
 
     /**
@@ -86,17 +87,9 @@ public class AbstractStepImplTest extends Assert {
             this.d = d;
         }
 
-        @Inject
-        Jenkins jenkins;
-
-        @StepContextParameter
-        Node n;
-
         @Override
-        protected boolean doStart(StepContext context) {
-            Assert.assertSame(jenkins, Jenkins.getInstance());
-            Assert.assertSame(n, Jenkins.getInstance());
-            return true;
+        protected Class<BogusStepExecution> getExecutionType() {
+            return BogusStepExecution.class;
         }
 
         @Extension
@@ -110,6 +103,21 @@ public class AbstractStepImplTest extends Assert {
             public String getDisplayName() {
                 return "ggg";
             }
+        }
+    }
+
+    public static class BogusStepExecution extends StepExecution {
+        @Inject
+        Jenkins jenkins;
+
+        @StepContextParameter
+        Node n;
+
+        @Override
+        public boolean start() {
+            Assert.assertSame(jenkins, Jenkins.getInstance());
+            Assert.assertSame(n, Jenkins.getInstance());
+            return true;
         }
     }
 }

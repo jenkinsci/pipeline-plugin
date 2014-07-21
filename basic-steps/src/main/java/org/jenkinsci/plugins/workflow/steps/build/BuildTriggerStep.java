@@ -1,14 +1,8 @@
 package org.jenkinsci.plugins.workflow.steps.build;
 
 import hudson.Extension;
-import hudson.model.AbstractProject;
-import hudson.model.Job;
-import hudson.model.TaskListener;
-import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -16,22 +10,16 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class BuildTriggerStep extends AbstractStepImpl {
 
-    private final String buildJobPath;
-
-    @StepContextParameter
-    private transient TaskListener listener;
+    public final String buildJobPath;
 
     @DataBoundConstructor
-    public BuildTriggerStep(String value) {
-        this.buildJobPath = value;
+    public BuildTriggerStep(String buildJobPath) {
+        this.buildJobPath = buildJobPath;
     }
 
     @Override
-    protected boolean doStart(final StepContext context) throws Exception {
-        listener.getLogger().println("Starting building project: "+buildJobPath);
-        AbstractProject project = Jenkins.getInstance().getItem(buildJobPath,context.get(Job.class), AbstractProject.class);
-        Jenkins.getInstance().getQueue().schedule(project, project.getQuietPeriod(), new BuildTriggerAction(context));
-        return false;
+    protected Class<BuildTriggerStepExecution> getExecutionType() {
+        return BuildTriggerStepExecution.class;
     }
 
     @Extension

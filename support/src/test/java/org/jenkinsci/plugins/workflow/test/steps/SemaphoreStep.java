@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 /**
  * Step that blocks until signaled.
@@ -63,20 +64,31 @@ public final class SemaphoreStep extends Step {
     }
 
     /** Starts running and waits for {@link #success} or {@link #failure} to be called, if they have not been already. */
-    @Override public boolean start(StepContext context) throws Exception {
-        if (returnValues.containsKey(k)) {
-            System.err.println("Immediately running " + k);
-            context.onSuccess(returnValues.get(k));
-            return true;
-        } else if (errors.containsKey(k)) {
-            System.err.println("Immediately failing " + k);
-            context.onFailure(errors.get(k));
-            return true;
-        } else {
-            System.err.println("Blocking " + k);
-            contexts.put(k, Jenkins.XSTREAM.toXML(context));
-            return false;
-        }
+    @Override public StepExecution start(StepContext context) throws Exception {
+        return new StepExecution(context) {
+            @Override
+            public boolean start() throws Exception {
+                if (returnValues.containsKey(k)) {
+                    System.err.println("Immediately running " + k);
+                    context.onSuccess(returnValues.get(k));
+                    return true;
+                } else if (errors.containsKey(k)) {
+                    System.err.println("Immediately failing " + k);
+                    context.onFailure(errors.get(k));
+                    return true;
+                } else {
+                    System.err.println("Blocking " + k);
+                    contexts.put(k, Jenkins.XSTREAM.toXML(context));
+                    return false;
+                }
+            }
+
+            @Override
+            public void stop() {
+                contexts.remove(k);
+                context.onFailure(new InterruptedException("aborted"));
+            }
+        };
     }
 
     /** Marks the step as having successfully completed; or, if not yet started, makes it do so synchronously when started. */

@@ -113,5 +113,20 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      */
     public abstract void invokeBodyLater(FutureCallback<Object> callback, Object... contextOverrides);
 
+    /**
+     * {@link StepContext}s get persisted, so they may not have the identity equality, but equals
+     * method would allow two instances to be compared.
+     *
+     * @return
+     *      true if {@link StepContext}s are for the same context for the same execution.
+     */
+    public abstract boolean equals(Object o);
+
+    /**
+     * Needs to be overridden as the {@link #equals(Object)} method is overridden.
+     */
+    @Override
+    public abstract int hashCode();
+
     private static final long serialVersionUID = 1L;
 }

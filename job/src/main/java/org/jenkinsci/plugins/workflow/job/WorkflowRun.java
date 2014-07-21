@@ -489,6 +489,16 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         @Override public String toString() {
             return "Owner[" + job + "/" + id + ":" + run + "]";
         }
+
+        @Override
+        public boolean equals(Object that) {
+            return this.toString().equals(that.toString());
+        }
+
+        @Override
+        public int hashCode() {
+            return toString().hashCode();
+        }
     }
 
     private final class GraphL implements GraphListener {

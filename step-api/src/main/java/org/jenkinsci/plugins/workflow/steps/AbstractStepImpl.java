@@ -40,10 +40,11 @@ import java.lang.reflect.Method;
  */
 public abstract class AbstractStepImpl extends Step {
     @Override
-    public boolean start(StepContext context) throws Exception {
-        prepareInjector(context).injectMembers(this);
-        return doStart(context);
+    public StepExecution start(StepContext context) throws Exception {
+        return prepareInjector(context).getInstance(getExecutionType());
     }
+
+    protected abstract Class<? extends StepExecution> getExecutionType();
 
     /**
      * Creates an {@link Injector} that performs injection to {@link Inject} and {@link StepContextParameter}.
@@ -52,6 +53,7 @@ public abstract class AbstractStepImpl extends Step {
         return Jenkins.getInstance().getInjector().createChildInjector(new AbstractModule() {
                     @Override
                     protected void configure() {
+                        bind(StepContext.class).toInstance(context);
                         bindListener(Matchers.any(),new TypeListener() {
                             @Override
                             public <I> void hear(TypeLiteral<I> type, TypeEncounter<I> encounter) {
@@ -125,10 +127,4 @@ public abstract class AbstractStepImpl extends Step {
                     }
                 });
     }
-
-    /**
-     * Subtype will implement this method and put the meat of the {@link #start(StepContext)} processing.
-     */
-    protected abstract boolean doStart(StepContext context) throws Exception;
-
 }
