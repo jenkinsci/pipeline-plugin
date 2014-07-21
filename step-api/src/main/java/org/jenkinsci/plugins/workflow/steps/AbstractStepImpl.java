@@ -52,8 +52,11 @@ public abstract class AbstractStepImpl extends Step {
                     @Override
                     protected void configure() {
                         bind(StepContext.class).toInstance(context);
-                        bind(Step.class).toInstance(AbstractStepImpl.this);
-                        bind((Class)AbstractStepImpl.this.getClass()).toInstance(AbstractStepImpl.this);
+
+                        // make the outer 'this' object available at arbitrary super type of the actual concrete type
+                        // this will allow Step to subtype another Step and work as expected
+                        for (Class c=AbstractStepImpl.this.getClass(); c!=AbstractStepImpl.class; c=c.getSuperclass())
+                            bind(c).toInstance(AbstractStepImpl.this);
 
                         bindListener(Matchers.any(), new TypeListener() {
                             @Override
