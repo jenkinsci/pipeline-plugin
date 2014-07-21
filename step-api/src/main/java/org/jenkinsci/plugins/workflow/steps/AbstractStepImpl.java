@@ -41,10 +41,8 @@ import java.lang.reflect.Method;
 public abstract class AbstractStepImpl extends Step {
     @Override
     public StepExecution start(StepContext context) throws Exception {
-        return prepareInjector(context).getInstance(getExecutionType());
+        return prepareInjector(context).getInstance(((AbstractStepDescriptorImpl)getDescriptor()).getExecutionType());
     }
-
-    protected abstract Class<? extends StepExecution> getExecutionType();
 
     /**
      * Creates an {@link Injector} that performs injection to {@link Inject} and {@link StepContextParameter}.

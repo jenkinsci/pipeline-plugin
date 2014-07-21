@@ -20,8 +20,18 @@ import java.util.Set;
 public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
     private volatile transient Set<Class<?>> contextTypes;
 
+    protected final Class<? extends StepExecution> executionType;
+
+    protected AbstractStepDescriptorImpl(Class<? extends StepExecution> executionType) {
+        this.executionType = executionType;
+    }
+
+    public Class<? extends StepExecution> getExecutionType() {
+        return executionType;
+    }
+
     /**
-     * Switch to ClassDescriptor.findConstructor() post Stapler1.225
+     * Switch to ClassDescriptor.findConstructor() post Stapler 1.225
      */
     private Constructor findConstructor(int length) {
         Constructor<?>[] ctrs = clazz.getConstructors();
@@ -135,14 +145,16 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
         if (contextTypes==null) {
             Set<Class<?>> r = new HashSet<Class<?>>();
 
-            for (Field f : clazz.getDeclaredFields()) {
-                if (f.isAnnotationPresent(StepContextParameter.class)) {
-                    r.add(f.getType());
+            for (Class c = executionType; c!=null; c=c.getSuperclass()) {
+                for (Field f : c.getDeclaredFields()) {
+                    if (f.isAnnotationPresent(StepContextParameter.class)) {
+                        r.add(f.getType());
+                    }
                 }
-            }
-            for (Method m : clazz.getDeclaredMethods()) {
-                if (m.isAnnotationPresent(StepContextParameter.class)) {
-                    Collections.addAll(r, m.getParameterTypes());
+                for (Method m : c.getDeclaredMethods()) {
+                    if (m.isAnnotationPresent(StepContextParameter.class)) {
+                        Collections.addAll(r, m.getParameterTypes());
+                    }
                 }
             }
 
