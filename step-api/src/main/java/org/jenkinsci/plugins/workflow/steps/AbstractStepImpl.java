@@ -54,7 +54,10 @@ public abstract class AbstractStepImpl extends Step {
                     @Override
                     protected void configure() {
                         bind(StepContext.class).toInstance(context);
-                        bindListener(Matchers.any(),new TypeListener() {
+                        bind(Step.class).toInstance(AbstractStepImpl.this);
+                        bind((Class)AbstractStepImpl.this.getClass()).toInstance(AbstractStepImpl.this);
+
+                        bindListener(Matchers.any(), new TypeListener() {
                             @Override
                             public <I> void hear(TypeLiteral<I> type, TypeEncounter<I> encounter) {
                                 for (Field f : type.getRawType().getDeclaredFields()) {
@@ -77,6 +80,7 @@ public abstract class AbstractStepImpl extends Step {
 
                             class FieldInjector<T> extends ParameterInjector<T> {
                                 final Field f;
+
                                 FieldInjector(Field f) {
                                     this.f = f;
                                     f.setAccessible(true);
@@ -85,19 +89,20 @@ public abstract class AbstractStepImpl extends Step {
                                 @Override
                                 public void injectMembers(T instance) {
                                     try {
-                                        f.set(instance,context.get(f.getType()));
+                                        f.set(instance, context.get(f.getType()));
                                     } catch (IllegalAccessException e) {
-                                        throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
+                                        throw (Error) new IllegalAccessError(e.getMessage()).initCause(e);
                                     } catch (InterruptedException e) {
-                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                        throw new ProvisionException("Failed to set a context parameter", e);
                                     } catch (IOException e) {
-                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                        throw new ProvisionException("Failed to set a context parameter", e);
                                     }
                                 }
                             }
 
                             class MethodInjector<T> extends ParameterInjector<T> {
                                 final Method m;
+
                                 MethodInjector(Method m) {
                                     this.m = m;
                                     m.setAccessible(true);
@@ -113,18 +118,18 @@ public abstract class AbstractStepImpl extends Step {
                                         }
                                         m.invoke(instance, args);
                                     } catch (IllegalAccessException e) {
-                                        throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
+                                        throw (Error) new IllegalAccessError(e.getMessage()).initCause(e);
                                     } catch (InvocationTargetException e) {
-                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                        throw new ProvisionException("Failed to set a context parameter", e);
                                     } catch (InterruptedException e) {
-                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                        throw new ProvisionException("Failed to set a context parameter", e);
                                     } catch (IOException e) {
-                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                        throw new ProvisionException("Failed to set a context parameter", e);
                                     }
                                 }
                             }
                         });
                     }
-                });
+        });
     }
 }

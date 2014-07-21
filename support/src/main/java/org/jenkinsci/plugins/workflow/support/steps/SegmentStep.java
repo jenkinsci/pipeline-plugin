@@ -88,7 +88,7 @@ public class SegmentStep extends Step {
     }
 
     @Override public SegmentStepExecution start(StepContext context) throws Exception {
-        return new SegmentStepExecution(this);
+        return new SegmentStepExecution(this,context);
     }
 
     @Extension public static final class DescriptorImpl extends StepDescriptor {

@@ -55,7 +55,7 @@ public final class ExecutorStep extends Step {
     }
 
     @Override public StepExecution start(StepContext context) throws Exception {
-        return new ExecutorStepExecution(this);
+        return new ExecutorStepExecution(this,context);
     }
 
 

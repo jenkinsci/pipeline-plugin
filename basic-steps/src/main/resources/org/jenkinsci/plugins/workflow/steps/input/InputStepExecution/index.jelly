@@ -11,7 +11,7 @@
         <st:include page="index.jelly" it="${param}"/>
       </j:forEach>
       <f:block>
-        <f:submit value="${it.ok}" name="proceed"/>
+        <f:submit value="${it.input.ok}" name="proceed"/>
         <f:submit value="${%Abort}" name="abort"/>
       </f:block>
     </f:form>

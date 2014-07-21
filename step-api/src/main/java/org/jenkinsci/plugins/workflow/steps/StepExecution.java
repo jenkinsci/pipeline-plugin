@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.steps;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.Map;
 
@@ -24,6 +25,11 @@ public abstract class StepExecution {
         this.context = context;
     }
 
+    public @Nonnull StepContext getContext() {
+        if (context==null)
+            throw new AssertionError();
+        return context;
+    }
 
     /**
      * Start execution of something and report the end result back to the given callback.

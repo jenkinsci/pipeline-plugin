@@ -46,9 +46,9 @@ public class InputStepTest extends Assert {
 
         // make sure we are pausing at the right state that reflects what we wrote in the program
         InputAction a = b.getAction(InputAction.class);
-        assertEquals(1, a.getSteps().size());
+        assertEquals(1, a.getExecutions().size());
 
-        InputStep is = a.getStep("Icecream");
+        InputStepExecution is = a.getExecution("Icecream");
         assertEquals("Do you want chocolate?", is.getMessage());
         assertEquals(1,is.getParameters().size());
 
@@ -57,7 +57,7 @@ public class InputStepTest extends Assert {
         // submit the input, and run workflow to the completion
         HtmlPage p = j.createWebClient().getPage(b, a.getUrlName());
         j.submit(p.getFormByName(is.getId()),"proceed");
-        assertEquals(0, a.getSteps().size());
+        assertEquals(0, a.getExecutions().size());
         q.get();
 
         // make sure 'x' gets assigned to false

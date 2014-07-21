@@ -66,7 +66,7 @@ public final class BlockState extends LinearState {
 
     @Override public FlowNode run(StepContext context, String nodeId, FlowExecution exec, FlowNode prior) {
         try {
-            if (step.start(context).start(0)) {
+            if (step.start(context).start()) {
                 // TODO assert that context has gotten a return value
             }
         } catch (Exception x) {
