@@ -9,18 +9,18 @@
 with.node(&apos;master&apos;) {
     def src = &apos;/var/lib/jenkins/workflow-plugin-pipeline-demo.git&apos;
     steps.git(url: src)
-    sh(&apos;mvn clean package&apos;)
+    sh(&apos;mvn -o clean package&apos;)
     steps.archive(&apos;target/x.war&apos;)
 
     steps.stage(&apos;QA&apos;)
 
     parallel(sometests: {
         runWithServer {url -&gt;
-            sh(&quot;mvn -f sometests/pom.xml test -Durl=${url}&quot;)
+            sh(&quot;mvn -o -f sometests/pom.xml test -Durl=${url}&quot;)
         }
     }, othertests: {
         runWithServer {url -&gt;
-            sh(&quot;mvn -f sometests/pom.xml test -Durl=${url}&quot;) // TODO add other test module
+            sh(&quot;mvn -o -f sometests/pom.xml test -Durl=${url}&quot;) // TODO add other test module
         }
     })
     steps.stage(value: &apos;Staging&apos;, concurrency: 1)
