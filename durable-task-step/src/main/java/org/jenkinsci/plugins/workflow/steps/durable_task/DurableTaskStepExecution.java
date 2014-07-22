@@ -26,13 +26,21 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * TODO: {@link RunningTask} should be subsumed by {@link DurableTaskStepExecution}.
+ * Represents one task that is believed to still be running.
  *
  * @author Jesse Glick
  * @author Kohsuke Kawaguchi
  */
 public class DurableTaskStepExecution extends StepExecution {
     private final DurableTask task;
+
+    // these fields are set during the start
+    private /*almost final*/ Controller controller;
+    private /*almost final*/ String node;
+    private /*almost final*/ String remote;
+
+    private transient Object result;
+    private transient Throwable error;
 
     public DurableTaskStepExecution(StepContext context, DurableTask task) {
         super(context);
@@ -55,7 +63,10 @@ public class DurableTaskStepExecution extends StepExecution {
             if (node == null) {
                 throw new IllegalStateException("no known node for " + ws);
             }
-            register(context, task.launch(context.get(EnvVars.class), ws, context.get(Launcher.class), context.get(TaskListener.class)), node, remote);
+            controller = task.launch(context.get(EnvVars.class), ws, context.get(Launcher.class), context.get(TaskListener.class));
+            this.node = node;
+            this.remote = remote;
+            register(this);
         } catch (Exception x) {
             context.onFailure(x);
         }
@@ -64,7 +75,8 @@ public class DurableTaskStepExecution extends StepExecution {
     }
 
 
-    private static List<RunningTask> runningTasks;
+    // TODO: eliminating this by providing the enumeration of running {@link StepExecution}s.
+    private static List<DurableTaskStepExecution> runningTasks;
 
     private static XmlFile getConfigFile() {
         return new XmlFile(new File(Jenkins.getInstance().getRootDir(), DurableTaskStep.class.getName() + ".xml"));
@@ -73,11 +85,11 @@ public class DurableTaskStepExecution extends StepExecution {
     @SuppressWarnings("unchecked")
     private static synchronized void load() {
         if (runningTasks == null) {
-            runningTasks = new ArrayList<RunningTask>();
+            runningTasks = new ArrayList<DurableTaskStepExecution>();
             XmlFile configFile = getConfigFile();
             if (configFile.exists()) {
                 try {
-                    runningTasks = (List<RunningTask>) configFile.read();
+                    runningTasks = (List<DurableTaskStepExecution>) configFile.read();
                 } catch (IOException x) {
                     LOGGER.log(Level.WARNING, null, x);
                 }
@@ -93,18 +105,18 @@ public class DurableTaskStepExecution extends StepExecution {
         }
     }
 
-    private static synchronized void register(StepContext context, Controller controller, String node, String remote) {
+    private static synchronized void register(DurableTaskStepExecution self) {
         load();
-        runningTasks.add(new RunningTask(context, controller, node, remote));
+        runningTasks.add(self);
         save();
     }
 
-    private static void check() {
-        List<RunningTask> done = new LinkedList<RunningTask>();
+    private static void checkAll() {
+        List<DurableTaskStepExecution> done = new LinkedList<DurableTaskStepExecution>();
         synchronized (DurableTaskStep.class) {
             load();
             boolean changed = false;
-            for (RunningTask rt : runningTasks) {
+            for (DurableTaskStepExecution rt : runningTasks) {
                 switch (rt.check()) {
                 case UPDATED:
                     changed = true;
@@ -122,7 +134,7 @@ public class DurableTaskStepExecution extends StepExecution {
                 save();
             }
         }
-        for (RunningTask rt : done) {
+        for (DurableTaskStepExecution rt : done) {
             rt.report();
         }
     }
@@ -136,73 +148,51 @@ public class DurableTaskStepExecution extends StepExecution {
         DONE
     }
 
-    /**
-     * Represents one task that is believed to still be running.
-     * Serializable; one row of our state table.
-     */
-    private static final class RunningTask {
-
-        private final StepContext context;
-        private final Controller controller;
-        private final String node;
-        private final String remote;
-        private transient Object result;
-        private transient Throwable error;
-
-        RunningTask(StepContext context, Controller controller, String node, String remote) {
-            this.context = context;
-            this.controller = controller;
-            this.node = node;
-            this.remote = remote;
-        }
-
-        /** Checks for progress or completion of the external task. */
-        CheckResult check() {
-            try {
-                Computer c = Jenkins.getInstance().getComputer(node);
-                if (c == null) {
-                    LOGGER.log(Level.FINE, "no such computer {0}", node);
-                    return CheckResult.NO_CHANGE;
-                }
-                if (c.isOffline()) {
-                    LOGGER.log(Level.FINE, "{0} is offline", node);
-                    return CheckResult.NO_CHANGE;
-                }
-                FilePath ws = new FilePath(c.getChannel(), remote);
-                if (!ws.isDirectory()) {
-                    error = new AbortException("missing workspace " + remote + " on " + node);
-                    return CheckResult.DONE;
-                }
-                TaskListener listener = context.get(TaskListener.class);
-                boolean wrote = controller.writeLog(ws, listener.getLogger());
-                Integer exitCode = controller.exitStatus(ws);
-                if (exitCode == null) {
-                    LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
-                    return wrote ? CheckResult.UPDATED : CheckResult.NO_CHANGE;
-                } else if (exitCode == 0) {
-                    result = exitCode; // TODO could add an option to have this be text output from command
-                } else {
-                    error = new AbortException("script returned exit code " + exitCode);
-                }
-                controller.cleanup(ws);
+    /** Checks for progress or completion of the external task. */
+    CheckResult check() {
+        try {
+            Computer c = Jenkins.getInstance().getComputer(node);
+            if (c == null) {
+                LOGGER.log(Level.FINE, "no such computer {0}", node);
+                return CheckResult.NO_CHANGE;
+            }
+            if (c.isOffline()) {
+                LOGGER.log(Level.FINE, "{0} is offline", node);
+                return CheckResult.NO_CHANGE;
+            }
+            FilePath ws = new FilePath(c.getChannel(), remote);
+            if (!ws.isDirectory()) {
+                error = new AbortException("missing workspace " + remote + " on " + node);
                 return CheckResult.DONE;
-            } catch (IOException x) {
-                error = x;
-            } catch (InterruptedException x) {
-                error = x;
             }
-            return CheckResult.DONE;
-        }
-
-        /** Reports success or failure of step, outside synchronization block to avoid deadlocks. */
-        void report() {
-            if (error != null) {
-                context.onFailure(error);
+            TaskListener listener = context.get(TaskListener.class);
+            boolean wrote = controller.writeLog(ws, listener.getLogger());
+            Integer exitCode = controller.exitStatus(ws);
+            if (exitCode == null) {
+                LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
+                return wrote ? CheckResult.UPDATED : CheckResult.NO_CHANGE;
+            } else if (exitCode == 0) {
+                result = exitCode; // TODO could add an option to have this be text output from command
             } else {
-                context.onSuccess(result);
+                error = new AbortException("script returned exit code " + exitCode);
             }
+            controller.cleanup(ws);
+            return CheckResult.DONE;
+        } catch (IOException x) {
+            error = x;
+        } catch (InterruptedException x) {
+            error = x;
         }
+        return CheckResult.DONE;
+    }
 
+    /** Reports success or failure of step, outside synchronization block to avoid deadlocks. */
+    void report() {
+        if (error != null) {
+            context.onFailure(error);
+        } else {
+            context.onSuccess(result);
+        }
     }
 
     @Restricted(NoExternalUse.class)
@@ -214,7 +204,7 @@ public class DurableTaskStepExecution extends StepExecution {
         }
 
         @Override protected void doRun() throws Exception {
-            check();
+            checkAll();
         }
 
     }
