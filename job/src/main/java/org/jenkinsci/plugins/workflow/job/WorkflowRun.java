@@ -113,7 +113,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     List<SCMCheckout> checkouts;
     // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally; perhaps keep a List<WeakReference<ChangeLogSet<?>>>
-    private transient List<ChangeLogSet<?>> changeSets;
+    private transient List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
 
     public WorkflowRun(WorkflowJob job) throws IOException {
         super(job);
@@ -382,7 +382,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     public synchronized List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets() {
         if (changeSets == null) {
-            changeSets = new ArrayList<ChangeLogSet<?>>();
+            changeSets = new ArrayList<ChangeLogSet<? extends ChangeLogSet.Entry>>();
             for (SCMCheckout co : checkouts) {
                 if (co.changelogFile != null && co.changelogFile.isFile()) {
                     try {
