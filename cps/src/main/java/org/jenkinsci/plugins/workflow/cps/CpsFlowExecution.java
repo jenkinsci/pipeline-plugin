@@ -75,6 +75,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -183,8 +184,7 @@ public class CpsFlowExecution extends FlowExecution {
      *
      * @see #runInCpsVmThread(FutureCallback)
      */
-    @Nonnull
-    public transient ListenableFuture<CpsThreadGroup> programPromise;
+    public transient volatile ListenableFuture<CpsThreadGroup> programPromise;
 
     /**
      * Recreated from {@link #owner}
@@ -463,6 +463,9 @@ public class CpsFlowExecution extends FlowExecution {
 
     @Override
     public ListenableFuture<List<StepExecution>> getCurrentExecutions() {
+        if (programPromise==null)
+            return Futures.immediateFuture(Collections.<StepExecution>emptyList());
+
         final SettableFuture<List<StepExecution>> r = SettableFuture.create();
         runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
             @Override
@@ -525,7 +528,7 @@ public class CpsFlowExecution extends FlowExecution {
                     try {
                         e.stop();
                     } catch (Exception x) {
-                        LOGGER.log(Level.WARNING, "Failed to abort "+CpsFlowExecution.this.toString(),x);
+                        LOGGER.log(Level.WARNING, "Failed to abort " + CpsFlowExecution.this.toString(), x);
                     }
                 }
             }
