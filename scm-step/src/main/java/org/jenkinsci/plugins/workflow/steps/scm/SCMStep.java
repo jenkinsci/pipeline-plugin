@@ -66,6 +66,10 @@ abstract class SCMStep extends Step {
     protected abstract @Nonnull SCM createSCM();
 
     class StepExecutionImpl extends AbstractSynchronousStepExecution<Void> {
+        StepExecutionImpl(StepContext context) {
+            super(context);
+        }
+
         @Override
         protected Void run() throws Exception {
             Run<?,?> run = context.get(Run.class);
@@ -111,7 +115,7 @@ abstract class SCMStep extends Step {
     }
 
     @Override public StepExecution start(StepContext context) throws Exception {
-        return new StepExecutionImpl();
+        return new StepExecutionImpl(context);
     }
 
     protected static abstract class SCMStepDescriptor extends StepDescriptor {

@@ -16,7 +16,8 @@ public abstract class StepExecutionIterator implements ExtensionPoint {
      * Finds all the ongoing {@link StepExecution} and apply the function.
      *
      * The control flow is inverted because a major use case (workflow) loads
-     * {@link StepExecution}s asynchronously.
+     * {@link StepExecution}s asynchronously (for example when workflow run
+     * is blocked trying to restore pickles.)
      *
      * @return
      *      {@link ListenableFuture} to signal the completion of the application.

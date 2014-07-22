@@ -96,6 +96,8 @@ public abstract class FlowExecution implements FlowActionStorage {
      *
      * {@link StepExecution}s are persisted as a part of the program state, so its lifecycle
      * is independent of {@link FlowExecution}, hence the asynchrony.
+     *
+     * Think of this as program counters of all the virtual threads.
      */
     public abstract ListenableFuture<List<StepExecution>> getCurrentExecutions();
 
