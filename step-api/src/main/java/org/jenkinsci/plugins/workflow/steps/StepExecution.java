@@ -1,5 +1,8 @@
 package org.jenkinsci.plugins.workflow.steps;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.Map;
@@ -61,5 +64,4 @@ public abstract class StepExecution {
      * whether or not it was asked to stop.
      */
     public void stop() {}
-
 }

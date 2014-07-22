@@ -1,6 +1,10 @@
 package org.jenkinsci.plugins.workflow.flow;
 
+import com.google.common.base.Function;
 import com.google.common.collect.AbstractIterator;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import hudson.Extension;
 import hudson.XmlFile;
@@ -9,6 +13,8 @@ import hudson.remoting.SingleLaneExecutorService;
 import hudson.util.CopyOnWriteList;
 import jenkins.model.Jenkins;
 import jenkins.util.Timer;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.steps.StepExecutionIterator;
 
 import java.io.File;
 import java.io.IOException;
@@ -136,4 +142,38 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
             }
         }
     }
+
+    /**
+     * Enumerates {@link StepExecution}s running inside {@link FlowExecution}.
+     */
+    @Extension
+    public static class StepExecutionIteratorImpl extends StepExecutionIterator {
+        @Inject
+        FlowExecutionList list;
+
+        @Override
+        public ListenableFuture<?> apply(final Function<StepExecution, Void> f) {
+            List<ListenableFuture<?>> all = new ArrayList<ListenableFuture<?>>();
+
+            for (FlowExecution e : list) {
+                ListenableFuture<List<StepExecution>> execs = e.getCurrentExecutions();
+                all.add(execs);
+                Futures.addCallback(execs,new FutureCallback<List<StepExecution>>() {
+                    @Override
+                    public void onSuccess(List<StepExecution> result) {
+                        for (StepExecution e : result) {
+                            f.apply(e);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                    }
+                });
+            }
+
+            return Futures.allAsList(all);
+        }
+    }
+
 }
