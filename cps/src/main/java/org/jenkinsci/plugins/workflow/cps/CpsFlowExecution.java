@@ -61,6 +61,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 import org.jenkinsci.plugins.workflow.support.pickles.serialization.PickleResolver;
 import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverReader;
@@ -461,6 +462,31 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     @Override
+    public ListenableFuture<List<StepExecution>> getCurrentExecutions() {
+        final SettableFuture<List<StepExecution>> r = SettableFuture.create();
+        runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+            @Override
+            public void onSuccess(CpsThreadGroup g) {
+                List<StepExecution> l = new ArrayList<StepExecution>();
+                for (CpsThread t : g.threads.values()) {
+                    // TODO: we need to exclude outer StepExecutions
+                    StepExecution e = t.getStep();
+                    if (e!=null)
+                        l.add(e);
+                }
+                r.set(l);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                r.setException(t);
+            }
+        });
+
+        return r;
+    }
+
+    @Override
     public boolean isCurrentHead(FlowNode n) {
         for (FlowHead h : heads.values()) {
             if (h.get().equals(n))
@@ -489,9 +515,21 @@ public class CpsFlowExecution extends FlowExecution {
 
     @Override
     public void finish(Result result) throws IOException, InterruptedException {
-        // TODO set FlowEndNode.result to ABORTED
-        // TODO: what happens to FlowGraph when we abort it?
-        throw new UnsupportedOperationException();
+        setResult(result);
+
+        // stop all ongoing activities
+        Futures.addCallback(getCurrentExecutions(), new FutureCallback<List<StepExecution>>() {
+            @Override
+            public void onSuccess(List<StepExecution> l) {
+                for (StepExecution e : l) {
+                    e.stop();
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+            }
+        });
     }
 
     @Override

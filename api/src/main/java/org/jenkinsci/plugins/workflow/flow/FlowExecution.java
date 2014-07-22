@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.flow;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import hudson.util.HttpResponses;
 import hudson.util.IOUtils;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -81,8 +83,23 @@ public abstract class FlowExecution implements FlowActionStorage {
 
     public abstract FlowExecutionOwner getOwner();
 
+    /**
+     * In the current flow graph, return all the "head" nodes where the graph is still growing.
+     *
+     * If you think of a flow graph as a git repository, these heads correspond to branches.
+     */
     // TODO: values are snapshot in time
     public abstract List<FlowNode> getCurrentHeads();
+
+    /**
+     * Yields the inner-most {@link StepExecution}s that are currently executing.
+     *
+     * {@link StepExecution}s are persisted as a part of the program state, so its lifecycle
+     * is independent of {@link FlowExecution}, hence the asynchrony.
+     */
+    public abstract ListenableFuture<List<StepExecution>> getCurrentExecutions();
+
+    // TODO: there should be navigation between FlowNode <-> StepExecution
 
     /**
      * Short for {@code getCurrentHeads().contains(n)} but more efficient.
