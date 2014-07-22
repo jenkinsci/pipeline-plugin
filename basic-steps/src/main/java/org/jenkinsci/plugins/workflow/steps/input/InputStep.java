@@ -29,6 +29,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -44,7 +45,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
  *
  * @author Kohsuke Kawaguchi
  */
-public class InputStep extends AbstractStepImpl implements ModelObject {
+public class InputStep extends AbstractStepImpl implements Serializable {
     private final String message;
 
     /**
@@ -110,12 +111,6 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
      */
     public String getOk() {
         return ok!=null ? ok : "Proceed";
-    }
-
-    @Override
-    public String getDisplayName() {
-        if (message.length()<32)    return message;
-        return message.substring(0,32)+"...";
     }
 
     public List<ParameterDefinition> getParameters() {

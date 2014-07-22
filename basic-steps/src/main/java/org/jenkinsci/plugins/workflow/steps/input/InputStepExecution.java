@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.workflow.steps.input;
 import hudson.FilePath;
 import hudson.model.Failure;
 import hudson.model.FileParameterValue;
+import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.Run;
@@ -29,7 +30,7 @@ import java.util.Map;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class InputStepExecution extends StepExecution {
+public class InputStepExecution extends StepExecution implements ModelObject {
     /**
      * Pause gets added here.
      */
@@ -79,6 +80,14 @@ public class InputStepExecution extends StepExecution {
             run.addAction(a=new InputAction());
         return a;
     }
+
+    @Override
+    public String getDisplayName() {
+        String message = getInput().getMessage();
+        if (message.length()<32)    return message;
+        return message.substring(0,32)+"...";
+    }
+
 
     /**
      * Called from the form via browser to submit/abort this input step.
@@ -217,4 +226,6 @@ public class InputStepExecution extends StepExecution {
         // not sure what to do
         return null;
     }
+
+    private static final long serialVersionUID = 1L;
 }

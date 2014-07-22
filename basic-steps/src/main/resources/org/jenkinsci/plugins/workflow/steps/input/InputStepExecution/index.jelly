@@ -7,7 +7,7 @@
   <h1>${it.message}</h1>
   <j:if test="${!it.completed}">
     <f:form method="post" action="${it.id}/submit" name="${it.id}">
-      <j:forEach var="param" items="${it.parameters}">
+      <j:forEach var="param" items="${it.input.parameters}">
         <st:include page="index.jelly" it="${param}"/>
       </j:forEach>
       <f:block>
