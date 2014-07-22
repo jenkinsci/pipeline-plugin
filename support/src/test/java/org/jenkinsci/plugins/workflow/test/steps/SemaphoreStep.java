@@ -25,6 +25,8 @@
 package org.jenkinsci.plugins.workflow.test.steps;
 
 import hudson.Extension;
+
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import org.jenkinsci.plugins.workflow.steps.Step;
@@ -39,7 +41,7 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 /**
  * Step that blocks until signaled.
  */
-public final class SemaphoreStep extends Step {
+public final class SemaphoreStep extends Step implements Serializable {
 
     private static final Map<String,Integer> iota = new HashMap<String,Integer>();
     /** map from {@link #k} to serial form of {@link StepContext} */
@@ -153,4 +155,5 @@ public final class SemaphoreStep extends Step {
 
     }
 
+    private static final long serialVersionUID = 1L;
 }

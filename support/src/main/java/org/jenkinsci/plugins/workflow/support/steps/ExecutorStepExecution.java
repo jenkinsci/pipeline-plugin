@@ -44,16 +44,16 @@ import java.util.logging.Logger;
  * @author Kohsuke Kawaguchi
  */
 public class ExecutorStepExecution extends StepExecution {
-    private final ExecutorStep step;
+    private final String label;
 
     public ExecutorStepExecution(ExecutorStep step, StepContext context) {
         super(context);
-        this.step = step;
+        this.label = step.getLabel();
     }
 
     @Override
     public boolean start() throws Exception {
-        Queue.getInstance().schedule2(new PlaceholderTask(context, step.getLabel()), 0);
+        Queue.getInstance().schedule2(new PlaceholderTask(context, label), 0);
         return false;
     }
 
@@ -353,6 +353,8 @@ public class ExecutorStepExecution extends StepExecution {
             private static final long serialVersionUID = 1L;
         }
     }
+
+    private static final long serialVersionUID = 1L;
 
     private static final Logger LOGGER = Logger.getLogger(ExecutorStepExecution.class.getName());
 }

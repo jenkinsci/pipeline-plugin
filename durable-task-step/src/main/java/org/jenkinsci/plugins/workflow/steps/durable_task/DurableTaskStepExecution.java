@@ -6,7 +6,6 @@ import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.XmlFile;
 import hudson.model.Computer;
 import hudson.model.PeriodicWork;
 import hudson.model.TaskListener;
@@ -15,17 +14,11 @@ import org.jenkinsci.plugins.durabletask.Controller;
 import org.jenkinsci.plugins.durabletask.DurableTask;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
-import org.jenkinsci.plugins.workflow.steps.StepExecutionIterator;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +30,7 @@ import java.util.logging.Logger;
  * @author Kohsuke Kawaguchi
  */
 public class DurableTaskStepExecution extends StepExecution {
-    private final DurableTask task;
+    private transient final DurableTask task;
 
     // these fields are set during the start
     private /*almost final*/ Controller controller;

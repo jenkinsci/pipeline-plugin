@@ -6,6 +6,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,11 +15,14 @@ import java.util.Map;
  * Scoped to a single execution of {@link Step}, and provides insights into what's going on
  * asynchronously and aborting the activity if need be.
  *
+ * <p>
+ * {@link StepExecution}s are persisted whenever used to run an asynchronous operation.
+ *
  * @author Kohsuke Kawaguchi
  * @author Jesse Glick
  * @see Step#start(StepContext)
  */
-public abstract class StepExecution {
+public abstract class StepExecution implements Serializable {
     @Inject
     protected StepContext context;
 
@@ -95,4 +99,6 @@ public abstract class StepExecution {
             }
         });
     }
+
+    private static final long serialVersionUID = 1L;
 }
