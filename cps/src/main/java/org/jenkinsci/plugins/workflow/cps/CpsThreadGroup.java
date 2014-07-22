@@ -314,7 +314,7 @@ public final class CpsThreadGroup implements Serializable {
 
         try {
             // TODO: write atomically
-            RiverWriter w = new RiverWriter(tmpFile,execution.getOwner());
+            RiverWriter w = new RiverWriter(tmpFile, execution.getOwner());
             try {
                 w.writeObject(this);
             } finally {
@@ -322,6 +322,8 @@ public final class CpsThreadGroup implements Serializable {
             }
             f.delete();
             tmpFile.renameTo(f);
+        } catch (IOException e) {
+            throw new IOException("Failed to persist "+f,e);
         } finally {
             PROGRAM_STATE_SERIALIZATION.set(old);
             tmpFile.delete();

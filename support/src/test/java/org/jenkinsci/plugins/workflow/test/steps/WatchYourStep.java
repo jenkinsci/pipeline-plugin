@@ -32,6 +32,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -42,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Kohsuke Kawaguchi
  */
-public class WatchYourStep extends AbstractStepImpl {
+public class WatchYourStep extends AbstractStepImpl implements Serializable {
     /*package*/ final File watch;
 
     @DataBoundConstructor
