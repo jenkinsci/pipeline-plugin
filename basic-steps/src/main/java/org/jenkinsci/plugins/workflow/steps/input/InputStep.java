@@ -134,11 +134,6 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         return message;
     }
 
-    @Override
-    protected Class<InputStepExecution> getExecutionType() {
-        return InputStepExecution.class;
-    }
-
     public boolean canSubmit() {
         Authentication a = Jenkins.getAuthentication();
         return canSettle(a);

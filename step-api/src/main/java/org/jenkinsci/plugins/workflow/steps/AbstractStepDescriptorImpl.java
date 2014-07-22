@@ -26,6 +26,18 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
         this.executionType = executionType;
     }
 
+    /**
+     * Infer {@link #executionType} by the naming convention from {@link #clazz} by appending "Execution" in the end
+     */
+    protected AbstractStepDescriptorImpl() {
+        String name = clazz.getName() + "Execution";
+        try {
+            this.executionType = clazz.getClassLoader().loadClass(name).asSubclass(StepExecution.class);
+        } catch (ClassNotFoundException e) {
+            throw (Error)new NoClassDefFoundError("Expected to find "+name).initCause(e);
+        }
+    }
+
     public Class<? extends StepExecution> getExecutionType() {
         return executionType;
     }

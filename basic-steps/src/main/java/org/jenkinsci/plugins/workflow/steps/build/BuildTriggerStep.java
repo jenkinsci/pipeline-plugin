@@ -17,11 +17,6 @@ public class BuildTriggerStep extends AbstractStepImpl {
         this.buildJobPath = buildJobPath;
     }
 
-    @Override
-    protected Class<BuildTriggerStepExecution> getExecutionType() {
-        return BuildTriggerStepExecution.class;
-    }
-
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
         @Override

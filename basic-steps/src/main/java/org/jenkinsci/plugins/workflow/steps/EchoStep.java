@@ -44,11 +44,6 @@ public class EchoStep extends AbstractStepImpl {
         return message;
     }
 
-    @Override
-    protected Class<? extends StepExecution> getExecutionType() {
-        return EchoStepExecution.class;
-    }
-
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
         @Override

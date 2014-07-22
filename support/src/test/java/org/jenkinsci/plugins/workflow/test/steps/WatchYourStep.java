@@ -51,11 +51,6 @@ public class WatchYourStep extends AbstractStepImpl {
     }
 
     @Override
-    protected Class<WatchYourStepExecution> getExecutionType() {
-        return WatchYourStepExecution.class;
-    }
-
-    @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl)super.getDescriptor();
     }

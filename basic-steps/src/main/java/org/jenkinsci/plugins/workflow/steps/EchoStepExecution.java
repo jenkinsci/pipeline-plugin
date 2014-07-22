@@ -16,7 +16,7 @@ public class EchoStepExecution extends AbstractSynchronousStepExecution<Void> {
 
     @Override
     protected Void run() throws Exception {
-        listener.getLogger().println(step.message);
+        listener.getLogger().println(step.getMessage());
         return null;
     }
 }

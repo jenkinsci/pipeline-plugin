@@ -87,11 +87,6 @@ public class AbstractStepImplTest extends Assert {
             this.d = d;
         }
 
-        @Override
-        protected Class<BogusStepExecution> getExecutionType() {
-            return BogusStepExecution.class;
-        }
-
         @Extension
         public static class DescriptorImpl extends AbstractStepDescriptorImpl {
             @Override

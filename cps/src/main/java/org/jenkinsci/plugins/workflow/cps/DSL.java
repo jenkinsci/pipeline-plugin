@@ -116,7 +116,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         final CpsStepContext context = new CpsStepContext(d,thread,handle,an,ps.body);
         boolean sync;
         try {
-            sync = s.start(context).start(0);
+            sync = s.start(context).start();
         } catch (Exception e) {
             context.onFailure(e);
             sync = true;

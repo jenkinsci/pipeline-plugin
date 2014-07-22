@@ -42,13 +42,7 @@ public class PushdStep extends AbstractStepImpl {
         return value;
     }
 
-    @Override
-    protected Class<PushdStepExecution> getExecutionType() {
-        return PushdStepExecution.class;
-    }
-
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
-
         @Override public String getFunctionName() {
             return "dir";
         }

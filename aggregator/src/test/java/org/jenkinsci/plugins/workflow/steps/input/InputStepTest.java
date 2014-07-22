@@ -49,10 +49,10 @@ public class InputStepTest extends Assert {
         assertEquals(1, a.getExecutions().size());
 
         InputStepExecution is = a.getExecution("Icecream");
-        assertEquals("Do you want chocolate?", is.getMessage());
-        assertEquals(1,is.getParameters().size());
+        assertEquals("Do you want chocolate?", is.input.getMessage());
+        assertEquals(1,is.input.getParameters().size());
 
-        j.assertEqualDataBoundBeans(is.getParameters().get(0), new BooleanParameterDefinition("chocolate",false,"Favorite icecream flavor"));
+        j.assertEqualDataBoundBeans(is.input.getParameters().get(0), new BooleanParameterDefinition("chocolate",false,"Favorite icecream flavor"));
 
         // submit the input, and run workflow to the completion
         HtmlPage p = j.createWebClient().getPage(b, a.getUrlName());
