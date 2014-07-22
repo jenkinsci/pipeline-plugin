@@ -29,7 +29,7 @@ public class BuildTriggerStepExecution extends StepExecution {
     @Override
     public boolean start() throws Exception {
         listener.getLogger().println("Starting building project: "+step.buildJobPath);
-        AbstractProject project = Jenkins.getInstance().getItem(step.buildJobPath,context.get(Job.class), AbstractProject.class);
+        AbstractProject project = jenkins.getItem(step.buildJobPath,context.get(Job.class), AbstractProject.class);
         jenkins.getQueue().schedule(project, project.getQuietPeriod(), new BuildTriggerAction(context));
         return false;
     }

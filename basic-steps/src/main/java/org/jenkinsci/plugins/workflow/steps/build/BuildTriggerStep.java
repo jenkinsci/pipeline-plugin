@@ -13,8 +13,12 @@ public class BuildTriggerStep extends AbstractStepImpl {
     public final String buildJobPath;
 
     @DataBoundConstructor
-    public BuildTriggerStep(String buildJobPath) {
-        this.buildJobPath = buildJobPath;
+    public BuildTriggerStep(String value) {
+        this.buildJobPath = value;
+    }
+
+    public String getValue() {
+        return buildJobPath;
     }
 
     @Extension
