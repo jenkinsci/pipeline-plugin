@@ -57,7 +57,6 @@ public abstract class StepExecution {
      */
     public abstract boolean start() throws Exception;
 
-    // TODO: add methods like abort()
     /**
      * May be called if someone asks a running step to abort.
      * The step might not honor the request (the default implementation does nothing),
