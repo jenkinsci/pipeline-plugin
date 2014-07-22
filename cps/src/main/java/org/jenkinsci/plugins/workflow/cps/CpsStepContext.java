@@ -322,6 +322,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                 }
 
                 flow.runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+                    @CpsVmThreadOnly
                     @Override
                     public void onSuccess(CpsThreadGroup g) {
                         g.unexport(body);
@@ -335,6 +336,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                                 thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
                             }
                             thread.head.markIfFail(getOutcome());
+                            thread.setStep(null);
                             thread.resume(getOutcome());
                         }
                     }

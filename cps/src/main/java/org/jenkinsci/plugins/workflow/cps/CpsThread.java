@@ -93,7 +93,11 @@ public final class CpsThread implements Serializable {
     @Nullable
     private final ContextVariableSet contextVariables;
 
-    private StepExecution execution;
+    /**
+     * If this thread is waiting for a {@link StepExecution} to complete (by invoking our callback),
+     * this field is set to that execution.
+     */
+    private StepExecution step;
 
     CpsThread(CpsThreadGroup group, int id, Continuable program, FlowHead head, ContextVariableSet contextVariables) {
         this.group = group;
@@ -122,6 +126,14 @@ public final class CpsThread implements Serializable {
 
     boolean isRunnable() {
         return resumeValue!=null;
+    }
+
+    public StepExecution getStep() {
+        return step;
+    }
+
+    /*package*/ void setStep(StepExecution step) {
+        this.step = step;
     }
 
     /**

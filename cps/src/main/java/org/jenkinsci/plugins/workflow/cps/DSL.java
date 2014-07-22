@@ -39,6 +39,7 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -116,7 +117,9 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         final CpsStepContext context = new CpsStepContext(d,thread,handle,an,ps.body);
         boolean sync;
         try {
-            sync = s.start(context).start();
+            StepExecution e = s.start(context);
+            thread.setStep(e);
+            sync = e.start();
         } catch (Exception e) {
             context.onFailure(e);
             sync = true;
@@ -128,6 +131,8 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             if (context.getOutcome()==null) {
                 context.onFailure(new AssertionError("Step "+s+" claimed to have ended synchronously, but didn't set the result via StepContext.onSuccess/onFailure"));
             }
+
+            thread.setStep(null);
 
             // if the execution has finished synchronously inside the start method
             // we just move on accordingly
