@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
+import hudson.util.AtomicFileWriter;
 import jenkins.util.AtmostOneTaskExecutor;
 import groovy.lang.Closure;
 import hudson.model.Result;
@@ -303,6 +304,9 @@ public final class CpsThreadGroup implements Serializable {
 
     @CpsVmThreadOnly
     void saveProgram(File f) throws IOException {
+        File dir = f.getParentFile();
+        File tmpFile = File.createTempFile("atomic",null, dir);
+
         assertVmThread();
 
         CpsFlowExecution old = PROGRAM_STATE_SERIALIZATION.get();
@@ -310,14 +314,17 @@ public final class CpsThreadGroup implements Serializable {
 
         try {
             // TODO: write atomically
-            RiverWriter w = new RiverWriter(f,execution.getOwner());
+            RiverWriter w = new RiverWriter(tmpFile,execution.getOwner());
             try {
                 w.writeObject(this);
             } finally {
                 w.close();
             }
+            f.delete();
+            tmpFile.renameTo(f);
         } finally {
             PROGRAM_STATE_SERIALIZATION.set(old);
+            tmpFile.delete();
         }
     }
 
