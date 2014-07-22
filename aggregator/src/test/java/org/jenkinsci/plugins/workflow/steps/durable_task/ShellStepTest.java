@@ -1,22 +1,28 @@
 package org.jenkinsci.plugins.workflow.steps.durable_task;
 
+import com.google.common.base.Predicate;
 import hudson.model.BallColor;
 import hudson.model.Result;
 import jenkins.util.VirtualFile;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import javax.annotation.Nullable;
+import java.io.File;
 import java.util.Arrays;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -55,6 +61,75 @@ public class ShellStepTest extends Assert {
         }
 
         assertTrue(found);
+    }
+
+    /**
+     * Abort a running workflow to ensure that the process is terminated.
+     *
+     * TODO: unignore when we require 1.575
+     */
+    @Test
+    @Ignore("Pending JENKINS-22641 fix in the core 1.575")
+    public void abort() throws Exception {
+        File tmp = File.createTempFile("jenkins","test");
+        tmp.delete();
+
+        // job setup
+        WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
+        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList(
+                "with.node {",
+                "  sh 'while true; do touch "+tmp+"; sleep 1; done'",
+                "}"
+        ), "\n")));
+
+        // get the build going, and wait until workflow pauses
+        WorkflowRun b = foo.scheduleBuild2(0).getStartCondition().get();
+        CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
+        e.waitForSuspension();
+
+        // at this point the file should be being touched
+        waitForCond(5000, tmp, new Predicate<File>() {
+            @Override
+            public boolean apply(File tmp) {
+                return tmp.exists();
+            }
+        });
+
+        e.abort();
+
+        // touching should have stopped
+        final long refTimestamp = tmp.lastModified();
+        ensureForWhile(5000, tmp, new Predicate<File>() {
+            @Override
+            public boolean apply(File tmp) {
+                return refTimestamp==tmp.lastModified();
+            }
+        });
+    }
+
+    /**
+     * Waits up to the given timeout until the predicate is satisfied.
+     */
+    private <T> void waitForCond(int timeout, T o, Predicate<T> predicate) throws Exception {
+        long goal = System.currentTimeMillis()+timeout;
+        while (System.currentTimeMillis()<goal) {
+            if (predicate.apply(o))
+                return;
+            Thread.sleep(100);
+        }
+        throw new TimeoutException();
+    }
+
+    /**
+     * Asserts that the predicate remains true up to the given timeout.
+     */
+    private <T> void ensureForWhile(int timeout, T o, Predicate<T> predicate) throws Exception {
+        long goal = System.currentTimeMillis()+timeout;
+        while (System.currentTimeMillis()<goal) {
+            if (!predicate.apply(o))
+                throw new AssertionError(predicate);
+            Thread.sleep(100);
+        }
     }
 }
 
