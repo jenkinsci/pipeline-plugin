@@ -34,7 +34,7 @@ public abstract class AbstractSynchronousStepExecution<T> extends StepExecution 
      * If the computation is going synchronously, try to cancel that.
      */
     @Override
-    public void stop() {
+    public void stop() throws Exception {
         Thread e = executing;   // capture
         if (e!=null)
             e.interrupt();

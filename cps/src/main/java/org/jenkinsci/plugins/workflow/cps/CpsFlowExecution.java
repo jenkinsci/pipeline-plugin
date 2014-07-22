@@ -522,7 +522,11 @@ public class CpsFlowExecution extends FlowExecution {
             @Override
             public void onSuccess(List<StepExecution> l) {
                 for (StepExecution e : l) {
-                    e.stop();
+                    try {
+                        e.stop();
+                    } catch (Exception x) {
+                        LOGGER.log(Level.WARNING, "Failed to abort "+CpsFlowExecution.this.toString(),x);
+                    }
                 }
             }
 

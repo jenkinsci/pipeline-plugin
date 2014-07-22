@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.steps.durable_task;
 
+import com.google.common.base.Function;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -14,14 +15,18 @@ import org.jenkinsci.plugins.durabletask.Controller;
 import org.jenkinsci.plugins.durabletask.DurableTask;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.steps.StepExecutionIterator;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -66,7 +71,6 @@ public class DurableTaskStepExecution extends StepExecution {
             controller = task.launch(context.get(EnvVars.class), ws, context.get(Launcher.class), context.get(TaskListener.class));
             this.node = node;
             this.remote = remote;
-            register(this);
         } catch (Exception x) {
             context.onFailure(x);
         }
@@ -74,69 +78,41 @@ public class DurableTaskStepExecution extends StepExecution {
         // TODO implement stop, however it is design (will need to call Controller.stop)
     }
 
-
-    // TODO: eliminating this by providing the enumeration of running {@link StepExecution}s.
-    private static List<DurableTaskStepExecution> runningTasks;
-
-    private static XmlFile getConfigFile() {
-        return new XmlFile(new File(Jenkins.getInstance().getRootDir(), DurableTaskStep.class.getName() + ".xml"));
+    private @CheckForNull FilePath getWorkspace() throws IOException, InterruptedException {
+        Computer c = Jenkins.getInstance().getComputer(node);
+        if (c == null) {
+            LOGGER.log(Level.FINE, "no such computer {0}", node);
+            return null;
+        }
+        if (c.isOffline()) {
+            LOGGER.log(Level.FINE, "{0} is offline", node);
+            return null;
+        }
+        FilePath ws = new FilePath(c.getChannel(), remote);
+        if (!ws.isDirectory()) {
+            error = new AbortException("missing workspace " + remote + " on " + node);
+            return null;
+        }
+        return ws;
     }
 
-    @SuppressWarnings("unchecked")
-    private static synchronized void load() {
-        if (runningTasks == null) {
-            runningTasks = new ArrayList<DurableTaskStepExecution>();
-            XmlFile configFile = getConfigFile();
-            if (configFile.exists()) {
-                try {
-                    runningTasks = (List<DurableTaskStepExecution>) configFile.read();
-                } catch (IOException x) {
-                    LOGGER.log(Level.WARNING, null, x);
+    @Override
+    public void stop() throws Exception {
+        FilePath ws = getWorkspace();
+        if (ws!=null)
+            controller.stop(ws);
+    }
+
+    private static void checkAll() throws ExecutionException, InterruptedException {
+        StepExecution.applyAll(DurableTaskStepExecution.class,new Function<DurableTaskStepExecution, Void>() {
+            @Override
+            public Void apply(DurableTaskStepExecution rt) {
+                if (rt.check()==CheckResult.DONE) {
+                    rt.report();
                 }
+                return null;
             }
-        }
-    }
-
-    private static synchronized void save() {
-        try {
-            getConfigFile().write(runningTasks);
-        } catch (IOException x) {
-            LOGGER.log(Level.WARNING, null, x);
-        }
-    }
-
-    private static synchronized void register(DurableTaskStepExecution self) {
-        load();
-        runningTasks.add(self);
-        save();
-    }
-
-    private static void checkAll() {
-        List<DurableTaskStepExecution> done = new LinkedList<DurableTaskStepExecution>();
-        synchronized (DurableTaskStep.class) {
-            load();
-            boolean changed = false;
-            for (DurableTaskStepExecution rt : runningTasks) {
-                switch (rt.check()) {
-                case UPDATED:
-                    changed = true;
-                    break;
-                case DONE:
-                    changed = true;
-                    done.add(rt);
-                    break;
-                default:
-                    // NO_CHANGE, leave in queue
-                }
-            }
-            if (changed) {
-                runningTasks.removeAll(done);
-                save();
-            }
-        }
-        for (DurableTaskStepExecution rt : done) {
-            rt.report();
-        }
+        }).get();
     }
 
     private enum CheckResult {
@@ -151,18 +127,8 @@ public class DurableTaskStepExecution extends StepExecution {
     /** Checks for progress or completion of the external task. */
     CheckResult check() {
         try {
-            Computer c = Jenkins.getInstance().getComputer(node);
-            if (c == null) {
-                LOGGER.log(Level.FINE, "no such computer {0}", node);
-                return CheckResult.NO_CHANGE;
-            }
-            if (c.isOffline()) {
-                LOGGER.log(Level.FINE, "{0} is offline", node);
-                return CheckResult.NO_CHANGE;
-            }
-            FilePath ws = new FilePath(c.getChannel(), remote);
-            if (!ws.isDirectory()) {
-                error = new AbortException("missing workspace " + remote + " on " + node);
+            FilePath ws = getWorkspace();
+            if (ws==null) {
                 return CheckResult.DONE;
             }
             TaskListener listener = context.get(TaskListener.class);

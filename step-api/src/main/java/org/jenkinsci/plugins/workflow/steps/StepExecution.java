@@ -66,7 +66,7 @@ public abstract class StepExecution {
      * {@link StepContext#onFailure(Throwable)} eventually,
      * whether or not it was asked to stop.
      */
-    public void stop() {}
+    public void stop() throws Exception {}
 
     /**
      * Apply the given function to all the active running {@link StepExecution}s in the system.
