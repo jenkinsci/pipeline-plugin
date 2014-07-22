@@ -28,6 +28,7 @@ import hudson.util.OneShotEvent;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
@@ -167,7 +168,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 listener.error("No flow definition, cannot run");
                 return;
             }
-            execution = definition.create(new Owner(this), getAllActions());
+            Owner owner = new Owner(this);
+            FlowExecutionList.get().register(owner);
+            execution = definition.create(owner, getAllActions());
             execution.addListener(new GraphL());
             completed = new AtomicBoolean();
             logsToCopy = new LinkedHashMap<String,Long>();
@@ -329,6 +332,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             completed.set(true);
             completed.notifyAll();
         }
+        FlowExecutionList.get().unregister(execution.getOwner());
     }
 
     /**
