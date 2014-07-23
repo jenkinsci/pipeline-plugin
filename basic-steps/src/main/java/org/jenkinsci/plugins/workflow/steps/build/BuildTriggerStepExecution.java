@@ -23,11 +23,10 @@ public class BuildTriggerStepExecution extends StepExecution {
     @Inject
     BuildTriggerStep step;
 
-    @Inject
-    Jenkins jenkins;
-
     @Override
     public boolean start() throws Exception {
+        Jenkins jenkins = Jenkins.getInstance();
+
         listener.getLogger().println("Starting building project: "+step.buildJobPath);
         AbstractProject project = jenkins.getItem(step.buildJobPath,context.get(Job.class), AbstractProject.class);
         jenkins.getQueue().schedule(project, project.getQuietPeriod(), new BuildTriggerAction(context));
@@ -36,6 +35,8 @@ public class BuildTriggerStepExecution extends StepExecution {
 
     @Override
     public void stop() {
+        Jenkins jenkins = Jenkins.getInstance();
+
         Queue q = jenkins.getQueue();
 
         // if the build is still in the queue, abort it.
