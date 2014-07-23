@@ -318,8 +318,4 @@ public class ParallelStepTest extends SingleJobTestBase {
     private WatchYourStep.DescriptorImpl watchDescriptor() {
         return jenkins().getInjector().getInstance(WatchYourStep.DescriptorImpl.class);
     }
-
-    private String join(String... args) {
-        return StringUtils.join(args,"\n");
-    }
 }

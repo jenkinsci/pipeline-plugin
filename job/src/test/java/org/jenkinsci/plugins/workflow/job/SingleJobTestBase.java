@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.job;
 
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.test.RestartableJenkinsRule;
 import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
@@ -123,4 +124,7 @@ public abstract class SingleJobTestBase extends Assert {
         return story.j.jenkins;
     }
 
+    public String join(String... args) {
+        return StringUtils.join(args, "\n");
+    }
 }
