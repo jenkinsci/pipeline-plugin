@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.test.RestartableJenkinsRule;
 import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
@@ -117,4 +118,9 @@ public abstract class SingleJobTestBase extends Assert {
         Result r = b.getResult();
         assert r == Result.SUCCESS: "Result is "+r+"\n"+JenkinsRule.getLog(b);
     }
+
+    public Jenkins jenkins() {
+        return story.j.jenkins;
+    }
+
 }

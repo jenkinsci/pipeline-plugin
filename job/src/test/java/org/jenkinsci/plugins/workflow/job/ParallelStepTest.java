@@ -315,10 +315,6 @@ public class ParallelStepTest extends SingleJobTestBase {
         assertEquals(Arrays.asList(expected),actual);
     }
 
-    private Jenkins jenkins() {
-        return story.j.jenkins;
-    }
-
     private WatchYourStep.DescriptorImpl watchDescriptor() {
         return jenkins().getInjector().getInstance(WatchYourStep.DescriptorImpl.class);
     }

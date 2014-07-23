@@ -57,12 +57,12 @@ public class WorkflowTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("steps.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))"));
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition("steps.watch(new File('" + jenkins().getRootDir() + "/touch'))"));
                 startBuilding();
                 waitForWorkflowToSuspend();
                 assertTrue(b.isBuilding());
-                assertFalse(story.j.jenkins.toComputer().isIdle());
+                assertFalse(jenkins().toComputer().isIdle());
             }
         });
         story.addStep(new Statement() {
@@ -73,8 +73,8 @@ public class WorkflowTest extends SingleJobTestBase {
                 for (int i = 0; i < 600 && !Queue.getInstance().isEmpty(); i++) {
                     Thread.sleep(100);
                 }
-                assertFalse(story.j.jenkins.toComputer().isIdle());
-                FileUtils.write(new File(story.j.jenkins.getRootDir(), "touch"), "I'm here");
+                assertFalse(jenkins().toComputer().isIdle());
+                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
                 watchDescriptor.watchUpdate();
                 e.waitForSuspension();
                 assertTrue(e.isComplete());
@@ -89,17 +89,17 @@ public class WorkflowTest extends SingleJobTestBase {
     @Test public void persistEphemeralObject() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                story.j.jenkins.setNumExecutors(0);
+                jenkins().setNumExecutors(0);
                 DumbSlave s = createSlave(story.j);
                 String nodeName = s.getNodeName();
 
-                p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
+                p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
                     "def s = jenkins.model.Jenkins.instance.getComputer('" + nodeName + "')\n" +
                     "def r = s.node.rootPath\n" +
                     "def p = r.getRemote()\n" +
 
-                    "steps.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))\n" +
+                    "steps.watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
 
                     // make sure these values are still alive
                     "assert s.nodeName=='" + nodeName + "'\n" +
@@ -117,7 +117,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
 
-                FileUtils.write(new File(story.j.jenkins.getRootDir(), "touch"), "I'm here");
+                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
 
                 watchDescriptor.watchUpdate();
 
@@ -143,7 +143,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 DumbSlave s = createSlave(story.j);
                 s.getNodeProperties().add(new EnvironmentVariablesNodeProperty(new EnvironmentVariablesNodeProperty.Entry("ONSLAVE", "true")));
 
-                p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
+                p = jenkins().createProject(WorkflowJob.class, "demo");
                 dir.set(s.getRemoteFS() + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
                     "with.node('" + s.getNodeName() + "') {\n" +
@@ -151,7 +151,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     "    sh('echo ONSLAVE=$ONSLAVE')\n" +
 
                         // we'll suspend the execution here
-                    "    steps.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))\n" +
+                    "    steps.watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
 
                     "    sh('echo after=$PWD')\n" +
                     "}"));
@@ -170,7 +170,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
 
-                FileUtils.write(new File(story.j.jenkins.getRootDir(), "touch"), "I'm here");
+                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
 
                 while (!e.isComplete()) {
                     e.waitForSuspension();
@@ -191,7 +191,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 DumbSlave s = createSlave(story.j);
                 s.getNodeProperties().add(new EnvironmentVariablesNodeProperty(new EnvironmentVariablesNodeProperty.Entry("ONSLAVE", "true")));
 
-                p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
+                p = jenkins().createProject(WorkflowJob.class, "demo");
                 dir.set(s.getRemoteFS() + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
                     "with.node('" + s.getNodeName() + "') {\n" +
@@ -218,8 +218,8 @@ public class WorkflowTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 @SuppressWarnings("deprecation")
                 String slaveRoot = story.j.createTmpDir().getPath();
-                story.j.jenkins.addNode(new DumbSlave("slave", "dummy", slaveRoot, "2", Node.Mode.NORMAL, "", story.j.createComputerLauncher(null), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList()));
-                p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
+                jenkins().addNode(new DumbSlave("slave", "dummy", slaveRoot, "2", Node.Mode.NORMAL, "", story.j.createComputerLauncher(null), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList()));
+                p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("FLAG", null)));
                 dir.set(slaveRoot + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
@@ -227,7 +227,7 @@ public class WorkflowTest extends SingleJobTestBase {
                                 "    sh('echo default=$PWD')\n" +
                                 "    with.ws {\n" + // and this locks a second one
                                 "        sh('echo before=$PWD')\n" +
-                                "        steps.watch(new File('" + story.j.jenkins.getRootDir() + "', FLAG))\n" +
+                                "        steps.watch(new File('" + jenkins().getRootDir() + "', FLAG))\n" +
                                 "        sh('echo after=$PWD')\n" +
                                 "    }\n" +
                                 "}"
@@ -256,8 +256,8 @@ public class WorkflowTest extends SingleJobTestBase {
                 WorkflowRun b2 = p.getBuildByNumber(2);
                 CpsFlowExecution e2 = (CpsFlowExecution) b2.getExecution();
                 assertThatWorkflowIsSuspended(b2, e2);
-                FileUtils.write(new File(story.j.jenkins.getRootDir(), "one"), "here");
-                FileUtils.write(new File(story.j.jenkins.getRootDir(), "two"), "here");
+                FileUtils.write(new File(jenkins().getRootDir(), "one"), "here");
+                FileUtils.write(new File(jenkins().getRootDir(), "two"), "here");
                 story.j.waitUntilNoActivity();
                 assertBuildCompletedSuccessfully(b1);
                 assertBuildCompletedSuccessfully(b2);
@@ -267,7 +267,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 story.j.assertLogContains("default=" + dir + "@3", b2);
                 story.j.assertLogContains("before=" + dir + "@4", b2);
                 story.j.assertLogContains("after=" + dir + "@4", b2);
-                FileUtils.write(new File(story.j.jenkins.getRootDir(), "three"), "here");
+                FileUtils.write(new File(jenkins().getRootDir(), "three"), "here");
                 WorkflowRun b3 = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "three"))));
                 story.j.assertLogContains("default=" + dir, b3);
                 story.j.assertLogContains("before=" + dir + "@2", b3);
@@ -282,13 +282,13 @@ public class WorkflowTest extends SingleJobTestBase {
     @Test public void invokeBodyLaterAfterRestart() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
+                p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
                     "import org.jenkinsci.plugins.workflow.job.SimulatedFailureForRetry;\n"+
                     "int count=0;\n" +
                     "retry(3) {\n" +
                         // we'll suspend the execution here
-                    "    steps.watch(new File('" + story.j.jenkins.getRootDir() + "/touch'))\n" +
+                    "    steps.watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
 
                     "    if (count++ < 2) {\n" + // forcing retry
                     "        throw new SimulatedFailureForRetry();\n" +
@@ -310,7 +310,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertThatWorkflowIsSuspended();
 
                 // resume execution and cause the retry to invoke the body again
-                FileUtils.write(new File(story.j.jenkins.getRootDir(), "touch"), "I'm here");
+                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
 
                 while (!e.isComplete()) {
                     e.waitForSuspension();
