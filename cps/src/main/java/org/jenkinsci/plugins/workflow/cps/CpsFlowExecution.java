@@ -444,6 +444,7 @@ public class CpsFlowExecution extends FlowExecution {
      *      if the workflow has failed
      */
     public void waitForSuspension() throws InterruptedException, ExecutionException {
+        if (isComplete())   return;
         CpsThreadGroup g = programPromise.get();
         g.scheduleRun().get();
     }
