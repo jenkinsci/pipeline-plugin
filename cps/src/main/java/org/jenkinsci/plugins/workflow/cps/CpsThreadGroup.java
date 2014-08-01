@@ -26,8 +26,6 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
-import hudson.util.AtomicFileWriter;
-import jenkins.util.AtmostOneTaskExecutor;
 import groovy.lang.Closure;
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -299,11 +297,7 @@ public final class CpsThreadGroup implements Serializable {
      */
     @CpsVmThreadOnly
     void saveProgram() throws IOException {
-        saveProgram(execution.getProgramDataFile());
-    }
-
-    @CpsVmThreadOnly
-    void saveProgram(File f) throws IOException {
+        File f = execution.getProgramDataFile();
         File dir = f.getParentFile();
         File tmpFile = File.createTempFile("atomic",null, dir);
 
