@@ -68,6 +68,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      *
      * @param arguments
      *      Named arguments and values, à la Ant task or Maven mojos.
+     * @return an instance of {@link #clazz}
      */
     public abstract Step newInstance(Map<String,Object> arguments) throws Exception;
 
