@@ -39,18 +39,21 @@ import org.kohsuke.stapler.DataBoundConstructor;
 /**
  * A step than runs a {@link SimpleBuildStep} as defined in Jenkins core.
  */
-public final class CoreStep extends Step {
+public final class CoreStep extends AbstractSynchronousStepImpl<Void> {
 
     private final SimpleBuildStep delegate;
+    @StepContextParameter private Run<?,?> run;
+    @StepContextParameter private FilePath ws;
+    @StepContextParameter private Launcher launcher;
+    @StepContextParameter private TaskListener listener;
 
     @DataBoundConstructor public CoreStep(SimpleBuildStep delegate) {
         this.delegate = delegate;
     }
 
-    @Override public boolean start(StepContext context) throws Exception {
-        delegate.perform(context.get(Run.class), context.get(FilePath.class), context.get(Launcher.class), context.get(TaskListener.class));
-        context.onSuccess(null);
-        return true;
+    @Override protected Void run(StepContext context) throws Exception {
+        delegate.perform(run, ws, launcher, listener);
+        return null;
     }
 
     @Extension public static final class DescriptorImpl extends StepDescriptor {
@@ -68,15 +71,11 @@ public final class CoreStep extends Step {
             return "step";
         }
 
-        @Override public Step newInstance(Map<String,Object> arguments) {
-            String value = (String) arguments.get("value");
-            try {
-                Class<? extends SimpleBuildStep> c = Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(value).asSubclass(SimpleBuildStep.class);
-                SimpleBuildStep delegate = null; // TODO instantiate as in AbstractStepDescriptorImpl
-                return new CoreStep(delegate);
-            } catch (Exception x) {
-                throw new RuntimeException(x); // TODO should newInstance be allowed to throw exception to begin with?
-            }
+        @Override public Step newInstance(Map<String,Object> arguments) throws Exception {
+            String className = (String) arguments.get("$class");
+            Class<? extends SimpleBuildStep> c = Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(className).asSubclass(SimpleBuildStep.class);
+            SimpleBuildStep delegate = AbstractStepDescriptorImpl.instantiate(c, arguments);
+            return new CoreStep(delegate);
         }
 
         @Override public String getDisplayName() {
