@@ -20,10 +20,8 @@ import java.util.Set;
 public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
     private volatile transient Set<Class<?>> contextTypes;
 
-    /**
-     * Switch to ClassDescriptor.findConstructor() post Stapler1.225
-     */
-    private Constructor findConstructor(int length) {
+    // copied from RequestImpl
+    private static Constructor findConstructor(Class<?> clazz, int length) {
         Constructor<?>[] ctrs = clazz.getConstructors();
         // one with DataBoundConstructor is the most reliable
         for (Constructor c : ctrs) {
@@ -47,49 +45,37 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
      * Instantiate a new object via DataBoundConstructor and DataBoundSetter.
      */
     @Override
-    public Step newInstance(final Map<String, Object> arguments) {
-        Step step = instantiate(arguments);
-        injectSetters(step, arguments);
-        return step;
+    public Step newInstance(final Map<String, Object> arguments) throws Exception {
+        return (Step) instantiate(clazz, arguments);
     }
 
     /**
-     * Creates an instance of {@link Step} via {@link DataBoundConstructor}
+     * Creates an instance of a class via {@link DataBoundConstructor}.
      */
-    protected Step instantiate(Map<String, Object> arguments) {
+    public static Object instantiate(Class<?> clazz, Map<String, Object> arguments) throws Exception {
         ClassDescriptor d = new ClassDescriptor(clazz);
 
         String[] names = d.loadConstructorParamNames();
-        Constructor c = findConstructor(names.length);
+        Constructor c = findConstructor(clazz, names.length);
         Object[] args = buildArguments(arguments, c.getParameterTypes(), names, true);
 
-        try {
-            return (Step) c.newInstance(args);
-        } catch (InstantiationException e) {
-            throw (Error)new InstantiationError(e.getMessage()).initCause(e);
-        } catch (IllegalAccessException e) {
-            throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
-        } catch (InvocationTargetException e) {
-            throw (Error)new InstantiationError(e.getMessage()).initCause(e);
-        }
+        Object o  = c.newInstance(args);
+        injectSetters(o, arguments);
+        return o;
     }
 
     /**
      * Injects via {@link DataBoundSetter}
      */
-    private void injectSetters(Step step, Map<String, Object> arguments) {
-        for (Class c = step.getClass(); c!=null; c=c.getSuperclass()) {
+    private static void injectSetters(Object o, Map<String, Object> arguments) throws Exception {
+        for (Class c = o.getClass(); c!=null; c=c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {
                 if (f.isAnnotationPresent(DataBoundSetter.class)) {
                     f.setAccessible(true);
-                    try {
                         if (arguments.containsKey(f.getName())) {
                             Object v = arguments.get(f.getName());
-                            f.set(step, v);
+                            f.set(o, v);
                         }
-                    } catch (IllegalAccessException e) {
-                        throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
-                    }
                 }
             }
             for (Method m : c.getDeclaredMethods()) {
@@ -97,15 +83,9 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
                     String[] names = ClassDescriptor.loadParameterNames(m);
 
                     m.setAccessible(true);
-                    try {
                         Object[] args = buildArguments(arguments, m.getParameterTypes(), names, false);
                         if (args!=null)
-                            m.invoke(step, args);
-                    } catch (IllegalAccessException e) {
-                        throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
-                    } catch (InvocationTargetException e) {
-                        throw (Error)new InstantiationError(e.getMessage()).initCause(e);
-                    }
+                            m.invoke(o, args);
                 }
             }
         }
@@ -113,7 +93,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
 
     // TODO: this is Groovy specific and should be removed from here
     // but some kind of type coercion would be useful to fix mismatch between Long vs Integer, etc.
-    private Object[] buildArguments(Map<String, Object> arguments, Class[] types, String[] names, boolean callEvenIfNoArgs) {
+    private static Object[] buildArguments(Map<String, Object> arguments, Class[] types, String[] names, boolean callEvenIfNoArgs) {
         Object[] args = new Object[names.length];
         boolean hasArg = callEvenIfNoArgs;
         for (int i = 0; i < args.length; i++) {
