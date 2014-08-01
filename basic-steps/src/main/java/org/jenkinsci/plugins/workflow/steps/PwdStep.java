@@ -25,22 +25,13 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Extension;
-import hudson.FilePath;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Returns the working directory path.
  */
 public class PwdStep extends AbstractStepImpl {
-
-    @StepContextParameter private transient FilePath cwd;
-
     @DataBoundConstructor public PwdStep() {}
-
-    @Override protected boolean doStart(StepContext context) throws Exception {
-        context.onSuccess(cwd.getRemote());
-        return true;
-    }
 
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
 

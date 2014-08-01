@@ -28,6 +28,7 @@ import hudson.util.OneShotEvent;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
@@ -112,7 +113,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     List<SCMCheckout> checkouts;
     // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally; perhaps keep a List<WeakReference<ChangeLogSet<?>>>
-    private transient List<ChangeLogSet<?>> changeSets;
+    private transient List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
 
     public WorkflowRun(WorkflowJob job) throws IOException {
         super(job);
@@ -167,7 +168,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 listener.error("No flow definition, cannot run");
                 return;
             }
-            execution = definition.create(new Owner(this), getAllActions());
+            Owner owner = new Owner(this);
+            FlowExecutionList.get().register(owner);
+            execution = definition.create(owner, getAllActions());
             execution.addListener(new GraphL());
             completed = new AtomicBoolean();
             logsToCopy = new LinkedHashMap<String,Long>();
@@ -329,6 +332,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             completed.set(true);
             completed.notifyAll();
         }
+        FlowExecutionList.get().unregister(execution.getOwner());
     }
 
     /**
@@ -378,7 +382,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     public synchronized List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets() {
         if (changeSets == null) {
-            changeSets = new ArrayList<ChangeLogSet<?>>();
+            changeSets = new ArrayList<ChangeLogSet<? extends ChangeLogSet.Entry>>();
             for (SCMCheckout co : checkouts) {
                 if (co.changelogFile != null && co.changelogFile.isFile()) {
                     try {
@@ -488,6 +492,16 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
         @Override public String toString() {
             return "Owner[" + job + "/" + id + ":" + run + "]";
+        }
+
+        @Override
+        public boolean equals(Object that) {
+            return this.toString().equals(that.toString());
+        }
+
+        @Override
+        public int hashCode() {
+            return toString().hashCode();
         }
     }
 

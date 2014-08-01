@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class InputAction implements RunAction2 {
 
-    private final List<InputStep> steps = new ArrayList<InputStep>();
+    private final List<InputStepExecution> executions = new ArrayList<InputStepExecution>();
 
     private transient Run<?,?> run;
 
@@ -26,7 +26,7 @@ public class InputAction implements RunAction2 {
     @Override
     public void onLoad(Run<?, ?> r) {
         this.run = r;
-        for (InputStep step : steps) {
+        for (InputStepExecution step : executions) {
             step.run = run;
         }
     }
@@ -37,13 +37,13 @@ public class InputAction implements RunAction2 {
 
     @Override
     public String getIconFileName() {
-        if (steps.isEmpty())    return null;
+        if (executions.isEmpty())    return null;
         else                    return "help.png";
     }
 
     @Override
     public String getDisplayName() {
-        if (steps.isEmpty())    return null;
+        if (executions.isEmpty())    return null;
         else                    return "Paused for Input";
     }
 
@@ -52,35 +52,35 @@ public class InputAction implements RunAction2 {
         return "input";
     }
 
-    public synchronized void add(InputStep step) throws IOException {
-        this.steps.add(step);
+    public synchronized void add(InputStepExecution step) throws IOException {
+        this.executions.add(step);
         run.save();
     }
 
-    public synchronized InputStep getStep(String id) {
-        for (InputStep step : steps) {
-            if (step.getId().equals(id))
-                return step;
+    public synchronized InputStepExecution getExecution(String id) {
+        for (InputStepExecution e : executions) {
+            if (e.input.getId().equals(id))
+                return e;
         }
         return null;
     }
 
-    public synchronized List<InputStep> getSteps() {
-        return new ArrayList<InputStep>(steps);
+    public synchronized List<InputStepExecution> getExecutions() {
+        return new ArrayList<InputStepExecution>(executions);
     }
 
     /**
-     * Called when {@link InputStep} is completed to remove it from the active input list.
+     * Called when {@link InputStepExecution} is completed to remove it from the active input list.
      */
-    public synchronized void remove(InputStep step) throws IOException {
-        steps.remove(step);
+    public synchronized void remove(InputStepExecution exec) throws IOException {
+        executions.remove(exec);
         run.save();
     }
 
     /**
      * Bind steps just by their ID names.
      */
-    public InputStep getDynamic(String token) {
-        return getStep(token);
+    public InputStepExecution getDynamic(String token) {
+        return getExecution(token);
     }
 }

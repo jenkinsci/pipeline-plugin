@@ -19,6 +19,28 @@ import java.util.Set;
 public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
     private volatile transient Set<Class<?>> contextTypes;
 
+    protected final Class<? extends StepExecution> executionType;
+
+    protected AbstractStepDescriptorImpl(Class<? extends StepExecution> executionType) {
+        this.executionType = executionType;
+    }
+
+    /**
+     * Infer {@link #executionType} by the naming convention from {@link #clazz} by appending "Execution" in the end
+     */
+    protected AbstractStepDescriptorImpl() {
+        String name = clazz.getName() + "Execution";
+        try {
+            this.executionType = clazz.getClassLoader().loadClass(name).asSubclass(StepExecution.class);
+        } catch (ClassNotFoundException e) {
+            throw (Error)new NoClassDefFoundError("Expected to find "+name).initCause(e);
+        }
+    }
+
+    public Class<? extends StepExecution> getExecutionType() {
+        return executionType;
+    }
+
     // copied from RequestImpl
     private static <T> Constructor<T> findConstructor(Class<? extends T> clazz, int length) {
         @SuppressWarnings("unchecked") // see Javadoc of getConstructors for this silliness
@@ -115,14 +137,16 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
         if (contextTypes==null) {
             Set<Class<?>> r = new HashSet<Class<?>>();
 
-            for (Field f : clazz.getDeclaredFields()) {
-                if (f.isAnnotationPresent(StepContextParameter.class)) {
-                    r.add(f.getType());
+            for (Class c = executionType; c!=null; c=c.getSuperclass()) {
+                for (Field f : c.getDeclaredFields()) {
+                    if (f.isAnnotationPresent(StepContextParameter.class)) {
+                        r.add(f.getType());
+                    }
                 }
-            }
-            for (Method m : clazz.getDeclaredMethods()) {
-                if (m.isAnnotationPresent(StepContextParameter.class)) {
-                    Collections.addAll(r, m.getParameterTypes());
+                for (Method m : c.getDeclaredMethods()) {
+                    if (m.isAnnotationPresent(StepContextParameter.class)) {
+                        Collections.addAll(r, m.getParameterTypes());
+                    }
                 }
             }
 

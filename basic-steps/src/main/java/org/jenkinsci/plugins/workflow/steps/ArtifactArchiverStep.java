@@ -28,22 +28,7 @@ import java.util.Map;
  *
  * @author Kohsuke Kawaguchi
  */
-public class ArtifactArchiverStep extends AbstractSynchronousStepImpl<Void> {
-
-    @StepContextParameter
-    private transient TaskListener listener;
-
-    @StepContextParameter
-    private transient FilePath ws;
-
-    @StepContextParameter
-    private transient EnvVars envVars;
-
-    @StepContextParameter
-    private transient Run build;
-
-    @StepContextParameter
-    private transient Launcher launcher;
+public class ArtifactArchiverStep extends AbstractStepImpl {
 
     @DataBoundSetter
     String includes;
@@ -59,38 +44,16 @@ public class ArtifactArchiverStep extends AbstractSynchronousStepImpl<Void> {
         this.includes = value;
     }
 
-    @Override
-    protected Void run(StepContext context) throws Exception {
-        String includes = envVars.expand(this.includes);
-        Map<String,String> files = ws.act(new ListFiles(includes, excludes));
-        build.pickArtifactManager().archive(ws, launcher, fakeBuildListener(), files);
-        return null;
+    public String getIncludes() {
+        return includes;
     }
 
-    private BuildListener fakeBuildListener() {
-        return (BuildListener)Proxy.newProxyInstance(BuildListener.class.getClassLoader(),new Class[]{BuildListener.class},new InvocationHandler() {
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                return method.invoke(listener,args);
-            }
-        });
+    public String getExcludes() {
+        return excludes;
     }
 
-    private static final class ListFiles implements FilePath.FileCallable<Map<String,String>> {
-        private static final long serialVersionUID = 1;
-        private final String includes, excludes;
-        ListFiles(String includes, String excludes) {
-            this.includes = includes;
-            this.excludes = excludes;
-        }
-        @Override public Map<String,String> invoke(File basedir, VirtualChannel channel) throws IOException, InterruptedException {
-            Map<String,String> r = new HashMap<String,String>();
-            for (String f : Util.createFileSet(basedir, includes, excludes).getDirectoryScanner().getIncludedFiles()) {
-                f = f.replace(File.separatorChar, '/');
-                r.put(f, f);
-            }
-            return r;
-        }
+    public boolean isFingerprint() {
+        return fingerprint;
     }
 
     @Extension

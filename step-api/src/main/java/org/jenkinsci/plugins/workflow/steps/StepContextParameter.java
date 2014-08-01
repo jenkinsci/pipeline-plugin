@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 /**
  * Injects value from {@link StepContext#get(Class)}.
  *
- * Used on methods and fields of the subtype of {@link AbstractStepImpl}.
+ * Used on methods and fields of the subtype of {@link StepExecution}.
  * {@link AbstractStepImpl#start(StepContext)} will inject context variables
  * to those fields.
  *

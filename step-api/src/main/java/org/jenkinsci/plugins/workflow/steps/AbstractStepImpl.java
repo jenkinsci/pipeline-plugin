@@ -40,9 +40,8 @@ import java.lang.reflect.Method;
  */
 public abstract class AbstractStepImpl extends Step {
     @Override
-    public final boolean start(StepContext context) throws Exception {
-        prepareInjector(context).injectMembers(this);
-        return doStart(context);
+    public final StepExecution start(StepContext context) throws Exception {
+        return prepareInjector(context).getInstance(((AbstractStepDescriptorImpl)getDescriptor()).getExecutionType());
     }
 
     /**
@@ -52,7 +51,14 @@ public abstract class AbstractStepImpl extends Step {
         return Jenkins.getInstance().getInjector().createChildInjector(new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bindListener(Matchers.any(),new TypeListener() {
+                        bind(StepContext.class).toInstance(context);
+
+                        // make the outer 'this' object available at arbitrary super type of the actual concrete type
+                        // this will allow Step to subtype another Step and work as expected
+                        for (Class c=AbstractStepImpl.this.getClass(); c!=AbstractStepImpl.class; c=c.getSuperclass())
+                            bind(c).toInstance(AbstractStepImpl.this);
+
+                        bindListener(Matchers.any(), new TypeListener() {
                             @Override
                             public <I> void hear(TypeLiteral<I> type, TypeEncounter<I> encounter) {
                                 for (Field f : type.getRawType().getDeclaredFields()) {
@@ -75,6 +81,7 @@ public abstract class AbstractStepImpl extends Step {
 
                             class FieldInjector<T> extends ParameterInjector<T> {
                                 final Field f;
+
                                 FieldInjector(Field f) {
                                     this.f = f;
                                     f.setAccessible(true);
@@ -83,19 +90,20 @@ public abstract class AbstractStepImpl extends Step {
                                 @Override
                                 public void injectMembers(T instance) {
                                     try {
-                                        f.set(instance,context.get(f.getType()));
+                                        f.set(instance, context.get(f.getType()));
                                     } catch (IllegalAccessException e) {
-                                        throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
+                                        throw (Error) new IllegalAccessError(e.getMessage()).initCause(e);
                                     } catch (InterruptedException e) {
-                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                        throw new ProvisionException("Failed to set a context parameter", e);
                                     } catch (IOException e) {
-                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                        throw new ProvisionException("Failed to set a context parameter", e);
                                     }
                                 }
                             }
 
                             class MethodInjector<T> extends ParameterInjector<T> {
                                 final Method m;
+
                                 MethodInjector(Method m) {
                                     this.m = m;
                                     m.setAccessible(true);
@@ -111,24 +119,18 @@ public abstract class AbstractStepImpl extends Step {
                                         }
                                         m.invoke(instance, args);
                                     } catch (IllegalAccessException e) {
-                                        throw (Error)new IllegalAccessError(e.getMessage()).initCause(e);
+                                        throw (Error) new IllegalAccessError(e.getMessage()).initCause(e);
                                     } catch (InvocationTargetException e) {
-                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                        throw new ProvisionException("Failed to set a context parameter", e);
                                     } catch (InterruptedException e) {
-                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                        throw new ProvisionException("Failed to set a context parameter", e);
                                     } catch (IOException e) {
-                                        throw new ProvisionException("Failed to set a context parameter",e);
+                                        throw new ProvisionException("Failed to set a context parameter", e);
                                     }
                                 }
                             }
                         });
                     }
-                });
+        });
     }
-
-    /**
-     * Subtype will implement this method and put the meat of the {@link #start(StepContext)} processing.
-     */
-    protected abstract boolean doStart(StepContext context) throws Exception;
-
 }

@@ -28,11 +28,11 @@ import hudson.Extension;
 import hudson.model.PeriodicWork;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -43,8 +43,8 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Kohsuke Kawaguchi
  */
-public class WatchYourStep extends AbstractStepImpl {
-    private final File watch;
+public class WatchYourStep extends AbstractStepImpl implements Serializable {
+    /*package*/ final File watch;
 
     @DataBoundConstructor
     public WatchYourStep(File value) {
@@ -52,42 +52,19 @@ public class WatchYourStep extends AbstractStepImpl {
     }
 
     @Override
-    public boolean doStart(StepContext context) {
-        if (watch.exists()) {
-            // synchronous case. Sometimes async steps can complete synchronously
-            context.onSuccess(null);
-            return true;
-        }
-
-        // asynchronous case.
-        getDescriptor().addWatch(new Tag(watch,context));
-        return false;
-    }
-
-    @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl)super.getDescriptor();
     }
 
-    private static class Tag {
-        private final File path;
-        private final StepContext context;
-
-        private Tag(File path, StepContext context) {
-            this.path = path;
-            this.context = context;
-        }
-    }
-
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
-        private List<Tag> activeWatches = new ArrayList<Tag>();
+        private List<WatchYourStepExecution> activeWatches = new ArrayList<WatchYourStepExecution>();
 
         public DescriptorImpl() {
             load();
         }
 
-        /*package*/ synchronized void addWatch(Tag t) {
+        /*package*/ synchronized void addWatch(WatchYourStepExecution t) {
             activeWatches.add(t);
             save();
         }
@@ -97,10 +74,10 @@ public class WatchYourStep extends AbstractStepImpl {
          */
         public synchronized void watchUpdate() {
             boolean changed = false;
-            for (Iterator<Tag> itr = activeWatches.iterator(); itr.hasNext(); ) {
-                Tag t = itr.next();
-                if (t.path.exists()) {
-                    t.context.onSuccess(null);
+            for (Iterator<WatchYourStepExecution> itr = activeWatches.iterator(); itr.hasNext(); ) {
+                WatchYourStepExecution t = itr.next();
+                if (t.getPath().exists()) {
+                    t.getContext().onSuccess(null);
                     itr.remove();
                     changed = true;
                 }
@@ -109,8 +86,8 @@ public class WatchYourStep extends AbstractStepImpl {
                 save();
         }
 
-        public synchronized List<Tag> getActiveWatches() {
-            return new ArrayList<Tag>(activeWatches);
+        public synchronized List<WatchYourStepExecution> getActiveWatches() {
+            return new ArrayList<WatchYourStepExecution>(activeWatches);
         }
 
         @Override

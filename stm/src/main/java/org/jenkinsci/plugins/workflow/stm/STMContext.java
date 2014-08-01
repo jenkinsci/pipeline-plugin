@@ -126,4 +126,21 @@ final class STMContext extends DefaultStepContext {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        STMContext that = (STMContext) o;
+
+        return handle.equals(that.handle) && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = handle.hashCode();
+        result = 31 * result + id.hashCode();
+        return result;
+    }
+
 }
