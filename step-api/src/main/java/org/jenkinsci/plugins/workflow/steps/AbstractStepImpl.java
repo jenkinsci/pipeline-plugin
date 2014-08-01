@@ -40,7 +40,7 @@ import java.lang.reflect.Method;
  */
 public abstract class AbstractStepImpl extends Step {
     @Override
-    public boolean start(StepContext context) throws Exception {
+    public final boolean start(StepContext context) throws Exception {
         prepareInjector(context).injectMembers(this);
         return doStart(context);
     }

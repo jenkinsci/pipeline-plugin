@@ -10,7 +10,7 @@ public abstract class AbstractSynchronousStepImpl<T> extends AbstractStepImpl {
     protected abstract T run(StepContext context) throws Exception;
 
     @Override
-    protected boolean doStart(StepContext context) throws Exception {
+    protected final boolean doStart(StepContext context) throws Exception {
         try {
             context.onSuccess(run(context));
         } catch (Throwable t) {
