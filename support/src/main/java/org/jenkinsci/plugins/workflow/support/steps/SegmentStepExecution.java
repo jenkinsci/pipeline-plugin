@@ -39,7 +39,8 @@ import java.util.logging.Logger;
 public class SegmentStepExecution extends StepExecution {
     private static final Logger LOGGER = Logger.getLogger(SegmentStep.class.getName());
 
-    private final SegmentStep step;
+    // only used during the start() call, so no need to be persisted
+    private transient final SegmentStep step;
 
     public SegmentStepExecution(SegmentStep step, StepContext context) {
         super(context);

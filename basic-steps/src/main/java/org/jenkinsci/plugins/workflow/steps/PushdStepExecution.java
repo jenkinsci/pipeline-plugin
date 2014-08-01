@@ -10,7 +10,7 @@ import javax.inject.Inject;
  */
 public class PushdStepExecution extends StepExecution {
     @Inject
-    PushdStep step;
+    transient PushdStep step;
     @StepContextParameter
     private transient TaskListener listener;
     @StepContextParameter
