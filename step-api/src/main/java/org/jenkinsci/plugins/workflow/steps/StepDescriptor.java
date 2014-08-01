@@ -44,7 +44,6 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      * (say in freestyle or in workflow).
      * @see StepContext#getContext
      */
-    // I'd implement a subtype of Step that uses injection
     public abstract Set<Class<?>> getRequiredContext();
 
     /**
@@ -68,9 +67,9 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      * Used when a {@link Step} is instantiated programmatically.
      *
      * @param arguments
-     *      Named arguments and values, ala Ant task or Maven mojos.
+     *      Named arguments and values, à la Ant task or Maven mojos.
      */
-    public abstract Step newInstance(Map<String,Object> arguments);
+    public abstract Step newInstance(Map<String,Object> arguments) throws Exception;
 
     public static DescriptorExtensionList<Step,StepDescriptor> all() {
         return Jenkins.getInstance().getDescriptorList(Step.class);
