@@ -322,6 +322,8 @@ public final class CpsThreadGroup implements Serializable {
             }
             f.delete();
             tmpFile.renameTo(f);
+        } catch (RuntimeException e) {
+            throw new IOException("Failed to persist "+f,e);
         } catch (IOException e) {
             throw new IOException("Failed to persist "+f,e);
         } finally {
