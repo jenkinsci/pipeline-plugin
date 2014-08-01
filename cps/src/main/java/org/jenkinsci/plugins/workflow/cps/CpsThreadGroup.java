@@ -36,7 +36,11 @@ import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -272,7 +276,6 @@ public final class CpsThreadGroup implements Serializable {
 
         if (doneSomeWork) {
             saveProgram();
-            LOGGER.log(FINE, "program state saved");
         }
     }
 
@@ -316,14 +319,38 @@ public final class CpsThreadGroup implements Serializable {
             }
             f.delete();
             tmpFile.renameTo(f);
+            LOGGER.log(FINE, "program state saved");
         } catch (RuntimeException e) {
+            LOGGER.log(WARNING, "program state save failed",e);
+            propagateErrorToWorkflow(e);
             throw new IOException("Failed to persist "+f,e);
         } catch (IOException e) {
+            LOGGER.log(WARNING, "program state save failed",e);
+            propagateErrorToWorkflow(e);
             throw new IOException("Failed to persist "+f,e);
         } finally {
             PROGRAM_STATE_SERIALIZATION.set(old);
             tmpFile.delete();
         }
+    }
+
+    /**
+     * Propagates the failure to the workflow by passing an exception
+     */
+    @CpsVmThreadOnly
+    private void propagateErrorToWorkflow(Throwable t) {
+        // it's not obvious which thread to blame, so as a heuristics, pick up the last one,
+        // as that's the ony more likely to have caused the problem.
+        // TODO: when we start tracking which thread is just waiting for the body, then
+        // that information would help. or maybe we should just remember the thread that has run the last time
+        List<CpsThread> all = new ArrayList<CpsThread>(threads.values());
+        Collections.sort(all,new Comparator<CpsThread>() {
+            @Override
+            public int compare(CpsThread o1, CpsThread o2) {
+                return o2.id-o1.id;
+            }
+        });
+        all.get(0).resume(new Outcome(null,t));
     }
 
     public Future<Void> scheduleSaveProgram() {
