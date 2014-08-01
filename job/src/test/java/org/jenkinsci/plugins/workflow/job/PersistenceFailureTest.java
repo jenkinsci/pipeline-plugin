@@ -30,7 +30,13 @@ public class PersistenceFailureTest extends SingleJobTestBase {
 
                 // TODO: let the ripple effect of a failure run to the completion.
                 while (b.isBuilding())
-                    waitForWorkflowToSuspend();
+                    try {
+                        waitForWorkflowToSuspend();
+                    } catch (Exception x) {
+                        // ignore persistence failure
+                        if (!x.getMessage().contains("Failed to persist"))
+                            throw x;
+                    }
 
                 Result r = b.getResult();
                 String log = JenkinsRule.getLog(b);
