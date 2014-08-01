@@ -5,7 +5,6 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.BuildListener;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
@@ -15,11 +14,9 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
+import jenkins.util.BuildListenerAdapter;
 
 /**
  * Artifact archiving.
@@ -63,17 +60,8 @@ public class ArtifactArchiverStep extends AbstractSynchronousStepImpl<Void> {
     protected Void run(StepContext context) throws Exception {
         String includes = envVars.expand(this.includes);
         Map<String,String> files = ws.act(new ListFiles(includes, excludes));
-        build.pickArtifactManager().archive(ws, launcher, fakeBuildListener(), files);
+        build.pickArtifactManager().archive(ws, launcher, new BuildListenerAdapter(listener), files);
         return null;
-    }
-
-    private BuildListener fakeBuildListener() {
-        return (BuildListener)Proxy.newProxyInstance(BuildListener.class.getClassLoader(),new Class[]{BuildListener.class},new InvocationHandler() {
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                return method.invoke(listener,args);
-            }
-        });
     }
 
     private static final class ListFiles implements FilePath.FileCallable<Map<String,String>> {
