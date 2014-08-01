@@ -7,7 +7,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,10 +20,11 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
     private volatile transient Set<Class<?>> contextTypes;
 
     // copied from RequestImpl
-    private static Constructor findConstructor(Class<?> clazz, int length) {
-        Constructor<?>[] ctrs = clazz.getConstructors();
+    private static <T> Constructor<T> findConstructor(Class<? extends T> clazz, int length) {
+        @SuppressWarnings("unchecked") // see Javadoc of getConstructors for this silliness
+        Constructor<T>[] ctrs = (Constructor<T>[]) clazz.getConstructors();
         // one with DataBoundConstructor is the most reliable
-        for (Constructor c : ctrs) {
+        for (Constructor<T> c : ctrs) {
             if(c.getAnnotation(DataBoundConstructor.class)!=null) {
                 if(c.getParameterTypes().length!=length)
                     throw new IllegalArgumentException(c+" has @DataBoundConstructor but it doesn't match with your .stapler file. Try clean rebuild");
@@ -34,7 +34,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
         // if not, maybe this was from @stapler-constructor,
         // so look for the constructor with the expected argument length.
         // this is not very reliable.
-        for (Constructor c : ctrs) {
+        for (Constructor<T> c : ctrs) {
             if(c.getParameterTypes().length==length)
                 return c;
         }
@@ -46,20 +46,20 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
      */
     @Override
     public Step newInstance(final Map<String, Object> arguments) throws Exception {
-        return (Step) instantiate(clazz, arguments);
+        return instantiate(clazz, arguments);
     }
 
     /**
      * Creates an instance of a class via {@link DataBoundConstructor}.
      */
-    public static Object instantiate(Class<?> clazz, Map<String, Object> arguments) throws Exception {
+    public static <T> T instantiate(Class<? extends T> clazz, Map<String, Object> arguments) throws Exception {
         ClassDescriptor d = new ClassDescriptor(clazz);
 
         String[] names = d.loadConstructorParamNames();
-        Constructor c = findConstructor(clazz, names.length);
+        Constructor<T> c = findConstructor(clazz, names.length);
         Object[] args = buildArguments(arguments, c.getParameterTypes(), names, true);
 
-        Object o  = c.newInstance(args);
+        T o  = c.newInstance(args);
         injectSetters(o, arguments);
         return o;
     }
