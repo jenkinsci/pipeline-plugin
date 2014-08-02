@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.steps.input;
+package org.jenkinsci.plugins.workflow.steps;
 
 import jenkins.util.VirtualFile;
 import org.apache.commons.io.IOUtils;

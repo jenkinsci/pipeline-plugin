@@ -4,7 +4,7 @@ Building continuous delivery pipelines and similarly complex tasks in Jenkins us
 You need to mix Parameterized Trigger, Copy Artifact, Promoted Builds, Conditional Build Step, and more just to express what should be a simple script.
 This project attempts to make it possible to directly write that script, what people often call a _workflow_ (sometimes abbreviated _flow_), while integrating with Jenkins features like slaves and publishers.
 
-[JUC Boston slides](http://www.cloudbees.com/sites/default/files/juc/juc2014/boston/2014-0618-Boston-Jesse_Glick-Workflow.pdf)
+[JUC Boston slides](http://www.cloudbees.com/sites/default/files/juc/juc2014/boston/2014-0618-Boston-Jesse_Glick-Workflow.pdf) and [video](https://www.youtube.com/watch?v=gpaV6x9QwDo&index=9&list=UUKlF3GIFy9KVUefVbycx_vw)
 
 [Early slides](https://docs.google.com/a/cloudbees.com/presentation/d/1ysu71kGpEjvsikKAXdPXTJULadHh9cRbpd0gJaIkVtA)
 
@@ -45,6 +45,8 @@ If you do not want to build from sources, some early releases (as of this writin
 You need to be running a recent Jenkins weekly release, currently 1.568 or newer.
 For OSS Jenkins users, follow [these instructions](http://jenkins-ci.org/content/experimental-plugins-update-center) and install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
 Jenkins Enterprise by CloudBees users can click _Enable access_ under _Access to experimental plugin releases_ in the main Jenkins configuration screen, and then install both _Workflow: Aggregator_ and the proprietary add-on _Workflow: Groovy CPS Execution Checkpoint_.
+
+There is a [demo](demo/README.md) using Docker available if you want to try a complete setup quickly.
 
 # Development
 
