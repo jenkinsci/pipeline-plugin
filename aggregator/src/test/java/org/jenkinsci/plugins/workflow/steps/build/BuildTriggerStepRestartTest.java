@@ -37,7 +37,7 @@ public class BuildTriggerStepRestartTest extends Assert {
                               p1.getBuildersList().add(new Shell("echo 'Hello World'"));
 
                               WorkflowJob foo = story.j.jenkins.createProject(WorkflowJob.class, "foo");
-                              foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("steps.build('test1');"), "\n")));
+                              foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("build('test1');"), "\n")));
 
 
                               QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);

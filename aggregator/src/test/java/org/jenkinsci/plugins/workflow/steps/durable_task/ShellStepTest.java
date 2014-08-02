@@ -33,7 +33,7 @@ public class ShellStepTest extends Assert {
         // job setup
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
         foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList(
-                "with.node {",
+                "node {",
                 "  sh 'false'",
                 "}"
         ), "\n")));

@@ -5,14 +5,14 @@
   <keepDependencies>false</keepDependencies>
   <properties/>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@0.1-beta-1">
-    <script>steps.stage(&apos;Dev&apos;)
-with.node(&apos;master&apos;) {
+    <script>stage(&apos;Dev&apos;)
+node(&apos;master&apos;) {
     def src = &apos;/var/lib/jenkins/workflow-plugin-pipeline-demo.git&apos;
-    steps.git(url: src)
+    git(url: src)
     sh(&apos;mvn -o clean package&apos;)
-    steps.archive(&apos;target/x.war&apos;)
+    archive(&apos;target/x.war&apos;)
 
-    steps.stage(&apos;QA&apos;)
+    stage(&apos;QA&apos;)
 
     parallel(sometests: {
         runWithServer {url -&gt;
@@ -23,16 +23,16 @@ with.node(&apos;master&apos;) {
             sh(&quot;mvn -o -f sometests/pom.xml test -Durl=${url}&quot;) // TODO add other test module
         }
     })
-    steps.stage(value: &apos;Staging&apos;, concurrency: 1)
+    stage(value: &apos;Staging&apos;, concurrency: 1)
     deploy(&apos;target/x.war&apos;, &apos;staging&apos;)
 }
-steps.input(message: &quot;Does http://localhost:8080/staging/ look good?&quot;)
-steps.stage(value: &apos;Production&apos;, concurrency: 1)
-with.node(&apos;master&apos;) {
+input(message: &quot;Does http://localhost:8080/staging/ look good?&quot;)
+stage(value: &apos;Production&apos;, concurrency: 1)
+node(&apos;master&apos;) {
     sh(&apos;curl -I http://localhost:8080/staging/&apos;)
-    steps.unarchive(mapping: [&apos;target/x.war&apos; : &apos;x.war&apos;])
+    unarchive(mapping: [&apos;target/x.war&apos; : &apos;x.war&apos;])
     deploy(&apos;x.war&apos;, &apos;production&apos;)
-    steps.echo &apos;Deployed to http://localhost:8080/production/&apos;
+    echo &apos;Deployed to http://localhost:8080/production/&apos;
 }
 
 def deploy(war, id) {

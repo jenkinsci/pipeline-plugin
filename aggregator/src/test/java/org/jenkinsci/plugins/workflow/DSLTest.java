@@ -22,21 +22,30 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.job;
+package org.jenkinsci.plugins.workflow;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.junit.Test;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
+import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-public class PushdStepTest {
-
+/**
+ * Verifies general DSL functionality.
+ */
+public class DSLTest {
+    
     @Rule public JenkinsRule r = new JenkinsRule();
 
-    @Test public void basics() throws Exception {
-        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");;
-        p.setDefinition(new CpsFlowDefinition("node {dir('subdir') {sh 'pwd'}}"));
-        r.assertLogContains("/subdir", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+    @Test public void overrideFunction() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("echo 'this came from a step'"));
+        r.assertLogContains("this came from a step", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+        p.setDefinition(new CpsFlowDefinition("def echo(s) {println s.toUpperCase()}\necho 'this came from my own function'\nsteps.echo 'but this is still from a step'"));
+        WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        r.assertLogContains("THIS CAME FROM MY OWN FUNCTION", b2);
+        r.assertLogContains("but this is still from a step", b2);
     }
 
 }
