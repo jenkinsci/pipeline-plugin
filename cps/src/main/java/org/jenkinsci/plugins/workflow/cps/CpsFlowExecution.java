@@ -239,12 +239,7 @@ public class CpsFlowExecution extends FlowExecution {
     @Override
     public void start() throws IOException {
         final CpsScript s = parseScript();
-        DSL dsl = new DSL(owner);
-        s.getBinding().setVariable("steps", dsl);
-        // some of the steps that acquire resources look better with 'with', so exposing
-        // that name, such as:
-        // node('linux') { ... }
-        s.loadEnvironment();
+        s.initialize();
 
         final FlowHead h = new FlowHead(this);
         heads.put(h.getId(),h);
