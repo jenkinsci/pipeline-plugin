@@ -29,7 +29,7 @@ Sample demo scenario
 * Go to [job configuration](http://localhost:8081/job/cd/configure) and walk through the workflow script
   and how that implements the pipeline explained above
     * Discuss use of abstractions like functions to organize complex workflow
-    * Highlight and explain some of the primitives, such as `stage`, `input`, and `with.node`
+    * Highlight and explain some of the primitives, such as `stage`, `input`, and `node`
 * Get one build going, and watch [Jetty top page](http://localhost:8080/) to see ephemeral test instances
   deployed and deleted
 * When it gets to the pause, go to the pause UI in the [build top page](http://localhost:8080/job/cd/1/) (left on the action list) and terminate the workflow

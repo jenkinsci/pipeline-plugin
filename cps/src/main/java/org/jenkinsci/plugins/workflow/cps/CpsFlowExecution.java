@@ -243,7 +243,7 @@ public class CpsFlowExecution extends FlowExecution {
         s.getBinding().setVariable("steps", dsl);
         // some of the steps that acquire resources look better with 'with', so exposing
         // that name, such as:
-        // with.node('linux') { ... }
+        // node('linux') { ... }
         s.loadEnvironment();
 
         final FlowHead h = new FlowHead(this);

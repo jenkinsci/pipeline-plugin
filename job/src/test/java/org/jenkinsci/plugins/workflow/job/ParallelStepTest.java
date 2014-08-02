@@ -42,8 +42,8 @@ public class ParallelStepTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                    "with.node {",
-                    "  x = parallel( a: { steps.echo('echo a'); return 1; }, b: { steps.echo('echo b'); return 2; } )",
+                    "node {",
+                    "  x = parallel( a: { echo('echo a'); return 1; }, b: { echo('echo b'); return 2; } )",
                     "  assert x.a==1",
                     "  assert x.b==2",
                     "}"
@@ -70,7 +70,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "import "+SimulatedFailureForRetry.class.getName(),
                     "import "+ParallelStepException.class.getName(),
 
-                    "with.node {",
+                    "node {",
                     "  try {",
                     "    parallel(",
                     "      b: { throw new SimulatedFailureForRetry(); },",
@@ -108,7 +108,7 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                    "with.node {",
+                    "node {",
                     "  parallel( { sh('touch "+aa+"'); }, { sh('touch "+bb+"'); } )",
                     "}"
                 )));
@@ -132,7 +132,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
                     "def touch(f) { sh 'touch '+f }",
-                    "with.node {",
+                    "node {",
                     "  parallel( { touch('"+aa+"'); }, { touch('"+bb+"'); } )",
                     "}"
                 )));
@@ -155,10 +155,10 @@ public class ParallelStepTest extends SingleJobTestBase {
                         "def notify(msg) {",
                         "  sh \"echo ${msg}\"",
                         "}",
-                        "with.node {",
-                        "  with.ws {",
+                        "node {",
+                        "  ws {",
                         "    sh 'echo start'",
-                        "    steps.parallel(one: {",
+                        "    parallel(one: {",
                         "      notify('one')",
                         "    }, two: {",
                         "      notify('two')",
@@ -216,11 +216,11 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "import "+SimulatedFailureForRetry.class.getName(),
                     "import "+ParallelStepException.class.getName(),
 
-                    "with.node {",
+                    "node {",
                     "    parallel(",
-                    "      a: { steps.watch(new File('"+aa+"')); sh('touch a.done'); },",
-                    "      b: { steps.watch(new File('"+bb+"')); sh('touch b.done'); },",
-                    "      c: { steps.watch(new File('"+cc+"')); sh('touch c.done'); },",
+                    "      a: { watch(new File('"+aa+"')); sh('touch a.done'); },",
+                    "      b: { watch(new File('"+bb+"')); sh('touch b.done'); },",
+                    "      c: { watch(new File('"+cc+"')); sh('touch c.done'); },",
                     "    )",
                     "}"
                 )));

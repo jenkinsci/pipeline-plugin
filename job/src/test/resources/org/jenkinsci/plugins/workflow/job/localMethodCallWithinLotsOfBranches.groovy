@@ -4,8 +4,8 @@ def notify(msg) {
     sh "echo ${msg} 3"
 }
 
-with.node {
-    with.ws {}
+node {
+    ws {}
     def x = []
     for (def i=0; i<128; i++) {
         def j = i;

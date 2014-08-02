@@ -72,9 +72,9 @@ public class GitStepTest {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         r.createOnlineSlave(Label.get("remote"));
         p.setDefinition(new CpsFlowDefinition(
-            "with.node('remote') {\n" +
-            "    with.ws {\n" +
-            "        steps.git(url: '" + sampleRepo + "', poll: false, changelog: false)\n" +
+            "node('remote') {\n" +
+            "    ws {\n" +
+            "        git(url: '" + sampleRepo + "', poll: false, changelog: false)\n" +
             "        sh 'for f in *; do echo PRESENT: $f; done'\n" +
             "    }\n" +
             "}"));
@@ -94,9 +94,9 @@ public class GitStepTest {
         p.addTrigger(new SCMTrigger("")); // no schedule, use notifyCommit only
         r.createOnlineSlave(Label.get("remote"));
         p.setDefinition(new CpsFlowDefinition(
-            "with.node('remote') {\n" +
-            "    with.ws {\n" +
-            "        steps.git(url: '" + sampleRepo + "')\n" +
+            "node('remote') {\n" +
+            "    ws {\n" +
+            "        git(url: '" + sampleRepo + "')\n" +
             "    }\n" +
             "}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
@@ -131,13 +131,13 @@ public class GitStepTest {
         p.addTrigger(new SCMTrigger(""));
         p.setQuietPeriod(3); // so it only does one build
         p.setDefinition(new CpsFlowDefinition(
-            "with.node {\n" +
-            "    with.ws {\n" +
-            "        with.dir('main') {\n" +
-            "            steps.git(url: '" + sampleRepo + "')\n" +
+            "node {\n" +
+            "    ws {\n" +
+            "        dir('main') {\n" +
+            "            git(url: '" + sampleRepo + "')\n" +
             "        }\n" +
-            "        with.dir('other') {\n" +
-            "            steps.git(url: '" + otherRepo + "')\n" +
+            "        dir('other') {\n" +
+            "            git(url: '" + otherRepo + "')\n" +
             "        }\n" +
             "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +
             "    }\n" +

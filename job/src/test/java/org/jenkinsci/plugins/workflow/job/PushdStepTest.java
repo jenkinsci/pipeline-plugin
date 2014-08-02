@@ -35,7 +35,7 @@ public class PushdStepTest {
 
     @Test public void basics() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");;
-        p.setDefinition(new CpsFlowDefinition("with.node {with.dir('subdir') {sh 'pwd'}}"));
+        p.setDefinition(new CpsFlowDefinition("node {dir('subdir') {sh 'pwd'}}"));
         r.assertLogContains("/subdir", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
 
