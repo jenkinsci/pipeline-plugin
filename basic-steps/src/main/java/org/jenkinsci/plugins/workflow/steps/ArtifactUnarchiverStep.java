@@ -49,7 +49,7 @@ public class ArtifactUnarchiverStep extends AbstractStepImpl {
         }
 
         @Override
-        public Step newInstance(Map<String, Object> arguments) {
+        public Step newInstance(Map<String, Object> arguments) throws Exception {
             Object v = arguments.get("value");
             if (v!=null) {
                 // sole string invocation like : unarchive('target/x.war')
