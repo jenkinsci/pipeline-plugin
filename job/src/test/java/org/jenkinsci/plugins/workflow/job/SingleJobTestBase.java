@@ -114,7 +114,6 @@ public abstract class SingleJobTestBase extends Assert {
 
     public void assertBuildCompletedSuccessfully(WorkflowRun b) throws Exception {
         assert !b.isBuilding(): JenkinsRule.getLog(b);
-        Result r = b.getResult();
-        assert r == Result.SUCCESS: "Result is "+r+"\n"+JenkinsRule.getLog(b);
+        story.j.assertBuildStatusSuccess(b);
     }
 }
