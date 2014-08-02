@@ -84,8 +84,9 @@ public abstract class SingleJobTestBase extends Assert {
     }
 
     public void waitForWorkflowToComplete() throws Exception {
-        while (!e.isComplete())
+        do {
             waitForWorkflowToSuspend(e);
+        } while (!e.isComplete());
     }
 
     public void waitForWorkflowToSuspend() throws Exception {
