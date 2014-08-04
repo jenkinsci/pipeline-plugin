@@ -52,7 +52,6 @@ import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jenkins.model.Jenkins;
 
 final class STMExecution extends FlowExecution {
     
@@ -329,7 +328,7 @@ final class STMExecution extends FlowExecution {
 
     private static Object perhapsConvertToValue(Object object) {
         // TODO this will not work, since various serializable objects (such as WorkspaceStep.Callback) hold references to objects that should be pickled
-        for (PickleFactory f : (valueFactories == null ? Jenkins.getInstance().getExtensionList(PickleFactory.class) : valueFactories)) {
+        for (PickleFactory f : (valueFactories == null ? PickleFactory.all() : valueFactories)) {
             Pickle v = f.writeReplace(object);
             if (v != null) {
                 return v;

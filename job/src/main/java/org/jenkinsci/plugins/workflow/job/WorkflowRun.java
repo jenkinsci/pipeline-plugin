@@ -108,6 +108,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     };
     private transient StreamBuildListener listener;
     private transient AtomicBoolean completed;
+    /** Jenkins instance in effect when {@link #waitForCompletion} was last called. */
+    private transient Jenkins jenkins;
     /** map from node IDs to log positions from which we should copy text */
     private Map<String,Long> logsToCopy;
 
@@ -193,8 +195,16 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
      * Sleeps until the run is finished, updating log messages periodically.
      */
     void waitForCompletion() {
+        jenkins = Jenkins.getInstance();
         synchronized (completed) {
             while (!completed.get()) {
+                if (jenkins == null || jenkins.isTerminating()) {
+                    LOGGER.log(Level.FINE, "shutting down, breaking waitForCompletion on {0}", this);
+                    // Stop writing content, in case a new set of objects gets loaded after in-VM restart and starts writing to the same file:
+                    listener.closeQuietly();
+                    listener = new StreamBuildListener(new NullStream());
+                    break;
+                }
                 try {
                     completed.wait(1000);
                 } catch (InterruptedException x) {
@@ -214,8 +224,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (logsToCopy == null) { // finished
             return;
         }
-        if (Jenkins.getInstance()==null)
-            return; // shutting down
         Iterator<Map.Entry<String,Long>> it = logsToCopy.entrySet().iterator();
         boolean modified = false;
         while (it.hasNext()) {

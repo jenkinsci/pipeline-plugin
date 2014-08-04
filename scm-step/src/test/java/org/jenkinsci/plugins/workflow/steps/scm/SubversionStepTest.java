@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.steps.scm;
 
+import hudson.ExtensionList;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.scm.SubversionRepositoryStatus;
@@ -39,7 +40,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import jenkins.model.Jenkins;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -77,7 +77,7 @@ public class SubversionStepTest {
 
     private void notifyCommit(String uuid, String path) throws Exception {
         // Mocking the web POST, with crumb, is way too hard, and get an IllegalStateException: STREAMED from doNotifyCommit’s getReader anyway.
-        for (SubversionRepositoryStatus.Listener listener : Jenkins.getInstance().getExtensionList(SubversionRepositoryStatus.Listener.class)) {
+        for (SubversionRepositoryStatus.Listener listener : ExtensionList.lookup(SubversionRepositoryStatus.Listener.class)) {
             listener.onNotify(UUID.fromString(uuid), -1, Collections.singleton(path));
         }
     }

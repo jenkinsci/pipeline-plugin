@@ -30,8 +30,11 @@ import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
+import hudson.remoting.Launcher;
+import hudson.remoting.Which;
 import hudson.slaves.DumbSlave;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
+import hudson.slaves.JNLPLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import org.apache.commons.io.FileUtils;
@@ -42,13 +45,21 @@ import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.tools.ant.util.JavaEnvUtils;
+import org.junit.After;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests of workflows that involve restarting Jenkins in the middle.
  */
 public class WorkflowTest extends SingleJobTestBase {
+
+    @Rule public TemporaryFolder tmp = new TemporaryFolder();
 
     /**
      * Restart Jenkins while workflow is executing to make sure it suspends all right
@@ -180,6 +191,83 @@ public class WorkflowTest extends SingleJobTestBase {
 
                 story.j.assertLogContains("before=" + dir, b);
                 story.j.assertLogContains("ONSLAVE=true", b);
+            }
+        });
+    }
+
+    private Process jnlpProc;
+    private void startJnlpProc() throws Exception {
+        ProcessBuilder pb = new ProcessBuilder(JavaEnvUtils.getJreExecutable("java"), "-jar", Which.jarFile(Launcher.class).getAbsolutePath(), "-jnlpUrl", story.j.getURL() + "computer/dumbo/slave-agent.jnlp");
+        try {
+            ProcessBuilder.class.getMethod("inheritIO").invoke(pb);
+        } catch (NoSuchMethodException x) {
+            // prior to Java 7
+        }
+        System.err.println("Running: " + pb.command());
+        jnlpProc = pb.start();
+    }
+    @After public void killJnlpProc() {
+        if (jnlpProc != null) {
+            jnlpProc.destroy();
+        }
+    }
+    @Ignore("TODO just hangs at end; list of flow node heads seems to be messed up?")
+    @Test public void buildShellScriptAcrossRestart() throws Exception {
+        /* TODO does not work; why?
+        Logger LOGGER = Logger.getLogger(DurableTaskStep.class.getName());
+        LOGGER.setLevel(Level.FINE);
+        Handler handler = new ConsoleHandler();
+        handler.setLevel(Level.ALL);
+        LOGGER.addHandler(handler);
+        */
+        story.addStep(new Statement() {
+            @SuppressWarnings("SleepWhileInLoop")
+            @Override public void evaluate() throws Throwable {
+                // Cannot use regular JenkinsRule.createSlave, since its slave dir is thrown out after a restart.
+                // Nor can we can use Jenkins.createComputerLauncher, since spawned commands are killed by CommandLauncher somehow (it is not clear how; apparently before its onClosed kills them off).
+                DumbSlave s = new DumbSlave("dumbo", "dummy", tmp.getRoot().getAbsolutePath(), "1", Node.Mode.NORMAL, "", new JNLPLauncher(), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
+                story.j.jenkins.addNode(s);
+                startJnlpProc();
+                p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
+                File f1 = new File(story.j.jenkins.getRootDir(), "f1");
+                File f2 = new File(story.j.jenkins.getRootDir(), "f2");
+                new FileOutputStream(f1).close();
+                p.setDefinition(new CpsFlowDefinition(
+                    "node('dumbo') {\n" +
+                    "    sh 'touch \"" + f2 + "\"; while [ -f \"" + f1 + "\" ]; do sleep 1; done; echo finished waiting; rm \"" + f2 + "\"'\n" +
+                    "    echo 'OK, done'\n" +
+                    "}"));
+                startBuilding();
+                while (!f2.isFile()) {
+                    Thread.sleep(100);
+                }
+                assertTrue(b.isBuilding());
+                Thread.sleep(5000); // TODO
+                System.err.println(JenkinsRule.getLog(b)); // TODO
+                killJnlpProc();
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                rebuildContext(story.j);
+                assertTrue(b.isBuilding());
+                startJnlpProc(); // Have to relaunch JNLP agent, since the Jenkins port has changed, and we cannot force JenkinsRule to reuse the same port as before.
+                File f1 = new File(story.j.jenkins.getRootDir(), "f1");
+                File f2 = new File(story.j.jenkins.getRootDir(), "f2");
+                assertTrue(f2.isFile());
+                assertTrue(f1.delete());
+                while (f2.isFile()) {
+                    Thread.sleep(100);
+                }
+                System.err.println("TODO OK, looks like script completed, now what?");
+                Thread.sleep(5000); // TODO
+                System.err.println(JenkinsRule.getLog(b)); // TODO
+                while (b.isBuilding()) {
+                    Thread.sleep(100);
+                }
+                assertBuildCompletedSuccessfully();
+                story.j.assertLogContains("finished waiting", b);
+                story.j.assertLogContains("OK, done", b);
             }
         });
     }

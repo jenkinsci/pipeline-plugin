@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.pickles;
 
 import hudson.ExtensionList;
 import hudson.ExtensionPoint;
-import jenkins.model.Jenkins;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -36,10 +35,9 @@ import javax.annotation.Nonnull;
  */
 public abstract class PickleFactory implements ExtensionPoint {
 
-    public abstract @CheckForNull
-    Pickle writeReplace(@Nonnull Object object);
+    public abstract @CheckForNull Pickle writeReplace(@Nonnull Object object);
 
     public static ExtensionList<PickleFactory> all() {
-        return Jenkins.getInstance().getExtensionList(PickleFactory.class);
+        return ExtensionList.lookup(PickleFactory.class);
     }
 }
