@@ -37,9 +37,6 @@ public class DurableTaskStepExecution extends StepExecution {
     private /*almost final*/ String node;
     private /*almost final*/ String remote;
 
-    private transient Object result;
-    private transient Throwable error;
-
     public DurableTaskStepExecution(StepContext context, DurableTask task) {
         super(context);
         this.task = task;
@@ -68,7 +65,6 @@ public class DurableTaskStepExecution extends StepExecution {
             context.onFailure(x);
         }
         return false;
-        // TODO implement stop, however it is design (will need to call Controller.stop)
     }
 
     private @CheckForNull FilePath getWorkspace() throws IOException, InterruptedException {
@@ -83,8 +79,7 @@ public class DurableTaskStepExecution extends StepExecution {
         }
         FilePath ws = new FilePath(c.getChannel(), remote);
         if (!ws.isDirectory()) {
-            error = new AbortException("missing workspace " + remote + " on " + node);
-            return null;
+            throw new AbortException("missing workspace " + remote + " on " + node);
         }
         return ws;
     }
@@ -100,57 +95,38 @@ public class DurableTaskStepExecution extends StepExecution {
         StepExecution.applyAll(DurableTaskStepExecution.class,new Function<DurableTaskStepExecution, Void>() {
             @Override
             public Void apply(DurableTaskStepExecution rt) {
-                if (rt.check()==CheckResult.DONE) {
-                    rt.report();
-                }
+                rt.check();
                 return null;
             }
         }).get();
     }
 
-    private enum CheckResult {
-        /** Task still believed to be running, but has produced no new output since the last check. */
-        NO_CHANGE,
-        /** Task has produced new output but is still running. */
-        UPDATED,
-        /** Task is finished (or in an unrecoverable error state). */
-        DONE
-    }
-
     /** Checks for progress or completion of the external task. */
-    CheckResult check() {
+    private void check() {
         try {
             FilePath ws = getWorkspace();
             if (ws==null) {
-                return CheckResult.DONE;
+                return;
             }
             TaskListener listener = context.get(TaskListener.class);
-            boolean wrote = controller.writeLog(ws, listener.getLogger());
+            // TODO prior to StepExecution we could use the return value of writeLog to decide whether to save state.
+            // Now the execution state is just saved implicitly at some time, without our control. Does it matter?
+            controller.writeLog(ws, listener.getLogger());
             Integer exitCode = controller.exitStatus(ws);
             if (exitCode == null) {
                 LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
-                return wrote ? CheckResult.UPDATED : CheckResult.NO_CHANGE;
-            } else if (exitCode == 0) {
-                result = exitCode; // TODO could add an option to have this be text output from command
             } else {
-                error = new AbortException("script returned exit code " + exitCode);
+                controller.cleanup(ws);
+                if (exitCode == 0) {
+                    context.onSuccess(exitCode); // TODO could add an option to have this be text output from command
+                } else {
+                    context.onFailure(new AbortException("script returned exit code " + exitCode));
+                }
             }
-            controller.cleanup(ws);
-            return CheckResult.DONE;
         } catch (IOException x) {
-            error = x;
+            context.onFailure(x);
         } catch (InterruptedException x) {
-            error = x;
-        }
-        return CheckResult.DONE;
-    }
-
-    /** Reports success or failure of step, outside synchronization block to avoid deadlocks. */
-    void report() {
-        if (error != null) {
-            context.onFailure(error);
-        } else {
-            context.onSuccess(result);
+            context.onFailure(x);
         }
     }
 
