@@ -24,17 +24,15 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
-import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
-import org.jenkinsci.plugins.workflow.test.RestartableJenkinsRule;
-import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
-import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.slaves.DumbSlave;
+import javax.inject.Inject;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
+import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import javax.inject.Inject;
+import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 /**
  * Base class for tests that interacts with a single workflow job.
