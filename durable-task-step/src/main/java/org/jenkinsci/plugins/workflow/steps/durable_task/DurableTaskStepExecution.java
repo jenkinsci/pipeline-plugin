@@ -109,9 +109,10 @@ public class DurableTaskStepExecution extends StepExecution {
                 return;
             }
             TaskListener listener = context.get(TaskListener.class);
-            // TODO prior to StepExecution we could use the return value of writeLog to decide whether to save state.
-            // Now the execution state is just saved implicitly at some time, without our control. Does it matter?
-            controller.writeLog(ws, listener.getLogger());
+            if (controller.writeLog(ws, listener.getLogger())) {
+                // TODO prior to StepExecution we could use the return value of writeLog to decide whether to save state.
+                // Now the execution state is just saved implicitly at some time, without our control.
+            }
             Integer exitCode = controller.exitStatus(ws);
             if (exitCode == null) {
                 LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
