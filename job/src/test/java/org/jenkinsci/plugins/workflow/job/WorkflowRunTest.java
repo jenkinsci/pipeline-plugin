@@ -80,7 +80,7 @@ public class WorkflowRunTest {
     }
 
     @Test public void parameters() throws Exception {
-        p.setDefinition(new CpsFlowDefinition("with.node {sh('echo param=' + PARAM)}"));
+        p.setDefinition(new CpsFlowDefinition("node {sh('echo param=' + PARAM)}"));
         p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("PARAM", null)));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("PARAM", "value"))));
         r.assertLogContains("param=value", b);
@@ -97,7 +97,7 @@ public class WorkflowRunTest {
 
         p.setDefinition(new CpsFlowDefinition(
             "println('hello')\n"+
-            "steps.watch(new File('"+test.getRemote()+"'))\n"+
+            "watch(new File('"+test.getRemote()+"'))\n"+
             "println('hello')\n"
         ));
 

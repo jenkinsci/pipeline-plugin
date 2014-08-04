@@ -33,7 +33,7 @@ public class BuildTriggerStepTest extends Assert {
 
 
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
-        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("steps.build('test1');"), "\n")));
+        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("build('test1');"), "\n")));
 
         QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
         j.assertBuildStatusSuccess(q);
@@ -47,7 +47,7 @@ public class BuildTriggerStepTest extends Assert {
 
 
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
-        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("steps.build('proj1/test1');"), "\n")));
+        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("build('proj1/test1');"), "\n")));
 
         QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
         j.assertBuildStatusSuccess(q);
@@ -67,9 +67,9 @@ public class BuildTriggerStepTest extends Assert {
 
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
         foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("parallel(test1: {\n" +
-                "          steps.build('test1');\n" +
+                "          build('test1');\n" +
                 "        }, test2: {\n" +
-                "          steps.build('test2');\n" +
+                "          build('test2');\n" +
                 "        })"), "\n")));
 
         QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
@@ -83,7 +83,7 @@ public class BuildTriggerStepTest extends Assert {
         p.getBuildersList().add(new Shell("sleep 6000"));
 
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
-        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("steps.build('test1');"), "\n")));
+        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("build('test1');"), "\n")));
 
         QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
         WorkflowRun b = q.getStartCondition().get();
@@ -110,7 +110,7 @@ public class BuildTriggerStepTest extends Assert {
         p.getBuildersList().add(new Shell("sleep 6000"));
 
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
-        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("steps.build('test1');"), "\n")));
+        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("build('test1');"), "\n")));
 
         j.jenkins.setNumExecutors(0); //should force freestyle build to remain in the queue?
 

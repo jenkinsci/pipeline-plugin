@@ -30,9 +30,9 @@ public class InputStepTest extends Assert {
         // job setup
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
         foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList(
-                "steps.echo('before');",
-                "def x = steps.input(message:'Do you want chocolate?', id:'Icecream', ok: 'Purchase icecream', params: new BooleanParameterDefinition('chocolate',false,'Favorite icecream flavor'));",
-                "steps.echo(\"after: ${x}\");"),"\n")));
+                "echo('before');",
+                "def x = input(message:'Do you want chocolate?', id:'Icecream', ok: 'Purchase icecream', params: new BooleanParameterDefinition('chocolate',false,'Favorite icecream flavor'));",
+                "echo(\"after: ${x}\");"),"\n")));
 
 
         // get the build going, and wait until workflow pauses

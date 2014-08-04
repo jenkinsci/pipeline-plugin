@@ -58,7 +58,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     @Test
     public void shellStep() {
         p.definition = new CpsFlowDefinition("""
-            with.node {
+            node {
               sh("echo hello world")
             }
         """)
@@ -76,7 +76,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
             e.waitForSuspension()   // let the workflow run to the completion
 
         assert b.result==Result.SUCCESS : b.log
-        // currentHeads[0] is FlowEndNode, whose parent is BlockEndNode for "with.node",
+        // currentHeads[0] is FlowEndNode, whose parent is BlockEndNode for "node",
         // whose parent is BlockEndNode for body invocation, whose parent is AtomNode
         AtomNode atom = e.currentHeads[0].parents[0].parents[0].parents[0]
         LogActionImpl la = atom.getAction(LogAction)
@@ -92,7 +92,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
         s.computer.connect(false).get() // wait for the slave to fully get connected
 
         p.definition = new CpsFlowDefinition("""
-            with.node {
+            node {
                 println 'Yo!'
             }
             println 'Out!'

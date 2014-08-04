@@ -58,7 +58,7 @@ public class WorkflowTest extends SingleJobTestBase {
             @Override
             public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("steps.watch(new File('" + jenkins().getRootDir() + "/touch'))"));
+                p.setDefinition(new CpsFlowDefinition("watch(new File('" + jenkins().getRootDir() + "/touch'))"));
                 startBuilding();
                 waitForWorkflowToSuspend();
                 assertTrue(b.isBuilding());
@@ -99,7 +99,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     "def r = s.node.rootPath\n" +
                     "def p = r.getRemote()\n" +
 
-                    "steps.watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
+                    "watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
 
                     // make sure these values are still alive
                     "assert s.nodeName=='" + nodeName + "'\n" +
@@ -146,12 +146,12 @@ public class WorkflowTest extends SingleJobTestBase {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 dir.set(s.getRemoteFS() + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
-                    "with.node('" + s.getNodeName() + "') {\n" +
+                    "node('" + s.getNodeName() + "') {\n" +
                     "    sh('echo before=$PWD')\n" +
                     "    sh('echo ONSLAVE=$ONSLAVE')\n" +
 
                         // we'll suspend the execution here
-                    "    steps.watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
+                    "    watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
 
                     "    sh('echo after=$PWD')\n" +
                     "}"));
@@ -194,7 +194,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 dir.set(s.getRemoteFS() + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
-                    "with.node('" + s.getNodeName() + "') {\n" +
+                    "node('" + s.getNodeName() + "') {\n" +
                     "    sh('pwd; echo ONSLAVE=$ONSLAVE')\n" +
                     "}"));
 
@@ -223,11 +223,11 @@ public class WorkflowTest extends SingleJobTestBase {
                 p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("FLAG", null)));
                 dir.set(slaveRoot + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
-                        "with.node('slave') {\n" + // this locks the WS
+                        "node('slave') {\n" + // this locks the WS
                                 "    sh('echo default=$PWD')\n" +
-                                "    with.ws {\n" + // and this locks a second one
+                                "    ws {\n" + // and this locks a second one
                                 "        sh('echo before=$PWD')\n" +
-                                "        steps.watch(new File('" + jenkins().getRootDir() + "', FLAG))\n" +
+                                "        watch(new File('" + jenkins().getRootDir() + "', FLAG))\n" +
                                 "        sh('echo after=$PWD')\n" +
                                 "    }\n" +
                                 "}"
@@ -288,7 +288,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     "int count=0;\n" +
                     "retry(3) {\n" +
                         // we'll suspend the execution here
-                    "    steps.watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
+                    "    watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
 
                     "    if (count++ < 2) {\n" + // forcing retry
                     "        throw new SimulatedFailureForRetry();\n" +

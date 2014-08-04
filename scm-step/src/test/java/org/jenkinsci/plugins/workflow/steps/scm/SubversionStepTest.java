@@ -103,13 +103,13 @@ public class SubversionStepTest {
         p.addTrigger(new SCMTrigger(""));
         p.setQuietPeriod(3); // so it only does one build
         p.setDefinition(new CpsFlowDefinition(
-            "with.node {\n" +
-            "    with.ws {\n" +
-            "        with.dir('main') {\n" +
-            "            steps.svn(url: '" + sampleRepoU + "')\n" +
+            "node {\n" +
+            "    ws {\n" +
+            "        dir('main') {\n" +
+            "            svn(url: '" + sampleRepoU + "')\n" +
             "        }\n" +
-            "        with.dir('other') {\n" +
-            "            steps.svn(url: '" + otherRepoU + "')\n" +
+            "        dir('other') {\n" +
+            "            svn(url: '" + otherRepoU + "')\n" +
             "        }\n" +
             "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +
             "    }\n" +

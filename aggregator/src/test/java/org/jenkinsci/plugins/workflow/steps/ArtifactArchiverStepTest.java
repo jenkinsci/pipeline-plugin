@@ -28,11 +28,11 @@ public class ArtifactArchiverStepTest extends Assert {
         // job setup
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
         foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList(
-                "with.node {",
+                "node {",
                 "  sh 'echo hello world > msg'",
-                "  steps.archive 'm*'",
-                "  steps.unarchive(mapping:['msg':'msg.out'])",
-                "  steps.archive 'msg.out'",
+                "  archive 'm*'",
+                "  unarchive(mapping:['msg':'msg.out'])",
+                "  archive 'msg.out'",
                 "}"), "\n")));
 
 

@@ -80,7 +80,7 @@ public abstract class DefaultStepContext extends StepContext {
             }
             /* contract is to quietly return null:
             if (n == null) {
-                throw new IllegalStateException("There is no current node. Perhaps you forgot to call with.node?");
+                throw new IllegalStateException("There is no current node. Perhaps you forgot to call node?");
             }
             */
             return key.cast(n);
