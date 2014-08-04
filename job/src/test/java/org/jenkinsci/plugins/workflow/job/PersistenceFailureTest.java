@@ -20,8 +20,8 @@ public class PersistenceFailureTest extends SingleJobTestBase {
             public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                        "with.node {",
-                        "  steps.persistenceProblem()",
+                        "node {",
+                        "  persistenceProblem()",
                         "}"
                 )));
 
