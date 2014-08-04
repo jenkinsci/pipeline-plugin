@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.test.RestartableJenkinsRule;
 import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
@@ -81,6 +83,12 @@ public abstract class SingleJobTestBase extends Assert {
         assert b.isBuilding() : JenkinsRule.getLog(b);
     }
 
+    public void waitForWorkflowToComplete() throws Exception {
+        do {
+            waitForWorkflowToSuspend(e);
+        } while (!e.isComplete());
+    }
+
     public void waitForWorkflowToSuspend() throws Exception {
         waitForWorkflowToSuspend(e);
     }
@@ -116,5 +124,13 @@ public abstract class SingleJobTestBase extends Assert {
         assert !b.isBuilding(): JenkinsRule.getLog(b);
         Result r = b.getResult();
         assert r == Result.SUCCESS: "Result is "+r+"\n"+JenkinsRule.getLog(b);
+    }
+
+    public Jenkins jenkins() {
+        return story.j.jenkins;
+    }
+
+    public String join(String... args) {
+        return StringUtils.join(args, "\n");
     }
 }

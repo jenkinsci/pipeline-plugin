@@ -20,8 +20,8 @@ public class BuildTriggerStepExecution extends StepExecution {
     @StepContextParameter
     private transient TaskListener listener;
 
-    @Inject
-    BuildTriggerStep step;
+    @Inject // used only during the start() method, so no need to be persisted
+    transient BuildTriggerStep step;
 
     @Override
     public boolean start() throws Exception {

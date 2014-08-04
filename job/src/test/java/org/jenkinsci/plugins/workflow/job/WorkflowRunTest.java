@@ -39,6 +39,7 @@ import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.security.Permission;
 import java.io.IOException;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
@@ -122,7 +123,7 @@ public class WorkflowRunTest {
         watch.watchUpdate();
 
         // bring it to the completion
-        e.waitForSuspension();
+        q.get(5, TimeUnit.SECONDS);
         assertTrue(e.isComplete());
 
         // and the color should be now solid blue
@@ -148,7 +149,7 @@ public class WorkflowRunTest {
         // bring it to the completion
         test.touch(0);
         watch.watchUpdate();
-        e.waitForSuspension();
+        q.get(5, TimeUnit.SECONDS);
 
         // and the color should be now solid blue
         assertFalse(b2.hasntStartedYet());
