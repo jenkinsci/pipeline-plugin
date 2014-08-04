@@ -65,11 +65,9 @@ public class ShellStepTest extends Assert {
 
     /**
      * Abort a running workflow to ensure that the process is terminated.
-     *
-     * TODO: unignore when we require 1.575
      */
     @Test
-    @Ignore("Pending JENKINS-22641 fix in the core 1.575")
+    @Ignore("TODO pending JENKINS-22641 fix in the core 1.575")
     public void abort() throws Exception {
         File tmp = File.createTempFile("jenkins","test");
         tmp.delete();
@@ -77,7 +75,7 @@ public class ShellStepTest extends Assert {
         // job setup
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
         foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList(
-                "with.node {",
+                "node {",
                 "  sh 'while true; do touch "+tmp+"; sleep 1; done'",
                 "}"
         ), "\n")));
