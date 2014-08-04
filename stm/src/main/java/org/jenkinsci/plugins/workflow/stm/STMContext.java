@@ -27,12 +27,14 @@ package org.jenkinsci.plugins.workflow.stm;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
 import hudson.model.Result;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
+import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 final class STMContext extends DefaultStepContext {
 
@@ -141,6 +143,10 @@ final class STMContext extends DefaultStepContext {
         int result = handle.hashCode();
         result = 31 * result + id.hashCode();
         return result;
+    }
+
+    @Override public ListenableFuture<Void> saveState() {
+        return Futures.immediateFailedFuture(new UnsupportedOperationException("TODO"));
     }
 
 }

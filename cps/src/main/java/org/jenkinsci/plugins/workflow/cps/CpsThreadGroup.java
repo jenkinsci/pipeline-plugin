@@ -31,7 +31,6 @@ import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverWriter;
 
 import java.io.File;
@@ -352,16 +351,6 @@ public final class CpsThreadGroup implements Serializable {
             }
         });
         all.get(0).resume(new Outcome(null,t));
-    }
-
-    public Future<Void> scheduleSaveProgram() {
-        return runner.submit(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                saveProgram();
-                return null;
-            }
-        });
     }
 
     private static final Logger LOGGER = Logger.getLogger(CpsThreadGroup.class.getName());

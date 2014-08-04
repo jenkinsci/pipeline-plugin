@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.workflow.cps;
 import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import groovy.lang.Closure;
 import hudson.model.Action;
 import hudson.model.Descriptor;
@@ -57,6 +58,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 /**
  * {@link StepContext} implementation for CPS.
@@ -405,6 +407,29 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         if (!syncMode)  throw new AssertionError();
         syncMode = false;
         return !isCompleted();
+    }
+
+    @Override public ListenableFuture<Void> saveState() {
+        try {
+            final SettableFuture<Void> f = SettableFuture.create();
+            getFlowExecution().runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+                @Override public void onSuccess(CpsThreadGroup result) {
+                    try {
+                        // TODO keep track of whether the program was saved anyway after saveState was called but before now, and do not bother resaving it in that case
+                        result.saveProgram();
+                        f.set(null);
+                    } catch (IOException x) {
+                        f.setException(x);
+                    }
+                }
+                @Override public void onFailure(Throwable t) {
+                    f.setException(t);
+                }
+            });
+            return f;
+        } catch (IOException x) {
+            return Futures.immediateFailedFuture(x);
+        }
     }
 
     @Override

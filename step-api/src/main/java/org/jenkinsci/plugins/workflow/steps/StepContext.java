@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -85,6 +86,14 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      * @return true normally, false if we are still reloading the context, for example during unpickling
      */
     public abstract boolean isReady() throws IOException, InterruptedException;
+
+    /**
+     * Requests that any state held by the {@link StepExecution} be saved to disk.
+     * Useful when a long-running step has changed some instance fields (or the content of a final field) and needs these changes to be recorded.
+     * An implementation might in fact save more state than just the associated step execution, but it must save at least that much.
+     * @return a future letting you know if and when the state was in fact saved
+     */
+    public abstract ListenableFuture<Void> saveState();
 
     public abstract Object getGlobalVariable(String name);
     public abstract void setGlobalVariable(String name, Object v);
