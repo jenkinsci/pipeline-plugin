@@ -102,6 +102,7 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
     public synchronized void unregister(final FlowExecutionOwner self) {
         load();
         runningTasks.remove(self);
+        LOGGER.log(FINE, "unregistered {0} so is now {1}", new Object[] {self, runningTasks.getView()});
         saveLater();
     }
 

@@ -24,15 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
-import hudson.util.OneShotEvent;
-import org.jenkinsci.plugins.workflow.actions.LogAction;
-import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import org.jenkinsci.plugins.workflow.flow.GraphListener;
-import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import hudson.AbortException;
@@ -503,13 +495,17 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
 
         @Override
-        public boolean equals(Object that) {
-            return this.toString().equals(that.toString());
+        public boolean equals(Object o) {
+            if (!(o instanceof Owner)) {
+                return false;
+            }
+            Owner that = (Owner) o;
+            return job.equals(that.job) && id.equals(that.id);
         }
 
         @Override
         public int hashCode() {
-            return toString().hashCode();
+            return job.hashCode() ^ id.hashCode();
         }
     }
 
