@@ -70,7 +70,6 @@ import org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStora
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -357,9 +356,10 @@ public class CpsFlowExecution extends FlowExecution {
      * Used by {@link #loadProgramAsync(File)} to propagate a failure to load the persisted execution state.
      * <p>
      * Let the workflow finish by throwing an exception that indicates how it failed.
+     * @param promise same as {@link #programPromise} but more strongly typed
      */
-    private void loadProgramFailed(Throwable problem, SettableFuture<CpsThreadGroup> promise) {
-        FlowHead head;
+    private void loadProgramFailed(final Throwable problem, SettableFuture<CpsThreadGroup> promise) {
+        final FlowHead head;
         switch (heads.size()) {
         case 0:
             // something went catastrophically wrong and there's no live head. fake one
@@ -382,13 +382,20 @@ public class CpsFlowExecution extends FlowExecution {
 
         CpsThreadGroup g = new CpsThreadGroup(this);
 
-        CpsThread t = g.addThread(
-                new Continuable(new ThrowBlock(new ConstantBlock(
-                    new IOException("Failed to load persisted workflow state", problem)))),
-                head, null
-        );
         promise.set(g);
-        t.resume(new Outcome(null,null));
+        runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+            @Override public void onSuccess(CpsThreadGroup g) {
+                CpsThread t = g.addThread(
+                        new Continuable(new ThrowBlock(new ConstantBlock(
+                            new IOException("Failed to load persisted workflow state", problem)))),
+                        head, null
+                );
+                t.resume(new Outcome(null,null));
+            }
+            @Override public void onFailure(Throwable t) {
+                LOGGER.log(Level.WARNING, null, t);
+            }
+        });
     }
 
     /**
