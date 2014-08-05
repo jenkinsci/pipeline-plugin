@@ -178,7 +178,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             } else {
                 x.printStackTrace(listener.error("failed to start build"));
             }
-            result = Result.FAILURE;
+            setResult(Result.FAILURE);
             executionPromise.setException(x);
         }
     }
@@ -311,9 +311,17 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     }
 
+    // Overridden since super version has an unwanted assertion about this.state, which we do not use.
+    @Override public void setResult(Result r) {
+        if (result == null || r.isWorseThan(result)) {
+            result = r;
+            LOGGER.log(Level.FINE, this + " in " + getRootDir() + ": result is set to " + r, LOGGER.isLoggable(Level.FINER) ? new Exception() : null);
+        }
+    }
+
     private void finish(Result r) {
         LOGGER.log(Level.INFO, "{0} completed: {1}", new Object[] {this, r});
-        result = r;
+        setResult(r);
         // TODO set duration
         RunListener.fireCompleted(WorkflowRun.this, listener);
         Throwable t = execution.getCauseOfFailure();
@@ -322,7 +330,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         } else if (t != null) {
             t.printStackTrace(listener.getLogger());
         }
-        listener.finished(result);
+        listener.finished(getResult());
         listener.closeQuietly();
         logsToCopy = null;
         try {
