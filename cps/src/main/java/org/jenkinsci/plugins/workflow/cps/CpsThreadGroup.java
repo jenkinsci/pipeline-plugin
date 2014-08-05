@@ -310,7 +310,6 @@ public final class CpsThreadGroup implements Serializable {
         PROGRAM_STATE_SERIALIZATION.set(execution);
 
         try {
-            // TODO: write atomically
             RiverWriter w = new RiverWriter(tmpFile, execution.getOwner());
             try {
                 w.writeObject(this);
