@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.*;
@@ -163,12 +164,17 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
                     @Override
                     public void onSuccess(List<StepExecution> result) {
                         for (StepExecution e : result) {
-                            f.apply(e);
+                            try {
+                                f.apply(e);
+                            } catch (RuntimeException x) {
+                                LOGGER.log(Level.WARNING, null, x);
+                            }
                         }
                     }
 
                     @Override
                     public void onFailure(Throwable t) {
+                        LOGGER.log(Level.WARNING, null, t);
                     }
                 });
             }

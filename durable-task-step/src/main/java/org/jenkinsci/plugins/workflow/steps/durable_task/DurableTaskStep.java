@@ -126,7 +126,8 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                 if (workspace == null) {
                     return;
                 }
-                if (controller.writeLog(workspace, listener.getLogger())) {
+                // cannot use this.listener after restart:
+                if (controller.writeLog(workspace, getContext().get(TaskListener.class).getLogger())) {
                     getContext().saveState();
                 }
                 Integer exitCode = controller.exitStatus(workspace);
