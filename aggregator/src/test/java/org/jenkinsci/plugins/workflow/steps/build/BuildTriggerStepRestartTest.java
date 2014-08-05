@@ -30,21 +30,21 @@ public class BuildTriggerStepRestartTest extends Assert {
     public void restartBetweenJobs() throws IOException {
 
         story.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                story.j.jenkins.setNumExecutors(0);
+                          @Override
+                          public void evaluate() throws Throwable {
+                              story.j.jenkins.setNumExecutors(0);
                               FreeStyleProject p1 = story.j.createFreeStyleProject("test1");
                               p1.getBuildersList().add(new Shell("echo 'Hello World'"));
 
                               WorkflowJob foo = story.j.jenkins.createProject(WorkflowJob.class, "foo");
-                              foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("steps.build('test1');"), "\n")));
+                              foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("build('test1');"), "\n")));
 
 
                               QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
                               WorkflowRun b = q.getStartCondition().get();
                               CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
                               e.waitForSuspension();
-                              assertEquals(1,story.j.jenkins.getQueue().getItems().length);
+                              assertEquals(1, story.j.jenkins.getQueue().getItems().length);
                           }
                       }
         );
@@ -52,7 +52,7 @@ public class BuildTriggerStepRestartTest extends Assert {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                assertEquals(1,story.j.jenkins.getQueue().getItems().length);
+                assertEquals(1, story.j.jenkins.getQueue().getItems().length);
                 story.j.jenkins.setNumExecutors(2);
             }
         });
@@ -70,6 +70,5 @@ public class BuildTriggerStepRestartTest extends Assert {
                           }
                       }
         );
-
     }
 }

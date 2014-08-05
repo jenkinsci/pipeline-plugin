@@ -28,6 +28,7 @@ import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import com.google.common.util.concurrent.FutureCallback;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.util.Map;
 import java.util.Set;
@@ -64,10 +65,15 @@ public final class BlockSemaphoreStep extends Step {
         return state;
     }
 
-    @Override public boolean start(StepContext context) throws Exception {
-        moveFrom(State.INIT);
+    @Override public StepExecution start(final StepContext context) throws Exception {
         this.context = context;
-        return false;
+        return new StepExecution(context) {
+            @Override
+            public boolean start() throws Exception {
+                moveFrom(State.INIT);
+                return false;
+            }
+        };
     }
 
     public void startBlock(Object... contextOverrides) {

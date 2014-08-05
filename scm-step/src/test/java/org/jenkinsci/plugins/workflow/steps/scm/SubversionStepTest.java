@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.steps.scm;
 
+import hudson.ExtensionList;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.scm.SubversionRepositoryStatus;
@@ -39,7 +40,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import jenkins.model.Jenkins;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -77,7 +77,7 @@ public class SubversionStepTest {
 
     private void notifyCommit(String uuid, String path) throws Exception {
         // Mocking the web POST, with crumb, is way too hard, and get an IllegalStateException: STREAMED from doNotifyCommit’s getReader anyway.
-        for (SubversionRepositoryStatus.Listener listener : Jenkins.getInstance().getExtensionList(SubversionRepositoryStatus.Listener.class)) {
+        for (SubversionRepositoryStatus.Listener listener : ExtensionList.lookup(SubversionRepositoryStatus.Listener.class)) {
             listener.onNotify(UUID.fromString(uuid), -1, Collections.singleton(path));
         }
     }
@@ -103,13 +103,13 @@ public class SubversionStepTest {
         p.addTrigger(new SCMTrigger(""));
         p.setQuietPeriod(3); // so it only does one build
         p.setDefinition(new CpsFlowDefinition(
-            "with.node {\n" +
-            "    with.ws {\n" +
-            "        with.dir('main') {\n" +
-            "            steps.svn(url: '" + sampleRepoU + "')\n" +
+            "node {\n" +
+            "    ws {\n" +
+            "        dir('main') {\n" +
+            "            svn(url: '" + sampleRepoU + "')\n" +
             "        }\n" +
-            "        with.dir('other') {\n" +
-            "            steps.svn(url: '" + otherRepoU + "')\n" +
+            "        dir('other') {\n" +
+            "            svn(url: '" + otherRepoU + "')\n" +
             "        }\n" +
             "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +
             "    }\n" +

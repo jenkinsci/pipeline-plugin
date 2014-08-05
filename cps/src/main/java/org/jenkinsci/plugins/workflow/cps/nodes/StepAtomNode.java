@@ -54,9 +54,13 @@ public class StepAtomNode extends AtomNode implements StepNode {
         setActions(Collections.<Action>emptyList());
     }
 
-    public StepDescriptor getDescriptor() {
-        if (descriptor==null)
-            descriptor = (StepDescriptor) Jenkins.getInstance().getDescriptor(descriptorId);
+    @Override public StepDescriptor getDescriptor() {
+        if (descriptor == null && descriptorId != null) {
+            Jenkins j = Jenkins.getInstance();
+            if (j != null) {
+                descriptor = (StepDescriptor) j.getDescriptor(descriptorId);
+            }
+        }
         return descriptor;
     }
 

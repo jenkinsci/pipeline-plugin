@@ -27,12 +27,12 @@ package org.jenkinsci.plugins.workflow.cps;
 import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import groovy.lang.Closure;
 import hudson.model.Action;
 import hudson.model.Descriptor;
 import hudson.model.Result;
 import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
@@ -58,6 +58,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 /**
  * {@link StepContext} implementation for CPS.
@@ -323,6 +324,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                 }
 
                 flow.runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+                    @CpsVmThreadOnly
                     @Override
                     public void onSuccess(CpsThreadGroup g) {
                         g.unexport(body);
@@ -336,6 +338,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                                 thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
                             }
                             thread.head.markIfFail(getOutcome());
+                            thread.setStep(null);
                             thread.resume(getOutcome());
                         }
                     }
@@ -404,6 +407,46 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         if (!syncMode)  throw new AssertionError();
         syncMode = false;
         return !isCompleted();
+    }
+
+    @Override public ListenableFuture<Void> saveState() {
+        try {
+            final SettableFuture<Void> f = SettableFuture.create();
+            getFlowExecution().runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+                @Override public void onSuccess(CpsThreadGroup result) {
+                    try {
+                        // TODO keep track of whether the program was saved anyway after saveState was called but before now, and do not bother resaving it in that case
+                        result.saveProgram();
+                        f.set(null);
+                    } catch (IOException x) {
+                        f.setException(x);
+                    }
+                }
+                @Override public void onFailure(Throwable t) {
+                    f.setException(t);
+                }
+            });
+            return f;
+        } catch (IOException x) {
+            return Futures.immediateFailedFuture(x);
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CpsStepContext that = (CpsStepContext) o;
+
+        return executionRef.equals(that.executionRef) && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = executionRef.hashCode();
+        result = 31 * result + id.hashCode();
+        return result;
     }
 
     private static final long serialVersionUID = 1L;

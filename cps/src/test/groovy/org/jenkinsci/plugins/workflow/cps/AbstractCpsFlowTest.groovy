@@ -112,6 +112,16 @@ class AbstractCpsFlowTest {
         String getUrl() {
             return "TODO";
         }
+
+        @Override
+        boolean equals(Object o) {
+            return this==o;
+        }
+
+        @Override
+        int hashCode() {
+            return 0;
+        }
     }
 
     private static AbstractCpsFlowTest TEST;

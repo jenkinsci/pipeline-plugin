@@ -1,10 +1,5 @@
 package org.jenkinsci.plugins.workflow.steps;
 
-import org.codehaus.groovy.reflection.ReflectionCache;
-import org.kohsuke.stapler.ClassDescriptor;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -12,12 +7,30 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import org.codehaus.groovy.reflection.ReflectionCache;
+import org.kohsuke.stapler.ClassDescriptor;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
 * @author Kohsuke Kawaguchi
 */
 public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
     private volatile transient Set<Class<?>> contextTypes;
+
+    private final Class<? extends StepExecution> executionType;
+
+    /**
+     * @param executionType an associated execution class; the {@link Step} (usually an {@link AbstractStepImpl}) can be {@link Inject}ed as {@code transient}; {@link StepContextParameter} may be used on {@code transient} fields as well
+     */
+    protected AbstractStepDescriptorImpl(Class<? extends StepExecution> executionType) {
+        this.executionType = executionType;
+    }
+
+    public final Class<? extends StepExecution> getExecutionType() {
+        return executionType;
+    }
 
     // copied from RequestImpl
     private static <T> Constructor<T> findConstructor(Class<? extends T> clazz, int length) {
@@ -45,7 +58,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
      * Instantiate a new object via DataBoundConstructor and DataBoundSetter.
      */
     @Override
-    public Step newInstance(final Map<String, Object> arguments) throws Exception {
+    public final Step newInstance(final Map<String, Object> arguments) throws Exception {
         return instantiate(clazz, arguments);
     }
 
@@ -68,7 +81,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
      * Injects via {@link DataBoundSetter}
      */
     private static void injectSetters(Object o, Map<String, Object> arguments) throws Exception {
-        for (Class c = o.getClass(); c!=null; c=c.getSuperclass()) {
+        for (Class<?> c = o.getClass(); c!=null; c=c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {
                 if (f.isAnnotationPresent(DataBoundSetter.class)) {
                     f.setAccessible(true);
@@ -93,7 +106,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
 
     // TODO: this is Groovy specific and should be removed from here
     // but some kind of type coercion would be useful to fix mismatch between Long vs Integer, etc.
-    private static Object[] buildArguments(Map<String, Object> arguments, Class[] types, String[] names, boolean callEvenIfNoArgs) {
+    private static Object[] buildArguments(Map<String, Object> arguments, Class<?>[] types, String[] names, boolean callEvenIfNoArgs) {
         Object[] args = new Object[names.length];
         boolean hasArg = callEvenIfNoArgs;
         for (int i = 0; i < args.length; i++) {
@@ -111,18 +124,20 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
      * and infer required contexts from there.
      */
     @Override
-    public Set<Class<?>> getRequiredContext() {
+    public final Set<Class<?>> getRequiredContext() {
         if (contextTypes==null) {
             Set<Class<?>> r = new HashSet<Class<?>>();
 
-            for (Field f : clazz.getDeclaredFields()) {
-                if (f.isAnnotationPresent(StepContextParameter.class)) {
-                    r.add(f.getType());
+            for (Class<?> c = executionType; c!=null; c=c.getSuperclass()) {
+                for (Field f : c.getDeclaredFields()) {
+                    if (f.isAnnotationPresent(StepContextParameter.class)) {
+                        r.add(f.getType());
+                    }
                 }
-            }
-            for (Method m : clazz.getDeclaredMethods()) {
-                if (m.isAnnotationPresent(StepContextParameter.class)) {
-                    Collections.addAll(r, m.getParameterTypes());
+                for (Method m : c.getDeclaredMethods()) {
+                    if (m.isAnnotationPresent(StepContextParameter.class)) {
+                        Collections.addAll(r, m.getParameterTypes());
+                    }
                 }
             }
 

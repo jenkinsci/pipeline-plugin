@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.stm;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
@@ -32,6 +33,7 @@ import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.storage.FlowNodeStorage;
 import org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage;
 import org.jenkinsci.plugins.workflow.pickles.Pickle;
@@ -50,7 +52,6 @@ import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jenkins.model.Jenkins;
 
 final class STMExecution extends FlowExecution {
     
@@ -292,6 +293,12 @@ final class STMExecution extends FlowExecution {
         return heads.values().contains(n.getId());
     }
 
+    @Override
+    public ListenableFuture<List<StepExecution>> getCurrentExecutions() {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
     @Override public void addListener(GraphListener listener) {
         listeners.add(listener);
     }
@@ -321,7 +328,7 @@ final class STMExecution extends FlowExecution {
 
     private static Object perhapsConvertToValue(Object object) {
         // TODO this will not work, since various serializable objects (such as WorkspaceStep.Callback) hold references to objects that should be pickled
-        for (PickleFactory f : (valueFactories == null ? Jenkins.getInstance().getExtensionList(PickleFactory.class) : valueFactories)) {
+        for (PickleFactory f : (valueFactories == null ? PickleFactory.all() : valueFactories)) {
             Pickle v = f.writeReplace(object);
             if (v != null) {
                 return v;

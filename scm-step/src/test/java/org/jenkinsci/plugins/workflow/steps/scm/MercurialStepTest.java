@@ -71,13 +71,13 @@ public class MercurialStepTest {
         p.addTrigger(new SCMTrigger(""));
         p.setQuietPeriod(3); // so it only does one build
         p.setDefinition(new CpsFlowDefinition(
-            "with.node {\n" +
-            "    with.ws {\n" +
-            "        with.dir('main') {\n" +
-            "            steps.hg(url: '" + sampleRepo + "')\n" +
+            "node {\n" +
+            "    ws {\n" +
+            "        dir('main') {\n" +
+            "            hg(url: '" + sampleRepo + "')\n" +
             "        }\n" +
-            "        with.dir('other') {\n" +
-            "            steps.hg(url: '" + otherRepo + "')\n" +
+            "        dir('other') {\n" +
+            "            hg(url: '" + otherRepo + "')\n" +
             "        }\n" +
             "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +
             "    }\n" +

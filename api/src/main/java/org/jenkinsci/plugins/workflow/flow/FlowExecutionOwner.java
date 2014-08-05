@@ -95,4 +95,16 @@ public abstract class FlowExecutionOwner implements Serializable {
     public String getUrlOfExecution() throws IOException {
         return getUrl()+"execution/";
     }
+
+    /**
+     * {@link FlowExecutionOwner}s are equal to one another if and only if
+     * they point to the same {@link FlowExecution} object.
+     */
+    public abstract boolean equals(Object o);
+
+    /**
+     * Needs to be overridden as the {@link #equals(Object)} method is overridden.
+     */
+    @Override
+    public abstract int hashCode();
 }

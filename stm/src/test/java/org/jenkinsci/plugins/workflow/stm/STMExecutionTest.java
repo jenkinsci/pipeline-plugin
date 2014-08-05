@@ -206,6 +206,16 @@ public class STMExecutionTest {
         @Override public String getUrl() {
             return "TODO";
         }
+
+        @Override
+        public boolean equals(Object o) {
+            return this==o;
+        }
+
+        @Override
+        public int hashCode() {
+            return 0;
+        }
     }
 
 }

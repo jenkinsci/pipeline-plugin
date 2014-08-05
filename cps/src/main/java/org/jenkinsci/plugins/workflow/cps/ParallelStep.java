@@ -10,6 +10,7 @@ import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -31,7 +32,7 @@ public class ParallelStep extends Step {
     /**
      * All the sub-workflows as {@link Closure}s, keyed by their names.
      */
-    private final Map<String,Closure> closures;
+    /*package*/ final Map<String,Closure> closures;
 
     public ParallelStep(Map<String,Closure> closures) {
         this.closures = closures;
@@ -39,25 +40,8 @@ public class ParallelStep extends Step {
 
     @Override
     @CpsVmThreadOnly("CPS program calls this, which is run by CpsVmThread")
-    public boolean start(StepContext context) throws Exception {
-        // TODO: we need to take over the flow node creation for a single StepStart/End pair that wraps
-        // around all the subflows (and not let DSL.invokeMethod creates AtomNode)
-        // see the corresponding hack in DSL.invokeMethod
-
-        CpsStepContext cps = (CpsStepContext) context;
-        CpsThread t = CpsThread.current();
-
-        ResultHandler r = new ResultHandler(context);
-
-        for (Entry<String,Closure> e : closures.entrySet()) {
-            cps.invokeBodyLater(
-                    t.group.export(e.getValue()),
-                    r.callbackFor(e.getKey()),
-                    Collections.singletonList(new ParallelLabelAction(e.getKey()))
-            );
-        }
-
-        return false;
+    public StepExecution start(StepContext context) throws Exception {
+        return new ParallelStepExecution(this, context);
     }
 
     @PersistIn(FLOW_NODE)

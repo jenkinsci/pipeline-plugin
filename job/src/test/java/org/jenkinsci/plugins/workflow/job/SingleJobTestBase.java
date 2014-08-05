@@ -24,17 +24,17 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
-import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
-import org.jenkinsci.plugins.workflow.test.RestartableJenkinsRule;
-import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
-import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.slaves.DumbSlave;
+import javax.inject.Inject;
+import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
+import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import javax.inject.Inject;
+import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 /**
  * Base class for tests that interacts with a single workflow job.
@@ -81,6 +81,12 @@ public abstract class SingleJobTestBase extends Assert {
         assert b.isBuilding() : JenkinsRule.getLog(b);
     }
 
+    public void waitForWorkflowToComplete() throws Exception {
+        do {
+            waitForWorkflowToSuspend(e);
+        } while (!e.isComplete());
+    }
+
     public void waitForWorkflowToSuspend() throws Exception {
         waitForWorkflowToSuspend(e);
     }
@@ -114,7 +120,14 @@ public abstract class SingleJobTestBase extends Assert {
 
     public void assertBuildCompletedSuccessfully(WorkflowRun b) throws Exception {
         assert !b.isBuilding(): JenkinsRule.getLog(b);
-        Result r = b.getResult();
-        assert r == Result.SUCCESS: "Result is "+r+"\n"+JenkinsRule.getLog(b);
+        story.j.assertBuildStatusSuccess(b);
+    }
+
+    public Jenkins jenkins() {
+        return story.j.jenkins;
+    }
+
+    public String join(String... args) {
+        return StringUtils.join(args, "\n");
     }
 }

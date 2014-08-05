@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
-import jenkins.util.AtmostOneTaskExecutor;
 import groovy.lang.Closure;
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -37,7 +36,11 @@ import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -273,7 +276,6 @@ public final class CpsThreadGroup implements Serializable {
 
         if (doneSomeWork) {
             saveProgram();
-            LOGGER.log(FINE, "program state saved");
         }
     }
 
@@ -298,37 +300,61 @@ public final class CpsThreadGroup implements Serializable {
      */
     @CpsVmThreadOnly
     void saveProgram() throws IOException {
-        saveProgram(execution.getProgramDataFile());
+        File f = execution.getProgramDataFile();
+        saveProgram(f);
     }
 
     @CpsVmThreadOnly
-    void saveProgram(File f) throws IOException {
+    public void saveProgram(File f) throws IOException {
+        File dir = f.getParentFile();
+        File tmpFile = File.createTempFile("atomic",null, dir);
+
         assertVmThread();
 
         CpsFlowExecution old = PROGRAM_STATE_SERIALIZATION.get();
         PROGRAM_STATE_SERIALIZATION.set(execution);
 
         try {
-            // TODO: write atomically
-            RiverWriter w = new RiverWriter(f,execution.getOwner());
+            RiverWriter w = new RiverWriter(tmpFile, execution.getOwner());
             try {
                 w.writeObject(this);
             } finally {
                 w.close();
             }
+            f.delete();
+            tmpFile.renameTo(f);
+            LOGGER.log(FINE, "program state saved");
+        } catch (RuntimeException e) {
+            LOGGER.log(WARNING, "program state save failed",e);
+            propagateErrorToWorkflow(e);
+            throw new IOException("Failed to persist "+f,e);
+        } catch (IOException e) {
+            LOGGER.log(WARNING, "program state save failed",e);
+            propagateErrorToWorkflow(e);
+            throw new IOException("Failed to persist "+f,e);
         } finally {
             PROGRAM_STATE_SERIALIZATION.set(old);
+            tmpFile.delete();
         }
     }
 
-    public Future<Void> scheduleSaveProgram() {
-        return runner.submit(new Callable<Void>() {
+    /**
+     * Propagates the failure to the workflow by passing an exception
+     */
+    @CpsVmThreadOnly
+    private void propagateErrorToWorkflow(Throwable t) {
+        // it's not obvious which thread to blame, so as a heuristics, pick up the last one,
+        // as that's the ony more likely to have caused the problem.
+        // TODO: when we start tracking which thread is just waiting for the body, then
+        // that information would help. or maybe we should just remember the thread that has run the last time
+        List<CpsThread> all = new ArrayList<CpsThread>(threads.values());
+        Collections.sort(all,new Comparator<CpsThread>() {
             @Override
-            public Void call() throws Exception {
-                saveProgram();
-                return null;
+            public int compare(CpsThread o1, CpsThread o2) {
+                return o2.id-o1.id;
             }
         });
+        all.get(0).resume(new Outcome(null,t));
     }
 
     private static final Logger LOGGER = Logger.getLogger(CpsThreadGroup.class.getName());

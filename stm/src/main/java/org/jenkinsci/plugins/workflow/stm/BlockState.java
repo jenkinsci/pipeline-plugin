@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -66,7 +67,9 @@ public final class BlockState extends LinearState {
 
     @Override public FlowNode run(StepContext context, String nodeId, FlowExecution exec, FlowNode prior) {
         try {
-            if (step.start(context)) {
+            StepExecution e = step.start(context);
+            // TODO: e should be stored somewhere
+            if (e.start()) {
                 // TODO assert that context has gotten a return value
             }
         } catch (Exception x) {
