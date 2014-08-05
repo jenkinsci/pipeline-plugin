@@ -23,9 +23,13 @@ import java.util.Map;
  * @see Step#start(StepContext)
  */
 public abstract class StepExecution implements Serializable {
-    @Inject
-    protected StepContext context;
+    
+    @Inject private StepContext context;
 
+    /**
+     * Default constructor used by injection.
+     * @see AbstractStepImpl#start
+     */
     protected StepExecution() {
     }
 
@@ -37,8 +41,9 @@ public abstract class StepExecution implements Serializable {
     }
 
     public @Nonnull StepContext getContext() {
-        if (context==null)
-            throw new AssertionError();
+        if (context == null) {
+            throw new IllegalStateException("you must either pass in a StepContext to the StepExecution constructor, or have the StepExecution be created automatically");
+        }
         return context;
     }
 

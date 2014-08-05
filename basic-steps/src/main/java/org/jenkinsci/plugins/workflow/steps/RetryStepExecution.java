@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.workflow.steps;
 import com.google.common.util.concurrent.FutureCallback;
 
 import javax.inject.Inject;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 /**
@@ -15,22 +14,20 @@ public class RetryStepExecution extends StepExecution {
 
     @Override
     public boolean start() throws Exception {
-        context.invokeBodyLater(new Callback(context));
+        getContext().invokeBodyLater(new Callback());
         return false;   // execution is asynchronous
     }
 
     private class Callback implements FutureCallback<Object>, Serializable {
-        private final StepContext context;
         private int left;
 
-        public Callback(StepContext context) {
-            this.context = context;
+        Callback() {
             left = step.getCount();
         }
 
         @Override
         public void onSuccess(Object result) {
-            context.onSuccess(result);
+            getContext().onSuccess(result);
         }
 
         @Override
@@ -39,7 +36,7 @@ public class RetryStepExecution extends StepExecution {
                 // TODO: here we want to access TaskListener that belongs to the body invocation end node.
                 // how should we do that?
                 /* TODO not currently legal:
-                TaskListener l = context.get(TaskListener.class);
+                TaskListener l = getContext().get(TaskListener.class);
                 t.printStackTrace(l.error("Execution failed"));
                 */
                 left--;
@@ -47,12 +44,12 @@ public class RetryStepExecution extends StepExecution {
                     /*
                     l.getLogger().println("Retrying");
                     */
-                    context.invokeBodyLater(this);
+                    getContext().invokeBodyLater(this);
                 } else {
-                    context.onFailure(t);
+                    getContext().onFailure(t);
                 }
             } catch (Throwable p) {
-                context.onFailure(p);
+                getContext().onFailure(p);
             }
         }
 

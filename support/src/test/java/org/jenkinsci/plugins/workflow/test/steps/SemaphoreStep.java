@@ -72,15 +72,15 @@ public final class SemaphoreStep extends Step implements Serializable {
             public boolean start() throws Exception {
                 if (returnValues.containsKey(k)) {
                     System.err.println("Immediately running " + k);
-                    context.onSuccess(returnValues.get(k));
+                    getContext().onSuccess(returnValues.get(k));
                     return true;
                 } else if (errors.containsKey(k)) {
                     System.err.println("Immediately failing " + k);
-                    context.onFailure(errors.get(k));
+                    getContext().onFailure(errors.get(k));
                     return true;
                 } else {
                     System.err.println("Blocking " + k);
-                    contexts.put(k, Jenkins.XSTREAM.toXML(context));
+                    contexts.put(k, Jenkins.XSTREAM.toXML(getContext()));
                     return false;
                 }
             }
@@ -88,7 +88,7 @@ public final class SemaphoreStep extends Step implements Serializable {
             @Override
             public void stop() {
                 contexts.remove(k);
-                context.onFailure(new InterruptedException("aborted"));
+                getContext().onFailure(new InterruptedException("aborted"));
             }
         };
     }

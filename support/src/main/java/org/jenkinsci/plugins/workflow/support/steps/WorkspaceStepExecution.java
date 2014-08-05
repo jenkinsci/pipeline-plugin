@@ -24,8 +24,8 @@ public class WorkspaceStepExecution extends StepExecution {
 
     @Override
     public boolean start() throws Exception {
-        Computer c = context.get(Computer.class);
-        Run<?,?> r = context.get(Run.class);
+        Computer c = getContext().get(Computer.class);
+        Run<?,?> r = getContext().get(Run.class);
         Job<?,?> j = r.getParent();
         if (!(j instanceof TopLevelItem)) {
             throw new Exception(j + " must be a top-level job");
@@ -37,8 +37,8 @@ public class WorkspaceStepExecution extends StepExecution {
         FilePath p = n.getWorkspaceFor((TopLevelItem) j);
         WorkspaceList.Lease lease = c.getWorkspaceList().allocate(p);
         FilePath workspace = lease.path;
-        context.get(TaskListener.class).getLogger().println("Running in " + workspace);
-        context.invokeBodyLater(new Callback(context, lease), workspace);
+        getContext().get(TaskListener.class).getLogger().println("Running in " + workspace);
+        getContext().invokeBodyLater(new Callback(getContext(), lease), workspace);
         return false;
     }
 

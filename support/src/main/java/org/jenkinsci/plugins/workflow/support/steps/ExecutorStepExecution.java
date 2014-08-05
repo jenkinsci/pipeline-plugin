@@ -53,7 +53,7 @@ public class ExecutorStepExecution extends StepExecution {
 
     @Override
     public boolean start() throws Exception {
-        Queue.getInstance().schedule2(new PlaceholderTask(context, label), 0);
+        Queue.getInstance().schedule2(new PlaceholderTask(getContext(), label), 0);
         return false;
     }
 

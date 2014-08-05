@@ -21,9 +21,9 @@ public abstract class AbstractSynchronousStepExecution<T> extends StepExecution 
     public final boolean start() throws Exception {
         executing = Thread.currentThread();
         try {
-            context.onSuccess(run());
+            getContext().onSuccess(run());
         } catch (Throwable t) {
-            context.onFailure(t);
+            getContext().onFailure(t);
         } finally {
             executing = null;
         }

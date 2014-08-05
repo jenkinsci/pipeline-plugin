@@ -72,7 +72,7 @@ abstract class SCMStep extends Step {
 
         @Override
         protected Void run() throws Exception {
-            Run<?,?> run = context.get(Run.class);
+            Run<?,?> run = getContext().get(Run.class);
             File changelogFile = null;
             if (changelog) {
                 for (int i = 0; ; i++) {
@@ -83,9 +83,9 @@ abstract class SCMStep extends Step {
                 }
             }
             SCM scm = createSCM();
-            FilePath workspace = context.get(FilePath.class);
-            TaskListener listener = context.get(TaskListener.class);
-            Launcher launcher = context.get(Launcher.class);
+            FilePath workspace = getContext().get(FilePath.class);
+            TaskListener listener = getContext().get(TaskListener.class);
+            Launcher launcher = getContext().get(Launcher.class);
             SCMRevisionState baseline = null;
             Run<?,?> prev = run.getPreviousBuild();
             if (prev != null) {

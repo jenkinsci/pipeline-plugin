@@ -127,7 +127,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                     return;
                 }
                 if (controller.writeLog(workspace, listener.getLogger())) {
-                    context.saveState();
+                    getContext().saveState();
                 }
                 Integer exitCode = controller.exitStatus(workspace);
                 if (exitCode == null) {
@@ -135,15 +135,15 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                 } else {
                     controller.cleanup(workspace);
                     if (exitCode == 0) {
-                        context.onSuccess(exitCode); // TODO could add an option to have this be text output from command
+                        getContext().onSuccess(exitCode); // TODO could add an option to have this be text output from command
                     } else {
-                        context.onFailure(new AbortException("script returned exit code " + exitCode));
+                        getContext().onFailure(new AbortException("script returned exit code " + exitCode));
                     }
                 }
             } catch (IOException x) {
-                context.onFailure(x);
+                getContext().onFailure(x);
             } catch (InterruptedException x) {
-                context.onFailure(x);
+                getContext().onFailure(x);
             }
         }
 

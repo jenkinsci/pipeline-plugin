@@ -16,7 +16,7 @@ public class WatchYourStepExecution extends StepExecution {
     public boolean start() {
         if (getPath().exists()) {
             // synchronous case. Sometimes async steps can complete synchronously
-            context.onSuccess(null);
+            getContext().onSuccess(null);
             return true;
         }
 

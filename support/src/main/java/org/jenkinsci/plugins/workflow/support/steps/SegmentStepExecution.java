@@ -49,10 +49,10 @@ public class SegmentStepExecution extends StepExecution {
 
     @Override
     public boolean start() throws Exception {
-        FlowNode n = context.get(FlowNode.class);
+        FlowNode n = getContext().get(FlowNode.class);
         n.addAction(new LabelAction(step.name));
-        Run<?,?> r = context.get(Run.class);
-        enter(r, context, step.name, step.concurrency);
+        Run<?,?> r = getContext().get(Run.class);
+        enter(r, getContext(), step.name, step.concurrency);
         return false;
     }
 

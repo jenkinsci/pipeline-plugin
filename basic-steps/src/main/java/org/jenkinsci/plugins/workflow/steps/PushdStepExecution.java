@@ -20,7 +20,7 @@ public class PushdStepExecution extends StepExecution {
     public boolean start() throws Exception {
         FilePath dir = cwd.child(step.getValue());
         listener.getLogger().println("Running in " + dir);
-        context.invokeBodyLater(context, dir);
+        getContext().invokeBodyLater(getContext(), dir);
         return false;
     }
 }

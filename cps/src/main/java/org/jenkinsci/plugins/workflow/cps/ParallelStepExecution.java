@@ -28,10 +28,10 @@ class ParallelStepExecution extends StepExecution {
         // around all the subflows (and not let DSL.invokeMethod creates AtomNode)
         // see the corresponding hack in DSL.invokeMethod
 
-        CpsStepContext cps = (CpsStepContext) context;
+        CpsStepContext cps = (CpsStepContext) getContext();
         CpsThread t = CpsThread.current();
 
-        ResultHandler r = new ResultHandler(context);
+        ResultHandler r = new ResultHandler(cps);
 
         for (Entry<String,Closure> e : parallelStep.closures.entrySet()) {
             cps.invokeBodyLater(

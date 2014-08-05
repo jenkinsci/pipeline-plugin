@@ -113,7 +113,7 @@ public class InputStepExecution extends StepExecution implements ModelObject {
 
         Object v = parseValue(request);
         outcome = new Outcome(v, null);
-        context.onSuccess(v);
+        getContext().onSuccess(v);
 
         postSettlement();
 
@@ -131,7 +131,7 @@ public class InputStepExecution extends StepExecution implements ModelObject {
 
         RejectionException e = new RejectionException(User.current());
         outcome = new Outcome(null,e);
-        context.onFailure(e);
+        getContext().onFailure(e);
 
         postSettlement();
 
