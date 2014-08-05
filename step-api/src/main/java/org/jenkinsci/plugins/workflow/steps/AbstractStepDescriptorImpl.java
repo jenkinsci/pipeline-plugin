@@ -113,8 +113,13 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
             // this coercion handles comes from Groovy's ParameterTypes.coerceArgumentsToClasses
             hasArg |= arguments.containsKey(names[i]);
             Object a = arguments.get(names[i]);
-            if (a!=null)
+            if (a != null) {
                 args[i] = ReflectionCache.getCachedClass(types[i]).coerceArgument(a);
+            } else if (types[i] == boolean.class) {
+                args[i] = false;
+            } else if (types[i].isPrimitive()) {
+                throw new UnsupportedOperationException("not yet handling @DataBoundConstructor default value of " + types[i] + "; pass an explicit value for " + names[i]);
+            }
         }
         return hasArg ? args : null;
     }
