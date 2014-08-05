@@ -200,31 +200,9 @@ public class InputStepExecution extends StepExecution implements ModelObject {
             FilePath fp = new FilePath(run.getRootDir()).child(name);
             fp.copyFrom(fv.getFile());
             return fp;
+        } else {
+            return v.getValue();
         }
-
-        // TODO: post
-        try {
-            Method m = v.getClass().getMethod("getValue");
-            return m.invoke(v);
-        } catch (NoSuchMethodException e) {
-            // fall through
-        } catch (IllegalAccessException e) {
-            // fall through
-        } catch (InvocationTargetException e) {
-            throw new IOException("Failed to convert value: "+v,e);
-        }
-
-        try {
-            Field f = v.getClass().getField("value");
-            return f.get(v);
-        } catch (IllegalAccessException e) {
-            // fall through
-        } catch (NoSuchFieldException e) {
-            // fall through
-        }
-
-        // not sure what to do
-        return null;
     }
 
     private static final long serialVersionUID = 1L;
