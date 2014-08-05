@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow.flow;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import hudson.util.HttpResponses;
 import hudson.util.IOUtils;
