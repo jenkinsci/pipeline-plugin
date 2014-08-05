@@ -22,7 +22,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
     private final Class<? extends StepExecution> executionType;
 
     /**
-     * @param executionType an associated execution class; the {@link Step} (usually an {@link AbstractStepImpl}) can be {@link Inject}ed; {@link StepContextParameter} may be used on fields as well
+     * @param executionType an associated execution class; the {@link Step} (usually an {@link AbstractStepImpl}) can be {@link Inject}ed as {@code transient}; {@link StepContextParameter} may be used on {@code transient} fields as well
      */
     protected AbstractStepDescriptorImpl(Class<? extends StepExecution> executionType) {
         this.executionType = executionType;
