@@ -27,6 +27,8 @@ package org.jenkinsci.plugins.workflow.job;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.slaves.DumbSlave;
 import javax.inject.Inject;
+import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 import org.junit.Assert;
@@ -79,6 +81,12 @@ public abstract class SingleJobTestBase extends Assert {
         assert b.isBuilding() : JenkinsRule.getLog(b);
     }
 
+    public void waitForWorkflowToComplete() throws Exception {
+        do {
+            waitForWorkflowToSuspend(e);
+        } while (!e.isComplete());
+    }
+
     public void waitForWorkflowToSuspend() throws Exception {
         waitForWorkflowToSuspend(e);
     }
@@ -113,5 +121,13 @@ public abstract class SingleJobTestBase extends Assert {
     public void assertBuildCompletedSuccessfully(WorkflowRun b) throws Exception {
         assert !b.isBuilding(): JenkinsRule.getLog(b);
         story.j.assertBuildStatusSuccess(b);
+    }
+
+    public Jenkins jenkins() {
+        return story.j.jenkins;
+    }
+
+    public String join(String... args) {
+        return StringUtils.join(args, "\n");
     }
 }

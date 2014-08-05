@@ -32,17 +32,13 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * Returns the working directory path.
  */
 public class PwdStep extends AbstractStepImpl {
-
-    @StepContextParameter private transient FilePath cwd;
-
     @DataBoundConstructor public PwdStep() {}
 
-    @Override protected boolean doStart(StepContext context) throws Exception {
-        context.onSuccess(cwd.getRemote());
-        return true;
-    }
-
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(Execution.class);
+        }
 
         @Override public String getFunctionName() {
             return "pwd";
@@ -50,6 +46,16 @@ public class PwdStep extends AbstractStepImpl {
 
         @Override public String getDisplayName() {
             return "Determine Current Directory";
+        }
+
+    }
+
+    public static class Execution extends AbstractSynchronousStepExecution<String> {
+        
+        @StepContextParameter private transient FilePath cwd;
+
+        @Override protected String run() throws Exception {
+            return cwd.getRemote();
         }
 
     }

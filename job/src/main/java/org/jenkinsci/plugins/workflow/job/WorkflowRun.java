@@ -24,14 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
-import hudson.util.OneShotEvent;
-import org.jenkinsci.plugins.workflow.actions.LogAction;
-import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import org.jenkinsci.plugins.workflow.flow.GraphListener;
-import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import hudson.AbortException;
@@ -114,7 +107,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     List<SCMCheckout> checkouts;
     // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally; perhaps keep a List<WeakReference<ChangeLogSet<?>>>
-    private transient List<ChangeLogSet<?>> changeSets;
+    private transient List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
 
     public WorkflowRun(WorkflowJob job) throws IOException {
         super(job);
@@ -169,7 +162,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 listener.error("No flow definition, cannot run");
                 return;
             }
-            execution = definition.create(new Owner(this), getAllActions());
+            Owner owner = new Owner(this);
+            FlowExecutionList.get().register(owner);
+            execution = definition.create(owner, getAllActions());
             execution.addListener(new GraphL());
             completed = new AtomicBoolean();
             logsToCopy = new LinkedHashMap<String,Long>();
@@ -283,7 +278,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     /** Hack to allow {@link #execution} to use an {@link Owner} referring to this run, even when it has not yet been loaded. */
     @Override public void reload() throws IOException {
-        LOADING_RUNS.put(key(), this);
+        synchronized (LOADING_RUNS) {
+            LOADING_RUNS.put(key(), this);
+        }
 
         // super.reload() forces result to be FAILURE, so working around that
         new XmlFile(XSTREAM,new File(getRootDir(),"build.xml")).unmarshal(this);
@@ -308,7 +305,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 Queue.getInstance().schedule(new AfterRestartTask(this), 0);
             }
         }
-        LOADING_RUNS.remove(key()); // or could just make the value type be WeakReference<WorkflowRun>
+        synchronized (LOADING_RUNS) {
+            LOADING_RUNS.remove(key()); // or could just make the value type be WeakReference<WorkflowRun>
+            LOADING_RUNS.notifyAll();
+        }
     }
 
     private void finish(Result r) {
@@ -337,6 +337,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             completed.set(true);
             completed.notifyAll();
         }
+        FlowExecutionList.get().unregister(execution.getOwner());
     }
 
     /**
@@ -386,7 +387,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     public synchronized List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets() {
         if (changeSets == null) {
-            changeSets = new ArrayList<ChangeLogSet<?>>();
+            changeSets = new ArrayList<ChangeLogSet<? extends ChangeLogSet.Entry>>();
             for (SCMCheckout co : checkouts) {
                 if (co.changelogFile != null && co.changelogFile.isFile()) {
                     try {
@@ -449,9 +450,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             job = run.getParent().getFullName();
             id = run.getId();
         }
+        private String key() {
+            return job + '/' + id;
+        }
         private @Nonnull WorkflowRun run() throws IOException {
             if (run==null) {
-                WorkflowRun candidate = LOADING_RUNS.get(job + '/' + id);
+                WorkflowRun candidate = LOADING_RUNS.get(key());
                 if (candidate != null && candidate.getParent().getFullName().equals(job) && candidate.getId().equals(id)) {
                     run = candidate;
                 } else {
@@ -470,6 +474,16 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
         @Override public FlowExecution get() throws IOException {
             WorkflowRun r = run();
+            synchronized (LOADING_RUNS) {
+                while (r.execution == null && LOADING_RUNS.containsKey(key())) {
+                    try {
+                        LOADING_RUNS.wait();
+                    } catch (InterruptedException x) {
+                        LOGGER.log(Level.WARNING, "failed to wait for " + r + " to be loaded", x);
+                        break;
+                    }
+                }
+            }
             FlowExecution exec = r.execution;
             if (exec != null) {
                 return exec;
@@ -495,7 +509,21 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             return run().getUrl();
         }
         @Override public String toString() {
-            return "Owner[" + job + "/" + id + ":" + run + "]";
+            return "Owner[" + key() + ":" + run + "]";
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof Owner)) {
+                return false;
+            }
+            Owner that = (Owner) o;
+            return job.equals(that.job) && id.equals(that.id);
+        }
+
+        @Override
+        public int hashCode() {
+            return job.hashCode() ^ id.hashCode();
         }
     }
 

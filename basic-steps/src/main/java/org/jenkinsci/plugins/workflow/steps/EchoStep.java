@@ -26,8 +26,8 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Extension;
 import hudson.model.TaskListener;
+import javax.inject.Inject;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * A simple echo back statement.
@@ -37,23 +37,22 @@ import org.kohsuke.stapler.DataBoundSetter;
 public class EchoStep extends AbstractStepImpl {
     private final String message;
 
-    @StepContextParameter
-    private transient TaskListener listener;
-
     @DataBoundConstructor
     public EchoStep(String value) {
         this.message = value;
     }
 
-    @Override
-    public boolean doStart(StepContext context) throws Exception {
-        listener.getLogger().println(message);
-        context.onSuccess(null);
-        return true;
+    public String getMessage() {
+        return message;
     }
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(Execution.class);
+        }
+
         @Override
         public String getFunctionName() {
             return "echo";
@@ -64,4 +63,16 @@ public class EchoStep extends AbstractStepImpl {
             return "Print Message";
         }
     }
+
+    public static class Execution extends AbstractSynchronousStepExecution<Void> {
+        
+        @Inject private EchoStep step;
+        @StepContextParameter private transient TaskListener listener;
+
+        @Override protected Void run() throws Exception {
+            listener.getLogger().println(step.getMessage());
+            return null;
+        }
+    }
+
 }

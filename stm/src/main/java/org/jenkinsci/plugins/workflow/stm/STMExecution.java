@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.stm;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
@@ -32,6 +33,7 @@ import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.storage.FlowNodeStorage;
 import org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage;
 import org.jenkinsci.plugins.workflow.pickles.Pickle;
@@ -289,6 +291,12 @@ final class STMExecution extends FlowExecution {
     @Override
     public boolean isCurrentHead(FlowNode n) {
         return heads.values().contains(n.getId());
+    }
+
+    @Override
+    public ListenableFuture<List<StepExecution>> getCurrentExecutions() {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override public void addListener(GraphListener listener) {

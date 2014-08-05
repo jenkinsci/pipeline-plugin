@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.flow;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import hudson.util.HttpResponses;
 import hudson.util.IOUtils;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
@@ -32,14 +34,16 @@ import org.jenkinsci.plugins.workflow.graph.FlowActionStorage;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Result;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 import javax.annotation.CheckForNull;
 
@@ -78,8 +82,25 @@ public abstract class FlowExecution implements FlowActionStorage {
 
     public abstract FlowExecutionOwner getOwner();
 
+    /**
+     * In the current flow graph, return all the "head" nodes where the graph is still growing.
+     *
+     * If you think of a flow graph as a git repository, these heads correspond to branches.
+     */
     // TODO: values are snapshot in time
     public abstract List<FlowNode> getCurrentHeads();
+
+    /**
+     * Yields the inner-most {@link StepExecution}s that are currently executing.
+     *
+     * {@link StepExecution}s are persisted as a part of the program state, so its lifecycle
+     * is independent of {@link FlowExecution}, hence the asynchrony.
+     *
+     * Think of this as program counters of all the virtual threads.
+     */
+    public abstract ListenableFuture<List<StepExecution>> getCurrentExecutions();
+
+    // TODO: there should be navigation between FlowNode <-> StepExecution
 
     /**
      * Short for {@code getCurrentHeads().contains(n)} but more efficient.
@@ -108,7 +129,7 @@ public abstract class FlowExecution implements FlowActionStorage {
      * If it's evaluating bodies (see {@link StepContext#invokeBodyLater(FutureCallback, Object...)},
      * then it's callback needs to be invoked.
      *
-     * @see Step#stop(StepContext)
+     * @see StepExecution#stop()
      */
     public abstract void finish(Result r) throws IOException, InterruptedException;
 
@@ -158,9 +179,10 @@ public abstract class FlowExecution implements FlowActionStorage {
      *
      * Primarily for diagnosing the visualization issue.
      */
-    public void doDot(StaplerResponse rsp) throws IOException {
-        rsp.setContentType("text/plain");
-        writeDot(new PrintWriter(rsp.getWriter()));
+    public HttpResponse doDot() throws IOException {
+        StringWriter sw = new StringWriter();
+        writeDot(new PrintWriter(sw));
+        return HttpResponses.plainText(sw.toString());
     }
 
     public void doGraphViz(StaplerResponse rsp) throws IOException {
