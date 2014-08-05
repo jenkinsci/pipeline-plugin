@@ -64,9 +64,6 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
                             return e;
                         }
                     } catch (IOException e) {
-                        // TODO: we need some means to remove stale entries from the list, but
-                        // this might be too drastic a measure (and it can be invoked too early,
-                        // for example before Jenkins fully loads all the jobs)
                         LOGGER.log(WARNING, "Failed to load " + o + ". Unregistering", e);
                         unregister(o);
                     }

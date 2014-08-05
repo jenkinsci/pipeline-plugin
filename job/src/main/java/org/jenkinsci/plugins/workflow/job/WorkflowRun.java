@@ -278,7 +278,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     /** Hack to allow {@link #execution} to use an {@link Owner} referring to this run, even when it has not yet been loaded. */
     @Override public void reload() throws IOException {
-        LOADING_RUNS.put(key(), this);
+        synchronized (LOADING_RUNS) {
+            LOADING_RUNS.put(key(), this);
+        }
 
         // super.reload() forces result to be FAILURE, so working around that
         new XmlFile(XSTREAM,new File(getRootDir(),"build.xml")).unmarshal(this);
@@ -303,7 +305,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 Queue.getInstance().schedule(new AfterRestartTask(this), 0);
             }
         }
-        LOADING_RUNS.remove(key()); // or could just make the value type be WeakReference<WorkflowRun>
+        synchronized (LOADING_RUNS) {
+            LOADING_RUNS.remove(key()); // or could just make the value type be WeakReference<WorkflowRun>
+            LOADING_RUNS.notifyAll();
+        }
     }
 
     private void finish(Result r) {
@@ -445,9 +450,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             job = run.getParent().getFullName();
             id = run.getId();
         }
+        private String key() {
+            return job + '/' + id;
+        }
         private @Nonnull WorkflowRun run() throws IOException {
             if (run==null) {
-                WorkflowRun candidate = LOADING_RUNS.get(job + '/' + id);
+                WorkflowRun candidate = LOADING_RUNS.get(key());
                 if (candidate != null && candidate.getParent().getFullName().equals(job) && candidate.getId().equals(id)) {
                     run = candidate;
                 } else {
@@ -466,6 +474,16 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
         @Override public FlowExecution get() throws IOException {
             WorkflowRun r = run();
+            synchronized (LOADING_RUNS) {
+                while (r.execution == null && LOADING_RUNS.containsKey(key())) {
+                    try {
+                        LOADING_RUNS.wait();
+                    } catch (InterruptedException x) {
+                        LOGGER.log(Level.WARNING, "failed to wait for " + r + " to be loaded", x);
+                        break;
+                    }
+                }
+            }
             FlowExecution exec = r.execution;
             if (exec != null) {
                 return exec;
@@ -491,7 +509,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             return run().getUrl();
         }
         @Override public String toString() {
-            return "Owner[" + job + "/" + id + ":" + run + "]";
+            return "Owner[" + key() + ":" + run + "]";
         }
 
         @Override
