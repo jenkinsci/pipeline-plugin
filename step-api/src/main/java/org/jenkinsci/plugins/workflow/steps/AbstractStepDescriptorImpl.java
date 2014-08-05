@@ -19,7 +19,7 @@ import java.util.Set;
 public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
     private volatile transient Set<Class<?>> contextTypes;
 
-    protected final Class<? extends StepExecution> executionType;
+    private final Class<? extends StepExecution> executionType;
 
     protected AbstractStepDescriptorImpl(Class<? extends StepExecution> executionType) {
         this.executionType = executionType;
