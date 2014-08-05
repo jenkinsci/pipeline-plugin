@@ -23,6 +23,11 @@ public class BuildTriggerStep extends AbstractStepImpl {
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(BuildTriggerStepExecution.class);
+        }
+
         @Override
         public String getFunctionName() {
             return "build";

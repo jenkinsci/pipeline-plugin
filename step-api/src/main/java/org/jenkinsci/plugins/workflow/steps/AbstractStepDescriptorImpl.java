@@ -1,10 +1,5 @@
 package org.jenkinsci.plugins.workflow.steps;
 
-import org.codehaus.groovy.reflection.ReflectionCache;
-import org.kohsuke.stapler.ClassDescriptor;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -12,6 +7,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
+import org.codehaus.groovy.reflection.ReflectionCache;
+import org.kohsuke.stapler.ClassDescriptor;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
 * @author Kohsuke Kawaguchi
@@ -21,20 +21,11 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
 
     private final Class<? extends StepExecution> executionType;
 
+    /**
+     * @param executionType an associated execution class; the {@link Step} (usually an {@link AbstractStepImpl}) can be {@link Inject}ed; {@link StepContextParameter} may be used on fields as well
+     */
     protected AbstractStepDescriptorImpl(Class<? extends StepExecution> executionType) {
         this.executionType = executionType;
-    }
-
-    /**
-     * Infer {@link #executionType} by the naming convention from {@link #clazz} by appending "Execution" in the end
-     */
-    protected AbstractStepDescriptorImpl() {
-        String name = clazz.getName() + "Execution";
-        try {
-            this.executionType = clazz.getClassLoader().loadClass(name).asSubclass(StepExecution.class);
-        } catch (ClassNotFoundException e) {
-            throw (Error)new NoClassDefFoundError("Expected to find "+name).initCause(e);
-        }
     }
 
     public final Class<? extends StepExecution> getExecutionType() {

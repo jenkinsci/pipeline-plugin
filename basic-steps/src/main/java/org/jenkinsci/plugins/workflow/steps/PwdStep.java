@@ -35,6 +35,10 @@ public class PwdStep extends AbstractStepImpl {
 
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
 
+        public DescriptorImpl() {
+            super(PwdStepExecution.class);
+        }
+
         @Override public String getFunctionName() {
             return "pwd";
         }

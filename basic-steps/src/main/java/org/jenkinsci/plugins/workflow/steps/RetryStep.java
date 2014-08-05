@@ -53,6 +53,11 @@ public class RetryStep extends AbstractStepImpl implements Serializable {
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(RetryStepExecution.class);
+        }
+
         @Override
         public String getFunctionName() {
             return "retry";

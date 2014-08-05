@@ -89,6 +89,11 @@ public class AbstractStepImplTest extends Assert {
 
         @Extension
         public static class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+            public DescriptorImpl() {
+                super(BogusStepExecution.class);
+            }
+
             @Override
             public String getFunctionName() {
                 return "fff";

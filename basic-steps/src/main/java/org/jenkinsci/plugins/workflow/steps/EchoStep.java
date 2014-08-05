@@ -46,6 +46,11 @@ public class EchoStep extends AbstractStepImpl {
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(EchoStepExecution.class);
+        }
+
         @Override
         public String getFunctionName() {
             return "echo";

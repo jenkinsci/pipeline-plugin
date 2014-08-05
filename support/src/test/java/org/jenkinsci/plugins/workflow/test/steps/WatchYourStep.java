@@ -61,6 +61,7 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
         private List<WatchYourStepExecution> activeWatches = new ArrayList<WatchYourStepExecution>();
 
         public DescriptorImpl() {
+            super(WatchYourStepExecution.class);
             load();
         }
 

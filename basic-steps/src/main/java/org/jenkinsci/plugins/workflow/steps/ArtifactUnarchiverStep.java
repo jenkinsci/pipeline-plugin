@@ -21,6 +21,11 @@ public class ArtifactUnarchiverStep extends AbstractStepImpl {
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(ArtifactUnarchiverStepExecution.class);
+        }
+
         @Override
         public String getFunctionName() {
             return "unarchive";

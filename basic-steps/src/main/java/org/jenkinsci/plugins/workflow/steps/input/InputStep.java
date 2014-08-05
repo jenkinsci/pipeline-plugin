@@ -155,6 +155,11 @@ public class InputStep extends AbstractStepImpl implements Serializable {
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(InputStepExecution.class);
+        }
+
         @Override
         public String getFunctionName() {
             return "input";

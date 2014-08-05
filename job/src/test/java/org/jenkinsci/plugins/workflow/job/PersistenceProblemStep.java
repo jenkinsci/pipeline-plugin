@@ -15,6 +15,11 @@ public class PersistenceProblemStep extends AbstractStepImpl {
 
     @Extension
     public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(PersistenceProblemStepExecution.class);
+        }
+
         @Override
         public String getFunctionName() {
             return "persistenceProblem";

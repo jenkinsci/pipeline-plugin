@@ -58,6 +58,11 @@ public class ArtifactArchiverStep extends AbstractStepImpl {
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(ArtifactArchiverStepExecution.class);
+        }
+
         @Override
         public String getFunctionName() {
             return "archive";
