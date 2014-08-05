@@ -64,6 +64,7 @@ public class ExecutorStepExecution extends StepExecution {
 
     private static final class PlaceholderTask extends AbstractQueueTask implements PrioritizedTask, Serializable {
 
+        // TODO can this be replaced with StepExecutionIterator?
         /** map from cookies to contexts of tasks thought to be running */
         private static final Map<String,StepContext> runningTasks = new HashMap<String,StepContext>();
 

@@ -61,6 +61,7 @@ public class SegmentStepExecution extends StepExecution {
         return new XmlFile(new File(Jenkins.getInstance().getRootDir(), SegmentStep.class.getName() + ".xml"));
     }
 
+    // TODO can this be replaced with StepExecutionIterator?
     private static Map<String,Map<String,Segment>> segmentsByNameByJob;
 
     // TODO or delete and make this an instance field in DescriptorImpl
