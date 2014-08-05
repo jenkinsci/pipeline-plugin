@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 /**
  * Sample asynchronous step that suspends until a file of the specified name is created.
@@ -58,14 +59,14 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
-        private List<WatchYourStepExecution> activeWatches = new ArrayList<WatchYourStepExecution>();
+        private List<Execution> activeWatches = new ArrayList<Execution>();
 
         public DescriptorImpl() {
-            super(WatchYourStepExecution.class);
+            super(Execution.class);
             load();
         }
 
-        /*package*/ synchronized void addWatch(WatchYourStepExecution t) {
+        /*package*/ synchronized void addWatch(Execution t) {
             activeWatches.add(t);
             save();
         }
@@ -75,8 +76,8 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
          */
         public synchronized void watchUpdate() {
             boolean changed = false;
-            for (Iterator<WatchYourStepExecution> itr = activeWatches.iterator(); itr.hasNext(); ) {
-                WatchYourStepExecution t = itr.next();
+            for (Iterator<Execution> itr = activeWatches.iterator(); itr.hasNext(); ) {
+                Execution t = itr.next();
                 if (t.getPath().exists()) {
                     t.getContext().onSuccess(null);
                     itr.remove();
@@ -87,8 +88,8 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
                 save();
         }
 
-        public synchronized List<WatchYourStepExecution> getActiveWatches() {
-            return new ArrayList<WatchYourStepExecution>(activeWatches);
+        public synchronized List<Execution> getActiveWatches() {
+            return new ArrayList<Execution>(activeWatches);
         }
 
         @Override
@@ -99,6 +100,30 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
         @Override
         public String getDisplayName() {
             return "Watch Path";
+        }
+    }
+
+    public static class Execution extends StepExecution {
+        
+        @Inject private WatchYourStep step;
+
+        @Override
+        public boolean start() {
+            if (getPath().exists()) {
+                // synchronous case. Sometimes async steps can complete synchronously
+                getContext().onSuccess(null);
+                return true;
+            }
+
+            // asynchronous case.
+            // TODO: move the persistence logic to this instance
+            step.getDescriptor().addWatch(this);
+
+            return false;
+        }
+
+        public File getPath() {
+            return step.watch;
         }
     }
 
