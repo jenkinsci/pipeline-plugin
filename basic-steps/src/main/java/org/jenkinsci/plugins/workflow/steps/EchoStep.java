@@ -25,6 +25,8 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Extension;
+import hudson.model.TaskListener;
+import javax.inject.Inject;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -48,7 +50,7 @@ public class EchoStep extends AbstractStepImpl {
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
 
         public DescriptorImpl() {
-            super(EchoStepExecution.class);
+            super(Execution.class);
         }
 
         @Override
@@ -61,4 +63,16 @@ public class EchoStep extends AbstractStepImpl {
             return "Print Message";
         }
     }
+
+    public static class Execution extends AbstractSynchronousStepExecution<Void> {
+        
+        @Inject private EchoStep step;
+        @StepContextParameter private transient TaskListener listener;
+
+        @Override protected Void run() throws Exception {
+            listener.getLogger().println(step.getMessage());
+            return null;
+        }
+    }
+
 }

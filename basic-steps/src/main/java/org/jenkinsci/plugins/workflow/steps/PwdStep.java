@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Extension;
+import hudson.FilePath;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -36,7 +37,7 @@ public class PwdStep extends AbstractStepImpl {
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
 
         public DescriptorImpl() {
-            super(PwdStepExecution.class);
+            super(Execution.class);
         }
 
         @Override public String getFunctionName() {
@@ -45,6 +46,16 @@ public class PwdStep extends AbstractStepImpl {
 
         @Override public String getDisplayName() {
             return "Determine Current Directory";
+        }
+
+    }
+
+    public static class Execution extends AbstractSynchronousStepExecution<String> {
+        
+        @StepContextParameter private transient FilePath cwd;
+
+        @Override protected String run() throws Exception {
+            return cwd.getRemote();
         }
 
     }
