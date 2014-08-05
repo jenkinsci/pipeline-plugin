@@ -31,14 +31,13 @@ public class ArtifactUnarchiverStepExecution extends AbstractSynchronousStepExec
     @Override
     protected List<FilePath> run() throws Exception {
         // where to copy artifacts from?
-        Run r = step.from;
-        if (r==null)    r=build;
+        Run r = build; // TODO consider an option to override this (but in what format?)
 
         ArtifactManager am = r.getArtifactManager();
 
         List<FilePath> files = new ArrayList<FilePath>();
 
-        for (Entry<String, String> e : step.files.entrySet()) {
+        for (Entry<String, String> e : step.mapping.entrySet()) {
             FilePath dst = new FilePath(ws,e.getValue());
 
             String[] all = am.root().list(e.getKey());
