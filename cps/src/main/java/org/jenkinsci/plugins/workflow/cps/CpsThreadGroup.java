@@ -299,8 +299,13 @@ public final class CpsThreadGroup implements Serializable {
      * Persists the current state of {@link CpsThreadGroup}.
      */
     @CpsVmThreadOnly
-    public void saveProgram() throws IOException {
+    void saveProgram() throws IOException {
         File f = execution.getProgramDataFile();
+        saveProgram(f);
+    }
+
+    @CpsVmThreadOnly
+    public void saveProgram(File f) throws IOException {
         File dir = f.getParentFile();
         File tmpFile = File.createTempFile("atomic",null, dir);
 
