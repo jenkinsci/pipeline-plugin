@@ -39,8 +39,9 @@ import java.lang.reflect.Method;
  * @author Kohsuke Kawaguchi
  */
 public abstract class AbstractStepImpl extends Step {
-    @Override
-    public final StepExecution start(StepContext context) throws Exception {
+
+    /** Constructs a step execution automatically according to {@link AbstractStepDescriptorImpl#getExecutionType}. */
+    @Override public final StepExecution start(StepContext context) throws Exception {
         return prepareInjector(context).getInstance(((AbstractStepDescriptorImpl)getDescriptor()).getExecutionType());
     }
 
