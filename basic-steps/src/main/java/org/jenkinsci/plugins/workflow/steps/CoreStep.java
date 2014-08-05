@@ -51,7 +51,7 @@ public final class CoreStep extends Step {
         return new Execution(delegate, context);
     }
 
-    private static final class Execution extends StepExecution {
+    private static final class Execution extends AbstractSynchronousStepExecution<Void> {
 
         private transient final SimpleBuildStep delegate;
 
@@ -60,9 +60,9 @@ public final class CoreStep extends Step {
             this.delegate = delegate;
         }
 
-        @Override public boolean start() throws Exception {
+        @Override protected Void run() throws Exception {
             delegate.perform(getContext().get(Run.class), getContext().get(FilePath.class), getContext().get(Launcher.class), getContext().get(TaskListener.class));
-            return true;
+            return null;
         }
 
     }
