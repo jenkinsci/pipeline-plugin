@@ -40,7 +40,6 @@ import hudson.security.Permission;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
@@ -58,9 +57,6 @@ public class WorkflowRunTest {
     @Rule public JenkinsRule r = new JenkinsRule();
 
     WorkflowJob p;
-
-    @Inject
-    WatchYourStep.DescriptorImpl watch;
 
     @Before
     public void setUp() throws Exception {
@@ -120,7 +116,7 @@ public class WorkflowRunTest {
         assertColor(b1, BallColor.NOTBUILT_ANIME);
 
         test.touch(0);
-        watch.watchUpdate();
+        WatchYourStep.update();
 
         // bring it to the completion
         q.get(5, TimeUnit.SECONDS);
@@ -148,7 +144,7 @@ public class WorkflowRunTest {
 
         // bring it to the completion
         test.touch(0);
-        watch.watchUpdate();
+        WatchYourStep.update();
         q.get(5, TimeUnit.SECONDS);
 
         // and the color should be now solid blue

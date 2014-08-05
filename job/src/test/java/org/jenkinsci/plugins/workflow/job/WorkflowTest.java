@@ -49,6 +49,7 @@ import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.tools.ant.util.JavaEnvUtils;
+import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -86,7 +87,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 }
                 assertFalse(jenkins().toComputer().isIdle());
                 FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
-                watchDescriptor.watchUpdate();
+                WatchYourStep.update();
                 waitForWorkflowToComplete();
                 assertTrue(e.isComplete());
                 assertBuildCompletedSuccessfully();
@@ -130,7 +131,7 @@ public class WorkflowTest extends SingleJobTestBase {
 
                 FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
 
-                watchDescriptor.watchUpdate();
+                WatchYourStep.update();
 
                 e.waitForSuspension();
                 System.out.println(JenkinsRule.getLog(b));
@@ -170,7 +171,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 startBuilding();
 
                 // wait until the execution gets to the watch task
-                while (watchDescriptor.getActiveWatches().isEmpty()) {
+                while (WatchYourStep.getActiveCount() == 0) {
                     assertTrue(JenkinsRule.getLog(b), b.isBuilding());
                     waitForWorkflowToSuspend();
                 }
@@ -323,13 +324,13 @@ public class WorkflowTest extends SingleJobTestBase {
                 p.save();
                 WorkflowRun b1 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "one"))).waitForStart();
                 CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
-                while (watchDescriptor.getActiveWatches().isEmpty()) {
+                while (WatchYourStep.getActiveCount() == 0) {
                     assertTrue(JenkinsRule.getLog(b1), b1.isBuilding());
                     waitForWorkflowToSuspend(e1);
                 }
                 WorkflowRun b2 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "two"))).waitForStart();
                 CpsFlowExecution e2 = (CpsFlowExecution) b2.getExecutionPromise().get();
-                while (watchDescriptor.getActiveWatches().size() == 1) {
+                while (WatchYourStep.getActiveCount() == 1) {
                     assertTrue(JenkinsRule.getLog(b2), b2.isBuilding());
                     waitForWorkflowToSuspend(e2);
                 }
@@ -386,7 +387,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 startBuilding();
 
                 // wait until the execution gets to the watch task
-                while (watchDescriptor.getActiveWatches().isEmpty()) {
+                while (WatchYourStep.getActiveCount() == 0) {
                     assertTrue(JenkinsRule.getLog(b), b.isBuilding());
                     waitForWorkflowToSuspend();
                 }
