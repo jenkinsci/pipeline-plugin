@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
+import hudson.model.Result;
 import hudson.tasks.Fingerprinter;
 import hudson.tasks.junit.TestResultAction;
 import java.util.List;
@@ -69,7 +70,7 @@ public class CoreStepTest {
                 + "    sh '''echo '<testsuite name=\"b\"><testcase name=\"b1\"/><testcase name=\"b2\"/></testsuite>' > b.xml'''\n"
                 + "    step($class: 'hudson.tasks.junit.JUnitResultArchiver', testResults: '*.xml')\n"
                 + "}"));
-        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        WorkflowRun b = r.assertBuildStatus(Result.UNSTABLE, p.scheduleBuild2(0).get());
         TestResultAction a = b.getAction(TestResultAction.class);
         assertNotNull(a);
         assertEquals(4, a.getTotalCount());
