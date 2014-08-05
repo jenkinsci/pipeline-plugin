@@ -37,7 +37,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
         }
     }
 
-    public Class<? extends StepExecution> getExecutionType() {
+    public final Class<? extends StepExecution> getExecutionType() {
         return executionType;
     }
 
@@ -67,7 +67,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
      * Instantiate a new object via DataBoundConstructor and DataBoundSetter.
      */
     @Override
-    public Step newInstance(final Map<String, Object> arguments) throws Exception {
+    public final Step newInstance(final Map<String, Object> arguments) throws Exception {
         return instantiate(clazz, arguments);
     }
 
@@ -90,7 +90,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
      * Injects via {@link DataBoundSetter}
      */
     private static void injectSetters(Object o, Map<String, Object> arguments) throws Exception {
-        for (Class c = o.getClass(); c!=null; c=c.getSuperclass()) {
+        for (Class<?> c = o.getClass(); c!=null; c=c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {
                 if (f.isAnnotationPresent(DataBoundSetter.class)) {
                     f.setAccessible(true);
@@ -115,7 +115,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
 
     // TODO: this is Groovy specific and should be removed from here
     // but some kind of type coercion would be useful to fix mismatch between Long vs Integer, etc.
-    private static Object[] buildArguments(Map<String, Object> arguments, Class[] types, String[] names, boolean callEvenIfNoArgs) {
+    private static Object[] buildArguments(Map<String, Object> arguments, Class<?>[] types, String[] names, boolean callEvenIfNoArgs) {
         Object[] args = new Object[names.length];
         boolean hasArg = callEvenIfNoArgs;
         for (int i = 0; i < args.length; i++) {
@@ -133,11 +133,11 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
      * and infer required contexts from there.
      */
     @Override
-    public Set<Class<?>> getRequiredContext() {
+    public final Set<Class<?>> getRequiredContext() {
         if (contextTypes==null) {
             Set<Class<?>> r = new HashSet<Class<?>>();
 
-            for (Class c = executionType; c!=null; c=c.getSuperclass()) {
+            for (Class<?> c = executionType; c!=null; c=c.getSuperclass()) {
                 for (Field f : c.getDeclaredFields()) {
                     if (f.isAnnotationPresent(StepContextParameter.class)) {
                         r.add(f.getType());
