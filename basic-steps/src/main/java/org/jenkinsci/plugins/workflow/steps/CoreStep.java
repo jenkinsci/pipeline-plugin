@@ -37,23 +37,34 @@ import jenkins.tasks.SimpleBuildStep;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * A step than runs a {@link SimpleBuildStep} as defined in Jenkins core.
+ * A step that runs a {@link SimpleBuildStep} as defined in Jenkins core.
  */
-public final class CoreStep extends AbstractSynchronousStepImpl<Void> {
+public final class CoreStep extends Step {
 
-    private final SimpleBuildStep delegate;
-    @StepContextParameter private Run<?,?> run;
-    @StepContextParameter private FilePath ws;
-    @StepContextParameter private Launcher launcher;
-    @StepContextParameter private TaskListener listener;
+    public final SimpleBuildStep delegate;
 
     @DataBoundConstructor public CoreStep(SimpleBuildStep delegate) {
         this.delegate = delegate;
     }
 
-    @Override protected Void run(StepContext context) throws Exception {
-        delegate.perform(run, ws, launcher, listener);
-        return null;
+    @Override public StepExecution start(StepContext context) throws Exception {
+        return new Execution(delegate, context);
+    }
+
+    private static final class Execution extends StepExecution {
+
+        private transient final SimpleBuildStep delegate;
+
+        Execution(SimpleBuildStep delegate, StepContext context) {
+            super(context);
+            this.delegate = delegate;
+        }
+
+        @Override public boolean start() throws Exception {
+            delegate.perform(getContext().get(Run.class), getContext().get(FilePath.class), getContext().get(Launcher.class), getContext().get(TaskListener.class));
+            return true;
+        }
+
     }
 
     @Extension public static final class DescriptorImpl extends StepDescriptor {
