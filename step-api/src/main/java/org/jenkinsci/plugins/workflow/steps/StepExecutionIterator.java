@@ -8,7 +8,7 @@ import jenkins.model.Jenkins;
 
 /**
  * Enumerates active running {@link StepExecution}s in the system.
- *
+ * @see StepExecution#applyAll(Class, Function)
  * @author Kohsuke Kawaguchi
  */
 public abstract class StepExecutionIterator implements ExtensionPoint {
