@@ -65,7 +65,7 @@ public class CoreStepTest {
         p.setDefinition(new CpsFlowDefinition(
                   "node {\n"
                 // Quote hell! " is Java, ''' is Groovy, ' is shell, \" is " inside XML
-                + "    sh '''echo '<testsuite name=\"a\"><testcase name=\"a1\"/><testcase name=\"a2\" error=\"a2 failed\"></testcase></testsuite>' > a.xml'''\n"
+                + "    sh '''echo '<testsuite name=\"a\"><testcase name=\"a1\"/><testcase name=\"a2\" error=\"a2 failed\"/></testsuite>' > a.xml'''\n"
                 + "    sh '''echo '<testsuite name=\"b\"><testcase name=\"b1\"/><testcase name=\"b2\"/></testsuite>' > b.xml'''\n"
                 + "    step($class: 'hudson.tasks.junit.JUnitResultArchiver', testResults: '*.xml')\n"
                 + "}"));
