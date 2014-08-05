@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.tasks.Fingerprinter;
+import hudson.tasks.junit.TestResultAction;
 import java.util.List;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -57,6 +58,22 @@ public class CoreStepTest {
         Fingerprinter.FingerprintAction fa = b.getAction(Fingerprinter.FingerprintAction.class);
         assertNotNull(fa);
         assertEquals("[x.txt]", fa.getRecords().keySet().toString());
+    }
+
+    @Test public void junitResultArchiver() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition(
+                  "node {\n"
+                // Quote hell! " is Java, ''' is Groovy, ' is shell, \" is " inside XML
+                + "    sh '''echo '<testsuite name=\"a\"><testcase name=\"a1\"/><testcase name=\"a2\" error=\"a2 failed\"></testcase></testsuite>' > a.xml'''\n"
+                + "    sh '''echo '<testsuite name=\"b\"><testcase name=\"b1\"/><testcase name=\"b2\"/></testsuite>' > b.xml'''\n"
+                + "    step($class: 'hudson.tasks.junit.JUnitResultArchiver', testResults: '*.xml')\n"
+                + "}"));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        TestResultAction a = b.getAction(TestResultAction.class);
+        assertNotNull(a);
+        assertEquals(4, a.getTotalCount());
+        assertEquals(1, a.getFailCount());
     }
 
 }
