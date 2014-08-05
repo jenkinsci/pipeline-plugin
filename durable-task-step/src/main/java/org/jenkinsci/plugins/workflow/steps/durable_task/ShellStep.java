@@ -24,9 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.steps.durable_task;
 
-import org.jenkinsci.plugins.workflow.steps.Step;
 import hudson.Extension;
-import java.util.Map;
 import org.jenkinsci.plugins.durabletask.BourneShellScript;
 import org.jenkinsci.plugins.durabletask.DurableTask;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -36,20 +34,20 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public final class ShellStep extends DurableTaskStep {
 
-    private final String script;
+    private final String value;
 
-    @DataBoundConstructor public ShellStep(String script) {
-        if (script==null)
+    @DataBoundConstructor public ShellStep(String value) {
+        if (value==null)
             throw new IllegalArgumentException();
-        this.script = script;
+        this.value = value;
     }
 
-    public String getScript() {
-        return script;
+    public String getValue() {
+        return value;
     }
 
     @Override protected DurableTask task() {
-        return new BourneShellScript(script);
+        return new BourneShellScript(value);
     }
 
     @Extension public static final class DescriptorImpl extends DurableTaskStepDescriptor {
@@ -60,10 +58,6 @@ public final class ShellStep extends DurableTaskStep {
 
         @Override public String getFunctionName() {
             return "sh";
-        }
-
-        @Override public Step newInstance(Map<String,Object> arguments) {
-            return new ShellStep((String) arguments.get("value"));
         }
 
     }

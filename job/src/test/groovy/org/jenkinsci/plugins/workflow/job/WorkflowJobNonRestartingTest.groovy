@@ -30,7 +30,6 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution
 import org.jenkinsci.plugins.workflow.graph.AtomNode
 import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep
-import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStepExecution
 import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl
 import hudson.model.Result
 import org.junit.Before
@@ -45,7 +44,7 @@ import javax.inject.Inject
  */
 public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     @Inject
-    DurableTaskStepExecution.Checker checker;
+    DurableTaskStep.Checker checker;
 
     WorkflowJob p
 
