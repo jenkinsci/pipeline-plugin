@@ -50,6 +50,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -63,6 +64,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
 public class DSL extends GroovyObjectSupport implements Serializable {
     private final FlowExecutionOwner handle;
     private transient CpsFlowExecution exec;
+    private transient Map<String,StepDescriptor> functions;
 
     public DSL(FlowExecutionOwner handle) {
         this.handle = handle;
@@ -89,9 +91,16 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             throw new Error(e); // TODO
         }
 
-        final StepDescriptor d = StepDescriptor.getByFunctionName(name);
-        if (d==null)
-            throw new NoSuchMethodError("No such DSL method exists: "+name);
+        if (functions == null) {
+            functions = new TreeMap<String,StepDescriptor>();
+            for (StepDescriptor d : StepDescriptor.all()) {
+                functions.put(d.getFunctionName(), d);
+            }
+        }
+        final StepDescriptor d = functions.get(name);
+        if (d == null) {
+            throw new NoSuchMethodError("No such DSL method " + name + " found among " + functions.keySet());
+        }
 
         final NamedArgsAndClosure ps = parseArgs(d,args);
 

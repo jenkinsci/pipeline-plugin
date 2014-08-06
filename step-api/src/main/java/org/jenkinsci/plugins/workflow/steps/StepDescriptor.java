@@ -76,11 +76,4 @@ public abstract class StepDescriptor extends Descriptor<Step> {
         return Jenkins.getInstance().getDescriptorList(Step.class);
     }
 
-    public static StepDescriptor getByFunctionName(String functionName) {
-        for (StepDescriptor d : all()) {
-            if (d.getFunctionName().equals(functionName))
-                return d;
-        }
-        return null;
-    }
 }
