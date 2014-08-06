@@ -76,10 +76,10 @@ public class MercurialStepTest {
             "node {\n" +
             "    ws {\n" +
             "        dir('main') {\n" +
-            "            scm($class: 'hudson.plugins.mercurial.MercurialSCM', source: '" + sampleRepo + "')\n" +
+            "            scm $class: 'hudson.plugins.mercurial.MercurialSCM', source: '" + sampleRepo + "'\n" +
             "        }\n" +
             "        dir('other') {\n" +
-            "            scm($class: 'hudson.plugins.mercurial.MercurialSCM', source: '" + otherRepo + "', clean: true)\n" +
+            "            scm $class: 'hudson.plugins.mercurial.MercurialSCM', source: '" + otherRepo + "', clean: true\n" +
             "            sh 'echo stuff >> unversioned; wc -l unversioned'\n" +
             "        }\n" +
             "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +
