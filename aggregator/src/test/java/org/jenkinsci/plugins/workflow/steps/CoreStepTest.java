@@ -77,4 +77,15 @@ public class CoreStepTest {
         assertEquals(1, a.getFailCount());
     }
 
+    @Test public void javadoc() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition(
+                  "node {\n"
+                + "    sh 'mkdir docs && echo hello world > docs/index.html'\n"
+                + "    step($class: 'hudson.tasks.JavadocArchiver', javadocDir: 'docs')\n"
+                + "}"));
+        r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals("hello world\n", r.createWebClient().getPage(p, "javadoc/").getWebResponse().getContentAsString());
+    }
+
 }
