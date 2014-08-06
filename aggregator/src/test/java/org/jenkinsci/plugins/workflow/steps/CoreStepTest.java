@@ -105,6 +105,15 @@ public class CoreStepTest {
         WorkflowRun b = r.assertBuildStatus(Result.UNSTABLE, p.scheduleBuild2(0).get());
         assertEquals(JenkinsRule.getLog(b), 1, inbox.size());
         assertEquals(/* MailSender.createUnstableMail/getSubject */Messages.MailSender_UnstableMail_Subject() + " " + b.getFullDisplayName(), inbox.get(0).getSubject());
+        p.setDefinition(new CpsFlowDefinition(
+                  "node {\n"
+                + "    catchError {sh 'false'}\n"
+                + "    step($class: 'hudson.tasks.Mailer', recipients: '" + recipient + "')\n"
+                + "}"));
+        inbox.clear();
+        b = r.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
+        assertEquals(JenkinsRule.getLog(b), 1, inbox.size());
+        assertEquals(Messages.MailSender_FailureMail_Subject() + " " + b.getFullDisplayName(), inbox.get(0).getSubject());
     }
 
 }
