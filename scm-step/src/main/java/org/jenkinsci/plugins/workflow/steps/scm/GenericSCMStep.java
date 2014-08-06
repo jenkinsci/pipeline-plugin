@@ -25,60 +25,48 @@
 package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.Extension;
-import hudson.plugins.mercurial.MercurialSCM;
 import hudson.scm.SCM;
 import java.util.Map;
+import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * Runs Git using {@link MercurialSCM}.
+ * Runs a user-selected {@link SCM}.
  */
-public final class MercurialStep extends SCMStep {
+public final class GenericSCMStep extends SCMStep {
 
-    private final String url;
-    private final String branch;
-    private final String credentialsId;
+    private final SCM scm;
 
-    @DataBoundConstructor public MercurialStep(String url, String branch, String credentialsId, boolean poll, boolean changelog) {
+    @DataBoundConstructor public GenericSCMStep(SCM scm, boolean poll, boolean changelog) {
         super(poll, changelog);
-        this.url = url;
-        this.branch = branch;
-        this.credentialsId = credentialsId;
+        this.scm = scm;
     }
 
-    public String getUrl() {
-        return url;
-    }
-
-    public String getBranch() {
-        return branch;
-    }
-
-    public String getCredentialsId() {
-        return credentialsId;
+    public SCM getSCM() {
+        return scm;
     }
 
     @Override protected SCM createSCM() {
-        return new MercurialSCM(null, url, MercurialSCM.RevisionType.BRANCH, branch, null, null, null, true, credentialsId, !isChangelog());
+        return scm;
     }
 
     @Extension public static final class DescriptorImpl extends SCMStepDescriptor {
 
         @Override public String getFunctionName() {
-            return "hg";
+            return "scm";
         }
 
-        @Override public Step newInstance(Map<String,Object> arguments) {
-            String branch = (String) arguments.get("branch");
-            if (branch == null) {
-                branch = "default";
-            }
-            return new MercurialStep((String) arguments.get("url"), branch, (String) arguments.get("credentialsId"), !Boolean.FALSE.equals(arguments.get("poll")), !Boolean.FALSE.equals(arguments.get("changelog")));
+        @Override public Step newInstance(Map<String,Object> arguments) throws Exception {
+            String className = (String) arguments.get("$class");
+            Class<? extends SCM> c = Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(className).asSubclass(SCM.class);
+            SCM scm = AbstractStepDescriptorImpl.instantiate(c, arguments);
+            return new GenericSCMStep(scm, !Boolean.FALSE.equals(arguments.get("poll")), !Boolean.FALSE.equals(arguments.get("changelog")));
         }
 
         @Override public String getDisplayName() {
-            return "Mercurial";
+            return "General SCM";
         }
 
     }

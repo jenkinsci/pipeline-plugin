@@ -30,12 +30,16 @@ This applies to external processes (shell scripts) so long as the slave can be r
 Flows can pause in the middle and wait for a human to approve something, or enter some information.
 Executors are not consumed while the flow is waiting.
 
+## SCM integration
+
+See [here](scm-step/README.md) for details on using version control from a workflow.
+
 ## Example script
 
 ```
 node('linux') { // grab a slave and allocate a workspace
-  sh('git clone …');
-  sh('mvn verify');
+  git url: '…' // clone/checkout
+  sh 'mvn verify' // run your build
 }
 ```
 
@@ -67,7 +71,7 @@ While the implementation is divided into a number of plugins, for ease of protot
 * `support` adds general implementations of some internals needed by flows, such as storing state.
 * `job` provides the actual job type and top-level UI for defining and running flows.
 * `durable-task-step` uses the `durable-task` plugin to define a shell script step that can survive restarts.
-* `scm-step` adds SCM-related steps.
+* `scm-step` adds SCM-related steps. There is [more documentation there](scm-step/README.md).
 * `cps` is the flow engine implementation based on the Groovy language, and supporting long-running flows using a _continuation passing style_ transformation of the script.
 * `stm` is a simple engine implementation using a _state transition machine_, less intended for end users than as a reference for how engines can work.
 * `aggregator` is a placeholder plugin allowing you to `mvn hpi:run` and see everything working together.
