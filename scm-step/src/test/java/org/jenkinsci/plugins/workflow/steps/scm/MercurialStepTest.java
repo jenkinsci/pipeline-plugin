@@ -42,8 +42,10 @@ import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.For;
 import org.jvnet.hudson.test.JenkinsRule;
 
+@For(GenericSCMStep.class) // formerly a dedicated MercurialStep
 public class MercurialStepTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
@@ -74,10 +76,11 @@ public class MercurialStepTest {
             "node {\n" +
             "    ws {\n" +
             "        dir('main') {\n" +
-            "            hg(url: '" + sampleRepo + "')\n" +
+            "            scm($class: 'hudson.plugins.mercurial.MercurialSCM', source: '" + sampleRepo + "')\n" +
             "        }\n" +
             "        dir('other') {\n" +
-            "            hg(url: '" + otherRepo + "')\n" +
+            "            scm($class: 'hudson.plugins.mercurial.MercurialSCM', source: '" + otherRepo + "', clean: true)\n" +
+            "            sh 'echo stuff >> unversioned; wc -l unversioned'\n" +
             "        }\n" +
             "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +
             "    }\n" +
@@ -85,6 +88,7 @@ public class MercurialStepTest {
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("PRESENT: main/file", b);
         r.assertLogContains("PRESENT: other/otherfile", b);
+        r.assertLogContains("1 unversioned", b);
         FileUtils.touch(new File(sampleRepo, "file2"));
         hg(sampleRepo, "add", "file2");
         hg(sampleRepo, "commit", "--message=file2");
@@ -100,6 +104,7 @@ public class MercurialStepTest {
         assertEquals(2, b.number);
         r.assertLogContains("PRESENT: main/file2", b);
         r.assertLogContains("PRESENT: other/otherfile2", b);
+        r.assertLogContains("1 unversioned", b);
         Iterator<? extends SCM> scms = p.getSCMs().iterator();
         assertTrue(scms.hasNext());
         assertEquals(sampleRepo.getAbsolutePath(), ((MercurialSCM) scms.next()).getSource());
