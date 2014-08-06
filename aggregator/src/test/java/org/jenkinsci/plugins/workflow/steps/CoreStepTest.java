@@ -26,8 +26,10 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Result;
 import hudson.tasks.Fingerprinter;
+import hudson.tasks.i18n.Messages;
 import hudson.tasks.junit.TestResultAction;
 import java.util.List;
+import javax.mail.internet.InternetAddress;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -35,6 +37,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.mock_javamail.Mailbox;
 
 public class CoreStepTest {
 
@@ -86,6 +89,22 @@ public class CoreStepTest {
                 + "}"));
         r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertEquals("hello world\n", r.createWebClient().getPage(p, "javadoc/").getWebResponse().getContentAsString());
+    }
+
+    @Test public void mailer() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        String recipient = "test@nowhere.net";
+        p.setDefinition(new CpsFlowDefinition(
+                  "node {\n"
+                + "    sh '''echo '<testsuite name=\"s\"><testcase name=\"c\"><error>failed</error></testcase></testsuite>' > r.xml'''\n"
+                + "    step($class: 'hudson.tasks.junit.JUnitResultArchiver', testResults: 'r.xml')\n"
+                + "    step($class: 'hudson.tasks.Mailer', recipients: '" + recipient + "')\n"
+                + "}"));
+        Mailbox inbox = Mailbox.get(new InternetAddress(recipient));
+        inbox.clear();
+        WorkflowRun b = r.assertBuildStatus(Result.UNSTABLE, p.scheduleBuild2(0).get());
+        assertEquals(JenkinsRule.getLog(b), 1, inbox.size());
+        assertEquals(/* MailSender.createUnstableMail/getSubject */Messages.MailSender_UnstableMail_Subject() + " " + b.getFullDisplayName(), inbox.get(0).getSubject());
     }
 
 }
