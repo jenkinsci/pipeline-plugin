@@ -51,7 +51,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -71,6 +74,7 @@ import javax.annotation.concurrent.GuardedBy;
 import jenkins.model.Jenkins;
 import jenkins.model.lazy.BuildReference;
 import jenkins.model.lazy.LazyBuildMixIn;
+import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -240,13 +244,13 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 AnnotatedLargeText<? extends FlowNode> logText = la.getLogText();
                 try {
                     long old = entry.getValue();
-                    long revised = logText.writeLogTo(old, listener.getLogger());
+                    long revised = writeLogTo(logText, old, listener.getLogger());
                     if (revised != old) {
                         entry.setValue(revised);
                         modified = true;
                     }
                     if (logText.isComplete()) {
-                        logText.writeLogTo(entry.getValue(), listener.getLogger()); // defend against race condition?
+                        writeLogTo(logText, entry.getValue(), listener.getLogger()); // defend against race condition?
                         assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
                         it.remove();
                         modified = true;
@@ -268,6 +272,16 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 LOGGER.log(Level.WARNING, null, x);
             }
         }
+    }
+    /** Hack since we really want the super method that does not wrap in a {@code PlainTextConsoleOutputStream}, but we cannot call that directly. */
+    private static long writeLogTo(AnnotatedLargeText<?> text, long position, OutputStream os) throws IOException {
+        // TODO this does not handle non-ASCII characters at all (Base64-encoded escape sequences should be OK); should we call the regular method if ^[ is not found in the log?
+        Reader r = text.readAll();
+        r.skip(position);
+        Writer w = new OutputStreamWriter(os);
+        int added = IOUtils.copy(r, w);
+        w.flush();
+        return position + added;
     }
     
     private static final Map<String,WorkflowRun> LOADING_RUNS = new HashMap<String,WorkflowRun>();
