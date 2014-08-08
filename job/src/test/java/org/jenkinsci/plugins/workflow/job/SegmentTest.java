@@ -30,14 +30,14 @@ import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
-import org.jenkinsci.plugins.workflow.support.steps.SegmentStep;
-import org.jenkinsci.plugins.workflow.test.RestartableJenkinsRule;
+import org.jenkinsci.plugins.workflow.support.steps.SegmentStepExecution;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class SegmentTest {
 
@@ -56,13 +56,13 @@ public class SegmentTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
-                        "steps.stage(value: 'A', concurrency: 2);\n" +
-                        "steps.echo('in A');\n" +
-                        "steps.semaphore('B');\n" +
-                        "steps.stage(value: 'B', concurrency: 1);\n" +
-                        "steps.echo('in B');\n" +
-                        "steps.semaphore('X');\n" +
-                        "steps.echo('done')"));
+                        "stage(value: 'A', concurrency: 2);\n" +
+                        "echo('in A');\n" +
+                        "semaphore('B');\n" +
+                        "stage(value: 'B', concurrency: 1);\n" +
+                        "echo('in B');\n" +
+                        "semaphore('X');\n" +
+                        "echo('done')"));
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
                 e1.waitForSuspension();
@@ -115,8 +115,8 @@ public class SegmentTest {
                     assertNotNull(iba);
                     List<CauseOfInterruption> causes = iba.getCauses();
                     assertEquals(1, causes.size());
-                    assertEquals(SegmentStep.CanceledCause.class, causes.get(0).getClass());
-                    assertEquals(b3, ((SegmentStep.CanceledCause) causes.get(0)).getNewerBuild());
+                    assertEquals(SegmentStepExecution.CanceledCause.class, causes.get(0).getClass());
+                    assertEquals(b3, ((SegmentStepExecution.CanceledCause) causes.get(0)).getNewerBuild());
                     assertTrue(b3.isBuilding());
                     story.j.assertLogNotContains("done", b1);
                     story.j.assertLogNotContains("in B", b2);
@@ -130,7 +130,7 @@ public class SegmentTest {
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                SegmentStep.clear();
+                SegmentStepExecution.clear();
                 WorkflowJob p = story.j.jenkins.getItemByFullName("demo", WorkflowJob.class);
                 WorkflowRun b1 = p.getBuildByNumber(1);
                 WorkflowRun b3 = p.getBuildByNumber(3);

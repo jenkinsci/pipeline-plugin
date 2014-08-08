@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import hudson.AbortException;
@@ -60,6 +61,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
@@ -97,13 +99,15 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     };
     private transient StreamBuildListener listener;
-    private transient Object completionLock;
+    private transient AtomicBoolean completed;
+    /** Jenkins instance in effect when {@link #waitForCompletion} was last called. */
+    private transient Jenkins jenkins;
     /** map from node IDs to log positions from which we should copy text */
     private Map<String,Long> logsToCopy;
 
     List<SCMCheckout> checkouts;
     // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally; perhaps keep a List<WeakReference<ChangeLogSet<?>>>
-    private transient List<ChangeLogSet<?>> changeSets;
+    private transient List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
 
     public WorkflowRun(WorkflowJob job) throws IOException {
         super(job);
@@ -158,9 +162,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 listener.error("No flow definition, cannot run");
                 return;
             }
-            execution = definition.create(new Owner(this), getAllActions());
+            Owner owner = new Owner(this);
+            FlowExecutionList.get().register(owner);
+            execution = definition.create(owner, getAllActions());
             execution.addListener(new GraphL());
-            completionLock = new Object();
+            completed = new AtomicBoolean();
             logsToCopy = new LinkedHashMap<String,Long>();
             checkouts = new LinkedList<SCMCheckout>();
             execution.start();
@@ -172,7 +178,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             } else {
                 x.printStackTrace(listener.error("failed to start build"));
             }
-            result = Result.FAILURE;
+            setResult(Result.FAILURE);
             executionPromise.setException(x);
         }
     }
@@ -180,12 +186,19 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     /**
      * Sleeps until the run is finished, updating log messages periodically.
      */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings({"ML_SYNC_ON_UPDATED_FIELD", "UW_UNCOND_WAIT"})
     void waitForCompletion() {
-        while (!execution.isComplete()) {
-            synchronized (completionLock) {
+        jenkins = Jenkins.getInstance();
+        synchronized (completed) {
+            while (!completed.get()) {
+                if (jenkins == null || jenkins.isTerminating()) {
+                    LOGGER.log(Level.FINE, "shutting down, breaking waitForCompletion on {0}", this);
+                    // Stop writing content, in case a new set of objects gets loaded after in-VM restart and starts writing to the same file:
+                    listener.closeQuietly();
+                    listener = new StreamBuildListener(new NullStream());
+                    break;
+                }
                 try {
-                    completionLock.wait(1000);
+                    completed.wait(1000);
                 } catch (InterruptedException x) {
                     try {
                         execution.abort();
@@ -198,12 +211,13 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     }
 
-    @GuardedBy("completionLock")
+    @GuardedBy("completed")
     private void copyLogs() {
         if (logsToCopy == null) { // finished
             return;
         }
         Iterator<Map.Entry<String,Long>> it = logsToCopy.entrySet().iterator();
+        boolean modified = false;
         while (it.hasNext()) {
             Map.Entry<String,Long> entry = it.next();
             FlowNode node;
@@ -212,29 +226,46 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             } catch (IOException x) {
                 LOGGER.log(Level.WARNING, null, x);
                 it.remove();
+                modified = true;
                 continue;
             }
             if (node == null) {
                 LOGGER.log(Level.WARNING, "no such node {0}", entry.getKey());
                 it.remove();
+                modified = true;
                 continue;
             }
             LogAction la = node.getAction(LogAction.class);
             if (la != null) {
                 AnnotatedLargeText<? extends FlowNode> logText = la.getLogText();
                 try {
-                    entry.setValue(logText.writeLogTo(entry.getValue(), listener.getLogger()));
+                    long old = entry.getValue();
+                    long revised = logText.writeLogTo(old, listener.getLogger());
+                    if (revised != old) {
+                        entry.setValue(revised);
+                        modified = true;
+                    }
                     if (logText.isComplete()) {
                         logText.writeLogTo(entry.getValue(), listener.getLogger()); // defend against race condition?
                         assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
                         it.remove();
+                        modified = true;
                     }
                 } catch (IOException x) {
                     LOGGER.log(Level.WARNING, null, x);
                     it.remove();
+                    modified = true;
                 }
             } else if (!node.isRunning()) {
                 it.remove();
+                modified = true;
+            }
+        }
+        if (modified) {
+            try {
+                save();
+            } catch (IOException x) {
+                LOGGER.log(Level.WARNING, null, x);
             }
         }
     }
@@ -247,8 +278,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     /** Hack to allow {@link #execution} to use an {@link Owner} referring to this run, even when it has not yet been loaded. */
     @Override public void reload() throws IOException {
-        LOADING_RUNS.put(key(), this);
-        super.reload();
+        synchronized (LOADING_RUNS) {
+            LOADING_RUNS.put(key(), this);
+        }
+
+        // super.reload() forces result to be FAILURE, so working around that
+        new XmlFile(XSTREAM,new File(getRootDir(),"build.xml")).unmarshal(this);
     }
 
     @Override protected void onLoad() {
@@ -266,16 +301,27 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     LOGGER.log(Level.WARNING, null, x);
                     listener = new StreamBuildListener(new NullStream());
                 }
-                completionLock = new Object();
+                completed = new AtomicBoolean();
                 Queue.getInstance().schedule(new AfterRestartTask(this), 0);
             }
         }
-        LOADING_RUNS.remove(key()); // or could just make the value type be WeakReference<WorkflowRun>
+        synchronized (LOADING_RUNS) {
+            LOADING_RUNS.remove(key()); // or could just make the value type be WeakReference<WorkflowRun>
+            LOADING_RUNS.notifyAll();
+        }
+    }
+
+    // Overridden since super version has an unwanted assertion about this.state, which we do not use.
+    @Override public void setResult(Result r) {
+        if (result == null || r.isWorseThan(result)) {
+            result = r;
+            LOGGER.log(Level.FINE, this + " in " + getRootDir() + ": result is set to " + r, LOGGER.isLoggable(Level.FINER) ? new Exception() : null);
+        }
     }
 
     private void finish(Result r) {
         LOGGER.log(Level.INFO, "{0} completed: {1}", new Object[] {this, r});
-        result = r;
+        setResult(r);
         // TODO set duration
         RunListener.fireCompleted(WorkflowRun.this, listener);
         Throwable t = execution.getCauseOfFailure();
@@ -284,7 +330,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         } else if (t != null) {
             t.printStackTrace(listener.getLogger());
         }
-        listener.finished(result);
+        listener.finished(getResult());
         listener.closeQuietly();
         logsToCopy = null;
         try {
@@ -294,10 +340,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             LOGGER.log(Level.WARNING, null, x);
         }
         RunListener.fireFinalized(this);
-        assert completionLock != null;
-        synchronized (completionLock) {
-            completionLock.notifyAll();
+        assert completed != null;
+        synchronized (completed) {
+            completed.set(true);
+            completed.notifyAll();
         }
+        FlowExecutionList.get().unregister(execution.getOwner());
     }
 
     /**
@@ -347,7 +395,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     public synchronized List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets() {
         if (changeSets == null) {
-            changeSets = new ArrayList<ChangeLogSet<?>>();
+            changeSets = new ArrayList<ChangeLogSet<? extends ChangeLogSet.Entry>>();
             for (SCMCheckout co : checkouts) {
                 if (co.changelogFile != null && co.changelogFile.isFile()) {
                     try {
@@ -370,6 +418,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
         }
         String node = null;
+        // TODO: switch to FilePath.toComputer in 1.571
         Jenkins j = Jenkins.getInstance();
         if (j != null) {
             for (Computer c : j.getComputers()) {
@@ -409,9 +458,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             job = run.getParent().getFullName();
             id = run.getId();
         }
+        private String key() {
+            return job + '/' + id;
+        }
         private @Nonnull WorkflowRun run() throws IOException {
             if (run==null) {
-                WorkflowRun candidate = LOADING_RUNS.get(job + '/' + id);
+                WorkflowRun candidate = LOADING_RUNS.get(key());
                 if (candidate != null && candidate.getParent().getFullName().equals(job) && candidate.getId().equals(id)) {
                     run = candidate;
                 } else {
@@ -430,6 +482,16 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
         @Override public FlowExecution get() throws IOException {
             WorkflowRun r = run();
+            synchronized (LOADING_RUNS) {
+                while (r.execution == null && LOADING_RUNS.containsKey(key())) {
+                    try {
+                        LOADING_RUNS.wait();
+                    } catch (InterruptedException x) {
+                        LOGGER.log(Level.WARNING, "failed to wait for " + r + " to be loaded", x);
+                        break;
+                    }
+                }
+            }
             FlowExecution exec = r.execution;
             if (exec != null) {
                 return exec;
@@ -455,13 +517,27 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             return run().getUrl();
         }
         @Override public String toString() {
-            return "Owner[" + job + "/" + id + ":" + run + "]";
+            return "Owner[" + key() + ":" + run + "]";
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof Owner)) {
+                return false;
+            }
+            Owner that = (Owner) o;
+            return job.equals(that.job) && id.equals(that.id);
+        }
+
+        @Override
+        public int hashCode() {
+            return job.hashCode() ^ id.hashCode();
         }
     }
 
     private final class GraphL implements GraphListener {
         @Override public void onNewHead(FlowNode node) {
-            synchronized (completionLock) {
+            synchronized (completed) {
                 copyLogs();
                 logsToCopy.put(node.getId(), 0L);
             }

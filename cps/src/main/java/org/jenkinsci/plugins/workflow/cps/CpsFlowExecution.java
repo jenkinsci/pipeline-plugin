@@ -61,6 +61,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 import org.jenkinsci.plugins.workflow.support.pickles.serialization.PickleResolver;
 import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverReader;
@@ -69,16 +70,17 @@ import org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStora
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Stack;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -178,9 +180,10 @@ public class CpsFlowExecution extends FlowExecution {
      * This object represents a {@link Future} for filling in {@link CpsThreadGroup}.
      *
      * TODO: provide a mechanism to diagnose how far along this process is.
+     *
+     * @see #runInCpsVmThread(FutureCallback)
      */
-    @Nonnull
-    public transient ListenableFuture<CpsThreadGroup> programPromise;
+    public transient volatile ListenableFuture<CpsThreadGroup> programPromise;
 
     /**
      * Recreated from {@link #owner}
@@ -202,6 +205,14 @@ public class CpsFlowExecution extends FlowExecution {
      * Result set from {@link StepContext}. Start by success and progressively gets worse.
      */
     private Result result = Result.SUCCESS;
+
+    /**
+     * When the program is completed, set to true.
+     *
+     * {@link FlowExecution} gets loaded into memory for the build records that have been completed,
+     * and for those we don't want to load the program state, so that check should be efficient.
+     */
+    private boolean done;
 
     public CpsFlowExecution(String script, FlowExecutionOwner owner) throws IOException {
         this.owner = owner;
@@ -227,32 +238,32 @@ public class CpsFlowExecution extends FlowExecution {
 
     @Override
     public void start() throws IOException {
-        CpsScript s = parseScript();
-        DSL dsl = new DSL(owner);
-        s.getBinding().setVariable("steps", dsl);
-        // some of the steps that acquire resources look better with 'with', so exposing
-        // that name, such as:
-        // with.node('linux') { ... }
-        s.getBinding().setVariable("with", dsl);
+        final CpsScript s = parseScript();
+        s.initialize();
 
-        s.loadEnvironment();
-
-        FlowHead h = new FlowHead(this);
+        final FlowHead h = new FlowHead(this);
         heads.put(h.getId(),h);
         h.newStartNode(new FlowStartNode(this, iotaStr()));
 
-        CpsThreadGroup g = new CpsThreadGroup(this);
-        CpsThread t = g.addThread(new Continuable(s),h,null);
+        final CpsThreadGroup g = new CpsThreadGroup(this);
+        final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
+        g.runner.submit(new Runnable() {
+            @Override
+            public void run() {
+                CpsThread t = g.addThread(new Continuable(s),h,null);
+                t.resume(new Outcome(null, null));
+                f.set(g);
+            }
+        });
 
-        programPromise = Futures.immediateFuture(g);
-        t.resume(new Outcome(null, null));
+        programPromise = f;
+
     }
 
     private GroovyShell buildShell() {
         ImportCustomizer ic = new ImportCustomizer();
         ic.addStarImports(NonCPS.class.getPackage().getName());
         ic.addStarImports("hudson.model","jenkins.model");
-        ic.addStaticStars(CpsBuiltinSteps.class.getName());
 
         CompilerConfiguration cc = new CompilerConfiguration();
         cc.addCompilationCustomizers(ic);
@@ -291,7 +302,8 @@ public class CpsFlowExecution extends FlowExecution {
     @Override
     public void onLoad() {
         try {
-            loadProgramAsync(getProgramDataFile());
+            if (!isComplete())
+                loadProgramAsync(getProgramDataFile());
         } catch (IOException e) {
             SettableFuture<CpsThreadGroup> p = SettableFuture.create();
             programPromise = p;
@@ -344,9 +356,10 @@ public class CpsFlowExecution extends FlowExecution {
      * Used by {@link #loadProgramAsync(File)} to propagate a failure to load the persisted execution state.
      * <p>
      * Let the workflow finish by throwing an exception that indicates how it failed.
+     * @param promise same as {@link #programPromise} but more strongly typed
      */
-    private void loadProgramFailed(Throwable problem, SettableFuture<CpsThreadGroup> promise) {
-        FlowHead head;
+    private void loadProgramFailed(final Throwable problem, SettableFuture<CpsThreadGroup> promise) {
+        final FlowHead head;
         switch (heads.size()) {
         case 0:
             // something went catastrophically wrong and there's no live head. fake one
@@ -369,13 +382,20 @@ public class CpsFlowExecution extends FlowExecution {
 
         CpsThreadGroup g = new CpsThreadGroup(this);
 
-        CpsThread t = g.addThread(
-                new Continuable(new ThrowBlock(new ConstantBlock(
-                    new IOException("Failed to load persisted workflow state", problem)))),
-                head, null
-        );
         promise.set(g);
-        t.resume(new Outcome(null,null));
+        runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+            @Override public void onSuccess(CpsThreadGroup g) {
+                CpsThread t = g.addThread(
+                        new Continuable(new ThrowBlock(new ConstantBlock(
+                            new IOException("Failed to load persisted workflow state", problem)))),
+                        head, null
+                );
+                t.resume(new Outcome(null,null));
+            }
+            @Override public void onFailure(Throwable t) {
+                LOGGER.log(Level.WARNING, null, t);
+            }
+        });
     }
 
     /**
@@ -386,12 +406,45 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     /**
+     * Execute a task in {@link CpsVmThread} to safely access {@link CpsThreadGroup} internal states.
+     *
+     * <p>
+     * If the {@link CpsThreadGroup} deserializatoin fails, {@link FutureCallback#onFailure(Throwable)} will
+     * be invoked (on a random thread that's not {@link CpsVmThread}, since {@link CpsVmThread} cannot exist.)
+     */
+    void runInCpsVmThread(final FutureCallback<CpsThreadGroup> callback) {
+        // first we need to wait for programPromise to fullfil CpsThreadGroup, then we need to run in its runner, phew!
+        Futures.addCallback(programPromise, new FutureCallback<CpsThreadGroup>() {
+            @Override
+            public void onSuccess(final CpsThreadGroup g) {
+                g.runner.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onSuccess(g);
+                    }
+                });
+            }
+
+            /**
+             * Program state failed to load.
+             */
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(t);
+            }
+        });
+    }
+
+
+    /**
      * Waits for the workflow to move into the SUSPENDED state.
      *
      * @throws Exception
      *      if the workflow has failed
      */
     public void waitForSuspension() throws InterruptedException, ExecutionException {
+        if (programPromise==null)
+            return; // the execution has already finished and we are not loading program state anymore
         CpsThreadGroup g = programPromise.get();
         g.scheduleRun().get();
     }
@@ -406,6 +459,34 @@ public class CpsFlowExecution extends FlowExecution {
         for (FlowHead h : heads.values()) {
             r.add(h.get());
         }
+        return r;
+    }
+
+    @Override
+    public ListenableFuture<List<StepExecution>> getCurrentExecutions() {
+        if (programPromise==null)
+            return Futures.immediateFuture(Collections.<StepExecution>emptyList());
+
+        final SettableFuture<List<StepExecution>> r = SettableFuture.create();
+        runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+            @Override
+            public void onSuccess(CpsThreadGroup g) {
+                List<StepExecution> l = new ArrayList<StepExecution>();
+                for (CpsThread t : g.threads.values()) {
+                    // TODO: we need to exclude outer StepExecutions
+                    StepExecution e = t.getStep();
+                    if (e!=null)
+                        l.add(e);
+                }
+                r.set(l);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                r.setException(t);
+            }
+        });
+
         return r;
     }
 
@@ -429,18 +510,34 @@ public class CpsFlowExecution extends FlowExecution {
 
 
     @Override
-    public synchronized void addListener(GraphListener listener) {
+    public void addListener(GraphListener listener) {
         if (listeners == null) {
-            listeners = new ArrayList<GraphListener>();
+            listeners = new CopyOnWriteArrayList<GraphListener>();
         }
         listeners.add(listener);
     }
 
     @Override
     public void finish(Result result) throws IOException, InterruptedException {
-        // TODO set FlowEndNode.result to ABORTED
-        // TODO: what happens to FlowGraph when we abort it?
-        throw new UnsupportedOperationException();
+        setResult(result);
+
+        // stop all ongoing activities
+        Futures.addCallback(getCurrentExecutions(), new FutureCallback<List<StepExecution>>() {
+            @Override
+            public void onSuccess(List<StepExecution> l) {
+                for (StepExecution e : l) {
+                    try {
+                        e.stop();
+                    } catch (Exception x) {
+                        LOGGER.log(Level.WARNING, "Failed to abort " + CpsFlowExecution.this.toString(), x);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+            }
+        });
     }
 
     @Override
@@ -464,6 +561,11 @@ public class CpsFlowExecution extends FlowExecution {
         storage.saveActions(node, actions);
     }
 
+    @Override
+    public boolean isComplete() {
+        return done || super.isComplete();
+    }
+
     /*packgage*/ synchronized void onProgramEnd(Outcome outcome) {
         // end of the program
         // run till the end successfully FIXME: failure comes here, too
@@ -474,6 +576,7 @@ public class CpsFlowExecution extends FlowExecution {
             head.addAction(new ErrorAction(outcome.getAbnormal()));
 
         // shrink everything into a single new head
+        done = true;
         FlowHead first = getFirstHead();
         first.setNewHead(head);
         heads.clear();
@@ -485,7 +588,7 @@ public class CpsFlowExecution extends FlowExecution {
         return heads.firstEntry().getValue();
     }
 
-    synchronized void notifyListeners(FlowNode node) {
+    void notifyListeners(FlowNode node) {
         if (listeners != null) {
             for (GraphListener listener : listeners) {
                 listener.onNewHead(node);

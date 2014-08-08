@@ -3,14 +3,12 @@ package org.jenkinsci.plugins.workflow.steps.input;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Util;
-import hudson.console.HyperlinkNote;
 import hudson.model.Failure;
 import hudson.model.FileParameterValue;
 import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.Run;
-import hudson.model.TaskListener;
 import hudson.model.User;
 import hudson.util.HttpResponses;
 import jenkins.model.Jenkins;
@@ -23,6 +21,7 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpResponse;
@@ -30,6 +29,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -45,7 +45,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
  *
  * @author Kohsuke Kawaguchi
  */
-public class InputStep extends AbstractStepImpl implements ModelObject {
+public class InputStep extends AbstractStepImpl implements Serializable {
     private final String message;
 
     /**
@@ -72,21 +72,6 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
     @DataBoundSetter
     private String ok;
 
-    private StepContext context;
-
-    /**
-     * Pause gets added here.
-     */
-    @StepContextParameter
-    /*package*/ transient Run run;
-
-    @StepContextParameter private transient TaskListener listener;
-
-    /**
-     * Result of the input.
-     */
-    private Outcome outcome;
-
     @DataBoundConstructor
     public InputStep(String message) {
         if (message==null)
@@ -105,6 +90,9 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         return id;
     }
 
+    public String getSubmitter() {
+        return submitter;
+    }
 
     private String capitalize(String id) {
         if (id==null)
@@ -125,12 +113,6 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         return ok!=null ? ok : "Proceed";
     }
 
-    @Override
-    public String getDisplayName() {
-        if (message.length()<32)    return message;
-        return message.substring(0,32)+"...";
-    }
-
     public List<ParameterDefinition> getParameters() {
         if (params instanceof ParameterDefinition)
             return Collections.singletonList((ParameterDefinition)params);
@@ -143,190 +125,11 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
         throw new IllegalStateException("Unexpected parameters: "+params);
     }
 
-    public Run getRun() {
-        return run;
-    }
-
     public String getMessage() {
         return message;
     }
 
-    /**
-     * If this input step has been decided one way or the other.
-     */
-    public boolean isSettled() {
-        return outcome!=null;
-    }
-
-    @Override
-    protected boolean doStart(StepContext context) throws Exception {
-        this.context = context;
-
-        // record this input
-        getPauseAction().add(this);
-
-        String baseUrl = '/' + run.getUrl() + getPauseAction().getUrlName() + '/';
-        if (getParameters().isEmpty()) {
-            String thisUrl = baseUrl + Util.rawEncode(getId()) + '/';
-            listener.getLogger().printf("%s%n%s or %s%n", getMessage(), POSTHyperlinkNote.encodeTo(thisUrl + "proceed", getOk()), POSTHyperlinkNote.encodeTo(thisUrl + "abort", "Abort"));
-        } else {
-            // TODO listener.hyperlink(…) does not work; why?
-            listener.getLogger().println(HyperlinkNote.encodeTo(baseUrl, "Input requested"));
-        }
-
-        return false;
-    }
-
-    /**
-     * Gets the {@link InputAction} that this step should be attached to.
-     */
-    private InputAction getPauseAction() {
-        InputAction a = run.getAction(InputAction.class);
-        if (a==null)
-            run.addAction(a=new InputAction());
-        return a;
-    }
-
-    /**
-     * Called from the form via browser to submit/abort this input step.
-     */
-    @RequirePOST
-    public HttpResponse doSubmit(StaplerRequest request) throws IOException, ServletException, InterruptedException {
-        if (request.getParameter("proceed")!=null) {
-            doProceed(request);
-        } else {
-            doAbort();
-        }
-
-        // go back to the Run page
-        return HttpResponses.redirectTo("../../");
-    }
-
-    /**
-     * REST endpoint to submit the input.
-     */
-    @RequirePOST
-    public HttpResponse doProceed(StaplerRequest request) throws IOException, ServletException, InterruptedException {
-        preSubmissionCheck();
-
-        Object v = parseValue(request);
-        outcome = new Outcome(v, null);
-        context.onSuccess(v);
-
-        postSettlement();
-
-        // TODO: record this decision to FlowNode
-
-        return HttpResponses.ok();
-    }
-
-    /**
-     * REST endpoint to abort the workflow.
-     */
-    @RequirePOST
-    public HttpResponse doAbort() throws IOException, ServletException {
-        preSubmissionCheck();
-
-        RejectionException e = new RejectionException(User.current());
-        outcome = new Outcome(null,e);
-        context.onFailure(e);
-
-        postSettlement();
-
-        // TODO: record this decision to FlowNode
-
-        return HttpResponses.ok();
-    }
-
-    /**
-     * Parse the submitted {@link ParameterValue}s
-     */
-    private Object parseValue(StaplerRequest request) throws ServletException, IOException, InterruptedException {
-        Map<String, Object> mapResult = new HashMap<String, Object>();
-        List<ParameterDefinition> defs = getParameters();
-
-        Object params = request.getSubmittedForm().get("parameter");
-        if (params!=null) {
-            for (Object o : JSONArray.fromObject(params)) {
-                JSONObject jo = (JSONObject) o;
-                String name = jo.getString("name");
-
-                ParameterDefinition d=null;
-                for (ParameterDefinition def : defs) {
-                    if (def.getName().equals(name))
-                        d = def;
-                }
-                if (d == null)
-                    throw new IllegalArgumentException("No such parameter definition: " + name);
-
-                ParameterValue v = d.createValue(request, jo);
-                mapResult.put(name, convert(name, v));
-            }
-        }
-
-        // TODO: perhaps we should return a different object to allow the workflow to look up
-        // who approved it, etc?
-        switch (mapResult.size()) {
-        case 0:
-            return null;    // no value if there's no parameter
-        case 1:
-            return mapResult.values().iterator().next();
-        default:
-            return mapResult;
-        }
-    }
-
-    private Object convert(String name, ParameterValue v) throws IOException, InterruptedException {
-        if (v instanceof FileParameterValue) {
-            FileParameterValue fv = (FileParameterValue) v;
-            FilePath fp = new FilePath(run.getRootDir()).child(name);
-            fp.copyFrom(fv.getFile());
-            return fp;
-        }
-
-        // TODO: post
-        try {
-            Method m = v.getClass().getMethod("getValue");
-            return m.invoke(v);
-        } catch (NoSuchMethodException e) {
-            // fall through
-        } catch (IllegalAccessException e) {
-            // fall through
-        } catch (InvocationTargetException e) {
-            throw new IOException("Failed to convert value: "+v,e);
-        }
-
-        try {
-            Field f = v.getClass().getField("value");
-            return f.get(v);
-        } catch (IllegalAccessException e) {
-            // fall through
-        } catch (NoSuchFieldException e) {
-            // fall through
-        }
-
-        // not sure what to do
-        return null;
-    }
-
-    /**
-     * Check if the current user can submit the input.
-     */
-    private void preSubmissionCheck() {
-        if (isSettled())
-            throw new Failure("This input has been already given");
-        // TODO: permission check
-        if (submitter !=null && !canSubmit()) {
-            throw new Failure("You need to be "+ submitter +" to submit this");
-        }
-    }
-
-    private void postSettlement() throws IOException {
-        getPauseAction().remove(this);
-        run.save();
-    }
-
-    private boolean canSubmit() {
+    public boolean canSubmit() {
         Authentication a = Jenkins.getAuthentication();
         return canSettle(a);
     }
@@ -335,7 +138,7 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
      * Checks if the given user can settle this input.
      */
     public boolean canSettle(Authentication a) {
-        if (a.getName().equals(submitter))
+        if (submitter==null || a.getName().equals(submitter))
             return true;
         for (GrantedAuthority ga : a.getAuthorities()) {
             if (ga.getAuthority().equals(submitter))
@@ -352,6 +155,11 @@ public class InputStep extends AbstractStepImpl implements ModelObject {
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(InputStepExecution.class);
+        }
+
         @Override
         public String getFunctionName() {
             return "input";

@@ -39,6 +39,7 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -49,6 +50,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -62,6 +64,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
 public class DSL extends GroovyObjectSupport implements Serializable {
     private final FlowExecutionOwner handle;
     private transient CpsFlowExecution exec;
+    private transient Map<String,StepDescriptor> functions;
 
     public DSL(FlowExecutionOwner handle) {
         this.handle = handle;
@@ -79,6 +82,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
      *      returned. Otherwise this method {@linkplain Continuable#suspend(Object) suspends}.
      */
     @Override
+    @CpsVmThreadOnly
     public Object invokeMethod(String name, Object args) {
         try {
             if (exec==null)
@@ -87,9 +91,16 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             throw new Error(e); // TODO
         }
 
-        final StepDescriptor d = StepDescriptor.getByFunctionName(name);
-        if (d==null)
-            throw new NoSuchMethodError("No such DSL method exists: "+name);
+        if (functions == null) {
+            functions = new TreeMap<String,StepDescriptor>();
+            for (StepDescriptor d : StepDescriptor.all()) {
+                functions.put(d.getFunctionName(), d);
+            }
+        }
+        final StepDescriptor d = functions.get(name);
+        if (d == null) {
+            throw new NoSuchMethodError("No such DSL method " + name + " found among " + functions.keySet());
+        }
 
         final NamedArgsAndClosure ps = parseArgs(d,args);
 
@@ -110,14 +121,17 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             thread.head.setNewHead(an);
         }
 
-        Step s = d.newInstance(ps.namedArgs);
-
         final CpsStepContext context = new CpsStepContext(d,thread,handle,an,ps.body);
+        Step s;
         boolean sync;
         try {
-            sync = s.start(context);
+            s = d.newInstance(ps.namedArgs);
+            StepExecution e = s.start(context);
+            thread.setStep(e);
+            sync = e.start();
         } catch (Exception e) {
             context.onFailure(e);
+            s = null;
             sync = true;
         }
 
@@ -128,12 +142,17 @@ public class DSL extends GroovyObjectSupport implements Serializable {
                 context.onFailure(new AssertionError("Step "+s+" claimed to have ended synchronously, but didn't set the result via StepContext.onSuccess/onFailure"));
             }
 
+            thread.setStep(null);
+
             // if the execution has finished synchronously inside the start method
             // we just move on accordingly
             if (an instanceof StepStartNode) {
                 // no body invoked, so EndNode follows StartNode immediately.
                 thread.head.setNewHead(new StepEndNode(exec, (StepStartNode)an, an));
             }
+
+            thread.head.markIfFail(context.getOutcome());
+
             return context.replay();
         } else {
             // if it's in progress, suspend it until we get invoked later.

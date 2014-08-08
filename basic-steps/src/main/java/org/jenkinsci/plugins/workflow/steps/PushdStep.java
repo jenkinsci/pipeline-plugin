@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.workflow.steps;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.TaskListener;
+import javax.inject.Inject;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -35,21 +36,20 @@ import org.kohsuke.stapler.DataBoundConstructor;
 public class PushdStep extends AbstractStepImpl {
 
     private final String value;
-    @StepContextParameter private transient TaskListener listener;
-    @StepContextParameter private transient FilePath cwd;
 
     @DataBoundConstructor public PushdStep(String value) {
         this.value = value;
     }
 
-    @Override protected boolean doStart(StepContext context) throws Exception {
-        FilePath dir = cwd.child(value);
-        listener.getLogger().println("Running in " + dir);
-        context.invokeBodyLater(context, dir);
-        return false;
+    public String getValue() {
+        return value;
     }
 
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(Execution.class);
+        }
 
         @Override public String getFunctionName() {
             return "dir";
@@ -63,6 +63,20 @@ public class PushdStep extends AbstractStepImpl {
             return true;
         }
 
+    }
+
+    public static class Execution extends StepExecution {
+        
+        @Inject private transient PushdStep step;
+        @StepContextParameter private transient TaskListener listener;
+        @StepContextParameter private transient FilePath cwd;
+
+        @Override public boolean start() throws Exception {
+            FilePath dir = cwd.child(step.getValue());
+            listener.getLogger().println("Running in " + dir);
+            getContext().invokeBodyLater(getContext(), dir);
+            return false;
+        }
     }
 
 }

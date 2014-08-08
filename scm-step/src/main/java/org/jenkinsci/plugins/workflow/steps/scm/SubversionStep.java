@@ -32,7 +32,7 @@ import org.jenkinsci.plugins.workflow.steps.Step;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * Runs Git using {@link SubversionSCM}.
+ * Runs Subversion using {@link SubversionSCM}.
  */
 public final class SubversionStep extends SCMStep {
 

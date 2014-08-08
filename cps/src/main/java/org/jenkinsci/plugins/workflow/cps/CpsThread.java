@@ -29,6 +29,7 @@ import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -38,7 +39,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.*;
-import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
  * Represents a {@link Continuable} that is either runnable or suspended (that waits for an
@@ -92,6 +93,12 @@ public final class CpsThread implements Serializable {
     @Nullable
     private final ContextVariableSet contextVariables;
 
+    /**
+     * If this thread is waiting for a {@link StepExecution} to complete (by invoking our callback),
+     * this field is set to that execution.
+     */
+    private StepExecution step;
+
     CpsThread(CpsThreadGroup group, int id, Continuable program, FlowHead head, ContextVariableSet contextVariables) {
         this.group = group;
         this.id = id;
@@ -119,6 +126,14 @@ public final class CpsThread implements Serializable {
 
     boolean isRunnable() {
         return resumeValue!=null;
+    }
+
+    public StepExecution getStep() {
+        return step;
+    }
+
+    /*package*/ void setStep(StepExecution step) {
+        this.step = step;
     }
 
     /**
@@ -214,9 +229,10 @@ public final class CpsThread implements Serializable {
     private static final ThreadLocal<CpsThread> CURRENT = new ThreadLocal<CpsThread>();
 
     /**
-     * While {@link Continuable#run0(Outcome)} executes, this method returns {@link CpsThread}
+     * While {@link CpsThreadGroup} executes, this method returns {@link CpsThread}
      * that's running.
      */
+    @CpsVmThreadOnly
     /*package*/ static CpsThread current() {
         return CURRENT.get();
     }

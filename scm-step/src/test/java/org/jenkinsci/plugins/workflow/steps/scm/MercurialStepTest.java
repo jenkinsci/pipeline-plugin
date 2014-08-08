@@ -42,8 +42,10 @@ import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.For;
 import org.jvnet.hudson.test.JenkinsRule;
 
+@For(GenericSCMStep.class) // formerly a dedicated MercurialStep
 public class MercurialStepTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
@@ -71,13 +73,14 @@ public class MercurialStepTest {
         p.addTrigger(new SCMTrigger(""));
         p.setQuietPeriod(3); // so it only does one build
         p.setDefinition(new CpsFlowDefinition(
-            "with.node {\n" +
-            "    with.ws {\n" +
-            "        with.dir('main') {\n" +
-            "            steps.hg(url: '" + sampleRepo + "')\n" +
+            "node {\n" +
+            "    ws {\n" +
+            "        dir('main') {\n" +
+            "            scm $class: 'hudson.plugins.mercurial.MercurialSCM', source: '" + sampleRepo + "'\n" +
             "        }\n" +
-            "        with.dir('other') {\n" +
-            "            steps.hg(url: '" + otherRepo + "')\n" +
+            "        dir('other') {\n" +
+            "            scm $class: 'hudson.plugins.mercurial.MercurialSCM', source: '" + otherRepo + "', clean: true\n" +
+            "            sh 'echo stuff >> unversioned; wc -l unversioned'\n" +
             "        }\n" +
             "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +
             "    }\n" +
@@ -85,6 +88,7 @@ public class MercurialStepTest {
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("PRESENT: main/file", b);
         r.assertLogContains("PRESENT: other/otherfile", b);
+        r.assertLogContains("1 unversioned", b);
         FileUtils.touch(new File(sampleRepo, "file2"));
         hg(sampleRepo, "add", "file2");
         hg(sampleRepo, "commit", "--message=file2");
@@ -93,12 +97,14 @@ public class MercurialStepTest {
         hg(otherRepo, "commit", "--message=otherfile2");
         System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
         System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(otherRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
+        Thread.sleep(1000); // TODO can we force SCMTrigger$Runner.run to have completed?
         r.waitUntilNoActivity();
         FileUtils.copyFile(p.getSCMTrigger().getLogFile(), System.out);
         b = p.getLastBuild();
         assertEquals(2, b.number);
         r.assertLogContains("PRESENT: main/file2", b);
         r.assertLogContains("PRESENT: other/otherfile2", b);
+        r.assertLogContains("1 unversioned", b);
         Iterator<? extends SCM> scms = p.getSCMs().iterator();
         assertTrue(scms.hasNext());
         assertEquals(sampleRepo.getAbsolutePath(), ((MercurialSCM) scms.next()).getSource());

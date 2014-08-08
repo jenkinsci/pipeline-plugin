@@ -28,33 +28,40 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.568</version>
+        <version>1.572</version>
     </parent>
-    <groupId>org.jenkinsci.plugins.workflow</groupId>
-    <artifactId>workflow-all</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <groupId>org.jenkins-ci.plugins.workflow</groupId>
+    <artifactId>workflow-pom</artifactId>
+    <version>0.1-beta-2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Workflow: Parent</name>
+    <url>https://github.com/jenkinsci/workflow-plugin</url>
     <licenses>
         <license>
             <name>MIT License</name>
             <url>http://opensource.org/licenses/MIT</url>
         </license>
     </licenses>
+    <scm>
+        <connection>scm:git:git://github.com/jenkinsci/workflow-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/workflow-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/workflow-plugin</url>
+      <tag>HEAD</tag>
+  </scm>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <modules>
         <module>step-api</module>
-        <module>flow-api</module>
-        <module>flow-support</module>
+        <module>api</module>
+        <module>support</module>
         <module>basic-steps</module>
         <module>durable-task-step</module>
         <module>scm-step</module>
         <module>cps</module>
         <module>stm</module>
         <module>job</module>
-        <module>demo</module>
+        <module>aggregator</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -96,6 +103,16 @@
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
                 <version>1.109</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <!-- https://jira.codehaus.org/browse/MRELEASE-271 workaround -->
+                    <preparationGoals>clean install</preparationGoals>
+                    <tagNameFormat>workflow-@{project.version}</tagNameFormat>
+                </configuration>
             </plugin>
         </plugins>
     </build>

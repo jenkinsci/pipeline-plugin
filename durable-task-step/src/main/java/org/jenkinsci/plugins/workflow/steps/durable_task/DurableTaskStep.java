@@ -24,48 +24,61 @@
 
 package org.jenkinsci.plugins.workflow.steps.durable_task;
 
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import com.google.common.base.Function;
+import com.google.inject.Inject;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.XmlFile;
 import hudson.model.Computer;
 import hudson.model.PeriodicWork;
 import hudson.model.TaskListener;
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.durabletask.Controller;
 import org.jenkinsci.plugins.durabletask.DurableTask;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 /**
  * Runs an durable task on a slave, such as a shell script.
  */
-public abstract class DurableTaskStep extends Step {
+public abstract class DurableTaskStep extends AbstractStepImpl {
 
     private static final Logger LOGGER = Logger.getLogger(DurableTaskStep.class.getName());
 
     protected abstract DurableTask task();
 
-    @Override public final boolean start(StepContext context) {
-        try {
-            FilePath ws = context.get(FilePath.class);
-            assert ws != null : context.getClass() + " failed to provide a FilePath even though one was requested";
-            String remote = ws.getRemote();
-            String node = null;
+    protected abstract static class DurableTaskStepDescriptor extends AbstractStepDescriptorImpl {
+        protected DurableTaskStepDescriptor() {
+            super(Execution.class);
+        }
+    }
+
+    /**
+     * Represents one task that is believed to still be running.
+     */
+    @Restricted(NoExternalUse.class)
+    public static final class Execution extends StepExecution {
+
+        @Inject private transient DurableTaskStep step;
+        @StepContextParameter private transient FilePath ws;
+        @StepContextParameter private transient EnvVars env;
+        @StepContextParameter private transient Launcher launcher;
+        @StepContextParameter private transient TaskListener listener;
+        private Controller controller;
+        private String node;
+        private String remote;
+
+        @Override public boolean start() throws Exception {
             for (Computer c : Jenkins.getInstance().getComputers()) {
                 if (c.getChannel() == ws.getChannel()) {
                     node = c.getName();
@@ -75,163 +88,63 @@ public abstract class DurableTaskStep extends Step {
             if (node == null) {
                 throw new IllegalStateException("no known node for " + ws);
             }
-            register(context, task().launch(context.get(EnvVars.class), ws, context.get(Launcher.class), context.get(TaskListener.class)), node, remote);
-        } catch (Exception x) {
-            context.onFailure(x);
-        }
-        return false;
-        // TODO implement stop, however it is design (will need to call Controller.stop)
-    }
-
-    protected abstract static class DurableTaskStepDescriptor extends StepDescriptor {
-        
-        @Override public final Set<Class<?>> getRequiredContext() {
-            Set<Class<?>> r = new HashSet<Class<?>>();
-            r.add(EnvVars.class);
-            r.add(FilePath.class);
-            r.add(Launcher.class);
-            r.add(TaskListener.class);
-            return r;
+            controller = step.task().launch(env, ws, launcher, listener);
+            this.remote = ws.getRemote();
+            return false;
         }
 
-    }
-
-    private static List<RunningTask> runningTasks;
-
-    private static XmlFile getConfigFile() {
-        return new XmlFile(new File(Jenkins.getInstance().getRootDir(), DurableTaskStep.class.getName() + ".xml"));
-    }
-
-    @SuppressWarnings("unchecked")
-    private static synchronized void load() {
-        if (runningTasks == null) {
-            runningTasks = new ArrayList<RunningTask>();
-            XmlFile configFile = getConfigFile();
-            if (configFile.exists()) {
-                try {
-                    runningTasks = (List<RunningTask>) configFile.read();
-                } catch (IOException x) {
-                    LOGGER.log(Level.WARNING, null, x);
-                }
-            }
-        }
-    }
-
-    private static synchronized void save() {
-        try {
-            getConfigFile().write(runningTasks);
-        } catch (IOException x) {
-            LOGGER.log(Level.WARNING, null, x);
-        }
-    }
-
-    private static synchronized void register(StepContext context, Controller controller, String node, String remote) {
-        load();
-        runningTasks.add(new RunningTask(context, controller, node, remote));
-        save();
-    }
-
-    private static void check() {
-        List<RunningTask> done = new LinkedList<RunningTask>();
-        synchronized (DurableTaskStep.class) {
-            load();
-            boolean changed = false;
-            for (RunningTask rt : runningTasks) {
-                switch (rt.check()) {
-                case UPDATED:
-                    changed = true;
-                    break;
-                case DONE:
-                    changed = true;
-                    done.add(rt);
-                    break;
-                default:
-                    // NO_CHANGE, leave in queue
-                }
-            }
-            if (changed) {
-                runningTasks.removeAll(done);
-                save();
-            }
-        }
-        for (RunningTask rt : done) {
-            rt.report();
-        }
-    }
-
-    private enum CheckResult {
-        /** Task still believed to be running, but has produced no new output since the last check. */
-        NO_CHANGE,
-        /** Task has produced new output but is still running. */
-        UPDATED,
-        /** Task is finished (or in an unrecoverable error state). */
-        DONE
-    }
-
-    /**
-     * Represents one task that is believed to still be running.
-     * Serializable; one row of our state table.
-     */
-    private static final class RunningTask {
-
-        private final StepContext context;
-        private final Controller controller;
-        private final String node;
-        private final String remote;
-        private transient Object result;
-        private transient Throwable error;
-
-        RunningTask(StepContext context, Controller controller, String node, String remote) {
-            this.context = context;
-            this.controller = controller;
-            this.node = node;
-            this.remote = remote;
-        }
-
-        /** Checks for progress or completion of the external task. */
-        CheckResult check() {
-            try {
+        private @CheckForNull FilePath getWorkspace() throws IOException, InterruptedException {
+            if (ws == null) {
                 Computer c = Jenkins.getInstance().getComputer(node);
                 if (c == null) {
                     LOGGER.log(Level.FINE, "no such computer {0}", node);
-                    return CheckResult.NO_CHANGE;
+                    return null;
                 }
                 if (c.isOffline()) {
                     LOGGER.log(Level.FINE, "{0} is offline", node);
-                    return CheckResult.NO_CHANGE;
+                    return null;
                 }
-                FilePath ws = new FilePath(c.getChannel(), remote);
-                if (!ws.isDirectory()) {
-                    error = new AbortException("missing workspace " + remote + " on " + node);
-                    return CheckResult.DONE;
-                }
-                TaskListener listener = context.get(TaskListener.class);
-                boolean wrote = controller.writeLog(ws, listener.getLogger());
-                Integer exitCode = controller.exitStatus(ws);
-                if (exitCode == null) {
-                    LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
-                    return wrote ? CheckResult.UPDATED : CheckResult.NO_CHANGE;
-                } else if (exitCode == 0) {
-                    result = exitCode; // TODO could add an option to have this be text output from command
-                } else {
-                    error = new AbortException("script returned exit code " + exitCode);
-                }
-                controller.cleanup(ws);
-                return CheckResult.DONE;
-            } catch (IOException x) {
-                error = x;
-            } catch (InterruptedException x) {
-                error = x;
+                ws = new FilePath(c.getChannel(), remote);
             }
-            return CheckResult.DONE;
+            if (!ws.isDirectory()) {
+                throw new AbortException("missing workspace " + remote + " on " + node);
+            }
+            return ws;
         }
 
-        /** Reports success or failure of step, outside synchronization block to avoid deadlocks. */
-        void report() {
-            if (error != null) {
-                context.onFailure(error);
-            } else {
-                context.onSuccess(result);
+        @Override public void stop() throws Exception {
+            FilePath workspace = getWorkspace();
+            if (workspace != null) {
+                controller.stop(workspace);
+            }
+        }
+
+        /** Checks for progress or completion of the external task. */
+        private void check() {
+            try {
+                FilePath workspace = getWorkspace();
+                if (workspace == null) {
+                    return;
+                }
+                // cannot use this.listener after restart:
+                if (controller.writeLog(workspace, getContext().get(TaskListener.class).getLogger())) {
+                    getContext().saveState();
+                }
+                Integer exitCode = controller.exitStatus(workspace);
+                if (exitCode == null) {
+                    LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
+                } else {
+                    controller.cleanup(workspace);
+                    if (exitCode == 0) {
+                        getContext().onSuccess(exitCode); // TODO could add an option to have this be text output from command
+                    } else {
+                        getContext().onFailure(new AbortException("script returned exit code " + exitCode));
+                    }
+                }
+            } catch (IOException x) {
+                getContext().onFailure(x);
+            } catch (InterruptedException x) {
+                getContext().onFailure(x);
             }
         }
 
@@ -239,15 +152,17 @@ public abstract class DurableTaskStep extends Step {
 
     @Restricted(NoExternalUse.class)
     @Extension public static final class Checker extends PeriodicWork {
-
         @Override public long getRecurrencePeriod() {
             return 5000; // 5s
         }
-
         @Override protected void doRun() throws Exception {
-            check();
+            StepExecution.applyAll(Execution.class, new Function<Execution,Void>() {
+                @Override public Void apply(Execution e) {
+                    e.check();
+                    return null;
+                }
+            }).get();
         }
-
     }
 
 }

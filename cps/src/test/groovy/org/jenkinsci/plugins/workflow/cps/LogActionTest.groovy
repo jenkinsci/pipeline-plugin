@@ -41,7 +41,7 @@ class LogActionTest extends AbstractCpsFlowTest {
     @Test
     public void echo() {
         def flow = new CpsFlowDefinition("""
-steps.echo("Hello I'm Gilbert")
+echo("Hello I'm Gilbert")
 """)
 
         def exec = createExecution(flow)

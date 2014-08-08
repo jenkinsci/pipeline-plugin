@@ -6,8 +6,8 @@
   <l:layout title="${it.displayName} : ${it.run}">
     <st:include it="${it.run}" page="sidepanel.jelly" />
     <l:main-panel>
-      <j:forEach var="s" items="${it.steps}">
-        <st:include page="index.jelly" it="${s}"/>
+      <j:forEach var="e" items="${it.executions}">
+        <st:include page="index.jelly" it="${e}"/>
       </j:forEach>
     </l:main-panel>
   </l:layout>

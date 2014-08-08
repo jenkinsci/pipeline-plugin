@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import com.cloudbees.groovy.cps.Outcome;
+import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -100,11 +102,11 @@ final class FlowHead implements Serializable {
             this.head = v;
             execution.storage.storeNode(head);
 
-            CpsThreadGroup ctg = CpsThreadGroup.current();
-            if (ctg!=null) {
+            CpsVmThread c = CpsVmThread.current();
+            if (c !=null) {
                 // if the manipulation is from within the program executing thread, then
                 // defer the notification till we get to a safe point.
-                ctg.queueNewHead(v);
+                c.threadGroup.notifyNewHead(v);
             } else {
                 // in recovering from error and such situation, we sometimes need to grow the graph
                 // without running the program.
@@ -117,6 +119,16 @@ final class FlowHead implements Serializable {
 
     FlowNode get() {
         return this.head;
+    }
+
+    /**
+     * If the given outcome is a failure, mark the current head as a failure.
+     */
+    public void markIfFail(Outcome o) {
+        // record the failure in a step
+        if (o.isFailure()) {
+            get().addAction(new ErrorAction(o.getAbnormal()));
+        }
     }
 
     // used only during deserialization

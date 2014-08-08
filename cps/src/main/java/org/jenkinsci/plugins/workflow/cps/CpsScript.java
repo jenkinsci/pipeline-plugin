@@ -35,7 +35,8 @@ import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 
 /**
  * {@link SerializableScript} that overrides target of the output.
@@ -44,6 +45,9 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  */
 @PersistIn(PROGRAM)
 public abstract class CpsScript extends SerializableScript {
+
+    private static final String STEPS_VAR = "steps";
+
     transient CpsFlowExecution execution;
 
     public CpsScript() {
@@ -54,10 +58,12 @@ public abstract class CpsScript extends SerializableScript {
     }
 
     @SuppressWarnings("deprecation") // TODO encoding of execution.owner.console?
-    void loadEnvironment() throws IOException {
-        Queue.Executable qe = execution.getOwner().getExecutable();
+    void initialize() throws IOException {
+        FlowExecutionOwner owner = execution.getOwner();
+        getBinding().setVariable(STEPS_VAR, new DSL(owner));
+        Queue.Executable qe = owner.getExecutable();
         if (qe instanceof Run) {
-            PrintStream ps = execution.getOwner().getConsole();
+            PrintStream ps = owner.getConsole();
             try {
                 EnvVars env = ((Run) qe).getEnvironment(new StreamTaskListener(ps));
                 getBinding().getVariables().putAll(env);
@@ -65,6 +71,17 @@ public abstract class CpsScript extends SerializableScript {
                 throw new IOException(x);
             }
         }
+    }
+
+
+    /**
+     * We use DSL here to try invoke the step implementation, if there is Step implementation found it's handled or
+     * it's an error
+     */
+    @Override
+    public Object invokeMethod(String name, Object args) {
+        DSL dsl = (DSL) getBinding().getVariable(STEPS_VAR);
+        return dsl.invokeMethod(name,args);
     }
 
     @Override

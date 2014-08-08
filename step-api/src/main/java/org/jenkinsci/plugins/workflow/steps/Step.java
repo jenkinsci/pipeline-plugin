@@ -52,19 +52,7 @@ public abstract class Step extends AbstractDescribableImpl<Step> {
      *      if any exception is thrown, {@link Step} is assumed to have completed abnormally synchronously
      *      (as if {@link StepContext#onFailure(Throwable) is called and the method returned true.)
      */
-    public abstract boolean start(StepContext context) throws Exception;
-
-    /* TODO this does not work since the Step is not kept around; need a callback on StepContext perhaps?
-    /**
-     * May be called if someone asks a running step to abort.
-     * The step might not honor the request (the default implementation does nothing),
-     * or it might do so but not immediately.
-     * Multiple stop requests might be sent.
-     * It is always responsible for calling {@link StepContext#reportSuccess} or (more likely) {@link StepContext#reportFailure} eventually,
-     * whether or not it was asked to stop.
-     * /
-    public void stop(StepContext context) {}
-    */
+    public abstract StepExecution start(StepContext context) throws Exception;
 
     @Override public StepDescriptor getDescriptor() {
         return (StepDescriptor) super.getDescriptor();

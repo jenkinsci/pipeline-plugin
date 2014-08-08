@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.workflow.job;
 
 import hudson.FilePath;
 import jenkins.model.Jenkins;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.ParallelStep;
@@ -22,6 +23,7 @@ import java.util.List;
 
 import static java.util.Arrays.*;
 import static java.util.concurrent.TimeUnit.*;
+import org.junit.Ignore;
 
 /**
  * Tests for {@link ParallelStep}.
@@ -41,8 +43,8 @@ public class ParallelStepTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                    "with.node {",
-                    "  x = parallel( a: { steps.echo('echo a'); return 1; }, b: { steps.echo('echo b'); return 2; } )",
+                    "node {",
+                    "  x = parallel( a: { echo('echo a'); return 1; }, b: { echo('echo b'); return 2; } )",
                     "  assert x.a==1",
                     "  assert x.b==2",
                     "}"
@@ -69,7 +71,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "import "+SimulatedFailureForRetry.class.getName(),
                     "import "+ParallelStepException.class.getName(),
 
-                    "with.node {",
+                    "node {",
                     "  try {",
                     "    parallel(",
                     "      b: { throw new SimulatedFailureForRetry(); },",
@@ -98,6 +100,7 @@ public class ParallelStepTest extends SingleJobTestBase {
     /**
      * Nameless closures.
      */
+    @Ignore("TODO CpsBuiltinSteps.parallel(Closure[]) used to handle this, but there is no replacement")
     @Test
     public void nameslessBranches() throws Exception {
         story.addStep(new Statement() {
@@ -107,7 +110,7 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                    "with.node {",
+                    "node {",
                     "  parallel( { sh('touch "+aa+"'); }, { sh('touch "+bb+"'); } )",
                     "}"
                 )));
@@ -131,8 +134,8 @@ public class ParallelStepTest extends SingleJobTestBase {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
                     "def touch(f) { sh 'touch '+f }",
-                    "with.node {",
-                    "  parallel( { touch('"+aa+"'); }, { touch('"+bb+"'); } )",
+                    "node {",
+                    "  parallel(aa: {touch '" + aa + "'}, bb: {touch '" + bb + "'})",
                     "}"
                 )));
 
@@ -151,24 +154,49 @@ public class ParallelStepTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                    "def notify(msg) {",
-                    "  sh \"echo ${msg}\"",
-                    "}",
-                    "with.node {",
-                    "  with.ws {",
-                    "    sh 'echo start'",
-                    "    steps.parallel(one: {",
-                    "      notify('one')",
-                    "    }, two: {",
-                    "      notify('two')",
-                    "    })",
-                    "    sh 'echo end'",
-                    "  }",
-                    "}"
+                        "def notify(msg) {",
+                        "  sh \"echo ${msg}\"",
+                        "}",
+                        "node {",
+                        "  ws {",
+                        "    sh 'echo start'",
+                        "    parallel(one: {",
+                        "      notify('one')",
+                        "    }, two: {",
+                        "      notify('two')",
+                        "    })",
+                        "    sh 'echo end'",
+                        "  }",
+                        "}"
                 )));
 
                 startBuilding().get();
                 assertBuildCompletedSuccessfully();
+            }
+        });
+    }
+
+    @Test
+    public void localMethodCallWithinLotsOfBranches() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(
+                        IOUtils.toString(getClass().getResource("localMethodCallWithinLotsOfBranches.groovy"))));
+
+                startBuilding().get();
+                assertBuildCompletedSuccessfully();
+
+                // count number of shell steps
+                FlowGraphTable t = buildTable();
+                int shell=0;
+                for (Row r : t.getRows()) {
+                    if (r.getNode() instanceof StepAtomNode) {
+                        if (((StepAtomNode)r.getNode()).getDescriptor() instanceof ShellStep.DescriptorImpl)
+                        shell++;
+                    }
+                }
+                assertEquals(128*3,shell);
             }
         });
     }
@@ -190,11 +218,11 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "import "+SimulatedFailureForRetry.class.getName(),
                     "import "+ParallelStepException.class.getName(),
 
-                    "with.node {",
+                    "node {",
                     "    parallel(",
-                    "      a: { steps.watch(new File('"+aa+"')); sh('touch a.done'); },",
-                    "      b: { steps.watch(new File('"+bb+"')); sh('touch b.done'); },",
-                    "      c: { steps.watch(new File('"+cc+"')); sh('touch c.done'); },",
+                    "      a: { watch(new File('"+aa+"')); sh('touch a.done'); },",
+                    "      b: { watch(new File('"+bb+"')); sh('touch b.done'); },",
+                    "      c: { watch(new File('"+cc+"')); sh('touch c.done'); },",
                     "    )",
                     "}"
                 )));
@@ -289,15 +317,7 @@ public class ParallelStepTest extends SingleJobTestBase {
         assertEquals(Arrays.asList(expected),actual);
     }
 
-    private Jenkins jenkins() {
-        return story.j.jenkins;
-    }
-
     private WatchYourStep.DescriptorImpl watchDescriptor() {
         return jenkins().getInjector().getInstance(WatchYourStep.DescriptorImpl.class);
-    }
-
-    private String join(String... args) {
-        return StringUtils.join(args,"\n");
     }
 }
