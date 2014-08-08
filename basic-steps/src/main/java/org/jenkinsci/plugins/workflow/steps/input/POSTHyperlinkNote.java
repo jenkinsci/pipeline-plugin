@@ -68,7 +68,7 @@ public final class POSTHyperlinkNote extends HyperlinkNote {
 
     @Override protected String extraAttributes() {
         // TODO perhaps add hoverNotification
-        // TODO this does not work; get a 400 “Nothing is submitted”; perhaps need to add a crumb? But similar trick works in Build Now links etc.
+        // TODO do we need to add a crumb if security is enabled?
         return " onclick=\"new Ajax.Request('" + url + "'); false\"";
     }
 
