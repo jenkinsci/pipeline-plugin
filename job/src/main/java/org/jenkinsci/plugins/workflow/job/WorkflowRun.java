@@ -33,6 +33,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
+import hudson.console.PlainTextConsoleOutputStream;
 import hudson.model.Computer;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
@@ -275,7 +276,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
         }
     }
-    /** Hack since we really want the super method that does not wrap in a {@code PlainTextConsoleOutputStream}, but we cannot call that directly. */
+    /**
+     * Equivalent to calling {@link LargeText#writeLogTo(long, OutputStream)} without the unwanted override in {@link AnnotatedLargeText} that wraps in a {@link PlainTextConsoleOutputStream}.
+     * TODO remove once <a href="https://trello.com/c/ZS9ufdXc/36-annotatedlargetext-writerawlogto">Stapler gives us a better option</a>.
+     */
     private static long writeLogTo(AnnotatedLargeText<?> text, long position, OutputStream os) throws IOException {
         Charset c;
         try {
