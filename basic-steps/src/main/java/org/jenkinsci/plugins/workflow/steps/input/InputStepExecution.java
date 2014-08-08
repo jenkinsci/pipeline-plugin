@@ -54,7 +54,9 @@ public class InputStepExecution extends StepExecution implements ModelObject {
         String baseUrl = '/' + run.getUrl() + getPauseAction().getUrlName() + '/';
         if (input.getParameters().isEmpty()) {
             String thisUrl = baseUrl + Util.rawEncode(getId()) + '/';
-            listener.getLogger().printf("%s%n%s or %s%n", input.getMessage(), POSTHyperlinkNote.encodeTo(thisUrl + "proceedEmpty", input.getOk()), POSTHyperlinkNote.encodeTo(thisUrl + "abort", "Abort"));
+            listener.getLogger().printf("%s%n%s or %s%n", input.getMessage(),
+                    POSTHyperlinkNote.encodeTo(thisUrl + "proceedEmpty", input.getOk()),
+                    POSTHyperlinkNote.encodeTo(thisUrl + "abort", "Abort"));
         } else {
             // TODO listener.hyperlink(…) does not work; why?
             // TODO would be even cooler to embed the parameter form right in the build log (hiding it after submission)
