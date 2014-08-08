@@ -1,12 +1,15 @@
 package org.jenkinsci.plugins.workflow.steps.input;
 
 import hudson.FilePath;
+import hudson.Util;
+import hudson.console.HyperlinkNote;
 import hudson.model.Failure;
 import hudson.model.FileParameterValue;
 import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.model.User;
 import hudson.util.HttpResponses;
 import net.sf.json.JSONArray;
@@ -20,9 +23,6 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +37,8 @@ public class InputStepExecution extends StepExecution implements ModelObject {
     @StepContextParameter
     /*package*/ transient Run run;
 
+    @StepContextParameter private transient TaskListener listener;
+
     /**
      * Result of the input.
      */
@@ -49,6 +51,17 @@ public class InputStepExecution extends StepExecution implements ModelObject {
     public boolean start() throws Exception {
         // record this input
         getPauseAction().add(this);
+        String baseUrl = '/' + run.getUrl() + getPauseAction().getUrlName() + '/';
+        if (input.getParameters().isEmpty()) {
+            String thisUrl = baseUrl + Util.rawEncode(getId()) + '/';
+            listener.getLogger().printf("%s%n%s or %s%n", input.getMessage(),
+                    POSTHyperlinkNote.encodeTo(thisUrl + "proceedEmpty", input.getOk()),
+                    POSTHyperlinkNote.encodeTo(thisUrl + "abort", "Abort"));
+        } else {
+            // TODO listener.hyperlink(…) does not work; why?
+            // TODO would be even cooler to embed the parameter form right in the build log (hiding it after submission)
+            listener.getLogger().println(HyperlinkNote.encodeTo(baseUrl, "Input requested"));
+        }
         return false;
     }
 
@@ -100,8 +113,8 @@ public class InputStepExecution extends StepExecution implements ModelObject {
             doAbort();
         }
 
-        // go back to the Run page
-        return HttpResponses.redirectTo("../../");
+        // go back to the Run console page
+        return HttpResponses.redirectTo("../../console");
     }
 
     /**
@@ -112,6 +125,10 @@ public class InputStepExecution extends StepExecution implements ModelObject {
         preSubmissionCheck();
 
         Object v = parseValue(request);
+        return proceed(v);
+    }
+
+    private HttpResponse proceed(Object v) throws IOException {
         outcome = new Outcome(v, null);
         getContext().onSuccess(v);
 
@@ -120,6 +137,14 @@ public class InputStepExecution extends StepExecution implements ModelObject {
         // TODO: record this decision to FlowNode
 
         return HttpResponses.ok();
+    }
+
+    /** Used from the Proceed hyperlink when no parameters are defined. */
+    @RequirePOST
+    public HttpResponse doProceedEmpty() throws IOException {
+        preSubmissionCheck();
+
+        return proceed(null);
     }
 
     /**
