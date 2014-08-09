@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.test.steps;
 
+import com.google.common.base.Function;
 import hudson.Extension;
 import hudson.model.PeriodicWork;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
@@ -33,10 +34,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 /**
@@ -52,44 +51,34 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
         this.watch = value;
     }
 
-    @Override
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
+    /**
+     * Checks presence of files synchronously.
+     */
+    public static void update() throws Exception {
+        StepExecution.applyAll(Execution.class, new Function<Execution,Void>() {
+            @Override public Void apply(Execution t) {
+                t.check();
+                return null;
+            }
+        }).get();
+    }
+
+    public static int getActiveCount() throws Exception {
+        final AtomicInteger count = new AtomicInteger();
+        StepExecution.applyAll(Execution.class, new Function<Execution,Void>() {
+            @Override public Void apply(Execution t) {
+                count.incrementAndGet();
+                return null;
+            }
+        }).get();
+        return count.get();
     }
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
-        private List<Execution> activeWatches = new ArrayList<Execution>();
 
         public DescriptorImpl() {
             super(Execution.class);
-            load();
-        }
-
-        /*package*/ synchronized void addWatch(Execution t) {
-            activeWatches.add(t);
-            save();
-        }
-
-        /**
-         * Checks presence of files synchronously.
-         */
-        public synchronized void watchUpdate() {
-            boolean changed = false;
-            for (Iterator<Execution> itr = activeWatches.iterator(); itr.hasNext(); ) {
-                Execution t = itr.next();
-                if (t.getPath().exists()) {
-                    t.getContext().onSuccess(null);
-                    itr.remove();
-                    changed = true;
-                }
-            }
-            if (changed)
-                save();
-        }
-
-        public synchronized List<Execution> getActiveWatches() {
-            return new ArrayList<Execution>(activeWatches);
         }
 
         @Override
@@ -109,28 +98,22 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
 
         @Override
         public boolean start() {
-            if (getPath().exists()) {
-                // synchronous case. Sometimes async steps can complete synchronously
+            return check(); // synchronous if already exists, else asynchronous
+        }
+
+        boolean check() {
+            if (step.watch.exists()) {
                 getContext().onSuccess(null);
                 return true;
+            } else {
+                return false;
             }
-
-            // asynchronous case.
-            // TODO: move the persistence logic to this instance
-            step.getDescriptor().addWatch(this);
-
-            return false;
         }
 
-        public File getPath() {
-            return step.watch;
-        }
     }
 
     @Extension
     public static class WatchTask extends PeriodicWork {
-        @Inject
-        DescriptorImpl d;
 
         @Override
         public long getRecurrencePeriod() {
@@ -139,7 +122,7 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
 
         @Override
         protected void doRun() throws Exception {
-            d.watchUpdate();
+            update();
         }
     }
 }

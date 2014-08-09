@@ -1,9 +1,7 @@
 package org.jenkinsci.plugins.workflow.job;
 
 import hudson.FilePath;
-import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.ParallelStep;
 import org.jenkinsci.plugins.workflow.cps.ParallelStep.ParallelLabelAction;
@@ -230,7 +228,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                 startBuilding();
 
                 // let the workflow run until all parallel branches settle in the watch()
-                while (watchDescriptor().getActiveWatches().size()<3 && !e.isComplete())
+                while (WatchYourStep.getActiveCount() < 3 && !e.isComplete())
                     waitForWorkflowToSuspend();
 
                 System.out.println(b.getLog());
@@ -257,7 +255,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                 // we let one branch go at a time
                 for (FilePath f : asList(aa, bb)) {
                     f.touch(0);
-                    watchDescriptor().watchUpdate();
+                    WatchYourStep.update();
                     waitForWorkflowToSuspend();
 
                     // until all execution joins into one, we retain all heads
@@ -267,7 +265,7 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 // when we let the last one go, it will now run till the completion
                 cc.touch(0);
-                watchDescriptor().watchUpdate();
+                WatchYourStep.update();
                 while (!e.isComplete())
                     waitForWorkflowToSuspend();
 
@@ -317,7 +315,4 @@ public class ParallelStepTest extends SingleJobTestBase {
         assertEquals(Arrays.asList(expected),actual);
     }
 
-    private WatchYourStep.DescriptorImpl watchDescriptor() {
-        return jenkins().getInjector().getInstance(WatchYourStep.DescriptorImpl.class);
-    }
 }

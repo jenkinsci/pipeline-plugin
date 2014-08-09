@@ -26,11 +26,9 @@ package org.jenkinsci.plugins.workflow.job;
 
 import hudson.model.queue.QueueTaskFuture;
 import hudson.slaves.DumbSlave;
-import javax.inject.Inject;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
-import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -44,10 +42,6 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public abstract class SingleJobTestBase extends Assert {
     @Rule
     public RestartableJenkinsRule story = new RestartableJenkinsRule();
-
-
-    @Inject
-    WatchYourStep.DescriptorImpl watchDescriptor;
 
     // currently executing workflow and its build
     public WorkflowJob p;
