@@ -60,7 +60,13 @@ public final class POSTHyperlinkNote extends HyperlinkNote {
             if (req != null) {
                 url = req.getContextPath() + url;
             } else {
-                url = Jenkins.getInstance().getRootUrl() + url.substring(1);
+                String rootUrl = Jenkins.getInstance().getRootUrl();
+                if (rootUrl != null) {
+                    url = rootUrl + url.substring(1);
+                } else {
+                    LOGGER.warning("You need to define the root URL of Jenkins");
+                    // hope that / works, i.e., that there is no context path
+                }
             }
         }
         this.url = url;
