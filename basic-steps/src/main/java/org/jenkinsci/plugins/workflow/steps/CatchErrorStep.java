@@ -75,6 +75,12 @@ public final class CatchErrorStep extends AbstractStepImpl {
         private final class Callback implements FutureCallback<Object>, Serializable {
 
             @Override public void onSuccess(Object result) {
+                try {
+                    getContext().get(Run.class).setResult(Result.SUCCESS);
+                } catch (Exception x) {
+                    getContext().onFailure(x);
+                    return;
+                }
                 getContext().onSuccess(null); // we do not pass up a result, since onFailure cannot
             }
 
