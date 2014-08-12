@@ -70,7 +70,7 @@
         <dependency>
             <groupId>com.cloudbees</groupId>
             <artifactId>groovy-cps</artifactId>
-            <version>0.5-20140804.141351-1</version>
+            <version>0.5</version>
         </dependency>
     </dependencies>
     <repositories> <!-- TODO until groovy-cps 0.5 is released -->
