@@ -24,6 +24,7 @@ ADD jenkins.war /var/lib/jenkins/jenkins.war
 ADD ws/plugins/ /var/lib/jenkins/plugins
 ADD config.xml  /var/lib/jenkins/jobs/cd/
 RUN find /var/lib/jenkins/plugins/* -type d | xargs rm -rf
+ADD jenkins.model.JenkinsLocationConfiguration.xml /var/lib/jenkins/
 
 ADD run.sh /var/lib/jenkins/run.sh
 ADD sshd_config /etc/ssh/sshd_config
