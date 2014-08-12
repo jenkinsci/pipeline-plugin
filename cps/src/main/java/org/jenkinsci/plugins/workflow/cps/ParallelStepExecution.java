@@ -44,5 +44,11 @@ class ParallelStepExecution extends StepExecution {
         return false;
     }
 
+    @Override
+    public void stop() throws Exception {
+        // TODO: see RetyrStepExecution.stop()
+        throw new UnsupportedOperationException();
+    }
+
     private static final long serialVersionUID = 1L;
 }

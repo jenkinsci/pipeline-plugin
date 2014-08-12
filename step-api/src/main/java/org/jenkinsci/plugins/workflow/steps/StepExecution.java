@@ -68,14 +68,15 @@ public abstract class StepExecution implements Serializable {
 
     /**
      * May be called if someone asks a running step to abort.
-     * The step might not honor the request (the default implementation does nothing),
-     * or it might do so but not immediately.
+     *
+     * Just like {@link Thread#interrupt()},
+     * the step might not honor the request immediately.
      * Multiple stop requests might be sent.
      * It is always responsible for calling {@link StepContext#onSuccess(Object)} or (more likely)
      * {@link StepContext#onFailure(Throwable)} eventually,
      * whether or not it was asked to stop.
      */
-    public void stop() throws Exception {}
+    public abstract void stop() throws Exception;
 
     /**
      * Apply the given function to all the active running {@link StepExecution}s in the system.
