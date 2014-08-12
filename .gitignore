@@ -2,3 +2,5 @@ target
 work
 .idea/
 *.iml
+demo/jenkins.war
+demo/ws/
