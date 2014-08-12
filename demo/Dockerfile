@@ -29,4 +29,4 @@ ADD run.sh /var/lib/jenkins/run.sh
 ADD sshd_config /etc/ssh/sshd_config
 
 CMD /var/lib/jenkins/run.sh
-EXPOSE 8080
+EXPOSE 8080 8081 22
