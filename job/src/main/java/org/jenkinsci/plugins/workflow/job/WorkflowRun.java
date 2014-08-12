@@ -278,7 +278,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     }
     /**
      * Equivalent to calling {@link LargeText#writeLogTo(long, OutputStream)} without the unwanted override in {@link AnnotatedLargeText} that wraps in a {@link PlainTextConsoleOutputStream}.
-     * TODO remove once <a href="https://trello.com/c/ZS9ufdXc/36-annotatedlargetext-writerawlogto">Stapler gives us a better option</a>.
+     * TODO replace with {@code AnnotatedLargeText#writeRawLogTo} in 1.577
      */
     private static long writeLogTo(AnnotatedLargeText<?> text, long position, OutputStream os) throws IOException {
         Charset c;
