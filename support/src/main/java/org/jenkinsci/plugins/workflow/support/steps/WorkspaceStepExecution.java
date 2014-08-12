@@ -42,6 +42,12 @@ public class WorkspaceStepExecution extends StepExecution {
         return false;
     }
 
+    @Override
+    public void stop() throws Exception {
+        // TODO: see RetyrStepExecution.stop()
+        throw new UnsupportedOperationException();
+    }
+
     private static final class Callback implements FutureCallback<Object>, Serializable {
 
         private final StepContext context;

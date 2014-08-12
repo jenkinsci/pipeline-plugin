@@ -106,7 +106,7 @@ public class AbstractStepImplTest {
         }
     }
 
-    public static class BogusStepExecution extends StepExecution {
+    public static class BogusStepExecution extends AbstractSynchronousStepExecution<Void> {
         @Inject
         Jenkins jenkins;
 
@@ -114,10 +114,10 @@ public class AbstractStepImplTest {
         Node n;
 
         @Override
-        public boolean start() {
+        protected Void run() throws Exception {
             assertSame(jenkins, Jenkins.getInstance());
             assertSame(n, Jenkins.getInstance());
-            return true;
+            return null;
         }
     }
 }

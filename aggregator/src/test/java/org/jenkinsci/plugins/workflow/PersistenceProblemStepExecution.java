@@ -20,4 +20,9 @@ public class PersistenceProblemStepExecution extends StepExecution {
     public boolean start() throws Exception {
         return false;
     }
+
+    @Override
+    public void stop() throws Exception {
+        // nothing to do here
+    }
 }

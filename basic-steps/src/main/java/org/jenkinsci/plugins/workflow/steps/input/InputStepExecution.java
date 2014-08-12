@@ -65,6 +65,11 @@ public class InputStepExecution extends StepExecution implements ModelObject {
         return false;
     }
 
+    @Override
+    public void stop() throws Exception {
+        doAbort();
+    }
+
     public String getId() {
         return input.getId();
     }

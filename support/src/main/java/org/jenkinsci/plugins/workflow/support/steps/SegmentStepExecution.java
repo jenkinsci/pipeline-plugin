@@ -56,6 +56,11 @@ public class SegmentStepExecution extends StepExecution {
         return false;
     }
 
+    @Override
+    public void stop() throws Exception {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
 
     private static XmlFile getConfigFile() {
         return new XmlFile(new File(Jenkins.getInstance().getRootDir(), SegmentStep.class.getName() + ".xml"));

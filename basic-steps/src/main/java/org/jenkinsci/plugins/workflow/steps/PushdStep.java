@@ -77,6 +77,12 @@ public class PushdStep extends AbstractStepImpl {
             getContext().invokeBodyLater(getContext(), dir);
             return false;
         }
+
+        @Override
+        public void stop() throws Exception {
+            // TODO: see RetyrStepExecution.stop()
+            throw new UnsupportedOperationException();
+        }
     }
 
 }
