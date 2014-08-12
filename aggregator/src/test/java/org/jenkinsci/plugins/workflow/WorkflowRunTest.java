@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.job;
+package org.jenkinsci.plugins.workflow;
 
 import hudson.FilePath;
 import hudson.model.BallColor;
@@ -45,6 +45,8 @@ import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 
 import static org.junit.Assert.*;
@@ -72,7 +74,7 @@ public class WorkflowRunTest {
         p.setDefinition(new CpsFlowDefinition("println('hello')"));
         WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertFalse(b1.isBuilding());
-        assertFalse(b1.isInProgress());
+        // TODO protected (but !building -> !inProgress): assertFalse(b1.isInProgress());
         assertFalse(b1.isLogUpdated());
         WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertEquals(b1, b2.getPreviousBuild());

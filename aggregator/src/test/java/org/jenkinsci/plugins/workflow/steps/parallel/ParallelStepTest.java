@@ -1,29 +1,28 @@
-package org.jenkinsci.plugins.workflow.job;
+package org.jenkinsci.plugins.workflow.steps.parallel;
 
+import org.jenkinsci.plugins.workflow.SimulatedFailureForRetry;
 import hudson.FilePath;
-import jenkins.model.Jenkins;
+import java.util.ArrayList;
+import java.util.Arrays;
+import static java.util.Arrays.*;
+import java.util.List;
+import static java.util.concurrent.TimeUnit.*;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.ParallelStep;
 import org.jenkinsci.plugins.workflow.cps.ParallelStep.ParallelLabelAction;
 import org.jenkinsci.plugins.workflow.cps.ParallelStepException;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.durable_task.ShellStep;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
 import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static java.util.Arrays.*;
-import static java.util.concurrent.TimeUnit.*;
-import org.junit.Ignore;
 
 /**
  * Tests for {@link ParallelStep}.

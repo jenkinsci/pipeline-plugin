@@ -1,7 +1,9 @@
-package org.jenkinsci.plugins.workflow.job;
+package org.jenkinsci.plugins.workflow;
 
+import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.JenkinsRule;

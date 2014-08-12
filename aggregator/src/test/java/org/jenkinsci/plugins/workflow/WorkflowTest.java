@@ -22,8 +22,9 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.job;
+package org.jenkinsci.plugins.workflow;
 
+import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import hudson.model.Node;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
@@ -49,6 +50,8 @@ import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.tools.ant.util.JavaEnvUtils;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -372,7 +375,7 @@ public class WorkflowTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
-                    "import org.jenkinsci.plugins.workflow.job.SimulatedFailureForRetry;\n"+
+                    "import " + SimulatedFailureForRetry.class.getName() + ";\n"+
                     "int count=0;\n" +
                     "retry(3) {\n" +
                         // we'll suspend the execution here

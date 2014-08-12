@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.job;
+package org.jenkinsci.plugins.workflow;
 
 /**
  * Used in the test to simulate a failure that we want to catch in the retry block.

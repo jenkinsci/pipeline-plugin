@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.job;
+package org.jenkinsci.plugins.workflow;
 
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 

@@ -22,13 +22,15 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.job
+package org.jenkinsci.plugins.workflow
 
 import org.jenkinsci.plugins.workflow.actions.LogAction
 import org.jenkinsci.plugins.workflow.cps.AbstractCpsFlowTest
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution
 import org.jenkinsci.plugins.workflow.graph.AtomNode
+import org.jenkinsci.plugins.workflow.job.WorkflowJob
+import org.jenkinsci.plugins.workflow.job.WorkflowRun
 import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep
 import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl
 import hudson.model.Result
@@ -116,7 +118,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     @Test
     public void testRetry() {
         p.definition = new CpsFlowDefinition("""
-            import org.jenkinsci.plugins.workflow.job.SimulatedFailureForRetry;
+            import ${SimulatedFailureForRetry.class.getName()};
 
             int i = 0;
             retry(3) {
