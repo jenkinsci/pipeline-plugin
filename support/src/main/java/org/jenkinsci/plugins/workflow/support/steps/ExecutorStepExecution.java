@@ -4,9 +4,9 @@ import com.google.common.util.concurrent.FutureCallback;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.Executor;
+import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.Label;
 import hudson.model.Node;
@@ -147,13 +147,13 @@ public class ExecutorStepExecution extends StepExecution {
         @Override public void checkAbortPermission() {
             AccessControlled ac = accessControlled();
             if (ac != null) {
-                ac.checkPermission(AbstractProject.ABORT); // TODO https://trello.com/c/78J5G2zx/37-abstractproject-abort why is this defined in AbstractProject?
+                ac.checkPermission(Item.CANCEL);
             }
         }
 
         @Override public boolean hasAbortPermission() {
             AccessControlled ac = accessControlled();
-            return ac != null && ac.hasPermission(AbstractProject.ABORT);
+            return ac != null && ac.hasPermission(Item.CANCEL);
         }
 
         private @CheckForNull
