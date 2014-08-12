@@ -5,8 +5,8 @@ RUN mkdir -p /var/lib/jenkins/plugins /var/lib/jenkins/jobs/cd
 
 # install Jetty
 WORKDIR /opt
-ENV VERSION 9.2.1.v20140609
-RUN curl "http://mirrors.ibiblio.org/eclipse/jetty/stable-9/dist/jetty-distribution-$VERSION.tar.gz" | tar xvfz -
+ENV VERSION 9.2.2.v20140723
+RUN curl "http://mirrors.ibiblio.org/eclipse/jetty/$VERSION/dist/jetty-distribution-$VERSION.tar.gz" | tar xvfz -
 RUN ln -sv jetty-distribution-$VERSION jetty
 RUN cd /tmp; ln -s /opt/jetty/webapps
 
