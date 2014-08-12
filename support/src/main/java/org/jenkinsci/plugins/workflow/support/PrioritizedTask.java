@@ -33,7 +33,7 @@ import hudson.model.queue.QueueTaskDispatcher;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 
-// TODO https://trello.com/c/JKJFUWXo/33-prioritizedtask should be an API in core or an independent plugin, as it can be useful elsewhere, and there must only be one copy for it work reliably
+// TODO after https://github.com/jenkinsci/jenkins/pull/1363 use core version
 
 /**
  * Marker for tasks which should perhaps “jump ahead” in the queue.
