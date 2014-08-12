@@ -18,7 +18,7 @@ Jenkins runs on port 8081, and Jetty runs on port 8080. The continuous delivery 
 * Workflow completes
 
 You can login as root in the demo container via `ssh -p 8022 root@localhost`. The password is `root`.
-(If you have `nsenter`, [you can use nsenter instead of ssh for a smoother demo](http://jpetazzo.github.io/2014/06/23/docker-ssh-considered-evil/)
+(If you have `nsenter`, [you can use docker-enter instead of ssh for a smoother demo](http://jpetazzo.github.io/2014/06/23/docker-ssh-considered-evil/)
 This is useful to kill Jetty to simulate a failure in the production deployment (via `pkill -9 -f jetty`) or restart it (via `jetty &`)
 
 
