@@ -4,7 +4,7 @@ import hudson.Extension;
 import hudson.model.Node;
 import jenkins.model.Jenkins;
 import org.codehaus.groovy.runtime.GStringImpl;
-import org.junit.Assert;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class AbstractStepImplTest extends Assert {
+public class AbstractStepImplTest {
     @Rule
     public JenkinsRule j = new JenkinsRule();
 
@@ -115,8 +115,8 @@ public class AbstractStepImplTest extends Assert {
 
         @Override
         public boolean start() {
-            Assert.assertSame(jenkins, Jenkins.getInstance());
-            Assert.assertSame(n, Jenkins.getInstance());
+            assertSame(jenkins, Jenkins.getInstance());
+            assertSame(n, Jenkins.getInstance());
             return true;
         }
     }
