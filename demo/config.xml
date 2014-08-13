@@ -54,5 +54,10 @@ def runWithServer(body) {
 }
 </script>
   </definition>
-  <triggers/>
+  <triggers>
+    <hudson.triggers.SCMTrigger>
+      <spec>* * * * *</spec>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
 </flow-definition>
