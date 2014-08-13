@@ -18,7 +18,7 @@ public class AppTest extends Assert {
 
         // this is supposed to be an integration test,
         // let's take some time. We want this to be longer than the build for sure.
-        Thread.sleep(30*1000);
+        Thread.sleep(Integer.getInteger("duration", 30) * 1000);
     }
 
     private URL getSUT() throws Exception {
