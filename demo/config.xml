@@ -7,20 +7,20 @@
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@0.1-beta-1">
     <script>stage &apos;Dev&apos;
 node(&apos;master&apos;) {
-    def src = &apos;/var/lib/jenkins/workflow-plugin-pipeline-demo.git&apos;
+    def src = &apos;/var/lib/jenkins/workflow-plugin-pipeline-demo&apos;
     git url: src
     sh &apos;mvn -o clean package&apos;
     archive &apos;target/x.war&apos;
 
     stage &apos;QA&apos;
 
-    parallel(sometests: {
+    parallel(longerTests: {
         runWithServer {url -&gt;
-            sh &quot;mvn -o -f sometests/pom.xml test -Durl=${url}&quot;
+            sh &quot;mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=30&quot;
         }
-    }, othertests: {
+    }, quickerTests: {
         runWithServer {url -&gt;
-            sh &quot;mvn -o -f sometests/pom.xml test -Durl=${url}&quot;
+            sh &quot;mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=20&quot;
         }
     })
     stage value: &apos;Staging&apos;, concurrency: 1

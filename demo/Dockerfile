@@ -16,11 +16,16 @@ RUN echo 'root:root' | chpasswd
 
 # make a local checkout of the demo workspace
 WORKDIR /var/lib/jenkins
-RUN git clone --bare https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git
-RUN git clone workflow-plugin-pipeline-demo.git workflow-plugin-pipeline-demo; cd workflow-plugin-pipeline-demo; mvn install; cd sometests; mvn clean install -Dmaven.test.failure.ignore=true
+RUN git clone https://github.com/jenkinsci/workflow-plugin-pipeline-demo && cd workflow-plugin-pipeline-demo
+WORKDIR /var/lib/jenkins/workflow-plugin-pipeline-demo
+# Specify a particular master revision in the Dockerfile so we can track changes (and so Docker cache works correctly):
+RUN git reset --hard 58677d8a2230c7b8e655c2674a42d2cab655c265
+# Prepare local Maven repo:
+RUN mvn install && mvn -f sometests -Dmaven.test.failure.ignore clean install
 
 RUN git config --global user.email "demo@jenkins-ci.org" && git config --global user.name "Workflow Demo"
 
+WORKDIR /var/lib/jenkins
 # preseed data
 ADD jenkins.war /var/lib/jenkins/jenkins.war
 ADD ws/plugins/ /var/lib/jenkins/plugins
