@@ -29,6 +29,7 @@ WORKDIR /var/lib/jenkins
 # preseed data
 ADD jenkins.war /var/lib/jenkins/jenkins.war
 ADD ws/plugins/ /var/lib/jenkins/plugins
+ADD root.xml  /var/lib/jenkins/config.xml
 ADD config.xml  /var/lib/jenkins/jobs/cd/
 RUN find /var/lib/jenkins/plugins/* -type d | xargs rm -rf
 ADD jenkins.model.JenkinsLocationConfiguration.xml /var/lib/jenkins/

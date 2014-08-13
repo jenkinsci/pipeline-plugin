@@ -6,7 +6,7 @@
   <properties/>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@0.1-beta-1">
     <script>stage &apos;Dev&apos;
-node(&apos;master&apos;) {
+node(&apos;slave&apos;) {
     def src = &apos;/var/lib/jenkins/workflow-plugin-pipeline-demo&apos;
     git url: src
     sh &apos;mvn -o clean package&apos;
