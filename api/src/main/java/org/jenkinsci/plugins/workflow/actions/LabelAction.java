@@ -28,7 +28,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import hudson.model.Action;
 
 /**
- * To mark {@link FlowNode} with human readable label, like segments.
+ * To mark {@link FlowNode} with human readable label, like stages.
  *
  * @author Kohsuke Kawaguchi
  * @author Jesse Glick

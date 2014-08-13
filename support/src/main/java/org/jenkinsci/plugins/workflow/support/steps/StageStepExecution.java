@@ -30,19 +30,13 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * TODO: rewrite persistance to use this class
- * TODO: implement stop()
- * @author Jesse Glick
- */
-public class SegmentStepExecution extends StepExecution {
-    private static final Logger LOGGER = Logger.getLogger(SegmentStep.class.getName());
+public class StageStepExecution extends StepExecution {
+    private static final Logger LOGGER = Logger.getLogger(StageStepExecution.class.getName());
 
     // only used during the start() call, so no need to be persisted
-    private transient final SegmentStep step;
+    private transient final StageStep step;
 
-    public SegmentStepExecution(SegmentStep step, StepContext context) {
+    public StageStepExecution(StageStep step, StepContext context) {
         super(context);
         this.step = step;
     }
@@ -63,40 +57,40 @@ public class SegmentStepExecution extends StepExecution {
     }
 
     private static XmlFile getConfigFile() {
-        return new XmlFile(new File(Jenkins.getInstance().getRootDir(), SegmentStep.class.getName() + ".xml"));
+        return new XmlFile(new File(Jenkins.getInstance().getRootDir(), StageStep.class.getName() + ".xml"));
     }
 
     // TODO can this be replaced with StepExecutionIterator?
-    private static Map<String,Map<String,Segment>> segmentsByNameByJob;
+    private static Map<String,Map<String,Stage>> stagesByNameByJob;
 
     // TODO or delete and make this an instance field in DescriptorImpl
     public static void clear() {
-        segmentsByNameByJob = null;
+        stagesByNameByJob = null;
     }
 
     @SuppressWarnings("unchecked")
     private static synchronized void load() {
-        if (segmentsByNameByJob == null) {
-            segmentsByNameByJob = new TreeMap<String,Map<String,Segment>>();
+        if (stagesByNameByJob == null) {
+            stagesByNameByJob = new TreeMap<String,Map<String,Stage>>();
             XmlFile configFile = getConfigFile();
             if (configFile.exists()) {
                 try {
-                    segmentsByNameByJob = (Map<String,Map<String,Segment>>) configFile.read();
+                    stagesByNameByJob = (Map<String,Map<String,Stage>>) configFile.read();
                 } catch (IOException x) {
                     LOGGER.log(Level.WARNING, null, x);
                 }
             }
-            LOGGER.log(Level.FINE, "load: {0}", segmentsByNameByJob);
+            LOGGER.log(Level.FINE, "load: {0}", stagesByNameByJob);
         }
     }
 
     private static synchronized void save() {
         try {
-            getConfigFile().write(segmentsByNameByJob);
+            getConfigFile().write(stagesByNameByJob);
         } catch (IOException x) {
             LOGGER.log(Level.WARNING, null, x);
         }
-        LOGGER.log(Level.FINE, "save: {0}", segmentsByNameByJob);
+        LOGGER.log(Level.FINE, "save: {0}", stagesByNameByJob);
     }
 
     private static synchronized void enter(Run<?,?> r, StepContext context, String name, Integer concurrency) {
@@ -105,65 +99,65 @@ public class SegmentStepExecution extends StepExecution {
         load();
         Job<?,?> job = r.getParent();
         String jobName = job.getFullName();
-        Map<String,Segment> segmentsByName = segmentsByNameByJob.get(jobName);
-        if (segmentsByName == null) {
-            segmentsByName = new TreeMap<String,Segment>();
-            segmentsByNameByJob.put(jobName, segmentsByName);
+        Map<String,Stage> stagesByName = stagesByNameByJob.get(jobName);
+        if (stagesByName == null) {
+            stagesByName = new TreeMap<String,Stage>();
+            stagesByNameByJob.put(jobName, stagesByName);
         }
-        Segment segment = segmentsByName.get(name);
-        if (segment == null) {
-            segment = new Segment();
-            segmentsByName.put(name, segment);
+        Stage stage = stagesByName.get(name);
+        if (stage == null) {
+            stage = new Stage();
+            stagesByName.put(name, stage);
         }
-        segment.concurrency = concurrency;
+        stage.concurrency = concurrency;
         int build = r.number;
-        if (segment.waitingContext != null) {
+        if (stage.waitingContext != null) {
             // Someone has got to give up.
-            if (segment.waitingBuild < build) {
+            if (stage.waitingBuild < build) {
                 // Cancel the older one.
                 try {
-                    cancel(segment.waitingContext, context);
+                    cancel(stage.waitingContext, context);
                 } catch (Exception x) {
                     LOGGER.log(Level.WARNING, "could not cancel an older flow (perhaps since deleted?)", x);
                 }
-            } else if (segment.waitingBuild > build) {
+            } else if (stage.waitingBuild > build) {
                 // Cancel this one. And work with the older one below, instead of the one initiating this call.
                 try {
-                    cancel(context, segment.waitingContext);
+                    cancel(context, stage.waitingContext);
                 } catch (Exception x) {
                     LOGGER.log(Level.WARNING, "could not cancel the current flow", x);
                 }
-                build = segment.waitingBuild;
-                context = segment.waitingContext;
+                build = stage.waitingBuild;
+                context = stage.waitingContext;
             } else {
-                throw new IllegalStateException("the same flow is trying to reënter the segment " + name);
+                throw new IllegalStateException("the same flow is trying to reënter the stage " + name);
             }
         }
-        for (Map.Entry<String,Segment> entry : segmentsByName.entrySet()) {
+        for (Map.Entry<String,Stage> entry : stagesByName.entrySet()) {
             if (entry.getKey().equals(name)) {
                 continue;
             }
-            Segment segment2 = entry.getValue();
-            // If we were holding another segment in the same job, release it, unlocking its waiter to proceed.
-            if (segment2.holding.remove(build)) {
-                if (segment2.waitingContext != null) {
-                    println(segment2.waitingContext, "Unblocked since " + r.getDisplayName() + " is moving into stage " + name);
-                    segment2.waitingContext.onSuccess(null);
-                    segment2.waitingBuild = null;
-                    segment2.waitingContext = null;
+            Stage stage2 = entry.getValue();
+            // If we were holding another stage in the same job, release it, unlocking its waiter to proceed.
+            if (stage2.holding.remove(build)) {
+                if (stage2.waitingContext != null) {
+                    println(stage2.waitingContext, "Unblocked since " + r.getDisplayName() + " is moving into stage " + name);
+                    stage2.waitingContext.onSuccess(null);
+                    stage2.waitingBuild = null;
+                    stage2.waitingContext = null;
                 }
             }
         }
-        if (segment.concurrency == null || segment.holding.size() < segment.concurrency) {
-            segment.waitingBuild = null;
-            segment.waitingContext = null;
-            segment.holding.add(build);
+        if (stage.concurrency == null || stage.holding.size() < stage.concurrency) {
+            stage.waitingBuild = null;
+            stage.waitingContext = null;
+            stage.holding.add(build);
             println(context, "Proceeding");
             context.onSuccess(null);
         } else {
-            segment.waitingBuild = build;
-            segment.waitingContext = context;
-            println(context, "Waiting for builds " + segment.holding);
+            stage.waitingBuild = build;
+            stage.waitingContext = context;
+            println(context, "Waiting for builds " + stage.holding);
         }
         cleanUp(job, jobName);
         save();
@@ -171,23 +165,23 @@ public class SegmentStepExecution extends StepExecution {
 
     private static synchronized void exit(Run<?,?> r) {
         load();
-        LOGGER.log(Level.FINE, "exit {0}: {1}", new Object[] {r, segmentsByNameByJob});
+        LOGGER.log(Level.FINE, "exit {0}: {1}", new Object[] {r, stagesByNameByJob});
         Job<?,?> job = r.getParent();
         String jobName = job.getFullName();
-        Map<String,Segment> segmentsByName = segmentsByNameByJob.get(jobName);
-        if (segmentsByName == null) {
+        Map<String,Stage> stagesByName = stagesByNameByJob.get(jobName);
+        if (stagesByName == null) {
             return;
         }
         boolean modified = false;
-        for (Segment segment : segmentsByName.values()) {
-            if (segment.holding.contains(r.number)) {
-                segment.holding.remove(r.number); // XSTR-757: do not rely on return value of TreeSet.remove(Object)
+        for (Stage stage : stagesByName.values()) {
+            if (stage.holding.contains(r.number)) {
+                stage.holding.remove(r.number); // XSTR-757: do not rely on return value of TreeSet.remove(Object)
                 modified = true;
-                if (segment.waitingContext != null) {
-                    println(segment.waitingContext, "Unblocked since " + r.getDisplayName() + " finished");
-                    segment.waitingContext.onSuccess(null);
-                    segment.waitingContext = null;
-                    segment.waitingBuild = null;
+                if (stage.waitingContext != null) {
+                    println(stage.waitingContext, "Unblocked since " + r.getDisplayName() + " finished");
+                    stage.waitingContext.onSuccess(null);
+                    stage.waitingContext = null;
+                    stage.waitingBuild = null;
                 }
             }
         }
@@ -198,11 +192,11 @@ public class SegmentStepExecution extends StepExecution {
     }
 
     private static void cleanUp(Job<?,?> job, String jobName) {
-        Map<String,Segment> segmentsByName = segmentsByNameByJob.get(jobName);
-        assert segmentsByName != null;
-        Iterator<Entry<String,Segment>> it = segmentsByName.entrySet().iterator();
+        Map<String,Stage> stagesByName = stagesByNameByJob.get(jobName);
+        assert stagesByName != null;
+        Iterator<Entry<String,Stage>> it = stagesByName.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry<String,Segment> entry = it.next();
+            Map.Entry<String,Stage> entry = it.next();
             Set<Integer> holding = entry.getValue().holding;
             Iterator<Integer> it2 = holding.iterator();
             while (it2.hasNext()) {
@@ -218,8 +212,8 @@ public class SegmentStepExecution extends StepExecution {
                 it.remove();
             }
         }
-        if (segmentsByName.isEmpty()) {
-            segmentsByNameByJob.remove(jobName);
+        if (stagesByName.isEmpty()) {
+            stagesByNameByJob.remove(jobName);
         }
     }
 
@@ -231,7 +225,7 @@ public class SegmentStepExecution extends StepExecution {
         }
     }
 
-    // TODO record the segment it got to and display that
+    // TODO record the stage it got to and display that
     private static void cancel(StepContext context, StepContext newer) throws IOException, InterruptedException {
         println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
         println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
@@ -244,7 +238,7 @@ public class SegmentStepExecution extends StepExecution {
     }
 
     /**
-     * Records that a flow was canceled while waiting in a segment step because a newer flow entered that segment instead.
+     * Records that a flow was canceled while waiting in a stage step because a newer flow entered that stage instead.
      */
     public static final class CanceledCause extends CauseOfInterruption {
 
@@ -264,19 +258,19 @@ public class SegmentStepExecution extends StepExecution {
 
     }
 
-    private static final class Segment {
-        /** number of builds current in this segment */
+    private static final class Stage {
+        /** number of builds current in this stage */
         final Set<Integer> holding = new TreeSet<Integer>();
         /** maximum permitted size of {@link #holding} */
         @CheckForNull
         Integer concurrency;
-        /** context of the build currently waiting to enter this segment, if any */
+        /** context of the build currently waiting to enter this stage, if any */
         @CheckForNull StepContext waitingContext;
         /** number of the waiting build, if any */
         @Nullable
         Integer waitingBuild;
         @Override public String toString() {
-            return "Segment[holding=" + holding + ",waitingBuild=" + waitingBuild + ",concurrency=" + concurrency + "]";
+            return "Stage[holding=" + holding + ",waitingBuild=" + waitingBuild + ",concurrency=" + concurrency + "]";
         }
     }
 

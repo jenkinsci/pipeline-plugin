@@ -59,19 +59,17 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * Marks a flow build as entering a gated “segment”, like a stage in a pipeline.
- * Each job has a set of named segments, each of which acts like a semaphore with an initial permit count,
+ * Marks a flow build as entering a gated “stage”, like a stage in a pipeline.
+ * Each job has a set of named stages, each of which acts like a semaphore with an initial permit count,
  * but with the special behavior that only one build may be waiting at any time: the newest.
  * Credit goes to @jtnord for implementing the {@code block} operator in {@code buildflow-extensions}, which inspired this.
  */
-public class SegmentStep extends Step {
-
-    private static final Logger LOGGER = Logger.getLogger(SegmentStep.class.getName());
+public class StageStep extends Step {
 
     public final String name;
     protected final @CheckForNull Integer concurrency;
 
-    private SegmentStep(String name, @CheckForNull Integer concurrency) {
+    private StageStep(String name, @CheckForNull Integer concurrency) {
         if (name == null) {
             throw new IllegalArgumentException("must specify name");
         }
@@ -79,7 +77,7 @@ public class SegmentStep extends Step {
         this.concurrency = concurrency;
     }
 
-    @DataBoundConstructor public SegmentStep(String name, String concurrency) {
+    @DataBoundConstructor public StageStep(String name, String concurrency) {
         this(Util.fixEmpty(name), Util.fixEmpty(concurrency) != null ? Integer.parseInt(concurrency) : null);
     }
 
@@ -87,8 +85,8 @@ public class SegmentStep extends Step {
         return concurrency == null ? "" : Integer.toString(concurrency);
     }
 
-    @Override public SegmentStepExecution start(StepContext context) throws Exception {
-        return new SegmentStepExecution(this,context);
+    @Override public StageStepExecution start(StepContext context) throws Exception {
+        return new StageStepExecution(this,context);
     }
 
     @Extension public static final class DescriptorImpl extends StepDescriptor {
@@ -107,7 +105,7 @@ public class SegmentStep extends Step {
         }
 
         @Override public Step newInstance(Map<String,Object> arguments) {
-            return new SegmentStep((String) arguments.get("value"), (Integer) arguments.get("concurrency"));
+            return new StageStep((String) arguments.get("value"), (Integer) arguments.get("concurrency"));
         }
 
         @Override public String getDisplayName() {

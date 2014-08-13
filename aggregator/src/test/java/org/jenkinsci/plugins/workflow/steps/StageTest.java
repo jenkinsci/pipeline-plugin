@@ -32,7 +32,7 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.support.steps.SegmentStepExecution;
+import org.jenkinsci.plugins.workflow.support.steps.StageStepExecution;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.Rule;
@@ -41,7 +41,7 @@ import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
-public class SegmentTest {
+public class StageTest {
 
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
@@ -117,8 +117,8 @@ public class SegmentTest {
                     assertNotNull(iba);
                     List<CauseOfInterruption> causes = iba.getCauses();
                     assertEquals(1, causes.size());
-                    assertEquals(SegmentStepExecution.CanceledCause.class, causes.get(0).getClass());
-                    assertEquals(b3, ((SegmentStepExecution.CanceledCause) causes.get(0)).getNewerBuild());
+                    assertEquals(StageStepExecution.CanceledCause.class, causes.get(0).getClass());
+                    assertEquals(b3, ((StageStepExecution.CanceledCause) causes.get(0)).getNewerBuild());
                     assertTrue(b3.isBuilding());
                     story.j.assertLogNotContains("done", b1);
                     story.j.assertLogNotContains("in B", b2);
@@ -132,7 +132,7 @@ public class SegmentTest {
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                SegmentStepExecution.clear();
+                StageStepExecution.clear();
                 WorkflowJob p = story.j.jenkins.getItemByFullName("demo", WorkflowJob.class);
                 WorkflowRun b1 = p.getBuildByNumber(1);
                 WorkflowRun b3 = p.getBuildByNumber(3);
