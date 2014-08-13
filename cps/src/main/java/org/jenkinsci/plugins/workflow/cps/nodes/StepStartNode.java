@@ -32,8 +32,12 @@ public class StepStartNode extends BlockStartNode implements StepNode {
     }
 
     public StepDescriptor getDescriptor() {
-        if (descriptor==null)
-            descriptor = (StepDescriptor) Jenkins.getInstance().getDescriptor(descriptorId);
+        if (descriptor == null) {
+            Jenkins j = Jenkins.getInstance();
+            if (j != null) {
+                descriptor = (StepDescriptor) j.getDescriptor(descriptorId);
+            }
+        }
         return descriptor;
     }
 
