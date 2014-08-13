@@ -28,8 +28,8 @@
     <td class="pane">
         <div style="white-space: normal">${%Building}
             <!-- TODO check for Item.READ permission on the accessControlled() -->
-            <a href="${rootURL}/${it.parent.url}"><l:breakable value="${it.parent.fullDisplayName}"/></a>&#160;${%tasks}
-            <t:buildProgressBar build="${it}" executor="${executor}"/>
+            <a href="${rootURL}/${it.parent.url}" class="model-link"><l:breakable value="${it.parent.fullDisplayName}"/></a>
+            <t:buildProgressBar build="${it.parent}" executor="${executor}"/>
         </div>
     </td>
 </j:jelly>
