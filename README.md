@@ -54,6 +54,7 @@ There is a [demo](demo/README.md) using Docker available if you want to try a co
 
 # Development
 
+* [Changelog](CHANGES.md)
 * [Source repository](https://github.com/jenkinsci/workflow-plugin)
 * [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+component+%3D+workflow+ORDER+BY+priority+DESC&mode=hide)
 * [Trello board](https://trello.com/b/u2fJQnDX/workflow) tracking active and proposed tasks.
