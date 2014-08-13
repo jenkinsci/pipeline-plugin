@@ -19,6 +19,8 @@ WORKDIR /var/lib/jenkins
 RUN git clone --bare https://github.com/jenkinsci/workflow-plugin-pipeline-demo.git
 RUN git clone workflow-plugin-pipeline-demo.git workflow-plugin-pipeline-demo; cd workflow-plugin-pipeline-demo; mvn install; cd sometests; mvn clean install -Dmaven.test.failure.ignore=true
 
+RUN git config --global user.email "demo@jenkins-ci.org" && git config --global user.name "Workflow Demo"
+
 # preseed data
 ADD jenkins.war /var/lib/jenkins/jenkins.war
 ADD ws/plugins/ /var/lib/jenkins/plugins
