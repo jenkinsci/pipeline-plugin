@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.workflow;
 
-import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -13,7 +12,7 @@ import org.jvnet.hudson.test.JenkinsRule;
  */
 public class PersistenceFailureTest extends SingleJobTestBase {
     /**
-     *
+     * When wokflow execution runs into a serialization problem, can we handle that situation gracefully?
      */
     @Test
     public void stepExecutionFailsToPersist() throws Exception {
