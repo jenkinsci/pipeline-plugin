@@ -23,8 +23,10 @@
       <numExecutors>2</numExecutors>
       <mode>NORMAL</mode>
       <retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/>
-      <launcher class="hudson.slaves.CommandLauncher">
-        <agentCommand>java -jar /var/lib/jenkins/war/WEB-INF/slave.jar</agentCommand>
+      <launcher class="hudson.plugins.sshslaves.SSHLauncher">
+        <host>localhost</host>
+        <port>22</port>
+        <credentialsId>root-login</credentialsId>
       </launcher>
       <label></label>
       <nodeProperties/>
