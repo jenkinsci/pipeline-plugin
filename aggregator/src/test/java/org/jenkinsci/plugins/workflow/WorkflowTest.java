@@ -151,17 +151,15 @@ public class WorkflowTest extends SingleJobTestBase {
      * that they are persisted and resurrected.
      */
     @Test public void buildShellScriptOnSlave() throws Exception {
-        final AtomicReference<String> dir = new AtomicReference<String>();
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 DumbSlave s = createSlave(story.j);
                 s.getNodeProperties().add(new EnvironmentVariablesNodeProperty(new EnvironmentVariablesNodeProperty.Entry("ONSLAVE", "true")));
 
                 p = jenkins().createProject(WorkflowJob.class, "demo");
-                dir.set(s.getRemoteFS() + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
                     "node('" + s.getNodeName() + "') {\n" +
-                    "    sh('echo before=$PWD')\n" +
+                    "    sh('echo before=`basename $PWD`')\n" +
                     "    sh('echo ONSLAVE=$ONSLAVE')\n" +
 
                         // we'll suspend the execution here
@@ -192,7 +190,7 @@ public class WorkflowTest extends SingleJobTestBase {
 
                 assertBuildCompletedSuccessfully();
 
-                story.j.assertLogContains("before=" + dir, b);
+                story.j.assertLogContains("before=demo", b);
                 story.j.assertLogContains("ONSLAVE=true", b);
             }
         });
@@ -304,7 +302,6 @@ public class WorkflowTest extends SingleJobTestBase {
     }
 
     @Test public void acquireWorkspace() throws Exception {
-        final AtomicReference<String> dir = new AtomicReference<String>();
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 @SuppressWarnings("deprecation")
@@ -312,14 +309,13 @@ public class WorkflowTest extends SingleJobTestBase {
                 jenkins().addNode(new DumbSlave("slave", "dummy", slaveRoot, "2", Node.Mode.NORMAL, "", story.j.createComputerLauncher(null), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList()));
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("FLAG", null)));
-                dir.set(slaveRoot + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
                         "node('slave') {\n" + // this locks the WS
-                                "    sh('echo default=$PWD')\n" +
+                                "    sh('echo default=`basename $PWD`')\n" +
                                 "    ws {\n" + // and this locks a second one
-                                "        sh('echo before=$PWD')\n" +
+                                "        sh('echo before=`basename $PWD`')\n" +
                                 "        watch(new File('" + jenkins().getRootDir() + "', FLAG))\n" +
-                                "        sh('echo after=$PWD')\n" +
+                                "        sh('echo after=`basename $PWD`')\n" +
                                 "    }\n" +
                                 "}"
                 ));
@@ -352,17 +348,17 @@ public class WorkflowTest extends SingleJobTestBase {
                 story.j.waitUntilNoActivity();
                 assertBuildCompletedSuccessfully(b1);
                 assertBuildCompletedSuccessfully(b2);
-                story.j.assertLogContains("default=" + dir, b1);
-                story.j.assertLogContains("before=" + dir + "@2", b1);
-                story.j.assertLogContains("after=" + dir + "@2", b1);
-                story.j.assertLogContains("default=" + dir + "@3", b2);
-                story.j.assertLogContains("before=" + dir + "@4", b2);
-                story.j.assertLogContains("after=" + dir + "@4", b2);
+                story.j.assertLogContains("default=demo", b1);
+                story.j.assertLogContains("before=demo@2", b1);
+                story.j.assertLogContains("after=demo@2", b1);
+                story.j.assertLogContains("default=demo@3", b2);
+                story.j.assertLogContains("before=demo@4", b2);
+                story.j.assertLogContains("after=demo@4", b2);
                 FileUtils.write(new File(jenkins().getRootDir(), "three"), "here");
                 WorkflowRun b3 = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "three"))));
-                story.j.assertLogContains("default=" + dir, b3);
-                story.j.assertLogContains("before=" + dir + "@2", b3);
-                story.j.assertLogContains("after=" + dir + "@2", b3);
+                story.j.assertLogContains("default=demo", b3);
+                story.j.assertLogContains("before=demo@2", b3);
+                story.j.assertLogContains("after=demo@2", b3);
             }
         });
     }
