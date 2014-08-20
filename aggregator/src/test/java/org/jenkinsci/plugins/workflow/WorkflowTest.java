@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow;
 
-import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import hudson.model.Node;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
@@ -38,24 +37,23 @@ import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
-import org.apache.commons.io.FileUtils;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
-import org.junit.Test;
-import org.junit.runners.model.Statement;
-import org.jvnet.hudson.test.JenkinsRule;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.commons.io.FileUtils;
 import org.apache.tools.ant.util.JavaEnvUtils;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  * Tests of workflows that involve restarting Jenkins in the middle.
@@ -90,7 +88,12 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertFalse(jenkins().toComputer().isIdle());
                 FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
                 watchDescriptor.watchUpdate();
-                waitForWorkflowToComplete();
+                try {
+                    waitForWorkflowToComplete();
+                } catch (Exception x) {
+                    System.out.println(JenkinsRule.getLog(b));
+                    throw x;
+                }
                 assertTrue(e.isComplete());
                 assertBuildCompletedSuccessfully();
             }
