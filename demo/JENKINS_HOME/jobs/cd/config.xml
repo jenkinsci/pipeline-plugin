@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@0.1-beta-1">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@0.1-beta-1">
+    <script>stage &apos;Dev&apos;
+node(&apos;slave&apos;) {
+    def src = &apos;/var/lib/jenkins/workflow-plugin-pipeline-demo&apos;
+    git url: src
+    sh &apos;mvn -o clean package&apos;
+    archive &apos;target/x.war&apos;
+
+    stage &apos;QA&apos;
+
+    parallel(longerTests: {
+        runWithServer {url -&gt;
+            sh &quot;mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=30&quot;
+        }
+    }, quickerTests: {
+        runWithServer {url -&gt;
+            sh &quot;mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=20&quot;
+        }
+    })
+    stage value: &apos;Staging&apos;, concurrency: 1
+    deploy &apos;target/x.war&apos;, &apos;staging&apos;
+}
+input message: &quot;Does http://localhost:8080/staging/ look good?&quot;
+stage value: &apos;Production&apos;, concurrency: 1
+node(&apos;master&apos;) {
+    sh &apos;curl -I http://localhost:8080/staging/&apos;
+    unarchive mapping: [&apos;target/x.war&apos; : &apos;x.war&apos;]
+    deploy &apos;x.war&apos;, &apos;production&apos;
+    echo &apos;Deployed to http://localhost:8080/production/&apos;
+}
+
+def deploy(war, id) {
+    sh &quot;cp ${war} /tmp/webapps/${id}.war&quot;
+}
+
+def undeploy(id) {
+    sh &quot;rm /tmp/webapps/${id}.war&quot;
+}
+
+def runWithServer(body) {
+    def id = UUID.randomUUID().toString()
+    deploy &apos;target/x.war&apos;, id
+    try {
+        body.call &quot;http://localhost:8080/${id}/&quot;
+    } finally {
+        undeploy id
+    }
+}
+</script>
+  </definition>
+  <triggers>
+    <hudson.triggers.SCMTrigger>
+      <spec>* * * * *</spec>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+</flow-definition>

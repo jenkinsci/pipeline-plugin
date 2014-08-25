@@ -344,8 +344,8 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return ResourceList.EMPTY;
     }
 
+    // TODO as of 1.577 implemented in Job, can delete override (and redundant implementation of ModelObjectWithChildren)
     @Override public ContextMenu doChildrenContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
-        // TODO copied from AbstractProject:
         ContextMenu menu = new ContextMenu();
         for (PermalinkProjectAction.Permalink p : getPermalinks()) {
             if (p.resolve(this) != null) {

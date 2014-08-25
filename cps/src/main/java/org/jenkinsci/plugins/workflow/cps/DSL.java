@@ -170,21 +170,24 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         final Map<String,Object> namedArgs;
         final Closure body;
 
-        private NamedArgsAndClosure(Map<String,Object> namedArgs, Closure body) {
-            this.namedArgs = new LinkedHashMap<String, Object>(namedArgs);
+        private NamedArgsAndClosure(Map<?,?> namedArgs, Closure body) {
+            this.namedArgs = new LinkedHashMap<String,Object>();
             this.body = body;
 
-            // coerce GString, to save StepDescriptor.newInstance() from being made aware of that
-            // this isn't the only type coercion that Groovy does, so this is not very kosher, but
-            // doing a proper coercion like Groovy does require us to know the type that the receiver
-            // expects.
-            //
-            // For the reference, Groovy does:
-            //   ReflectionCache.getCachedClass(types[i]).coerceArgument(a)
-            for (Entry<String, Object> e : this.namedArgs.entrySet()) {
-                if (e.getValue() instanceof GString) {
-                    e.setValue(e.getValue().toString());
+            for (Map.Entry<?,?> entry : namedArgs.entrySet()) {
+                String k = entry.getKey().toString(); // coerces GString and more
+                Object v = entry.getValue();
+                // coerce GString, to save StepDescriptor.newInstance() from being made aware of that
+                // this isn't the only type coercion that Groovy does, so this is not very kosher, but
+                // doing a proper coercion like Groovy does require us to know the type that the receiver
+                // expects.
+                //
+                // For the reference, Groovy does:
+                //   ReflectionCache.getCachedClass(types[i]).coerceArgument(a)
+                if (v instanceof GString) {
+                    v = v.toString();
                 }
+                this.namedArgs.put(k, v);
             }
         }
     }
@@ -208,8 +211,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         boolean expectsBlock = d.takesImplicitBlockArgument();
 
         if (arg instanceof Map)
-            // TODO: convert the key to a string
-            return new NamedArgsAndClosure((Map<String,Object>) arg, null);
+            return new NamedArgsAndClosure((Map) arg, null);
         if (arg instanceof Closure && expectsBlock)
             return new NamedArgsAndClosure(Collections.<String,Object>emptyMap(),(Closure)arg);
 

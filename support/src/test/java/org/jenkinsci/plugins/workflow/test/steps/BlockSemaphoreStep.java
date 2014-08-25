@@ -48,7 +48,9 @@ public final class BlockSemaphoreStep extends Step {
         /** {@link FutureCallback} from {@link StepContext#invokeBodyLater} has been notified, so the block has ended. */
         BLOCK_ENDED,
         /** {@link FutureCallback} from {@link Step} has been notified, so the whole step has ended. */
-        DONE
+        DONE,
+        /** Aborted through {@link StepExecution#stop()}. */
+        STOPPED
     }
 
     private State state = State.INIT;
@@ -72,6 +74,12 @@ public final class BlockSemaphoreStep extends Step {
             public boolean start() throws Exception {
                 moveFrom(State.INIT);
                 return false;
+            }
+
+            @Override
+            public void stop() throws Exception {
+                state = State.STOPPED; // force the state change regardless of the current state
+                context.onFailure(new InterruptedException());
             }
         };
     }

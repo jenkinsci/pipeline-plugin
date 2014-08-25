@@ -25,6 +25,6 @@
 
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
   <f:entry title="${%Script}" field="script">
-    <f:textarea />
+    <f:textarea checkMethod="post"/>
   </f:entry>
 </j:jelly>

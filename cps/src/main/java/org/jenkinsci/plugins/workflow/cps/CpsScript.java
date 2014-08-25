@@ -25,7 +25,6 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.SerializableScript;
-import groovy.lang.Binding;
 import hudson.EnvVars;
 import hudson.model.Queue;
 import hudson.model.Run;
@@ -39,8 +38,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 
 /**
- * {@link SerializableScript} that overrides target of the output.
- *
+ * The script of a workflow.
  * @author Kohsuke Kawaguchi
  */
 @PersistIn(PROGRAM)
@@ -50,11 +48,8 @@ public abstract class CpsScript extends SerializableScript {
 
     transient CpsFlowExecution execution;
 
+    /** Default constructor for {@link CpsFlowExecution}. */
     public CpsScript() {
-    }
-
-    public CpsScript(Binding binding) {
-        super(binding);
     }
 
     @SuppressWarnings("deprecation") // TODO encoding of execution.owner.console?

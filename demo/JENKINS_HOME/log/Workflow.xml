@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<log>
+  <name>Workflow</name>
+  <targets>
+    <target>
+      <name>org.jenkinsci.plugins.workflow</name>
+      <level>500</level>
+    </target>
+    <target>
+      <name>org.jenkinsci.plugins.durabletask</name>
+      <level>500</level>
+    </target>
+  </targets>
+</log>

@@ -195,7 +195,7 @@ public class CpsFlowExecution extends FlowExecution {
      */
     /*package*/ final Stack<BlockStartNode> startNodes = new Stack<BlockStartNode>();
 
-    private final NavigableMap<Integer,FlowHead> heads = new TreeMap<Integer, FlowHead>();
+    private final NavigableMap<Integer,FlowHead> heads = new TreeMap<Integer, FlowHead>(); // TODO inconsistent synchronization can cause ConcurrentModificationException in marshal
 
     private final AtomicInteger iota = new AtomicInteger();
 

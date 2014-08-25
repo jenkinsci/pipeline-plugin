@@ -18,6 +18,15 @@ public class RetryStepExecution extends StepExecution {
         return false;   // execution is asynchronous
     }
 
+    @Override
+    public void stop() throws Exception {
+        // TODO
+        // requiring finding the tip and aborting it
+        // Perhaps StepContext should support stopping the execution
+        // started by the invokeBodyLater method
+        throw new UnsupportedOperationException();
+    }
+
     private class Callback implements FutureCallback<Object>, Serializable {
         private int left;
 

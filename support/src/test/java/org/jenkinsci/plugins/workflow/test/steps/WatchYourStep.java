@@ -122,6 +122,11 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
             return false;
         }
 
+        @Override
+        public void stop() throws Exception {
+            getContext().onFailure(new InterruptedException());
+        }
+
         public File getPath() {
             return step.watch;
         }

@@ -1,4 +1,12 @@
 target
 work
+
 .idea/
 *.iml
+*.iws
+*.ipr
+.idea
+out
+
+demo/jenkins.war
+demo/ws/

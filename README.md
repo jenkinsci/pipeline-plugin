@@ -10,7 +10,7 @@ This project attempts to make it possible to directly write that script, what pe
 
 # Core features
 
-Not all implemented yet, of course; see below for status.
+Specific status of implementation below.
 
 ## Scripted control flow
 
@@ -34,6 +34,20 @@ Executors are not consumed while the flow is waiting.
 
 See [here](scm-step/README.md) for details on using version control from a workflow.
 
+## Pipeline stages
+
+By default, flow builds can run concurrently.
+The `stage` command lets you not mark certain sections of a build as being constrained by limited concurrency (or, later, unconstrained).
+Newer builds are always given priority when entering such a throttled stage; older builds will simply exit early if they are preëmpted.
+
+A concurrency of one is useful to let you lock a singleton resource, such as deployment to a single target server.
+Only one build will deploy at a given time: the newest which passed all previous stages.
+
+A finite concurrency ≥1 can also be used to prevent slow build stages such as integration tests from overloading the system.
+Every SCM push can still trigger a separate build of a quicker earlier stage as compilation and unit tests.
+Yet each build runs linearly and can even retain a single workspace, avoiding the need to identify and copy artifacts between builds.
+(Even if you dispose of a workspace from an earlier stage, you can retain information about it using simple local variables.)
+
 ## Example script
 
 ```
@@ -54,6 +68,7 @@ There is a [demo](demo/README.md) using Docker available if you want to try a co
 
 # Development
 
+* [Changelog](CHANGES.md)
 * [Source repository](https://github.com/jenkinsci/workflow-plugin)
 * [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+component+%3D+workflow+ORDER+BY+priority+DESC&mode=hide)
 * [Trello board](https://trello.com/b/u2fJQnDX/workflow) tracking active and proposed tasks.
