@@ -79,7 +79,12 @@ public abstract class SingleJobTestBase extends Assert {
     }
 
     public void assertThatWorkflowIsSuspended(WorkflowRun b, CpsFlowExecution e) throws Exception {
-        e.waitForSuspension();  // it should be in the suspended state
+        try {
+            e.waitForSuspension();  // it should be in the suspended state
+        } catch (InterruptedException x) {
+            System.out.println(JenkinsRule.getLog(b));
+            throw x;
+        }
         assert b.isBuilding() : JenkinsRule.getLog(b);
     }
 

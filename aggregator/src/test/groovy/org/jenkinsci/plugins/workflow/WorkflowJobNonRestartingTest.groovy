@@ -76,6 +76,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
         while (!e.isComplete())
             e.waitForSuspension()   // let the workflow run to the completion
 
+        f.get()
         assert b.result==Result.SUCCESS : b.log
         // currentHeads[0] is FlowEndNode, whose parent is BlockEndNode for "node",
         // whose parent is BlockEndNode for body invocation, whose parent is AtomNode

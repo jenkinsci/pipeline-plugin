@@ -1,25 +1,9 @@
 package org.jenkinsci.plugins.workflow.steps;
 
-import hudson.EnvVars;
 import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.Util;
-import hudson.model.BuildListener;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStep;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Artifact archiving.
