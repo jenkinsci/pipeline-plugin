@@ -72,6 +72,10 @@ public final class CatchErrorStep extends AbstractStepImpl {
             return false;
         }
 
+        @Override public void stop() throws Exception {
+            // nothing to do
+        }
+
         private final class Callback implements FutureCallback<Object>, Serializable {
 
             @Override public void onSuccess(Object result) {
