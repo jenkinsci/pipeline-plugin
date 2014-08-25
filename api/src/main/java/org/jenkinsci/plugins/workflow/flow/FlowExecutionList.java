@@ -122,7 +122,11 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
     private static final Logger LOGGER = Logger.getLogger(FlowExecutionList.class.getName());
 
     public static FlowExecutionList get() {
-        return Jenkins.getInstance().getInjector().getInstance(FlowExecutionList.class);
+        Jenkins j = Jenkins.getInstance();
+        if (j == null) { // might be called during shutdown
+            return new FlowExecutionList();
+        }
+        return j.getInjector().getInstance(FlowExecutionList.class);
     }
 
     /**
