@@ -22,6 +22,8 @@ At any point you can insert a shell script to do “real work” (compilation, e
 
 Standard DSL functions let you run external processes, grab slave nodes, allocate workspaces, build “legacy” (freestyle) jobs, and so on.
 
+See [here](basic-steps/CORE-STEPS.md) for information on reusing build steps from freestyle projects.
+
 ## Pause and resume execution
 
 If Jenkins is restarted (intentionally, or because of a crash) while your workflow is running, when it comes back up, execution is resumed where it left off.
