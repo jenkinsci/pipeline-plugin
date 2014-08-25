@@ -13,7 +13,7 @@ ws/plugins/workflow-aggregator.jpi:	jenkins.war
 	JENKINS_HOME=ws java -jar jenkins.war --httpPort=-1
 
 jenkins.war:
-	wget -O jenkins.war	https://updates.jenkins-ci.org/download/war/1.572/jenkins.war
+	wget -O jenkins.war	https://updates.jenkins-ci.org/download/war/1.577/jenkins.war
 
 clean:
 	rm -rf ws jenkins.war
