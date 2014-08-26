@@ -621,7 +621,7 @@ public class CpsFlowExecution extends FlowExecution {
             writeChild(w, context, "result", e.result, Result.class);
             writeChild(w, context, "script", e.script, String.class);
             writeChild(w, context, "owner", e.owner, Object.class);
-            for (FlowHead h : e.heads.values()) {
+            for (FlowHead h : e.heads.values()) { // TODO synchronize access to e.heads: https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/org.jenkins-ci.plugins.workflow$workflow-aggregator/362/testReport/junit/org.jenkinsci.plugins.workflow.steps.parallel/ParallelStepTest/localMethodCallWithinLotsOfBranches/
                 writeChild(w, context, "head", h.getId()+":"+h.get().getId(), String.class);
             }
             writeChild(w, context, "iota", e.iota.get(), Integer.class);
