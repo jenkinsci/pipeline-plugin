@@ -25,12 +25,8 @@ RUN mvn install && mvn -f sometests -Dmaven.test.failure.ignore clean install
 
 RUN git config --global user.email "demo@jenkins-ci.org" && git config --global user.name "Workflow Demo"
 
-WORKDIR /var/lib/jenkins
-# preseed data
-ADD jenkins.war /var/lib/jenkins/jenkins.war
 ADD JENKINS_HOME /var/lib/jenkins/
-ADD ws/plugins/ /var/lib/jenkins/plugins
-RUN find /var/lib/jenkins/plugins/* -type d | xargs rm -rf
+ADD jenkins-war.war /var/lib/jenkins/jenkins.war
 
 ADD run.sh /var/lib/jenkins/run.sh
 ADD sshd_config /etc/ssh/sshd_config

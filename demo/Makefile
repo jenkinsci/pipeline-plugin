@@ -1,25 +1,50 @@
-build:	ws/plugins/workflow-aggregator.jpi
+build: releases
 	docker build -t jenkinsci/workflow-demo .
 
-# TODO this is quite crude, but we need to install dependencies of workflow plugins, not only ../*/target/*.jpi:
-build-from-src: jenkins.war ../aggregator/work/plugins/workflow-job.jpi
-	[ -d ws/plugins ] || mkdir -p ws/plugins
-	cp -v ../aggregator/work/plugins/*.jpi ws/plugins
-	docker build -t jenkinsci/workflow-demo-snapshot .
+run: build
+	docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo
 
-ws/plugins/workflow-aggregator.jpi:	jenkins.war
-	[ -d ws ] || mkdir ws
-	cp init.groovy ws/init.groovy
-	JENKINS_HOME=ws java -jar jenkins.war --httpPort=-1
+PLUGINS=\
+	org.jenkins-ci.plugins:durable-task \
+	org.jenkins-ci.plugins:git \
+	org.jenkins-ci.plugins:git-client \
+	org.jenkins-ci.plugins:javadoc \
+	org.jenkins-ci.plugins:junit \
+	org.jenkins-ci.plugins:mailer \
+	org.jenkins-ci.plugins:mapdb-api \
+	org.jenkins-ci.plugins:mercurial \
+	org.jenkins-ci.plugins:scm-api \
+	org.jenkins-ci.plugins:script-security \
+	org.jenkins-ci.plugins:subversion \
+	org.jenkins-ci.plugins.workflow:workflow-aggregator \
+	org.jenkins-ci.plugins.workflow:workflow-api \
+	org.jenkins-ci.plugins.workflow:workflow-basic-steps \
+	org.jenkins-ci.plugins.workflow:workflow-cps \
+	org.jenkins-ci.plugins.workflow:workflow-durable-task-step \
+	org.jenkins-ci.plugins.workflow:workflow-job \
+	org.jenkins-ci.plugins.workflow:workflow-scm-step \
+	org.jenkins-ci.plugins.workflow:workflow-step-api \
+	org.jenkins-ci.plugins.workflow:workflow-stm \
+	org.jenkins-ci.plugins.workflow:workflow-support
 
-JENKINS_VERSION=$(shell perl -n -e 'if (m{<version>(.+)</version>}) {print "$$1\n"; exit}' ../pom.xml)
+# TODO using ADD with a remote URL would be more convenient, but docker-build claims that URLs like http://jenkins-updates.cloudbees.com/download/plugins/mercurial/*latest*/mercurial.hpi give a 404 (in fact they are 302 → 200)
+# anyway it seems to download the entire content disregarding Last-Modified, making it unusable
+releases:
+# TODO should we pass -U to mvn? Slower but more precise.
+	[ -f jenkins-war.war ] || mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=org.jenkins-ci.main:jenkins-war:RELEASE:war -DoutputDirectory=. -Dmdep.stripVersion
+	set -e; for ga in $(PLUGINS); do a=$$(echo $$ga | sed 's/.*\://'); [ -f JENKINS_HOME/plugins/$$a.jpi ] || (mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=$$ga:RELEASE:hpi -DoutputDirectory=JENKINS_HOME/plugins -Dmdep.stripVersion && mv JENKINS_HOME/plugins/$$a.hpi JENKINS_HOME/plugins/$$a.jpi); touch JENKINS_HOME/plugins/$$a.jpi.pinned; done
 
-jenkins.war:
-	mvn -U org.apache.maven.plugins:maven-dependency-plugin:2.5.1:get -Dartifact=org.jenkins-ci.main:jenkins-war:$(JENKINS_VERSION):war -Dtransitive=false
-	cp -v ~/.m2/repository/org/jenkins-ci/main/jenkins-war/$(JENKINS_VERSION)/jenkins-war-$(JENKINS_VERSION).war jenkins.war
+build-snapshot: build
+	mvn -f .. -DskipTests clean install
+	cp -v ../*/target/*.hpi snapshot/plugins
+# TODO need to write snapshot/Dockerfile
+	docker build -t jenkinsci/workflow-demo-snapshot snapshot
+
+run-snapshot: build-snapshot
+	docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo-snapshot
 
 clean:
-	rm -rf ws jenkins.war
+	rm -rf jenkins-war.war JENKINS_HOME/plugins snapshot/plugins
 
 push:
 	docker push jenkinsci/workflow-demo

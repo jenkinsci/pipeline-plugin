@@ -9,4 +9,4 @@ EOF
 chmod 755 /usr/bin/jetty
 
 jetty &
-JENKINS_HOME=/var/lib/jenkins java -jar jenkins.war --httpPort=8081
+JENKINS_HOME=/var/lib/jenkins java -jar /var/lib/jenkins/jenkins.war --httpPort=8081
