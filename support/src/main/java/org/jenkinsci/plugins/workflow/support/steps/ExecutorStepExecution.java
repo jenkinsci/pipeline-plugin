@@ -26,7 +26,6 @@ import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
-import org.jenkinsci.plugins.workflow.support.PrioritizedTask;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 
@@ -39,6 +38,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jenkinsci.plugins.durabletask.ContinuedTask;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -62,7 +62,7 @@ public class ExecutorStepExecution extends StepExecution {
         // TODO: think about how to do this
     }
 
-    private static final class PlaceholderTask extends AbstractQueueTask implements PrioritizedTask, Serializable {
+    private static final class PlaceholderTask extends AbstractQueueTask implements ContinuedTask, Serializable {
 
         // TODO can this be replaced with StepExecutionIterator?
         /** map from cookies to contexts of tasks thought to be running */
@@ -202,7 +202,7 @@ public class ExecutorStepExecution extends StepExecution {
             return super.getDefaultAuthentication(); // TODO should pick up credentials from configuring user or something
         }
 
-        @Override public boolean isPrioritized() {
+        @Override public boolean isContinued() {
             return cookie != null; // in which case this is after a restart and we still claim the executor
         }
 
