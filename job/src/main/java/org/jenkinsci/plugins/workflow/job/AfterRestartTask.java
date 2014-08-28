@@ -109,7 +109,6 @@ class AfterRestartTask extends AbstractQueueTask implements Queue.FlyweightTask,
 
     public final class Body implements Queue.Executable {
 
-        /** for Jelly */
         public final WorkflowRun run;
 
         Body(WorkflowRun run) {

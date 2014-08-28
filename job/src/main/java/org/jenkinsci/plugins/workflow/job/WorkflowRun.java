@@ -35,6 +35,7 @@ import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
 import hudson.console.PlainTextConsoleOutputStream;
 import hudson.model.Computer;
+import hudson.model.Executor;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
@@ -85,7 +86,10 @@ import org.jenkinsci.plugins.workflow.flow.GraphListener;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
+import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.framework.io.LargeText;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
 public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Queue.Executable, LazyBuildMixIn.LazyLoadingRun<WorkflowJob,WorkflowRun> {
@@ -211,6 +215,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                         execution.abort();
                     } catch (Exception x2) {
                         LOGGER.log(Level.WARNING, null, x2);
+                    }
+                    Executor exec = Executor.currentExecutor();
+                    if (exec != null) {
+                        exec.recordCauseOfInterruption(this, listener);
                     }
                 }
                 copyLogs();
@@ -437,6 +445,31 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
         }
         return changeSets;
+    }
+
+    /** TODO {@link AbstractBuild#doStop} could be pulled up into {@link Run} making this unnecessary. */
+    @RequirePOST
+    public synchronized HttpResponse doStop() {
+        Executor e = getOneOffExecutor();
+        if (e != null) {
+            return e.doStop();
+        } else {
+            return HttpResponses.forwardToPreviousPage();
+        }
+    }
+    @Override public Executor getOneOffExecutor() {
+        Jenkins j = Jenkins.getInstance();
+        if (j != null) {
+            for (Computer c : j.getComputers()) {
+                for (Executor e : c.getOneOffExecutors()) {
+                    Queue.Executable exec = e.getCurrentExecutable();
+                    if (exec == this || (exec instanceof AfterRestartTask.Body && ((AfterRestartTask.Body) exec).run == this)) {
+                        return e;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private void onCheckout(SCM scm, FilePath workspace, @CheckForNull File changelogFile, @CheckForNull SCMRevisionState pollingBaseline) throws Exception {

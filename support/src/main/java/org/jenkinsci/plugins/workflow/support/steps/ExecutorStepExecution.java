@@ -16,7 +16,6 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.model.queue.AbstractQueueTask;
-import hudson.model.queue.SubTask;
 import hudson.remoting.ChannelClosedException;
 import hudson.remoting.RequestAbortedException;
 import hudson.security.AccessControlled;
@@ -59,7 +58,30 @@ public class ExecutorStepExecution extends StepExecution {
 
     @Override
     public void stop() {
-        // TODO: think about how to do this
+        for (Queue.Item item : Queue.getInstance().getItems()) {
+            if (item.task instanceof PlaceholderTask && ((PlaceholderTask) item.task).context.equals(getContext())) {
+                Queue.getInstance().cancel(item);
+                break;
+            }
+        }
+        Jenkins j = Jenkins.getInstance();
+        if (j != null) {
+            // Similar to Run.getExecutor (and proposed Executables.getExecutor), but distinct since we do not have the Executable yet:
+            COMPUTERS: for (Computer c : j.getComputers()) {
+                for (Executor e : c.getExecutors()) {
+                    Queue.Executable exec = e.getCurrentExecutable();
+                    if (exec instanceof PlaceholderTask.PlaceholderExecutable && ((PlaceholderTask.PlaceholderExecutable) exec).getParent().context.equals(getContext())) {
+                        PlaceholderTask.finish(((PlaceholderTask.PlaceholderExecutable) exec).getParent().cookie);
+                        break COMPUTERS;
+                    }
+                }
+            }
+        }
+        // Whether or not either of the above worked (and they would not if for example our item were canceled), make sure we die.
+        getContext().onFailure(new InterruptedException());
+        // TODO also would like to listen for our queue item being canceled directly (Queue.cancel(Item)) and finish automatically,
+        // but ScheduleResult.getCreateItem().getFuture().getStartCondition() is not a ListenableFuture so we cannot wait for it to be cancelled without consuming a thread,
+        // and Item.cancel(Queue) is private and cannot be overridden; the only workaround for now is to have a custom QueueListener
     }
 
     private static final class PlaceholderTask extends AbstractQueueTask implements ContinuedTask, Serializable {
@@ -270,6 +292,7 @@ public class ExecutorStepExecution extends StepExecution {
                     }
                     TaskListener listener = context.get(TaskListener.class);
                     Launcher launcher = node.createLauncher(listener);
+                    Run<?,?> r = context.get(Run.class);
                     if (cookie == null) {
                         // First time around.
                         cookie = UUID.randomUUID().toString();
@@ -280,8 +303,7 @@ public class ExecutorStepExecution extends StepExecution {
                         synchronized (runningTasks) {
                             runningTasks.put(cookie, context);
                         }
-                        // For convenience, automatically a workspace, like WorkspaceStep would:
-                        Run<?,?> r = context.get(Run.class);
+                        // For convenience, automatically allocate a workspace, like WorkspaceStep would:
                         Job<?,?> j = r.getParent();
                         if (!(j instanceof TopLevelItem)) {
                             throw new Exception(j + " must be a top-level job");
@@ -303,7 +325,9 @@ public class ExecutorStepExecution extends StepExecution {
                                 try {
                                     runningTasks.wait();
                                 } catch (InterruptedException x) {
-                                    // fine, Jenkins is shutting down
+                                    // Jenkins is shutting down or this task was interrupted (Executor.doStop)
+                                    // TODO if the latter, we would like an API to StepExecution.stop the tip of our body
+                                    exec.recordCauseOfInterruption(r, listener);
                                 }
                             }
                         }
@@ -321,7 +345,7 @@ public class ExecutorStepExecution extends StepExecution {
                 }
             }
 
-            @Override public SubTask getParent() {
+            @Override public PlaceholderTask getParent() {
                 return PlaceholderTask.this;
             }
 
