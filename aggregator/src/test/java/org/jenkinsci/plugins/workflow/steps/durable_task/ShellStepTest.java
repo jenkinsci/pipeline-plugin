@@ -3,8 +3,6 @@ package org.jenkinsci.plugins.workflow.steps.durable_task;
 import com.google.common.base.Predicate;
 import hudson.model.BallColor;
 import hudson.model.Result;
-import jenkins.util.VirtualFile;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
@@ -14,12 +12,10 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
@@ -67,7 +63,6 @@ public class ShellStepTest extends Assert {
      * Abort a running workflow to ensure that the process is terminated.
      */
     @Test
-    @Ignore("TODO pending JENKINS-22641 fix in the core 1.575")
     public void abort() throws Exception {
         File tmp = File.createTempFile("jenkins","test");
         tmp.delete();
