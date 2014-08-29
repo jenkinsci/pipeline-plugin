@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -101,18 +102,24 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
     }
 
     private synchronized void saveLater() {
-        executor.submit(new Runnable() {
-            final List<FlowExecutionOwner> copy = new ArrayList<FlowExecutionOwner>(runningTasks.getView());
-
-            @Override
-            public void run() {
-                try {
-                    configFile.write(copy);
-                } catch (IOException x) {
-                    LOGGER.log(WARNING, null, x);
+        final List<FlowExecutionOwner> copy = new ArrayList<FlowExecutionOwner>(runningTasks.getView());
+        try {
+            executor.submit(new Runnable() {
+                @Override public void run() {
+                    save(copy);
                 }
-            }
-        });
+            });
+        } catch (RejectedExecutionException x) {
+            LOGGER.log(FINE, "could not schedule save, perhaps because Jenkins is shutting down; saving immediately", x);
+            save(copy);
+        }
+    }
+    private void save(List<FlowExecutionOwner> copy) {
+        try {
+            configFile.write(copy);
+        } catch (IOException x) {
+            LOGGER.log(WARNING, null, x);
+        }
     }
 
     private static final Logger LOGGER = Logger.getLogger(FlowExecutionList.class.getName());
