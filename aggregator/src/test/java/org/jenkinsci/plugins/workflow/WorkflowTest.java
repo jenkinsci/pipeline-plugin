@@ -193,6 +193,29 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
+    @Ignore("TODO breaks because flows resumed too early and Jenkins.instance == null")
+    @Test public void buildShellScriptOnSlaveWithDifferentResumePoint() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                String script = "node {watch(new File('" + jenkins().getRootDir() + "/touch'))}";
+                p.setDefinition(new CpsFlowDefinition(script));
+                startBuilding();
+                waitForWorkflowToSuspend();
+                // intentionally not waiting for watch step to begin
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                rebuildContext(story.j);
+                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "");
+                watchDescriptor.watchUpdate();
+                waitForWorkflowToComplete();
+                assertBuildCompletedSuccessfully();
+            }
+        });
+    }
+
     private Process jnlpProc;
     private void startJnlpProc() throws Exception {
         ProcessBuilder pb = new ProcessBuilder(JavaEnvUtils.getJreExecutable("java"), "-jar", Which.jarFile(Launcher.class).getAbsolutePath(), "-jnlpUrl", story.j.getURL() + "computer/dumbo/slave-agent.jnlp");

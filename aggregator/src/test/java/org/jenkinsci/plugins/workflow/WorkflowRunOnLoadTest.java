@@ -30,10 +30,12 @@ import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  * Makes sure that we do not have problems with build loading.
@@ -67,6 +69,10 @@ public class WorkflowRunOnLoadTest extends SingleJobTestBase {
                 p.setDefinition(new CpsFlowDefinition(script));
                 startBuilding();
                 waitForWorkflowToSuspend();
+                while (watchDescriptor.getActiveWatches().isEmpty()) {
+                    assertTrue(JenkinsRule.getLog(b), b.isBuilding());
+                    waitForWorkflowToSuspend();
+                }
             }
         });
         story.addStep(new Statement() {
