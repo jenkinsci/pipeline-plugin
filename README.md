@@ -39,7 +39,7 @@ See [here](scm-step/README.md) for details on using version control from a workf
 ## Pipeline stages
 
 By default, flow builds can run concurrently.
-The `stage` command lets you not mark certain sections of a build as being constrained by limited concurrency (or, later, unconstrained).
+The `stage` command lets you mark certain sections of a build as being constrained by limited concurrency (or, later, unconstrained).
 Newer builds are always given priority when entering such a throttled stage; older builds will simply exit early if they are preëmpted.
 
 A concurrency of one is useful to let you lock a singleton resource, such as deployment to a single target server.
