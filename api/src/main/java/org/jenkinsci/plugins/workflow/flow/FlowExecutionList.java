@@ -35,10 +35,7 @@ import static java.util.logging.Level.*;
 public class FlowExecutionList implements Iterable<FlowExecution> {
     private CopyOnWriteList<FlowExecutionOwner> runningTasks = new CopyOnWriteList<FlowExecutionOwner>();
     private final SingleLaneExecutorService executor = new SingleLaneExecutorService(Timer.get());
-
-    private XmlFile getConfigFile() {
-        return new XmlFile(new File(Jenkins.getInstance().getRootDir(), FlowExecutionList.class.getName() + ".xml"));
-    }
+    private final XmlFile configFile = new XmlFile(new File(Jenkins.getInstance().getRootDir(), FlowExecutionList.class.getName() + ".xml"));
 
     public FlowExecutionList() {
         load();
@@ -75,7 +72,6 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
 
     @SuppressWarnings("unchecked")
     private synchronized void load() {
-        XmlFile configFile = getConfigFile();
         if (configFile.exists()) {
             try {
                 runningTasks.replaceBy((List<FlowExecutionOwner>) configFile.read());
@@ -111,7 +107,7 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
             @Override
             public void run() {
                 try {
-                    getConfigFile().write(copy);
+                    configFile.write(copy);
                 } catch (IOException x) {
                     LOGGER.log(WARNING, null, x);
                 }
