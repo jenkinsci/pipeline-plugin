@@ -20,24 +20,26 @@ import hudson.remoting.ChannelClosedException;
 import hudson.remoting.RequestAbortedException;
 import hudson.security.AccessControlled;
 import hudson.slaves.WorkspaceList;
-import jenkins.model.Jenkins;
-import org.acegisecurity.Authentication;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.DoNotUse;
-
-import javax.annotation.CheckForNull;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.CheckForNull;
+import jenkins.model.Jenkins;
+import jenkins.util.Timer;
+import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.durabletask.ContinuedTask;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -52,7 +54,30 @@ public class ExecutorStepExecution extends StepExecution {
 
     @Override
     public boolean start() throws Exception {
-        Queue.getInstance().schedule2(new PlaceholderTask(getContext(), label), 0);
+        final PlaceholderTask task = new PlaceholderTask(getContext(), label);
+        if (Queue.getInstance().schedule2(task, 0).getCreateItem() == null) {
+            // There can be no duplicates. But could be refused if a QueueDecisionHandler rejects it for some odd reason.
+            throw new IllegalStateException("failed to schedule task");
+        }
+        Timer.get().schedule(new Runnable() {
+            @Override public void run() {
+                Queue.Item item = Queue.getInstance().getItem(task);
+                if (item != null) {
+                    PrintStream logger;
+                    try {
+                        logger = getContext().get(TaskListener.class).getLogger();
+                    } catch (Exception x) { // IOException, InterruptedException
+                        LOGGER.log(Level.WARNING, null, x);
+                        return;
+                    }
+                    logger.println("Still waiting to schedule task");
+                    String why = item.getWhy();
+                    if (why != null) {
+                        logger.println(why);
+                    }
+                }
+            }
+        }, 15, TimeUnit.SECONDS);
         return false;
     }
 
