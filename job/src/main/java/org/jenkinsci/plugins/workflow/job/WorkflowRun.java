@@ -174,8 +174,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 return;
             }
             Owner owner = new Owner(this);
-            FlowExecutionList.get().register(owner);
             execution = definition.create(owner, getAllActions());
+            FlowExecutionList.get().register(owner);
             execution.addListener(new GraphL());
             completed = new AtomicBoolean();
             logsToCopy = new LinkedHashMap<String,Long>();
@@ -520,13 +520,17 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         Owner(WorkflowRun run) {
             job = run.getParent().getFullName();
             id = run.getId();
+            this.run = run;
         }
         private String key() {
             return job + '/' + id;
         }
         private @Nonnull WorkflowRun run() throws IOException {
             if (run==null) {
-                WorkflowRun candidate = LOADING_RUNS.get(key());
+                WorkflowRun candidate;
+                synchronized (LOADING_RUNS) {
+                    candidate = LOADING_RUNS.get(key());
+                }
                 if (candidate != null && candidate.getParent().getFullName().equals(job) && candidate.getId().equals(id)) {
                     run = candidate;
                 } else {
