@@ -88,13 +88,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertFalse(jenkins().toComputer().isIdle());
                 FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
                 watchDescriptor.watchUpdate();
-                try {
-                    waitForWorkflowToComplete();
-                } catch (Exception x) {
-                    System.out.println(JenkinsRule.getLog(b));
-                    throw x;
-                }
-                assertTrue(e.isComplete());
+                waitForWorkflowToComplete();
                 assertBuildCompletedSuccessfully();
             }
         });

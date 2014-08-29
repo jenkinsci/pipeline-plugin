@@ -89,9 +89,14 @@ public abstract class SingleJobTestBase extends Assert {
     }
 
     public void waitForWorkflowToComplete() throws Exception {
-        do {
-            waitForWorkflowToSuspend(e);
-        } while (!e.isComplete());
+        try {
+            do {
+                waitForWorkflowToSuspend(e);
+            } while (!e.isComplete());
+        } catch (Exception x) {
+            System.out.println(JenkinsRule.getLog(b));
+            throw x;
+        }
     }
 
     public void waitForWorkflowToSuspend() throws Exception {
