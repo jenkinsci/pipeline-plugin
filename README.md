@@ -77,6 +77,7 @@ There is a [demo](demo/README.md) using Docker available if you want to try a co
 * [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/) with validated merge support.
   [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
 * [Video tutorial on implementing a Step API](http://jenkins-ci.org/content/workflow-plugin-tutorial-writing-step-impl)
+* [Video walkthrough of code](https://www.youtube.com/watch?v=tZygoTlW6YE)
 
 # Source organization
 
