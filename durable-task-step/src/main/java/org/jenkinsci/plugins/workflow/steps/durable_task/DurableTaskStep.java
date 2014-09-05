@@ -124,9 +124,9 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             try {
                 FilePath workspace = getWorkspace();
                 if (workspace == null) {
-                    return;
+                    return; // slave not yet ready, wait for another day
                 }
-                // cannot use this.listener after restart:
+                // cannot use this.listener after restart: TODO: re-inject parameters after deserialization?
                 if (controller.writeLog(workspace, getContext().get(TaskListener.class).getLogger())) {
                     getContext().saveState();
                 }

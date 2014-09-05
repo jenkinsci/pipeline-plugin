@@ -29,8 +29,12 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import java.util.List;
 
 /**
+ * Together with {@link BlockEndNode}, designates some kind of nested structure that contains "children",
+ * which are {@link FlowNode}s that are in between {@link BlockStartNode} and {@link BlockEndNode}
+ *
  * @author Kohsuke Kawaguchi
  * @author Jesse Glick
+ * @see BlockEndNode
  */
 public abstract class BlockStartNode extends FlowNode {
     protected BlockStartNode(FlowExecution exec, String id, FlowNode... parents) {

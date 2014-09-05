@@ -31,6 +31,7 @@ import java.util.List;
 /**
  * @author Kohsuke Kawaguchi
  * @author Jesse Glick
+ * @see BlockStartNode
  */
 public abstract class BlockEndNode<START extends BlockStartNode> extends FlowNode {
     private final START start;

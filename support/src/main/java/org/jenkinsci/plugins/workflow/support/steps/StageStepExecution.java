@@ -47,7 +47,7 @@ public class StageStepExecution extends StepExecution {
         n.addAction(new LabelAction(step.name));
         Run<?,?> r = getContext().get(Run.class);
         enter(r, getContext(), step.name, step.concurrency);
-        return false;
+        return false; // execute asynchronously
     }
 
     @Override
@@ -130,7 +130,7 @@ public class StageStepExecution extends StepExecution {
                 build = stage.waitingBuild;
                 context = stage.waitingContext;
             } else {
-                throw new IllegalStateException("the same flow is trying to reënter the stage " + name);
+                throw new IllegalStateException("the same flow is trying to reënter the stage " + name); // see 'e' with two dots, that's Jesse Glick for you! - KK
             }
         }
         for (Map.Entry<String,Stage> entry : stagesByName.entrySet()) {

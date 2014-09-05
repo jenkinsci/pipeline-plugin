@@ -42,6 +42,7 @@ import java.util.Collections;
 public class StepAtomNode extends AtomNode implements StepNode {
     private final String descriptorId;
 
+    // once we successfully convert descriptorId to a real instance, cache that
     private transient StepDescriptor descriptor;
 
     public StepAtomNode(CpsFlowExecution exec, StepDescriptor d, FlowNode parent) {

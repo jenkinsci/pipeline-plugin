@@ -14,8 +14,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 /**
-* @author Kohsuke Kawaguchi
-*/
+ * @author Kohsuke Kawaguchi
+ */
 public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
     private volatile transient Set<Class<?>> contextTypes;
 

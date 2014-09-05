@@ -30,6 +30,14 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Returns the working directory path.
+ *
+ * Used like:
+ *
+ * <pre>
+ * node {
+ *     def x = pwd() // where is my workspace?
+ * }
+ * </pre>
  */
 public class PwdStep extends AbstractStepImpl {
     @DataBoundConstructor public PwdStep() {}

@@ -42,6 +42,11 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 /**
  * Sample asynchronous step that suspends until a file of the specified name is created.
  *
+ * Used like:
+ * <pre>
+ * def x = watch('/tmp/foo')
+ * </pre>
+ *
  * @author Kohsuke Kawaguchi
  */
 public class WatchYourStep extends AbstractStepImpl implements Serializable {

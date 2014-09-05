@@ -45,6 +45,8 @@ import java.util.logging.Logger;
 import static java.util.logging.Level.*;
 
 /**
+ * TODO: document
+ *
  * @author Kohsuke Kawaguchi
  * @author Jesse Glick
  */

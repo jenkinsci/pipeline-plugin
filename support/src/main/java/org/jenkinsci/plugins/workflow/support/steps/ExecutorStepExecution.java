@@ -52,6 +52,13 @@ public class ExecutorStepExecution extends StepExecution {
         this.label = step.getLabel();
     }
 
+    /**
+     * General strategy of this step.
+     *
+     * 1. schedule {@link PlaceholderTask} into the {@link Queue} (what this method does)
+     * 2. when {@link PlaceholderTask} starts running, invoke the closure
+     * 3. when the closure is done, let {@link PlaceholderTask} complete
+     */
     @Override
     public boolean start() throws Exception {
         final PlaceholderTask task = new PlaceholderTask(getContext(), label);
@@ -84,6 +91,7 @@ public class ExecutorStepExecution extends StepExecution {
     @Override
     public void stop() {
         for (Queue.Item item : Queue.getInstance().getItems()) {
+            // if we are still in the queue waiting to be scheduled, just retract that
             if (item.task instanceof PlaceholderTask && ((PlaceholderTask) item.task).context.equals(getContext())) {
                 Queue.getInstance().cancel(item);
                 break;
@@ -91,6 +99,7 @@ public class ExecutorStepExecution extends StepExecution {
         }
         Jenkins j = Jenkins.getInstance();
         if (j != null) {
+            // if we are already running, kill the ongoing activities, which releases PlaceholderExecutable from its sleep loop
             // Similar to Run.getExecutor (and proposed Executables.getExecutor), but distinct since we do not have the Executable yet:
             COMPUTERS: for (Computer c : j.getComputers()) {
                 for (Executor e : c.getExecutors()) {
@@ -267,6 +276,9 @@ public class ExecutorStepExecution extends StepExecution {
             }
         }
 
+        /**
+         * Called when the body closure is complete.
+         */
         private static final class Callback implements FutureCallback<Object>, Serializable {
 
             private final String cookie;
@@ -299,6 +311,9 @@ public class ExecutorStepExecution extends StepExecution {
 
         }
 
+        /**
+         * Occupies {@link Executor} while workflow uses this slave.
+         */
         private final class PlaceholderExecutable implements Queue.Executable {
 
             private static final String COOKIE_VAR = "JENKINS_SERVER_COOKIE";
@@ -344,6 +359,7 @@ public class ExecutorStepExecution extends StepExecution {
                         LOGGER.log(Level.FINE, "resuming {0}", cookie);
                     }
                     try {
+                        // wait until the invokeBodyLater call above completes and notifies our Callback object
                         synchronized (runningTasks) {
                             while (runningTasks.containsKey(cookie)) {
                                 LOGGER.log(Level.FINE, "waiting on {0}", cookie);

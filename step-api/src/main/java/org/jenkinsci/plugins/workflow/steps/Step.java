@@ -30,6 +30,10 @@ import java.util.Map;
 
 /**
  * One thing that can be done, perhaps asynchronously.
+ *
+ * <p>
+ * Extends from {@link Describable} to support UI-based instantiation.
+ *
  * @author Kohsuke Kawaguchi
  * @author Jesse Glick
  */

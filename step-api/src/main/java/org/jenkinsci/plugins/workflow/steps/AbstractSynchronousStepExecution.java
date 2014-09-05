@@ -15,6 +15,11 @@ public abstract class AbstractSynchronousStepExecution<T> extends StepExecution 
         super(context);
     }
 
+    /**
+     * Meat of the execution.
+     *
+     * When this method returns, a step execution is over.
+     */
     protected abstract T run() throws Exception;
 
     @Override

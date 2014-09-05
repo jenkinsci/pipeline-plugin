@@ -41,6 +41,14 @@ import java.util.Set;
 
 /**
  * Grabs an {@link Executor} on a node of your choice and runs its block with that executor occupied.
+ *
+ * <p>
+ * Used like:
+ * <pre>
+ *     node("foo") {
+ *         // execute some stuff in a slave that has a label "foo" while workflow has this slave
+ *     }
+ * </pre>
  */
 public final class ExecutorStep extends Step {
 

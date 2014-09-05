@@ -159,6 +159,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return t;
     }
 
+    /**
+     * Actually executes the workflow.
+     */
     @Override public void run() {
         // TODO how to set startTime? reflection? https://trello.com/c/Gbg8I3pl/41-run-starttime
         // Some code here copied from execute(RunExecution), but subsequently modified quite a bit.
@@ -331,6 +334,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             execution.addListener(new GraphL());
             executionPromise.set(execution);
             if (!execution.isComplete()) {
+                // we've been restarted while we were running. let's get the execution going again.
                 try {
                     OutputStream logger = new FileOutputStream(getLogFile(), true);
                     listener = new StreamBuildListener(logger, Charset.defaultCharset());
