@@ -45,7 +45,7 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 /**
  * A step which uses some kind of {@link SCM}.
  */
-abstract class SCMStep extends Step {
+public abstract class SCMStep extends Step {
 
     private final boolean poll;
     private final boolean changelog;
@@ -118,7 +118,7 @@ abstract class SCMStep extends Step {
         return new StepExecutionImpl(context);
     }
 
-    protected static abstract class SCMStepDescriptor extends StepDescriptor {
+    public static abstract class SCMStepDescriptor extends StepDescriptor {
 
         @Override public Set<Class<?>> getRequiredContext() {
             Set<Class<?>> s = new HashSet<Class<?>>();
