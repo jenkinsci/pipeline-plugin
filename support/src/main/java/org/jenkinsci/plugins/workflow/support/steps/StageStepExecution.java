@@ -3,21 +3,12 @@ package org.jenkinsci.plugins.workflow.support.steps;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.XmlFile;
+import hudson.model.InvisibleAction;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
-import jenkins.model.CauseOfInterruption;
-import jenkins.model.InterruptedBuildAction;
-import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.workflow.actions.LabelAction;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -29,6 +20,16 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
+import jenkins.model.CauseOfInterruption;
+import jenkins.model.InterruptedBuildAction;
+import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.actions.StageAction;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 public class StageStepExecution extends StepExecution {
     private static final Logger LOGGER = Logger.getLogger(StageStepExecution.class.getName());
@@ -41,10 +42,21 @@ public class StageStepExecution extends StepExecution {
         this.step = step;
     }
 
+    private static final class StageActionImpl extends InvisibleAction implements StageAction {
+        private final String stageName;
+        StageActionImpl(String stageName) {
+            this.stageName = stageName;
+        }
+        @Override public String getStageName() {
+            return stageName;
+        }
+    }
+
     @Override
     public boolean start() throws Exception {
         FlowNode n = getContext().get(FlowNode.class);
         n.addAction(new LabelAction(step.name));
+        n.addAction(new StageActionImpl(step.name));
         Run<?,?> r = getContext().get(Run.class);
         enter(r, getContext(), step.name, step.concurrency);
         return false; // execute asynchronously
