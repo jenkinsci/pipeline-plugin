@@ -34,12 +34,14 @@ import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
 import jenkins.util.Timer;
 import org.acegisecurity.Authentication;
-import org.jenkinsci.plugins.durabletask.ContinuedTask;
+import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
+import org.jenkinsci.plugins.durabletask.executors.ContinuedTask;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -314,7 +316,7 @@ public class ExecutorStepExecution extends StepExecution {
         /**
          * Occupies {@link Executor} while workflow uses this slave.
          */
-        private final class PlaceholderExecutable implements Queue.Executable {
+        private final class PlaceholderExecutable implements ContinuableExecutable {
 
             private static final String COOKIE_VAR = "JENKINS_SERVER_COOKIE";
 
@@ -394,6 +396,12 @@ public class ExecutorStepExecution extends StepExecution {
                 return -1;
             }
 
+            @Override public boolean willContinue() {
+                synchronized (runningTasks) {
+                    return runningTasks.containsKey(cookie);
+                }
+            }
+
             // TODO extract this from Run to a utility method in Executables: https://trello.com/c/6FVhT94X/39-executables-getexecutor
             @Restricted(DoNotUse.class) // for Jelly
             public @CheckForNull Executor getExecutor() {
@@ -411,9 +419,13 @@ public class ExecutorStepExecution extends StepExecution {
                 return null;
             }
 
-            @Restricted(DoNotUse.class) // for Jelly
+            @Restricted(NoExternalUse.class) // for Jelly and toString
             public String getUrl() {
                 return PlaceholderTask.this.getUrl(); // we hope this has a console.jelly
+            }
+
+            @Override public String toString() {
+                return "PlaceholderExecutable:" + getUrl() + ":" + cookie;
             }
 
             private static final long serialVersionUID = 1L;
