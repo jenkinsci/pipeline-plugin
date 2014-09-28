@@ -43,5 +43,23 @@ public class ArtifactArchiverStepTest extends Assert {
         assertTrue(archivedFile.exists());
         assertEquals("hello world\n",IOUtils.toString(archivedFile.open()));
     }
+
+    @Test public void unarchiveDir() throws Exception {
+        WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList(
+                "node {",
+                "  sh 'mkdir -p a/b && echo one > a/1 && echo two > a/b/2'",
+                "  archive 'a/'",
+                "  sh 'rm -r a'",
+                "  unarchive mapping: ['a/' : '.']",
+                "  sh 'cat a/1 a/b/2'",
+                "}"), "\n")));
+        WorkflowRun b = j.assertBuildStatusSuccess(p.scheduleBuild2(0).get());
+        VirtualFile archivedFile = b.getArtifactManager().root().child("a/b/2");
+        assertTrue(archivedFile.exists());
+        assertEquals("two\n", IOUtils.toString(archivedFile.open()));
+        j.assertLogContains("one\ntwo", b);
+    }
+
 }
 
