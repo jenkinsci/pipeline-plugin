@@ -39,11 +39,11 @@ public class ArtifactUnarchiverStepExecution extends AbstractSynchronousStepExec
 
         for (Entry<String, String> e : step.mapping.entrySet()) {
             FilePath dst = new FilePath(ws,e.getValue());
-
-            String[] all = am.root().list(e.getKey());
+            String src = e.getKey();
+            String[] all = am.root().list(src);
             if (all.length == 0) {
-                throw new AbortException("no artifacts to unarchive");
-            } else if (all.length==1 && all[0].equals(e.getKey())) {
+                throw new AbortException("no artifacts to unarchive in " + src);
+            } else if (all.length == 1 && all[0].equals(src)) {
                 // the source is a file
                 if (dst.isDirectory())
                     dst = dst.child(getFileName(all[0]));
