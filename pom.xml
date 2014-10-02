@@ -70,7 +70,7 @@
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>script-security</artifactId>
-                <version>1.6-20141002.175018-1</version> <!-- TODO temporary until releasable -->
+                <version>1.6</version>
             </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
