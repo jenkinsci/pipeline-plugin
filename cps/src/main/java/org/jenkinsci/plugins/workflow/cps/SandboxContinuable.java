@@ -27,8 +27,6 @@ class SandboxContinuable extends Continuable {
             }, CpsWhitelist.INSTANCE);
         } catch (RuntimeException e) {
             throw e;
-        } catch (Error e) {
-            throw e;
         } catch (Exception e) {
             throw new AssertionError(e);    // Callable doesn't throw anything
         }
