@@ -88,6 +88,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.thoughtworks.xstream.io.ExtendedHierarchicalStreamWriterHelper.*;
+import hudson.model.User;
+import hudson.security.ACL;
+import javax.annotation.CheckForNull;
+import org.acegisecurity.Authentication;
+import org.acegisecurity.userdetails.UsernameNotFoundException;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
@@ -190,6 +195,9 @@ public class CpsFlowExecution extends FlowExecution {
      */
     /*package*/ transient /*almos final*/ FlowNodeStorage storage;
 
+    /** User ID associated with this build, or null if none specific. */
+    private final @CheckForNull String user;
+
     /**
      * Start nodes that have been created, whose {@link BlockEndNode} is not yet created.
      */
@@ -218,6 +226,8 @@ public class CpsFlowExecution extends FlowExecution {
         this.owner = owner;
         this.script = script;
         this.storage = createStorage();
+        Authentication auth = Jenkins.getAuthentication();
+        this.user = auth.equals(ACL.SYSTEM) ? null : auth.getName();
     }
 
     @Override
@@ -596,6 +606,19 @@ public class CpsFlowExecution extends FlowExecution {
         }
     }
 
+    @Override public Authentication getAuthentication() {
+        if (user == null) {
+            return ACL.SYSTEM;
+        }
+        try {
+            return User.get(user).impersonate();
+        } catch (UsernameNotFoundException x) {
+            LOGGER.log(Level.WARNING, "could not restore authentication", x);
+            // Should not expose this to callers.
+            return Jenkins.ANONYMOUS;
+        }
+    }
+
     // TODO: write a custom XStream Converter so that while we are writing CpsFlowExecution, it holds that lock
     // the execution in Groovy CPS should hold that lock (or worse, hold that lock in the runNextChunk method)
     // so that the execution gets suspended while we are getting serialized
@@ -621,6 +644,7 @@ public class CpsFlowExecution extends FlowExecution {
             writeChild(w, context, "result", e.result, Result.class);
             writeChild(w, context, "script", e.script, String.class);
             writeChild(w, context, "owner", e.owner, Object.class);
+            writeChild(w, context, "user", e.user, String.class);
             for (FlowHead h : e.heads.values()) { // TODO synchronize access to e.heads: https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/org.jenkins-ci.plugins.workflow$workflow-aggregator/362/testReport/junit/org.jenkinsci.plugins.workflow.steps.parallel/ParallelStepTest/localMethodCallWithinLotsOfBranches/
                 writeChild(w, context, "head", h.getId()+":"+h.get().getId(), String.class);
             }
@@ -672,6 +696,10 @@ public class CpsFlowExecution extends FlowExecution {
                         FlowExecutionOwner owner = (FlowExecutionOwner) readChild(reader, context, Object.class, result);
                         setField(result, "owner", owner);
                         setField(result, "storage", storage = result.createStorage());
+                    } else
+                    if (nodeName.equals("user")) {
+                        String user = readChild(reader, context, String.class, result);
+                        setField(result, "user", user);
                     } else
                     if (nodeName.equals("head")) {
                         String[] head = readChild(reader, context, String.class, result).split(":");

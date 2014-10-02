@@ -24,12 +24,15 @@
 
 package org.jenkinsci.plugins.workflow;
 
+import com.google.common.base.Function;
 import hudson.model.Node;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
+import hudson.model.TaskListener;
+import hudson.model.User;
 import hudson.remoting.Launcher;
 import hudson.remoting.Which;
 import hudson.slaves.DumbSlave;
@@ -41,19 +44,30 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
+import jenkins.model.Jenkins;
+import jenkins.security.QueueItemAuthenticatorConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.tools.ant.util.JavaEnvUtils;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.junit.After;
+import static org.junit.Assert.assertFalse;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.MockQueueItemAuthenticator;
+import org.jvnet.hudson.test.TestExtension;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Tests of workflows that involve restarting Jenkins in the middle.
@@ -428,6 +442,77 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertBuildCompletedSuccessfully();
             }
         });
+    }
+
+    @Test public void authentication() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                jenkins().setSecurityRealm(story.j.createDummySecurityRealm());
+                jenkins().save();
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new MockQueueItemAuthenticator(Collections.singletonMap("demo", User.get("someone").impersonate())));
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition("checkAuth()"));
+                ScriptApproval.get().preapproveAll();
+                startBuilding();
+                waitForWorkflowToSuspend();
+                assertTrue(JenkinsRule.getLog(b), b.isBuilding());
+                Thread.sleep(1500); // TODO how else to ensure that WorkflowRun.waitForCompletion has called copyLogs? (it flushes logs when a step finishes but cannot tell when start() returns, and it cannot listen for LogAction being added or written)
+                story.j.assertLogContains("running as someone", b);
+                CheckAuth.finish(false);
+                waitForWorkflowToSuspend();
+                assertTrue(JenkinsRule.getLog(b), b.isBuilding());
+                Thread.sleep(1500); // TODO
+                story.j.assertLogContains("still running as someone", b);
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                assertEquals(JenkinsRule.DummySecurityRealm.class, jenkins().getSecurityRealm().getClass());
+                rebuildContext(story.j);
+                assertThatWorkflowIsSuspended();
+                CheckAuth.finish(true);
+                waitForWorkflowToComplete();
+                assertBuildCompletedSuccessfully();
+                story.j.assertLogContains("finally running as someone", b);
+            }
+        });
+    }
+    public static final class CheckAuth extends AbstractStepImpl {
+        @DataBoundConstructor public CheckAuth() {}
+        @TestExtension("authentication") public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+            public DescriptorImpl() {
+                super(Execution.class);
+            }
+            @Override public String getFunctionName() {
+                return "checkAuth";
+            }
+            @Override
+            public String getDisplayName() {
+                return getFunctionName(); // TODO would be nice for this to be the default, perhaps?
+            }
+        }
+        public static final class Execution extends StepExecution {
+            @Override public boolean start() throws Exception {
+                getContext().get(TaskListener.class).getLogger().println("running as " + Jenkins.getAuthentication().getName() + " from " + Thread.currentThread().getName());
+                return false;
+            }
+            @Override public void stop() throws Exception {}
+        }
+        public static void finish(final boolean terminate) {
+            StepExecution.applyAll(Execution.class, new Function<Execution,Void>() {
+                @Override public Void apply(Execution input) {
+                    try {
+                        input.getContext().get(TaskListener.class).getLogger().println((terminate ? "finally" : "still") + " running as " + input.getContext().get(FlowExecution.class).getAuthentication().getName() + " from " + Thread.currentThread().getName());
+                        if (terminate) {
+                            input.getContext().onSuccess(null);
+                        }
+                    } catch (Exception x) {
+                        input.getContext().onFailure(x);
+                    }
+                    return null;
+                }
+            });
+        }
     }
 
 }

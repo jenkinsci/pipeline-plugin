@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.workflow.cps;
 
+import hudson.security.ACL;
+
 /**
  * Thread that executes {@link CpsThreadGroup} and handles all its state updates.
  *
@@ -12,6 +14,11 @@ class CpsVmThread extends Thread {
     public CpsVmThread(CpsThreadGroup threadGroup, Runnable target) {
         super(target, "CPS VM execution thread: " + threadGroup.getExecution().toString());
         this.threadGroup = threadGroup;
+    }
+
+    @Override public void run() {
+        ACL.impersonate(threadGroup.getExecution().getAuthentication());
+        super.run();
     }
 
     /*package*/ static CpsVmThread current() {

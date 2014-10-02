@@ -37,6 +37,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Result;
+import hudson.security.ACL;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerResponse;
@@ -46,6 +47,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import jenkins.model.Jenkins;
+import org.acegisecurity.Authentication;
 
 /**
  * State of a currently executing workflow.
@@ -173,6 +177,13 @@ public abstract class FlowExecution implements FlowActionStorage {
      */
     public abstract @CheckForNull FlowNode getNode(String id) throws IOException;
 
+    /**
+     * Looks up authentication associated with this flow execution.
+     * For example, if a flow is configured to be a trusted agent of a user, that would be set here.
+     * A flow run triggered by a user manually might be associated with the runtime, or it might not.
+     * @return an authentication; {@link ACL#SYSTEM} as a fallback, or {@link Jenkins#ANONYMOUS} if the flow is supposed to be limited to a specific user but that user cannot now be looked up
+     */
+    public abstract @Nonnull Authentication getAuthentication();
 
     /**
      * Dumps the current {@link FlowNode} graph in the GraphViz dot notation.
