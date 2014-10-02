@@ -228,6 +228,12 @@ public class CpsFlowExecution extends FlowExecution {
      */
     private boolean done;
 
+    /**
+     * Groovy compiler with CPS+sandbox transformation correctly setup.
+     * By the time the script starts running, this field is set to non-null.
+     */
+    private transient GroovyShell shell;
+
     @Deprecated
     CpsFlowExecution(String script, FlowExecutionOwner owner) throws IOException {
         this(script, false, owner);
@@ -240,6 +246,15 @@ public class CpsFlowExecution extends FlowExecution {
         this.storage = createStorage();
         Authentication auth = Jenkins.getAuthentication();
         this.user = auth.equals(ACL.SYSTEM) ? null : auth.getName();
+    }
+
+    /**
+     * Returns a groovy compiler used to load the script.
+     *
+     * @see GroovyShell#getClassLoader()
+     */
+    public GroovyShell getShell() {
+        return shell;
     }
 
     /**
@@ -274,7 +289,7 @@ public class CpsFlowExecution extends FlowExecution {
         heads.put(h.getId(),h);
         h.newStartNode(new FlowStartNode(this, iotaStr()));
 
-        final CpsThreadGroup g = new CpsThreadGroup(this,s.getClass().getClassLoader());
+        final CpsThreadGroup g = new CpsThreadGroup(this);
         final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
         g.runner.submit(new Runnable() {
             @Override
@@ -311,7 +326,7 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     private CpsScript parseScript() throws IOException {
-        GroovyShell shell = buildShell();
+        shell = buildShell();
         CpsScript s = (CpsScript) shell.parse(script);
         s.execution = this;
         if (false) {
@@ -371,7 +386,6 @@ public class CpsFlowExecution extends FlowExecution {
                             PROGRAM_STATE_SERIALIZATION.set(CpsFlowExecution.this);
                             try {
                                 CpsThreadGroup g = (CpsThreadGroup) u.readObject();
-                                g.scriptClassLoader = scriptClassLoader;
                                 result.set(g);
                             } catch (Throwable t) {
                                 onFailure(t);
@@ -418,7 +432,7 @@ public class CpsFlowExecution extends FlowExecution {
         }
 
 
-        CpsThreadGroup g = new CpsThreadGroup(this,null);
+        CpsThreadGroup g = new CpsThreadGroup(this);
 
         promise.set(g);
         runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {

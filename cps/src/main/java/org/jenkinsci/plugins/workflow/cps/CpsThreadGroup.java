@@ -91,18 +91,12 @@ public final class CpsThreadGroup implements Serializable {
     transient ExecutorService runner;
 
     /**
-     * ClassLoader used to load user script.
-     */
-    transient ClassLoader scriptClassLoader;
-
-    /**
      * "Exported" closures that are referenced by live {@link CpsStepContext}s.
      */
     public final Map<Integer,Closure> closures = new HashMap<Integer,Closure>();
 
-    CpsThreadGroup(CpsFlowExecution execution, ClassLoader scriptClassLoader) {
+    CpsThreadGroup(CpsFlowExecution execution) {
         this.execution = execution;
-        this.scriptClassLoader = scriptClassLoader;
         setupTransients();
     }
 
