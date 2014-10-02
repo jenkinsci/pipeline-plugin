@@ -26,11 +26,15 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.CpsTransformer;
+import com.cloudbees.groovy.cps.Env;
+import com.cloudbees.groovy.cps.Envs;
 import com.cloudbees.groovy.cps.NonCPS;
 import com.cloudbees.groovy.cps.Outcome;
 import com.cloudbees.groovy.cps.SandboxCpsTransformer;
 import com.cloudbees.groovy.cps.impl.ConstantBlock;
 import com.cloudbees.groovy.cps.impl.ThrowBlock;
+import com.cloudbees.groovy.cps.sandbox.DefaultInvoker;
+import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -265,9 +269,17 @@ public class CpsFlowExecution extends FlowExecution {
         g.runner.submit(new Runnable() {
             @Override
             public void run() {
-                CpsThread t = g.addThread(new Continuable(s),h,null);
+                CpsThread t = g.addThread(new Continuable(s,createInitialEnv()),h,null);
                 t.resume(new Outcome(null, null));
                 f.set(g);
+            }
+
+            /**
+             * Environment to start executing the script in.
+             * During sandbox execution, we need to call sandbox interceptor while executing asynchronous code.
+             */
+            private Env createInitialEnv() {
+                return Envs.empty( isSandbox() ? new SandboxInvoker() : new DefaultInvoker());
             }
         });
 
