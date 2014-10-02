@@ -2,9 +2,11 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
-import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.GroovySandbox;
-
 import java.util.concurrent.Callable;
+import org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException;
+import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.GroovySandbox;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 
 /**
  * {@link Continuable} that executes code inside sandbox execution.
@@ -22,7 +24,12 @@ class SandboxContinuable extends Continuable {
             return GroovySandbox.runInSandbox(new Callable<Outcome>() {
                 @Override
                 public Outcome call() {
-                    return SandboxContinuable.super.run0(cn);
+                    Outcome outcome = SandboxContinuable.super.run0(cn);
+                    Throwable t = outcome.getAbnormal();
+                    if (t instanceof RejectedAccessException) {
+                        ScriptApproval.get().accessRejected((RejectedAccessException) t, ApprovalContext.create());
+                    }
+                    return outcome;
                 }
             }, CpsWhitelist.INSTANCE);
         } catch (RuntimeException e) {
