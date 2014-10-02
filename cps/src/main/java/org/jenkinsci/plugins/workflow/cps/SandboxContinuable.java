@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
-import org.jenkinsci.plugins.scriptsecurity.sandbox.Whitelist;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.GroovySandbox;
 
 import java.util.concurrent.Callable;
@@ -25,7 +24,7 @@ class SandboxContinuable extends Continuable {
                 public Outcome call() {
                     return SandboxContinuable.super.run0(cn);
                 }
-            }, WHITELIST);
+            }, CpsWhitelist.INSTANCE);
         } catch (RuntimeException e) {
             throw e;
         } catch (Error e) {
@@ -34,7 +33,4 @@ class SandboxContinuable extends Continuable {
             throw new AssertionError(e);    // Callable doesn't throw anything
         }
     }
-
-    private static final Whitelist WHITELIST = null;    // TODO
-
 }
