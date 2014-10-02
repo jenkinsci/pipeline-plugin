@@ -34,7 +34,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
-import hudson.console.PlainTextConsoleOutputStream;
+import hudson.model.AbstractBuild;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.ParameterValue;
@@ -53,11 +53,8 @@ import hudson.util.NullStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.Reader;
-import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,8 +74,6 @@ import javax.annotation.concurrent.GuardedBy;
 import jenkins.model.Jenkins;
 import jenkins.model.lazy.BuildReference;
 import jenkins.model.lazy.LazyBuildMixIn;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.ReaderInputStream;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -89,7 +84,6 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.HttpResponses;
-import org.kohsuke.stapler.framework.io.LargeText;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
@@ -259,13 +253,13 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 AnnotatedLargeText<? extends FlowNode> logText = la.getLogText();
                 try {
                     long old = entry.getValue();
-                    long revised = writeLogTo(logText, old, listener.getLogger());
+                    long revised = logText.writeRawLogTo(old, listener.getLogger());
                     if (revised != old) {
                         entry.setValue(revised);
                         modified = true;
                     }
                     if (logText.isComplete()) {
-                        writeLogTo(logText, entry.getValue(), listener.getLogger()); // defend against race condition?
+                        logText.writeRawLogTo(entry.getValue(), listener.getLogger()); // defend against race condition?
                         assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
                         it.remove();
                         modified = true;
@@ -286,29 +280,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             } catch (IOException x) {
                 LOGGER.log(Level.WARNING, null, x);
             }
-        }
-    }
-    /**
-     * Equivalent to calling {@link LargeText#writeLogTo(long, OutputStream)} without the unwanted override in {@link AnnotatedLargeText} that wraps in a {@link PlainTextConsoleOutputStream}.
-     * TODO replace with {@code AnnotatedLargeText#writeRawLogTo} in 1.577
-     */
-    private static long writeLogTo(AnnotatedLargeText<?> text, long position, OutputStream os) throws IOException {
-        Charset c;
-        try {
-            Field f = LargeText.class.getDeclaredField("charset");
-            f.setAccessible(true);
-            c = (Charset) f.get(text);
-        } catch (Exception x) {
-            LOGGER.log(Level.WARNING, null, x);
-            return text.writeLogTo(position, os); // give up
-        }
-        Reader r = text.readAll();
-        try {
-            InputStream is = new ReaderInputStream(r, c);
-            is.skip(position);
-            return position + IOUtils.copyLarge(is, os);
-        } finally {
-            r.close();
         }
     }
     
