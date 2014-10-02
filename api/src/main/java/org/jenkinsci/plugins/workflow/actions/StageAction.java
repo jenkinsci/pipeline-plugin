@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014, CloudBees, Inc.
+ * Copyright 2014 Jesse Glick.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,43 +21,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package org.jenkinsci.plugins.workflow.actions;
 
 import hudson.model.Action;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
 /**
- * Action to mark a {@link FlowNode} as being a Stage.
- * <p/>
- * Also contains metadata about the stage.
- *
- * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
+ * Attached to a {@link FlowNode} to indicate that it entered a “stage” of a build.
+ * This could be used by high-level visualizations which do not care about individual nodes.
+ * <p>Flow nodes preceding one with this action are considered to be in no stage, or an anonymous stage.
+ * This flow node, and any descendants until the next node with this action, are in the stage named here.
+ * <p>Stages might be considered linear throughout a {@link FlowExecution},
+ * or only within a single thread of an execution (branch of the flow graph).
+ * <p>The standard implementation is attached by {@code StageStep} and is linear within an execution (threads are ignored).
  */
-public class StageAction implements Action {
+public interface StageAction extends Action {
 
-    private String stageName;
-
-    public String getStageName() {
-        return stageName;
-    }
-
-    public StageAction setStageName(String stageName) {
-        this.stageName = stageName;
-        return this;
-    }
-
-    @Override
-    public String getIconFileName() {
-        return null;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return "Stage";
-    }
-
-    @Override
-    public String getUrlName() {
-        return null;
-    }
+    /**
+     * Gets the name of the stage.
+     * Intended to be unique within a given {@link FlowExecution}.
+     * @return a stage identifier
+     */
+    String getStageName();
 }

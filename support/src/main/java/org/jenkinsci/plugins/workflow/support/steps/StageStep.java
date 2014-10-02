@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.CheckForNull;
-import org.jenkinsci.plugins.workflow.actions.StageAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
@@ -68,10 +67,6 @@ public class StageStep extends Step {
     }
 
     @Override public StageStepExecution start(StepContext context) throws Exception {
-        FlowNode flownode = context.get(FlowNode.class);
-        if (flownode != null) {
-            flownode.addAction(new StageAction().setStageName(name));
-        }
         return new StageStepExecution(this,context);
     }
 
