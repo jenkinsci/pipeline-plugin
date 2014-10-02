@@ -175,8 +175,9 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     @Test
     public void sandbox() {
         p.definition = new CpsFlowDefinition("""
+            def message() {'hello world'}
             node {
-              sh("echo hello world")
+              sh("echo " + message())
             }
         """,true);
 
