@@ -264,7 +264,7 @@ public class CpsFlowExecution extends FlowExecution {
         heads.put(h.getId(),h);
         h.newStartNode(new FlowStartNode(this, iotaStr()));
 
-        final CpsThreadGroup g = new CpsThreadGroup(this);
+        final CpsThreadGroup g = new CpsThreadGroup(this,s.getClass().getClassLoader());
         final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
         g.runner.submit(new Runnable() {
             @Override
@@ -349,7 +349,7 @@ public class CpsFlowExecution extends FlowExecution {
         programPromise = result;
 
         try {
-            ClassLoader scriptClassLoader = parseScript().getClass().getClassLoader();
+            final ClassLoader scriptClassLoader = parseScript().getClass().getClassLoader();
 
             RiverReader r = new RiverReader(programDataFile, scriptClassLoader, owner);
             Futures.addCallback(
@@ -361,6 +361,7 @@ public class CpsFlowExecution extends FlowExecution {
                             PROGRAM_STATE_SERIALIZATION.set(CpsFlowExecution.this);
                             try {
                                 CpsThreadGroup g = (CpsThreadGroup) u.readObject();
+                                g.scriptClassLoader = scriptClassLoader;
                                 result.set(g);
                             } catch (Throwable t) {
                                 onFailure(t);
@@ -407,7 +408,7 @@ public class CpsFlowExecution extends FlowExecution {
         }
 
 
-        CpsThreadGroup g = new CpsThreadGroup(this);
+        CpsThreadGroup g = new CpsThreadGroup(this,null);
 
         promise.set(g);
         runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {

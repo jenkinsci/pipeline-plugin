@@ -187,8 +187,25 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
         assert b.result == Result.SUCCESS: b.log
         // currentHeads[0] is FlowEndNode, whose parent is BlockEndNode for "node",
         // whose parent is BlockEndNode for body invocation, whose parent is AtomNode
-        AtomNode atom = e.currentHeads[0].parents[0].parents[0].parents[0]
+        AtomNode atom = b.execution.currentHeads[0].parents[0].parents[0].parents[0]
         LogActionImpl la = atom.getAction(LogAction)
         assert la.logFile.text.contains("hello world")
+    }
+
+    /**
+     * If a prohibited method is called, execution should fail.
+     */
+    @Test
+    public void sandboxRejection() {
+        p.definition = new CpsFlowDefinition("""
+            "42".toString();
+        """,true);
+
+        def f = p.scheduleBuild2(0)
+        WorkflowRun b = f.get()
+
+        System.out.println(b.log)
+        assert b.log.contains("org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException: Scripts not permitted to use method java.lang.Object toString")
+        assert b.result == Result.FAILURE: b.log
     }
 }

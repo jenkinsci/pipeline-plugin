@@ -71,10 +71,14 @@ public abstract class CpsScript extends SerializableScript {
 
     /**
      * We use DSL here to try invoke the step implementation, if there is Step implementation found it's handled or
-     * it's an error
+     * it's an error.
+     *
+     * <p>
+     * sandbox security execution relies on the assumption that CpsScript.invokeMethod() is safe for sandboxed code.
+     * That means we cannot let user-written script override this method, hence the final.
      */
     @Override
-    public Object invokeMethod(String name, Object args) {
+    public final Object invokeMethod(String name, Object args) {
         DSL dsl = (DSL) getBinding().getVariable(STEPS_VAR);
         return dsl.invokeMethod(name,args);
     }

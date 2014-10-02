@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
-import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
@@ -103,7 +102,7 @@ public final class CpsThread implements Serializable {
     CpsThread(CpsThreadGroup group, int id, Continuable program, FlowHead head, ContextVariableSet contextVariables) {
         this.group = group;
         this.id = id;
-        this.program = group.getExecution().isSandbox() ? new SandboxContinuable(program) : program;
+        this.program = group.getExecution().isSandbox() ? new SandboxContinuable(program,this) : program;
         this.head = head;
         this.contextVariables = contextVariables;
     }
