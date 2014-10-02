@@ -59,7 +59,9 @@
         <module>durable-task-step</module>
         <module>scm-step</module>
         <module>cps</module>
+        <!-- TODO excluding until implemented enough to be used:
         <module>stm</module>
+        -->
         <module>job</module>
         <module>aggregator</module>
     </modules>

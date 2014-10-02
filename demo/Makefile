@@ -24,8 +24,8 @@ PLUGINS=\
 	org.jenkins-ci.plugins.workflow:workflow-job \
 	org.jenkins-ci.plugins.workflow:workflow-scm-step \
 	org.jenkins-ci.plugins.workflow:workflow-step-api \
-	org.jenkins-ci.plugins.workflow:workflow-stm \
 	org.jenkins-ci.plugins.workflow:workflow-support
+#	org.jenkins-ci.plugins.workflow:workflow-stm
 
 # TODO using ADD with a remote URL would be more convenient, but docker-build claims that URLs like http://jenkins-updates.cloudbees.com/download/plugins/mercurial/*latest*/mercurial.hpi give a 404 (in fact they are 302 → 200)
 # anyway it seems to download the entire content disregarding Last-Modified, making it unusable
