@@ -26,10 +26,15 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.CpsTransformer;
+import com.cloudbees.groovy.cps.Env;
+import com.cloudbees.groovy.cps.Envs;
 import com.cloudbees.groovy.cps.NonCPS;
 import com.cloudbees.groovy.cps.Outcome;
+import com.cloudbees.groovy.cps.SandboxCpsTransformer;
 import com.cloudbees.groovy.cps.impl.ConstantBlock;
 import com.cloudbees.groovy.cps.impl.ThrowBlock;
+import com.cloudbees.groovy.cps.sandbox.DefaultInvoker;
+import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -178,6 +183,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
 @PersistIn(RUN)
 public class CpsFlowExecution extends FlowExecution {
     private final String script;
+    private final boolean sandbox;
     private /*almost final*/ FlowExecutionOwner owner;
 
     /**
@@ -222,12 +228,25 @@ public class CpsFlowExecution extends FlowExecution {
      */
     private boolean done;
 
-    public CpsFlowExecution(String script, FlowExecutionOwner owner) throws IOException {
+    @Deprecated
+    CpsFlowExecution(String script, FlowExecutionOwner owner) throws IOException {
+        this(script, false, owner);
+    }
+
+    CpsFlowExecution(String script, boolean sandbox, FlowExecutionOwner owner) throws IOException {
         this.owner = owner;
         this.script = script;
+        this.sandbox = sandbox;
         this.storage = createStorage();
         Authentication auth = Jenkins.getAuthentication();
         this.user = auth.equals(ACL.SYSTEM) ? null : auth.getName();
+    }
+
+    /**
+     * True if executing with groovy-sandbox, false if executing with approval.
+     */
+    public boolean isSandbox() {
+        return sandbox;
     }
 
     @Override
@@ -255,14 +274,22 @@ public class CpsFlowExecution extends FlowExecution {
         heads.put(h.getId(),h);
         h.newStartNode(new FlowStartNode(this, iotaStr()));
 
-        final CpsThreadGroup g = new CpsThreadGroup(this);
+        final CpsThreadGroup g = new CpsThreadGroup(this,s.getClass().getClassLoader());
         final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
         g.runner.submit(new Runnable() {
             @Override
             public void run() {
-                CpsThread t = g.addThread(new Continuable(s),h,null);
+                CpsThread t = g.addThread(new Continuable(s,createInitialEnv()),h,null);
                 t.resume(new Outcome(null, null));
                 f.set(g);
+            }
+
+            /**
+             * Environment to start executing the script in.
+             * During sandbox execution, we need to call sandbox interceptor while executing asynchronous code.
+             */
+            private Env createInitialEnv() {
+                return Envs.empty( isSandbox() ? new SandboxInvoker() : new DefaultInvoker());
             }
         });
 
@@ -277,7 +304,7 @@ public class CpsFlowExecution extends FlowExecution {
 
         CompilerConfiguration cc = new CompilerConfiguration();
         cc.addCompilationCustomizers(ic);
-        cc.addCompilationCustomizers(new CpsTransformer());
+        cc.addCompilationCustomizers(sandbox ? new SandboxCpsTransformer() : new CpsTransformer());
         cc.setScriptBaseClass(CpsScript.class.getName());
         Jenkins j = Jenkins.getInstance();
         return new GroovyShell(j!=null ? j.getPluginManager().uberClassLoader : getClass().getClassLoader(), new Binding(), cc);
@@ -332,7 +359,7 @@ public class CpsFlowExecution extends FlowExecution {
         programPromise = result;
 
         try {
-            ClassLoader scriptClassLoader = parseScript().getClass().getClassLoader();
+            final ClassLoader scriptClassLoader = parseScript().getClass().getClassLoader();
 
             RiverReader r = new RiverReader(programDataFile, scriptClassLoader, owner);
             Futures.addCallback(
@@ -344,6 +371,7 @@ public class CpsFlowExecution extends FlowExecution {
                             PROGRAM_STATE_SERIALIZATION.set(CpsFlowExecution.this);
                             try {
                                 CpsThreadGroup g = (CpsThreadGroup) u.readObject();
+                                g.scriptClassLoader = scriptClassLoader;
                                 result.set(g);
                             } catch (Throwable t) {
                                 onFailure(t);
@@ -390,7 +418,7 @@ public class CpsFlowExecution extends FlowExecution {
         }
 
 
-        CpsThreadGroup g = new CpsThreadGroup(this);
+        CpsThreadGroup g = new CpsThreadGroup(this,null);
 
         promise.set(g);
         runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
