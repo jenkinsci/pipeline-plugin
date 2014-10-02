@@ -27,23 +27,25 @@ import hudson.model.Action;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
 /**
- * Action to mark a {@link FlowNode} as being a Stage.
- * <p/>
- * Also contains metadata about the stage.
+ * Action to add timestamp metadata to a {@link FlowNode}.
  *
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
-public class StageAction implements Action {
+public class TimingAction implements Action {
 
-    private String stageName;
+    private long startTime = System.currentTimeMillis();
 
-    public String getStageName() {
-        return stageName;
+    public long getStartTime() {
+        return startTime;
     }
 
-    public StageAction setStageName(String stageName) {
-        this.stageName = stageName;
-        return this;
+    public static long getStartTime(FlowNode flowNode) {
+        TimingAction timingAction = flowNode.getAction(TimingAction.class);
+        if (timingAction != null) {
+            return timingAction.getStartTime();
+        } else {
+            return 0;
+        }
     }
 
     @Override
@@ -53,7 +55,7 @@ public class StageAction implements Action {
 
     @Override
     public String getDisplayName() {
-        return "Stage";
+        return "Timing";
     }
 
     @Override

@@ -24,38 +24,20 @@
 
 package org.jenkinsci.plugins.workflow.support.steps;
 
-import hudson.AbortException;
 import hudson.Extension;
 import hudson.Util;
-import hudson.XmlFile;
-import hudson.model.Job;
-import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.listeners.RunListener;
-import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
-import jenkins.model.CauseOfInterruption;
-import jenkins.model.InterruptedBuildAction;
-import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.actions.StageAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -86,6 +68,10 @@ public class StageStep extends Step {
     }
 
     @Override public StageStepExecution start(StepContext context) throws Exception {
+        FlowNode flownode = context.get(FlowNode.class);
+        if (flownode != null) {
+            flownode.addAction(new StageAction().setStageName(name));
+        }
         return new StageStepExecution(this,context);
     }
 
