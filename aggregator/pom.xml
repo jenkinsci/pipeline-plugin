@@ -28,7 +28,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>0.1-beta-4-SNAPSHOT</version>
+        <version>0.1-beta-5-SNAPSHOT</version>
     </parent>
     <artifactId>workflow-aggregator</artifactId>
     <packaging>hpi</packaging>
@@ -65,11 +65,13 @@
             <artifactId>workflow-cps</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- TODO not implemented:
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-stm</artifactId>
             <version>${project.version}</version>
         </dependency>
+        -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-job</artifactId>

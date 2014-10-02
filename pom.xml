@@ -28,11 +28,11 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.577</version>
+        <version>1.580</version>
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
-    <version>0.1-beta-4-SNAPSHOT</version>
+    <version>0.1-beta-5-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Workflow: Parent</name>
     <url>https://github.com/jenkinsci/workflow-plugin</url>
@@ -59,7 +59,9 @@
         <module>durable-task-step</module>
         <module>scm-step</module>
         <module>cps</module>
+        <!-- TODO excluding until implemented enough to be used:
         <module>stm</module>
+        -->
         <module>job</module>
         <module>aggregator</module>
     </modules>

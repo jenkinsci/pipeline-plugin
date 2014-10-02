@@ -24,8 +24,8 @@ PLUGINS=\
 	org.jenkins-ci.plugins.workflow:workflow-job \
 	org.jenkins-ci.plugins.workflow:workflow-scm-step \
 	org.jenkins-ci.plugins.workflow:workflow-step-api \
-	org.jenkins-ci.plugins.workflow:workflow-stm \
 	org.jenkins-ci.plugins.workflow:workflow-support
+#	org.jenkins-ci.plugins.workflow:workflow-stm
 
 # TODO using ADD with a remote URL would be more convenient, but docker-build claims that URLs like http://jenkins-updates.cloudbees.com/download/plugins/mercurial/*latest*/mercurial.hpi give a 404 (in fact they are 302 → 200)
 # anyway it seems to download the entire content disregarding Last-Modified, making it unusable
@@ -35,9 +35,9 @@ releases:
 	set -e; for ga in $(PLUGINS); do a=$$(echo $$ga | sed 's/.*\://'); [ -f JENKINS_HOME/plugins/$$a.jpi ] || (mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=$$ga:RELEASE:hpi -DoutputDirectory=JENKINS_HOME/plugins -Dmdep.stripVersion && mv JENKINS_HOME/plugins/$$a.hpi JENKINS_HOME/plugins/$$a.jpi); touch JENKINS_HOME/plugins/$$a.jpi.pinned; done
 
 build-snapshot: build
-	mvn -f .. -DskipTests clean install
-	cp -v ../*/target/*.hpi snapshot/plugins
-# TODO need to write snapshot/Dockerfile
+	[ -f ../aggregator/target/workflow-aggregator.hpi ] || mvn -f .. -DskipTests clean install
+	mkdir -p snapshot/plugins
+	for p in ../*/target/*.hpi; do cp -v $$p snapshot/plugins/$$(basename $${p%%.hpi}).jpi; done
 	docker build -t jenkinsci/workflow-demo-snapshot snapshot
 
 run-snapshot: build-snapshot
