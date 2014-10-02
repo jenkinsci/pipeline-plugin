@@ -10,15 +10,15 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class BuildTriggerStep extends AbstractStepImpl {
 
-    public final String buildJobPath;
+    private final String job;
 
     @DataBoundConstructor
     public BuildTriggerStep(String value) {
-        this.buildJobPath = value;
+        this.job = value;
     }
 
     public String getValue() {
-        return buildJobPath;
+        return job;
     }
 
     @Extension

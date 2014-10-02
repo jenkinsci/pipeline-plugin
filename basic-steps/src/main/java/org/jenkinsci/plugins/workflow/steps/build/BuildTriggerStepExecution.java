@@ -28,11 +28,11 @@ public class BuildTriggerStepExecution extends StepExecution {
     @Override
     public boolean start() throws Exception {
         Jenkins jenkins = Jenkins.getInstance();
-
-        listener.getLogger().println("Starting building project: "+step.buildJobPath);
-        final ParameterizedJobMixIn.ParameterizedJob project = jenkins.getItem(step.buildJobPath, getContext().get(Job.class), ParameterizedJobMixIn.ParameterizedJob.class);
+        String job = step.getValue();
+        listener.getLogger().println("Starting building project: " + job);
+        final ParameterizedJobMixIn.ParameterizedJob project = jenkins.getItem(job, getContext().get(Job.class), ParameterizedJobMixIn.ParameterizedJob.class);
         if (project == null) {
-            throw new AbortException("No parameterized job named " + step.buildJobPath + " found");
+            throw new AbortException("No parameterized job named " + job + " found");
         }
         new ParameterizedJobMixIn() {
             @Override protected Job asJob() {
