@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import org.jenkinsci.plugins.workflow.actions.TimingAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -612,6 +613,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 copyLogs();
                 logsToCopy.put(node.getId(), 0L);
             }
+            node.addAction(new TimingAction());
+
             listener.getLogger().println("Running: " + node.getDisplayName());
             if (node instanceof FlowEndNode) {
                 finish(((FlowEndNode) node).getResult());

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2014 Jesse Glick.
+ * Copyright (c) 2013-2014, CloudBees, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,28 +21,45 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package org.jenkinsci.plugins.workflow.actions;
 
 import hudson.model.Action;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
 /**
- * Attached to a {@link FlowNode} to indicate that it entered a “stage” of a build.
- * This could be used by high-level visualizations which do not care about individual nodes.
- * <p>Flow nodes preceding one with this action are considered to be in no stage, or an anonymous stage.
- * This flow node, and any descendants until the next node with this action, are in the stage named here.
- * <p>Stages might be considered linear throughout a {@link FlowExecution},
- * or only within a single thread of an execution (branch of the flow graph).
- * <p>The standard implementation is attached by {@code StageStep} and is linear within an execution (threads are ignored).
+ * Action to add timestamp metadata to a {@link FlowNode}.
+ *
+ * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
-public interface StageAction extends Action {
+public class TimingAction implements Action {
 
-    /**
-     * Gets the name of the stage.
-     * Intended to be unique within a given {@link FlowExecution}.
-     * @return a stage identifier
-     */
-    String getStageName();
+    private long startTime = System.currentTimeMillis();
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public static long getStartTime(FlowNode flowNode) {
+        TimingAction timingAction = flowNode.getAction(TimingAction.class);
+        if (timingAction != null) {
+            return timingAction.getStartTime();
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
+    public String getIconFileName() {
+        return null;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return "Timing";
+    }
+
+    @Override
+    public String getUrlName() {
+        return null;
+    }
 }
