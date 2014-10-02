@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.cps;
+package org.jenkinsci.plugins.workflow.cps.steps;
 
 /**
  * Indicates a failure in one of the sub-workflows of {@code parallel} task.

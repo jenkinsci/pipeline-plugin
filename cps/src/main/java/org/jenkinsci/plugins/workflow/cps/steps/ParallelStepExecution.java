@@ -1,13 +1,14 @@
-package org.jenkinsci.plugins.workflow.cps;
+package org.jenkinsci.plugins.workflow.cps.steps;
 
 import groovy.lang.Closure;
-import org.jenkinsci.plugins.workflow.cps.ParallelStep.ParallelLabelAction;
-import org.jenkinsci.plugins.workflow.cps.ParallelStep.ResultHandler;
+import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
+import org.jenkinsci.plugins.workflow.cps.CpsThread;
+import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ParallelLabelAction;
+import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ResultHandler;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -35,7 +36,7 @@ class ParallelStepExecution extends StepExecution {
 
         for (Entry<String,Closure> e : parallelStep.closures.entrySet()) {
             cps.invokeBodyLater(
-                    t.group.export(e.getValue()),
+                    t.getGroup().export(e.getValue()),
                     r.callbackFor(e.getKey()),
                     Collections.singletonList(new ParallelLabelAction(e.getKey()))
             );

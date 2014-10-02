@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.cps;
+package org.jenkinsci.plugins.workflow.cps.steps;
 
 import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
@@ -6,6 +6,7 @@ import groovy.lang.Closure;
 import hudson.Extension;
 import hudson.model.TaskListener;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.cps.CpsVmThreadOnly;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;

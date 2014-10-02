@@ -234,7 +234,7 @@ public final class CpsThread implements Serializable {
      * that's running.
      */
     @CpsVmThreadOnly
-    /*package*/ static CpsThread current() {
+    public static CpsThread current() {
         return CURRENT.get();
     }
 
