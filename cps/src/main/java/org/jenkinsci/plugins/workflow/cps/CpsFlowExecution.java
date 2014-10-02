@@ -174,6 +174,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
 @PersistIn(RUN)
 public class CpsFlowExecution extends FlowExecution {
     private final String script;
+    private final boolean sandbox;
     private /*almost final*/ FlowExecutionOwner owner;
 
     /**
@@ -215,13 +216,16 @@ public class CpsFlowExecution extends FlowExecution {
      */
     private boolean done;
 
-    /*package*/ boolean sandbox;
+    @Deprecated
+    CpsFlowExecution(String script, FlowExecutionOwner owner) throws IOException {
+        this(script, false, owner);
+    }
 
-    public CpsFlowExecution(String script, FlowExecutionOwner owner, boolean sandbox) throws IOException {
+    CpsFlowExecution(String script, boolean sandbox, FlowExecutionOwner owner) throws IOException {
         this.owner = owner;
         this.script = script;
-        this.storage = createStorage();
         this.sandbox = sandbox;
+        this.storage = createStorage();
     }
 
     @Override

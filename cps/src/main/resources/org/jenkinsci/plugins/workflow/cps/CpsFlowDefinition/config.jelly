@@ -27,4 +27,7 @@
   <f:entry title="${%Script}" field="script">
     <f:textarea checkMethod="post"/>
   </f:entry>
+  <f:entry field="sandbox" title="${%Use Groovy Sandbox}">
+    <f:checkbox/>
+  </f:entry>
 </j:jelly>

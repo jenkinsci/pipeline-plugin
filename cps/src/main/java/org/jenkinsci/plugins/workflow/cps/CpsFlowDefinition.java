@@ -55,15 +55,17 @@ import org.kohsuke.stapler.StaplerRequest;
 @PersistIn(JOB)
 public class CpsFlowDefinition extends FlowDefinition {
     private final String script;
+    private final boolean sandbox;
 
-    @DataBoundConstructor
     public CpsFlowDefinition(String script) {
-        StaplerRequest req = Stapler.getCurrentRequest();
-        this.script = ScriptApproval.get().configuring(script, GroovyLanguage.get(), ApprovalContext.create().withCurrentUser().withItemAsKey(req != null ? req.findAncestorObject(Item.class) : null));
+        this(script, false);
     }
 
-    public boolean isSandbox() {// TODO
-        return true;
+    @DataBoundConstructor
+    public CpsFlowDefinition(String script, boolean sandbox) {
+        StaplerRequest req = Stapler.getCurrentRequest();
+        this.script = sandbox ? script : ScriptApproval.get().configuring(script, GroovyLanguage.get(), ApprovalContext.create().withCurrentUser().withItemAsKey(req != null ? req.findAncestorObject(Item.class) : null));
+        this.sandbox = sandbox;
     }
 
     private Object readResolve() {
@@ -73,6 +75,10 @@ public class CpsFlowDefinition extends FlowDefinition {
 
     public String getScript() {
         return script;
+    }
+
+    public boolean isSandbox() {
+        return sandbox;
     }
 
     // Used only from Groovy tests.
@@ -88,7 +94,7 @@ public class CpsFlowDefinition extends FlowDefinition {
                 return fa.create(this,owner,actions);
             }
         }
-        return new CpsFlowExecution(ScriptApproval.get().using(script, GroovyLanguage.get()), owner, isSandbox());
+        return new CpsFlowExecution(sandbox ? script : ScriptApproval.get().using(script, GroovyLanguage.get()), sandbox, owner);
     }
 
     @Extension
@@ -98,13 +104,13 @@ public class CpsFlowDefinition extends FlowDefinition {
             return "Groovy CPS DSL";
         }
 
-        public FormValidation doCheckScript(@QueryParameter String value) {
+        public FormValidation doCheckScript(@QueryParameter String value, @QueryParameter boolean sandbox) {
             try {
                 new GroovyShell(Jenkins.getInstance().getPluginManager().uberClassLoader).parse(value);
             } catch (CompilationFailedException x) {
                 return FormValidation.error(x.getLocalizedMessage());
             }
-            return ScriptApproval.get().checking(value, GroovyLanguage.get());
+            return sandbox ? FormValidation.ok() : ScriptApproval.get().checking(value, GroovyLanguage.get());
         }
 
     }
