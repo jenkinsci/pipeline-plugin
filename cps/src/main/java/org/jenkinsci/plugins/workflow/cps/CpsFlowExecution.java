@@ -228,6 +228,13 @@ public class CpsFlowExecution extends FlowExecution {
         this.storage = createStorage();
     }
 
+    /**
+     * True if executing with groovy-sandbox, false if executing with approval.
+     */
+    public boolean isSandbox() {
+        return sandbox;
+    }
+
     @Override
     public FlowExecutionOwner getOwner() {
         return owner;

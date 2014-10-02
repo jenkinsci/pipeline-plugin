@@ -103,7 +103,7 @@ public final class CpsThread implements Serializable {
     CpsThread(CpsThreadGroup group, int id, Continuable program, FlowHead head, ContextVariableSet contextVariables) {
         this.group = group;
         this.id = id;
-        this.program = group.getExecution().sandbox ? new SandboxContinuable(program) : program;
+        this.program = group.getExecution().isSandbox() ? new SandboxContinuable(program) : program;
         this.head = head;
         this.contextVariables = contextVariables;
     }

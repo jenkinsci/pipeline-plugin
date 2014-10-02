@@ -178,8 +178,7 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
             node {
               sh("echo hello world")
             }
-        """)
-        p.definition.sandbox = true;
+        """,true);
 
         def f = p.scheduleBuild2(0)
         WorkflowRun b = f.get()
