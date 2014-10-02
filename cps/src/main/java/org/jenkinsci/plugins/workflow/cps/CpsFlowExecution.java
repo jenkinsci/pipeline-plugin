@@ -28,6 +28,7 @@ import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.CpsTransformer;
 import com.cloudbees.groovy.cps.NonCPS;
 import com.cloudbees.groovy.cps.Outcome;
+import com.cloudbees.groovy.cps.SandboxCpsTransformer;
 import com.cloudbees.groovy.cps.impl.ConstantBlock;
 import com.cloudbees.groovy.cps.impl.ThrowBlock;
 import com.google.common.util.concurrent.FutureCallback;
@@ -214,10 +215,13 @@ public class CpsFlowExecution extends FlowExecution {
      */
     private boolean done;
 
-    public CpsFlowExecution(String script, FlowExecutionOwner owner) throws IOException {
+    /*package*/ boolean sandbox;
+
+    public CpsFlowExecution(String script, FlowExecutionOwner owner, boolean sandbox) throws IOException {
         this.owner = owner;
         this.script = script;
         this.storage = createStorage();
+        this.sandbox = sandbox;
     }
 
     @Override
@@ -267,7 +271,7 @@ public class CpsFlowExecution extends FlowExecution {
 
         CompilerConfiguration cc = new CompilerConfiguration();
         cc.addCompilationCustomizers(ic);
-        cc.addCompilationCustomizers(new CpsTransformer());
+        cc.addCompilationCustomizers(sandbox ? new SandboxCpsTransformer() : new CpsTransformer());
         cc.setScriptBaseClass(CpsScript.class.getName());
         Jenkins j = Jenkins.getInstance();
         return new GroovyShell(j!=null ? j.getPluginManager().uberClassLoader : getClass().getClassLoader(), new Binding(), cc);

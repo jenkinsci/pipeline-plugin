@@ -62,6 +62,10 @@ public class CpsFlowDefinition extends FlowDefinition {
         this.script = ScriptApproval.get().configuring(script, GroovyLanguage.get(), ApprovalContext.create().withCurrentUser().withItemAsKey(req != null ? req.findAncestorObject(Item.class) : null));
     }
 
+    public boolean isSandbox() {// TODO
+        return true;
+    }
+
     private Object readResolve() {
         ScriptApproval.get().configuring(script, GroovyLanguage.get(), ApprovalContext.create());
         return this;
@@ -84,7 +88,7 @@ public class CpsFlowDefinition extends FlowDefinition {
                 return fa.create(this,owner,actions);
             }
         }
-        return new CpsFlowExecution(ScriptApproval.get().using(script, GroovyLanguage.get()), owner);
+        return new CpsFlowExecution(ScriptApproval.get().using(script, GroovyLanguage.get()), owner, isSandbox());
     }
 
     @Extension
