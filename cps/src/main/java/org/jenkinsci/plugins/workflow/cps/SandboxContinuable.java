@@ -4,6 +4,7 @@ import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
 import java.util.concurrent.Callable;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException;
+import org.jenkinsci.plugins.scriptsecurity.sandbox.Whitelist;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.GroovySandbox;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
@@ -31,7 +32,7 @@ class SandboxContinuable extends Continuable {
                     }
                     return outcome;
                 }
-            }, CpsWhitelist.INSTANCE);
+            }, Whitelist.all());
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
