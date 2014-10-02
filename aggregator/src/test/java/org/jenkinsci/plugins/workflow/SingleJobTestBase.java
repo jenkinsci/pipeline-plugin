@@ -39,7 +39,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 /**
- * Base class for tests that interacts with a single workflow job.
+ * Base class for tests that interacts with a single workflow job named {@code demo}.
  *
  * @author Kohsuke Kawaguchi
  */
@@ -61,6 +61,7 @@ public abstract class SingleJobTestBase extends Assert {
      */
     public void rebuildContext(JenkinsRule j) throws Exception {
         WorkflowJob p2 = (WorkflowJob) j.jenkins.getItem("demo");
+        assertNotNull("could not find a job named demo", p2);
         assert p!=p2;  // make sure Jenkins was restarted
         p = p2;
 
