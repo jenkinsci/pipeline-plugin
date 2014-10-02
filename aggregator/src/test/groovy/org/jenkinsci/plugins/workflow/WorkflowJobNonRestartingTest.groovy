@@ -168,4 +168,27 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
             assert idx!=-1 : msg+" not found";
         }
     }
+
+    /**
+     * The first test case to try out the sandbox execution.
+     */
+    @Test
+    public void sandbox() {
+        p.definition = new CpsFlowDefinition("""
+            node {
+              sh("echo hello world")
+            }
+        """)
+        p.definition.sandbox = true;
+
+        def f = p.scheduleBuild2(0)
+        WorkflowRun b = f.get()
+
+        assert b.result == Result.SUCCESS: b.log
+        // currentHeads[0] is FlowEndNode, whose parent is BlockEndNode for "node",
+        // whose parent is BlockEndNode for body invocation, whose parent is AtomNode
+        AtomNode atom = e.currentHeads[0].parents[0].parents[0].parents[0]
+        LogActionImpl la = atom.getAction(LogAction)
+        assert la.logFile.text.contains("hello world")
+    }
 }
