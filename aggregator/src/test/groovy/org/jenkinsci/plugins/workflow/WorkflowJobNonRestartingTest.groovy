@@ -198,14 +198,14 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     @Test
     public void sandboxRejection() {
         p.definition = new CpsFlowDefinition("""
-            "42".toString();
+            Jenkins.getInstance();  // this method is not approved
         """,true);
 
         def f = p.scheduleBuild2(0)
         WorkflowRun b = f.get()
 
         System.out.println(b.log)
-        assert b.log.contains("org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException: Scripts not permitted to use method java.lang.Object toString")
+        assert b.log.contains("org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException: Scripts not permitted to use staticMethod jenkins.model.Jenkins getInstance")
         assert b.result == Result.FAILURE: b.log
     }
 }
