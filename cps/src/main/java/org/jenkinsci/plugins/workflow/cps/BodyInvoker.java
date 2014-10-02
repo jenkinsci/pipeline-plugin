@@ -33,6 +33,7 @@ import com.cloudbees.groovy.cps.impl.CpsCallableInvocation;
 import com.cloudbees.groovy.cps.impl.FunctionCallEnv;
 import com.cloudbees.groovy.cps.impl.SourceLocation;
 import com.cloudbees.groovy.cps.impl.TryBlockEnv;
+import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Action;
@@ -120,7 +121,7 @@ final class BodyInvoker {
             // execute this closure asynchronously
             // TODO: does it make sense that the new thread shares the same head?
             // this problem is captured as https://trello.com/c/v6Pbwqxj/70-allowing-steps-to-build-flownodes
-            CpsThread t = currentThread.group.addThread(createContinuable(e, c, sn), head,
+            CpsThread t = currentThread.group.addThread(createContinuable(currentThread, e, c, sn), head,
                     ContextVariableSet.from(currentThread.getContextVariables(), contextOverrides));
             t.resume(new Outcome(null, null));  // get the new thread going
         } catch (Throwable t) {
@@ -162,10 +163,12 @@ final class BodyInvoker {
      * execution a failure if any of the threads fail, so this behaviour ensures that a problem in the closure
      * body won't terminate the workflow.
      */
-    private Continuable createContinuable(CpsCallableInvocation inv, final FutureCallback callback, BlockStartNode sn) {
+    private Continuable createContinuable(CpsThread currentThread, CpsCallableInvocation inv, final FutureCallback callback, BlockStartNode sn) {
         // we need FunctionCallEnv that acts as the back drop of try/catch block.
         // TODO: we need to capture the surrounding calling context to capture variables, and switch to ClosureCallEnv
-        Env caller = new FunctionCallEnv(null, new SuccessAdapter(callback,sn), null, null);
+        FunctionCallEnv caller = new FunctionCallEnv(null, new SuccessAdapter(callback,sn), null, null);
+        if (currentThread.getExecution().isSandbox())
+            caller.setInvoker(new SandboxInvoker());
 
         // catch an exception thrown from body and treat that as a failure
         TryBlockEnv env = new TryBlockEnv(caller, null);
