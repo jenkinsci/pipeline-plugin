@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.actions;
 
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import hudson.model.Action;
+import java.lang.reflect.UndeclaredThrowableException;
 
 /**
  * Attached to {@link AtomNode} that caused an error.
@@ -37,7 +38,11 @@ import hudson.model.Action;
 public class ErrorAction implements Action {
     private final Throwable error;
 
+    /** For convenience, unwraps {@link UndeclaredThrowableException} automatically. */
     public ErrorAction(Throwable error) {
+        if (error instanceof UndeclaredThrowableException) {
+            error = ((UndeclaredThrowableException) error).getCause();
+        }
         assert error!=null;
         this.error = error;
     }

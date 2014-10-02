@@ -48,6 +48,7 @@ import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 
 import javax.annotation.CheckForNull;
 import java.io.IOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -385,7 +386,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                 throw (RuntimeException) failure;
             if (failure instanceof Error)
                 throw (Error) failure;
-            throw new RuntimeException(failure);
+            throw new UndeclaredThrowableException(failure);
         }
     }
 
