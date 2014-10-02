@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.steps.build;
 
+import hudson.AbortException;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
@@ -29,6 +30,9 @@ public class BuildTriggerStepExecution extends StepExecution {
 
         listener.getLogger().println("Starting building project: "+step.buildJobPath);
         AbstractProject project = jenkins.getItem(step.buildJobPath, getContext().get(Job.class), AbstractProject.class);
+        if (project == null) {
+            throw new AbortException("No parameterized job named " + step.buildJobPath + " found");
+        }
         jenkins.getQueue().schedule(project, project.getQuietPeriod(), new BuildTriggerAction(getContext()));
         return false;
     }
