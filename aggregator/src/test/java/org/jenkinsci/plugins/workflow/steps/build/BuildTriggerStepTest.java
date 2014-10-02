@@ -126,4 +126,15 @@ public class BuildTriggerStepTest extends Assert {
 
         j.assertBuildStatus(Result.FAILURE,q.get());
     }
+
+    @SuppressWarnings("deprecation")
+    @Test public void triggerWorkflow() throws Exception {
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("build 'ds'"));
+        WorkflowJob ds = j.jenkins.createProject(WorkflowJob.class, "ds");
+        ds.setDefinition(new CpsFlowDefinition("echo 'OK'"));
+        j.assertBuildStatusSuccess(us.scheduleBuild2(0));
+        assertEquals(1, ds.getBuilds().size());
+    }
+
 }
