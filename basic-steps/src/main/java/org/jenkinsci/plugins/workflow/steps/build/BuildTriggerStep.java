@@ -1,9 +1,12 @@
 package org.jenkinsci.plugins.workflow.steps.build;
 
 import hudson.Extension;
+import hudson.model.ParameterValue;
+import java.util.List;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * @author Vivek Pandey
@@ -11,6 +14,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 public class BuildTriggerStep extends AbstractStepImpl {
 
     private final String job;
+    private List<ParameterValue> parameters;
 
     @DataBoundConstructor
     public BuildTriggerStep(String value) {
@@ -19,6 +23,14 @@ public class BuildTriggerStep extends AbstractStepImpl {
 
     public String getValue() {
         return job;
+    }
+
+    public List<ParameterValue> getParameters() {
+        return parameters;
+    }
+
+    @DataBoundSetter public void setParameters(List<ParameterValue> parameters) {
+        this.parameters = parameters;
     }
 
     @Extension

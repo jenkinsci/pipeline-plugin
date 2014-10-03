@@ -1,12 +1,17 @@
 package org.jenkinsci.plugins.workflow.steps.build;
 
 import hudson.AbortException;
+import hudson.model.Action;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Job;
+import hudson.model.ParameterValue;
+import hudson.model.ParametersAction;
 import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import java.util.ArrayList;
+import java.util.List;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
@@ -34,11 +39,17 @@ public class BuildTriggerStepExecution extends StepExecution {
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
         }
+        List<Action> actions = new ArrayList<Action>();
+        actions.add(new BuildTriggerAction(getContext()));
+        List<ParameterValue> parameters = step.getParameters();
+        if (parameters != null) {
+            actions.add(new ParametersAction(parameters));
+        }
         new ParameterizedJobMixIn() {
             @Override protected Job asJob() {
                 return (Job) project;
             }
-        }.scheduleBuild2(project.getQuietPeriod(), new BuildTriggerAction(getContext()));
+        }.scheduleBuild2(project.getQuietPeriod(), actions.toArray(new Action[actions.size()]));
         return false;
     }
 

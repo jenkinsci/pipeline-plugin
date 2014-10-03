@@ -1,9 +1,12 @@
 package org.jenkinsci.plugins.workflow.steps.build;
 
+import hudson.model.BooleanParameterDefinition;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
 import hudson.model.Result;
+import hudson.model.StringParameterDefinition;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.tasks.Shell;
 import org.apache.commons.lang.StringUtils;
@@ -135,6 +138,24 @@ public class BuildTriggerStepTest extends Assert {
         ds.setDefinition(new CpsFlowDefinition("echo 'OK'"));
         j.assertBuildStatusSuccess(us.scheduleBuild2(0));
         assertEquals(1, ds.getBuilds().size());
+    }
+
+    @Test public void parameters() throws Exception {
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        FreeStyleProject ds = j.jenkins.createProject(FreeStyleProject.class, "ds");
+        ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("branch", "master"), new BooleanParameterDefinition("extra", false, null)));
+        ds.getBuildersList().add(new Shell("echo branch=$branch extra=$extra"));
+        us.setDefinition(new CpsFlowDefinition("build 'ds'"));
+        j.assertBuildStatusSuccess(us.scheduleBuild2(0));
+        j.assertLogContains("branch=master extra=false", ds.getBuildByNumber(1));
+        // TODO https://trello.com/c/d4gxlcQJ/78-parameterdefinition-create-object would be useful to let us bind a simple Groovy map
+        us.setDefinition(new CpsFlowDefinition("build value: 'ds', parameters: [new hudson.model.StringParameterValue('branch', 'release')]"));
+        j.assertBuildStatusSuccess(us.scheduleBuild2(0));
+        // TODO IIRC there is an open PR regarding automatic filling in of default parameter values; should that be used, or is BuildTriggerStepExecution responsible, or ParameterizedJobMixIn.scheduleBuild2?
+        j.assertLogContains("branch=release extra=", ds.getBuildByNumber(2));
+        us.setDefinition(new CpsFlowDefinition("build value: 'ds', parameters: [new hudson.model.StringParameterValue('branch', 'release'), new hudson.model.BooleanParameterValue('extra', true)]"));
+        j.assertBuildStatusSuccess(us.scheduleBuild2(0));
+        j.assertLogContains("branch=release extra=true", ds.getBuildByNumber(3));
     }
 
 }
