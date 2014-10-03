@@ -289,7 +289,7 @@ public class WorkflowTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
-                assertTrue(b.isBuilding());
+                assertTrue(JenkinsRule.getLog(b), b.isBuilding());
                 startJnlpProc(); // Have to relaunch JNLP agent, since the Jenkins port has changed, and we cannot force JenkinsRule to reuse the same port as before.
                 File f1 = new File(story.j.jenkins.getRootDir(), "f1");
                 File f2 = new File(story.j.jenkins.getRootDir(), "f2");
