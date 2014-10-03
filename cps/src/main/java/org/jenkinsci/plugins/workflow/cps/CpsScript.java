@@ -33,6 +33,7 @@ import hudson.util.StreamTaskListener;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -95,10 +96,26 @@ public abstract class CpsScript extends SerializableScript {
 
     @Override
     public Object evaluate(String script) throws CompilationFailedException {
-        GroovyShell shell = CpsThreadGroup.current().getExecution().getShell();
-        // this might throw the magic CpsCallableInvocation to execute the rest asynchronously
-        // "each" call from EvaluatedClosureTransformation is intercepted by our Category class and causing a problem
-        return shell.evaluate(script);
+        // this might throw the magic CpsCallableInvocation to execute the script asynchronously
+        return getShell().evaluate(script);
+    }
+
+    @Override
+    public Object evaluate(File file) throws CompilationFailedException, IOException {
+        return getShell().evaluate(file);
+    }
+
+    @Override
+    public void run(File file, String[] arguments) throws CompilationFailedException, IOException {
+        getShell().run(file,arguments);
+    }
+
+    /**
+     * Obtains the Groovy compiler to be used for compiling user script
+     * in the CPS-transformed and sandboxed manner.
+     */
+    private GroovyShell getShell() {
+        return CpsThreadGroup.current().getExecution().getShell();
     }
 
     private Object readResolve() {
