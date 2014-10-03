@@ -36,10 +36,13 @@ import hudson.model.PeriodicWork;
 import hudson.model.TaskListener;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
+import jenkins.util.Timer;
 import org.jenkinsci.plugins.durabletask.Controller;
 import org.jenkinsci.plugins.durabletask.DurableTask;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
@@ -141,6 +144,16 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             if (workspace == null) {
                 return; // slave not yet ready, wait for another day
             }
+            // Do not allow this to take more than 3s for any given task:
+            final AtomicReference<Thread> t = new AtomicReference<Thread>(Thread.currentThread());
+            Timer.get().schedule(new Runnable() {
+                @Override public void run() {
+                    Thread _t = t.get();
+                    if (_t != null) {
+                        _t.interrupt();
+                    }
+                }
+            }, 3, TimeUnit.SECONDS);
             try {
                 // cannot use this.listener after restart: TODO: re-inject parameters after deserialization?
                 if (controller.writeLog(workspace, getContext().get(TaskListener.class).getLogger())) {
@@ -163,6 +176,8 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             } catch (InterruptedException x) {
                 LOGGER.log(Level.FINE, "could not check " + workspace, x);
                 ws = null;
+            } finally {
+                t.set(null); // cancel timer
             }
         }
 
