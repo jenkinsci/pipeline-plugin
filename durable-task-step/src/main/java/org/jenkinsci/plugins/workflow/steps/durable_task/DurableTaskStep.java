@@ -131,11 +131,17 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
 
         /** Checks for progress or completion of the external task. */
         private void check() {
+            FilePath workspace;
             try {
-                FilePath workspace = getWorkspace();
-                if (workspace == null) {
-                    return; // slave not yet ready, wait for another day
-                }
+                workspace = getWorkspace();
+            } catch (AbortException x) {
+                getContext().onFailure(x);
+                return;
+            }
+            if (workspace == null) {
+                return; // slave not yet ready, wait for another day
+            }
+            try {
                 // cannot use this.listener after restart: TODO: re-inject parameters after deserialization?
                 if (controller.writeLog(workspace, getContext().get(TaskListener.class).getLogger())) {
                     getContext().saveState();
@@ -152,9 +158,9 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                     }
                 }
             } catch (IOException x) {
-                getContext().onFailure(x);
+                LOGGER.log(Level.FINE, "could not check " + workspace, x);
             } catch (InterruptedException x) {
-                getContext().onFailure(x);
+                LOGGER.log(Level.FINE, "could not check " + workspace, x);
             }
         }
 
