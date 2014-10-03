@@ -20,6 +20,11 @@ public class CpsWhitelist extends AbstractWhitelist {
         if (receiver instanceof CpsScript && method.getName().equals("invokeMethod"))
             return true;
 
+        // evaluate() family of methods are reimplemented in CpsScript for safe manner
+        // but we can't allow arbitrary Script.evaluate() calls as that will escape sandbox
+        if (receiver instanceof CpsScript && method.getName().equals("evaluate"))
+            return true;
+
         return false;
     }
 
