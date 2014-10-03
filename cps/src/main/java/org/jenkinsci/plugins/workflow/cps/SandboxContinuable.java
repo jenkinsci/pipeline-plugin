@@ -38,7 +38,7 @@ class SandboxContinuable extends Continuable {
                     }
                     return outcome;
                 }
-            }, new ProxyWhitelist(new ClassLoaderWhitelist(thread.group.scriptClassLoader),CpsWhitelist.get()));
+            }, new ProxyWhitelist(new ClassLoaderWhitelist(thread.group.getExecution().getShell().getClassLoader()),CpsWhitelist.get()));
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
