@@ -466,6 +466,8 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertEquals(JenkinsRule.DummySecurityRealm.class, jenkins().getSecurityRealm().getClass());
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
+                Thread.sleep(1500); // TODO
+                story.j.assertLogContains("again running as someone", b);
                 CheckAuth.finish(true);
                 waitForWorkflowToComplete();
                 assertBuildCompletedSuccessfully();
@@ -493,6 +495,13 @@ public class WorkflowTest extends SingleJobTestBase {
                 return false;
             }
             @Override public void stop() throws Exception {}
+            @Override public void onResume() {
+                try {
+                    getContext().get(TaskListener.class).getLogger().println("again running as " + getContext().get(FlowExecution.class).getAuthentication().getName() + " from " + Thread.currentThread().getName());
+                } catch (Exception x) {
+                    getContext().onFailure(x);
+                }
+            }
         }
         public static void finish(final boolean terminate) {
             StepExecution.applyAll(Execution.class, new Function<Execution,Void>() {
