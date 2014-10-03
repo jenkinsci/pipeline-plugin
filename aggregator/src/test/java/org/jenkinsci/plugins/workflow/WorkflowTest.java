@@ -176,6 +176,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
                     "node('" + s.getNodeName() + "') {\n" +
+                    // TODO this has been observed to print the basename command, but not echo the result; why?
                     "    sh('echo before=`basename $PWD`')\n" +
                     "    sh('echo ONSLAVE=$ONSLAVE')\n" +
 
