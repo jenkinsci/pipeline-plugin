@@ -57,7 +57,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
-import org.junit.After;
+import org.junit.AfterClass;
 import static org.junit.Assert.assertFalse;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -230,7 +230,7 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
-    private Process jnlpProc;
+    private static Process jnlpProc;
     private void startJnlpProc() throws Exception {
         ProcessBuilder pb = new ProcessBuilder(JavaEnvUtils.getJreExecutable("java"), "-jar", Which.jarFile(Launcher.class).getAbsolutePath(), "-jnlpUrl", story.j.getURL() + "computer/dumbo/slave-agent.jnlp");
         try {
@@ -241,12 +241,13 @@ public class WorkflowTest extends SingleJobTestBase {
         System.err.println("Running: " + pb.command());
         jnlpProc = pb.start();
     }
-    @After public void killJnlpProc() {
+    // TODO @After does not seem to work at all in RestartableJenkinsRule
+    @AfterClass public static void killJnlpProc() {
         if (jnlpProc != null) {
             jnlpProc.destroy();
+            jnlpProc = null;
         }
     }
-    @Ignore("TODO just hangs at end; list of flow node heads seems to be messed up?")
     @Test public void buildShellScriptAcrossRestart() throws Exception {
         /* TODO does not work; why?
         Logger LOGGER = Logger.getLogger(DurableTaskStep.class.getName());
@@ -259,7 +260,7 @@ public class WorkflowTest extends SingleJobTestBase {
             @SuppressWarnings("SleepWhileInLoop")
             @Override public void evaluate() throws Throwable {
                 // Cannot use regular JenkinsRule.createSlave, since its slave dir is thrown out after a restart.
-                // Nor can we can use Jenkins.createComputerLauncher, since spawned commands are killed by CommandLauncher somehow (it is not clear how; apparently before its onClosed kills them off).
+                // Nor can we can use JenkinsRule.createComputerLauncher, since spawned commands are killed by CommandLauncher somehow (it is not clear how; apparently before its onClosed kills them off).
                 DumbSlave s = new DumbSlave("dumbo", "dummy", tmp.getRoot().getAbsolutePath(), "1", Node.Mode.NORMAL, "", new JNLPLauncher(), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
                 story.j.jenkins.addNode(s);
                 startJnlpProc();
@@ -277,8 +278,6 @@ public class WorkflowTest extends SingleJobTestBase {
                     Thread.sleep(100);
                 }
                 assertTrue(b.isBuilding());
-                Thread.sleep(5000); // TODO
-                System.err.println(JenkinsRule.getLog(b)); // TODO
                 killJnlpProc();
             }
         });
@@ -294,9 +293,6 @@ public class WorkflowTest extends SingleJobTestBase {
                 while (f2.isFile()) {
                     Thread.sleep(100);
                 }
-                System.err.println("TODO OK, looks like script completed, now what?");
-                Thread.sleep(5000); // TODO
-                System.err.println(JenkinsRule.getLog(b)); // TODO
                 while (b.isBuilding()) {
                     Thread.sleep(100);
                 }
