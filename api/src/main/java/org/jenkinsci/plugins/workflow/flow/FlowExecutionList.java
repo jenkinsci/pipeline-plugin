@@ -145,6 +145,19 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
         public void onLoaded() {
             for (FlowExecution e : list) {
                 LOGGER.fine("Eager loading "+e);
+                Futures.addCallback(e.getCurrentExecutions(), new FutureCallback<List<StepExecution>>() {
+                    @Override
+                    public void onSuccess(List<StepExecution> result) {
+                        for (StepExecution se : result) {
+                            se.onResume();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+
+                    }
+                });
             }
         }
     }
