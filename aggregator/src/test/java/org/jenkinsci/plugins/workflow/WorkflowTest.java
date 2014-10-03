@@ -239,6 +239,7 @@ public class WorkflowTest extends SingleJobTestBase {
 
     private static Process jnlpProc;
     private void startJnlpProc() throws Exception {
+        killJnlpProc();
         ProcessBuilder pb = new ProcessBuilder(JavaEnvUtils.getJreExecutable("java"), "-jar", Which.jarFile(Launcher.class).getAbsolutePath(), "-jnlpUrl", story.j.getURL() + "computer/dumbo/slave-agent.jnlp");
         try {
             ProcessBuilder.class.getMethod("inheritIO").invoke(pb);
