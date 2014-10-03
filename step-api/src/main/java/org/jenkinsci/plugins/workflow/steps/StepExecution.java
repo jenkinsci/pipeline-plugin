@@ -79,6 +79,12 @@ public abstract class StepExecution implements Serializable {
     public abstract void stop() throws Exception;
 
     /**
+     * Called when {@link StepExecution} is brought back into memory after restart.
+     * Convenient for re-establishing the polling.
+     */
+    public void onResume() {}
+
+    /**
      * Apply the given function to all the active running {@link StepExecution}s in the system.
      *
      * @return
