@@ -34,7 +34,6 @@ import hudson.model.Executor;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.remoting.VirtualChannel;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -60,7 +59,6 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      * <dt>{@link FilePath}<dd>a “workspace” to use for example as from {@link hudson.Launcher.ProcStarter#pwd(hudson.FilePath)}
      * <dt>{@link Computer}<dd>a slave we are running on
      * <dt>{@link Executor}<dd>an executor slot on a slave we are running on
-     * <dt>{@link VirtualChannel}<dd>a way to run remote commands
      * <dt>{@link TaskListener}<dd>a place to send output (see {@code LogAction} for a flow)
      * <dt>{@code AtomNode}<dd>a running node in a flow
      * <dt>{@link Run}<dd>a running build

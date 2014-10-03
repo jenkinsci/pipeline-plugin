@@ -94,7 +94,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             return false;
         }
 
-        private @CheckForNull FilePath getWorkspace() throws IOException, InterruptedException {
+        private @CheckForNull FilePath getWorkspace() throws AbortException {
             if (ws == null) {
                 Computer c = Jenkins.getInstance().getComputer(node);
                 if (c == null) {
@@ -107,7 +107,16 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                 }
                 ws = new FilePath(c.getChannel(), remote);
             }
-            if (!ws.isDirectory()) {
+            boolean directory;
+            try {
+                directory = ws.isDirectory();
+            } catch (Exception x) {
+                // RequestAbortedException, ChannelClosedException, EOFException, wrappers thereof…
+                LOGGER.log(Level.FINE, node + " is evidently offline now", x);
+                ws = null;
+                return null;
+            }
+            if (!directory) {
                 throw new AbortException("missing workspace " + remote + " on " + node);
             }
             return ws;

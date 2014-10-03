@@ -354,7 +354,7 @@ public class ExecutorStepExecution extends StepExecution {
                         WorkspaceList.Lease lease = computer.getWorkspaceList().allocate(p);
                         FilePath workspace = lease.path;
                         listener.getLogger().println("Running on " + computer.getDisplayName() + " in " + workspace); // TODO hyperlink
-                        context.invokeBodyLater(new Callback(cookie, lease), exec, computer, computer.getChannel(), env, workspace);
+                        context.invokeBodyLater(new Callback(cookie, lease), exec, computer, env, workspace);
                         LOGGER.log(Level.FINE, "started {0}", cookie);
                     } else {
                         // just rescheduled after a restart; wait for task to complete

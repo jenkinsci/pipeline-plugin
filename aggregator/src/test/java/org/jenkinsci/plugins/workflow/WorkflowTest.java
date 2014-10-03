@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow;
 
 import com.google.common.base.Function;
+import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
@@ -44,6 +45,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
 import org.apache.commons.io.FileUtils;
@@ -57,6 +62,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertFalse;
 import org.junit.Ignore;
@@ -248,17 +254,16 @@ public class WorkflowTest extends SingleJobTestBase {
             jnlpProc = null;
         }
     }
+
     @Test public void buildShellScriptAcrossRestart() throws Exception {
-        /* TODO does not work; why?
-        Logger LOGGER = Logger.getLogger(DurableTaskStep.class.getName());
-        LOGGER.setLevel(Level.FINE);
-        Handler handler = new ConsoleHandler();
-        handler.setLevel(Level.ALL);
-        LOGGER.addHandler(handler);
-        */
         story.addStep(new Statement() {
             @SuppressWarnings("SleepWhileInLoop")
             @Override public void evaluate() throws Throwable {
+                Logger LOGGER = Logger.getLogger(DurableTaskStep.class.getName());
+                LOGGER.setLevel(Level.FINE);
+                Handler handler = new ConsoleHandler();
+                handler.setLevel(Level.ALL);
+                LOGGER.addHandler(handler);
                 // Cannot use regular JenkinsRule.createSlave, since its slave dir is thrown out after a restart.
                 // Nor can we can use JenkinsRule.createComputerLauncher, since spawned commands are killed by CommandLauncher somehow (it is not clear how; apparently before its onClosed kills them off).
                 DumbSlave s = new DumbSlave("dumbo", "dummy", tmp.getRoot().getAbsolutePath(), "1", Node.Mode.NORMAL, "", new JNLPLauncher(), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
@@ -299,6 +304,59 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertBuildCompletedSuccessfully();
                 story.j.assertLogContains("finished waiting", b);
                 story.j.assertLogContains("OK, done", b);
+                killJnlpProc();
+            }
+        });
+    }
+
+    @Test public void buildShellScriptAcrossDisconnect() throws Exception {
+        story.addStep(new Statement() {
+            @SuppressWarnings("SleepWhileInLoop")
+            @Override public void evaluate() throws Throwable {
+                Logger LOGGER = Logger.getLogger(DurableTaskStep.class.getName());
+                LOGGER.setLevel(Level.FINE);
+                Handler handler = new ConsoleHandler();
+                handler.setLevel(Level.ALL);
+                LOGGER.addHandler(handler);
+                DumbSlave s = new DumbSlave("dumbo", "dummy", tmp.getRoot().getAbsolutePath(), "1", Node.Mode.NORMAL, "", new JNLPLauncher(), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
+                story.j.jenkins.addNode(s);
+                startJnlpProc();
+                p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
+                File f1 = new File(story.j.jenkins.getRootDir(), "f1");
+                File f2 = new File(story.j.jenkins.getRootDir(), "f2");
+                new FileOutputStream(f1).close();
+                p.setDefinition(new CpsFlowDefinition(
+                    "node('dumbo') {\n" +
+                    "    sh 'touch \"" + f2 + "\"; while [ -f \"" + f1 + "\" ]; do sleep 1; done; echo finished waiting; rm \"" + f2 + "\"'\n" +
+                    "    echo 'OK, done'\n" +
+                    "}"));
+                startBuilding();
+                while (!f2.isFile()) {
+                    Thread.sleep(100);
+                }
+                assertTrue(b.isBuilding());
+                Computer c = s.toComputer();
+                assertNotNull(c);
+                killJnlpProc();
+                while (c.isOnline()) {
+                    Thread.sleep(100);
+                }
+                startJnlpProc();
+                while (c.isOffline()) {
+                    Thread.sleep(100);
+                }
+                assertTrue(f2.isFile());
+                assertTrue(f1.delete());
+                while (f2.isFile()) {
+                    Thread.sleep(100);
+                }
+                while (b.isBuilding()) {
+                    Thread.sleep(100);
+                }
+                assertBuildCompletedSuccessfully();
+                story.j.assertLogContains("finished waiting", b);
+                story.j.assertLogContains("OK, done", b);
+                killJnlpProc();
             }
         });
     }

@@ -29,7 +29,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Computer;
+import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
+import hudson.slaves.ComputerListener;
+import java.util.Map;
+import java.util.WeakHashMap;
 import jenkins.model.Jenkins;
 
 /**
@@ -40,18 +44,12 @@ public class FilePathPickle extends Pickle {
     private final String path;
 
     private FilePathPickle(FilePath v) {
-        // TODO: switch to FilePath.toComputer in 1.571
-        Jenkins j = Jenkins.getInstance();
-        if (j != null) {
-            for (Computer c : j.getComputers()) {
-                if (v.getChannel()==c.getChannel()) {
-                    slave = c.getName();
-                    path = v.getRemote();
-                    return;
-                }
-            }
+        // TODO switch to FilePath.toComputer once it uses something like Listener here and so is actually reliable
+        slave = Listener.channelNames.get(v.getChannel());
+        if (slave == null) {
+            throw new IllegalStateException("no known slave for " + v);
         }
-        throw new IllegalStateException();
+        path = v.getRemote();
     }
 
     @Override
@@ -77,6 +75,13 @@ public class FilePathPickle extends Pickle {
     @Extension public static final class Factory extends SingleTypedPickleFactory<FilePath> {
         @Override protected Pickle pickle(FilePath object) {
             return new FilePathPickle(object);
+        }
+    }
+
+    @Extension public static final class Listener extends ComputerListener {
+        static Map<VirtualChannel,String> channelNames = new WeakHashMap<VirtualChannel,String>();
+        @Override public void onOnline(Computer c, TaskListener l) {
+            channelNames.put(c.getChannel(), c.getName());
         }
     }
 

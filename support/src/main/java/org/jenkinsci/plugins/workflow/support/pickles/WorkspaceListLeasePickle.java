@@ -35,22 +35,17 @@ import org.jenkinsci.plugins.workflow.pickles.Pickle;
 
 public class WorkspaceListLeasePickle extends Pickle {
 
+    // Could perhaps just store the FilePath directly (thus using FilePathPickle implicitly), but we need the Computer anyway for its WorkspaceList:
     private final String slave;
     private final String path;
 
     private WorkspaceListLeasePickle(WorkspaceList.Lease lease) {
-        Jenkins j = Jenkins.getInstance();
-        // TODO: switch to FilePath.toComputer in 1.571
-        if (j != null) {
-            for (Computer c : j.getComputers()) {
-                if (lease.path.getChannel() == c.getChannel()) {
-                    slave = c.getName();
-                    path = lease.path.getRemote();
-                    return;
-                }
-            }
+        // TODO see FilePathPickle:
+        slave = FilePathPickle.Listener.channelNames.get(lease.path.getChannel());
+        if (slave == null) {
+            throw new IllegalStateException("no known slave for " + lease.path);
         }
-        throw new IllegalStateException();
+        path = lease.path.getRemote();
     }
 
     @Override public ListenableFuture<?> rehydrate() {
