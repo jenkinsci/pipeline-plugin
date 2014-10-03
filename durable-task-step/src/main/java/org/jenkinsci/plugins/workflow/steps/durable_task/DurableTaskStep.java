@@ -35,6 +35,7 @@ import hudson.model.Computer;
 import hudson.model.PeriodicWork;
 import hudson.model.TaskListener;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
@@ -155,13 +156,17 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
         @Override public long getRecurrencePeriod() {
             return 5000; // 5s
         }
-        @Override protected void doRun() throws Exception {
-            StepExecution.applyAll(Execution.class, new Function<Execution,Void>() {
-                @Override public Void apply(Execution e) {
-                    e.check();
-                    return null;
-                }
-            }).get();
+        @Override protected void doRun() throws ExecutionException {
+            try {
+                StepExecution.applyAll(Execution.class, new Function<Execution,Void>() {
+                    @Override public Void apply(Execution e) {
+                        e.check();
+                        return null;
+                    }
+                }).get();
+            } catch (InterruptedException x) {
+                // can happen during shutdown; probably harmless
+            }
         }
     }
 
