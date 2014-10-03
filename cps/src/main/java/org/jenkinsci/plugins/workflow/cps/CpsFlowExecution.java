@@ -484,6 +484,7 @@ public class CpsFlowExecution extends FlowExecution {
         if (programPromise==null)
             return; // the execution has already finished and we are not loading program state anymore
         CpsThreadGroup g = programPromise.get();
+        // TODO occasionally tests fail here with RejectedExecutionException, apparently because the runner has been shut down; should we just ignore that?
         g.scheduleRun().get();
     }
 
