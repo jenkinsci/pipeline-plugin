@@ -163,7 +163,7 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
         @Override
         public void onLoaded() {
             for (FlowExecution e : list) {
-                LOGGER.fine("Eager loading "+e);
+                LOGGER.log(FINE, "Eager loading {0}", e);
                 Futures.addCallback(e.getCurrentExecutions(), new FutureCallback<List<StepExecution>>() {
                     @Override
                     public void onSuccess(List<StepExecution> result) {
