@@ -13,10 +13,6 @@ import java.io.Serializable;
  * @author Kohsuke Kawaguchi
  */
 public class TmpDirStepExecution extends StepExecution {
-    public TmpDirStepExecution(StepContext context) {
-        super(context);
-    }
-
     @Override
     public boolean start() throws Exception {
         File dir = Util.createTempDir();

@@ -25,10 +25,12 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.SerializableScript;
+import groovy.lang.GroovyShell;
 import hudson.EnvVars;
 import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.util.StreamTaskListener;
+import org.codehaus.groovy.control.CompilationFailedException;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 
 import java.io.IOException;
@@ -89,6 +91,14 @@ public abstract class CpsScript extends SerializableScript {
             return execution.getOwner().getConsole();
         }
         return super.getProperty(property);
+    }
+
+    @Override
+    public Object evaluate(String script) throws CompilationFailedException {
+        GroovyShell shell = CpsThreadGroup.current().getExecution().getShell();
+        // this might throw the magic CpsCallableInvocation to execute the rest asynchronously
+        // "each" call from EvaluatedClosureTransformation is intercepted by our Category class and causing a problem
+        return shell.evaluate(script);
     }
 
     private Object readResolve() {
