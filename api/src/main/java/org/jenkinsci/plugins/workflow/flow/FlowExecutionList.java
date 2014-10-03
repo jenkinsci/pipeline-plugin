@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.*;
+import javax.annotation.CheckForNull;
 
 /**
  * Tracks the running {@link FlowExecution}s so that it can be enumerated.
@@ -36,7 +37,7 @@ import static java.util.logging.Level.*;
 public class FlowExecutionList implements Iterable<FlowExecution> {
     private CopyOnWriteList<FlowExecutionOwner> runningTasks = new CopyOnWriteList<FlowExecutionOwner>();
     private final SingleLaneExecutorService executor = new SingleLaneExecutorService(Timer.get());
-    private final XmlFile configFile = new XmlFile(new File(Jenkins.getInstance().getRootDir(), FlowExecutionList.class.getName() + ".xml"));
+    private XmlFile configFile;
 
     public FlowExecutionList() {
         load();
@@ -71,11 +72,25 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
         };
     }
 
+    private synchronized @CheckForNull XmlFile configFile() {
+        if (configFile == null) {
+            Jenkins j = Jenkins.getInstance();
+            if (j != null) {
+                configFile = new XmlFile(new File(j.getRootDir(), FlowExecutionList.class.getName() + ".xml"));
+            }
+        }
+        return configFile;
+    }
+
     @SuppressWarnings("unchecked")
     private synchronized void load() {
-        if (configFile.exists()) {
+        XmlFile cf = configFile();
+        if (cf == null) {
+            return; // oh well
+        }
+        if (cf.exists()) {
             try {
-                runningTasks.replaceBy((List<FlowExecutionOwner>) configFile.read());
+                runningTasks.replaceBy((List<FlowExecutionOwner>) cf.read());
             } catch (IOException x) {
                 LOGGER.log(WARNING, null, x);
             }
@@ -115,8 +130,12 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
         }
     }
     private void save(List<FlowExecutionOwner> copy) {
+        XmlFile cf = configFile();
+        if (cf == null) {
+            return; // oh well
+        }
         try {
-            configFile.write(copy);
+            cf.write(copy);
         } catch (IOException x) {
             LOGGER.log(WARNING, null, x);
         }
