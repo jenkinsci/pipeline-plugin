@@ -159,8 +159,10 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                 }
             } catch (IOException x) {
                 LOGGER.log(Level.FINE, "could not check " + workspace, x);
+                ws = null;
             } catch (InterruptedException x) {
                 LOGGER.log(Level.FINE, "could not check " + workspace, x);
+                ws = null;
             }
         }
 
