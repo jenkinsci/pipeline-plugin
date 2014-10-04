@@ -29,7 +29,7 @@ public class EvaluateStep extends AbstractStepImpl {
 
         @Override
         public String getFunctionName() {
-            return "evaluate";
+            return "evaluateWorkspaceScript";
         }
 
         @Override
