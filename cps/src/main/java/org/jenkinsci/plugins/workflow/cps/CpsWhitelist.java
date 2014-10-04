@@ -11,7 +11,7 @@ import java.lang.reflect.Method;
  *
  * @author Kohsuke Kawaguchi
  */
-public class CpsWhitelist extends AbstractWhitelist {
+class CpsWhitelist extends AbstractWhitelist {
     private CpsWhitelist() {}
 
     @Override

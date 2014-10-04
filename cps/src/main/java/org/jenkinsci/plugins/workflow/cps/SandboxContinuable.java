@@ -3,8 +3,6 @@ package org.jenkinsci.plugins.workflow.cps;
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException;
-import org.jenkinsci.plugins.scriptsecurity.sandbox.Whitelist;
-import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.ClassLoaderWhitelist;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.GroovySandbox;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.ProxyWhitelist;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
@@ -38,7 +36,7 @@ class SandboxContinuable extends Continuable {
                     }
                     return outcome;
                 }
-            }, new ProxyWhitelist(new ClassLoaderWhitelist(thread.group.getExecution().getShell().getClassLoader()),CpsWhitelist.get()));
+            }, new ProxyWhitelist(new GroovyClassLoaderWhitelist(thread.group.getExecution().getShell().getClassLoader()),CpsWhitelist.get()));
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
