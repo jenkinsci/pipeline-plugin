@@ -6,6 +6,7 @@ import jenkins.model.RunAction2;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * Records the pending inputs required.
@@ -26,6 +27,7 @@ public class InputAction implements RunAction2 {
     @Override
     public void onLoad(Run<?, ?> r) {
         this.run = r;
+        assert executions != null && !executions.contains(null) : executions;
         for (InputStepExecution step : executions) {
             step.run = run;
         }
@@ -52,7 +54,7 @@ public class InputAction implements RunAction2 {
         return "input";
     }
 
-    public synchronized void add(InputStepExecution step) throws IOException {
+    public synchronized void add(@Nonnull InputStepExecution step) throws IOException {
         this.executions.add(step);
         run.save();
     }
