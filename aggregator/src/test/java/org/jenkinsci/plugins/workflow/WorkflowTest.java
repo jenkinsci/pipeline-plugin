@@ -530,6 +530,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 story.j.assertLogContains("again running as someone", b);
                 CheckAuth.finish(true);
                 waitForWorkflowToComplete();
+                Thread.sleep(1500); // TODO
                 assertBuildCompletedSuccessfully();
                 story.j.assertLogContains("finally running as someone", b);
             }
