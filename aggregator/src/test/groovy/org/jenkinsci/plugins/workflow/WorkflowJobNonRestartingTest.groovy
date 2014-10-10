@@ -45,8 +45,6 @@ import javax.inject.Inject
  * @author Kohsuke Kawaguchi
  */
 public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
-    @Inject
-    DurableTaskStep.Checker checker;
 
     WorkflowJob p
 
@@ -71,7 +69,6 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
         e.waitForSuspension()
 
         Thread.sleep(1000)  // give a bit of time for shell script to complete
-        checker.doRun()     // and let us notice that right away
 
         while (!e.isComplete())
             e.waitForSuspension()   // let the workflow run to the completion
