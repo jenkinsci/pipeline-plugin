@@ -23,11 +23,25 @@
   ~ THE SOFTWARE.
   -->
 
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
   <f:entry title="${%Script}" field="script">
     <f:textarea checkMethod="post"/>
   </f:entry>
   <f:entry field="sandbox" title="${%Use Groovy Sandbox}">
     <f:checkbox/>
   </f:entry>
+  <!-- TODO see if this can be made to work:
+  <div id="prototypeBlock">
+      <f:dropdownList name="_" title="Sample Step">…</f:dropdownList>
+      <f:block>
+          <input type="submit" …/>
+      </f:block>
+  </div>
+  <script>
+    var prototypeForm = document.createElement('form');
+    prototypeForm.name = 'prototype';
+    document.forms.config.parentNode.appendChild(prototypeForm);
+    prototypeForm.appendChild($('prototypeBlock'));
+  </script>
+  -->
 </j:jelly>
