@@ -42,18 +42,20 @@ public class BuildTriggerStepTest extends Assert {
         j.assertBuildStatusSuccess(q);
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void buildFolderProject() throws Exception {
-        MockFolder f = j.createFolder("proj1");
-        FreeStyleProject p = f.createProject(FreeStyleProject.class, "test1");
-        p.getBuildersList().add(new Shell("echo 'Hello World'"));
+        MockFolder dir1 = j.createFolder("dir1");
+        FreeStyleProject downstream = dir1.createProject(FreeStyleProject.class, "downstream");
+        downstream.getBuildersList().add(new Shell("echo 'Hello World'"));
 
+        MockFolder dir2 = j.createFolder("dir2");
+        WorkflowJob upstream = dir2.createProject(WorkflowJob.class, "upstream");
+        upstream.setDefinition(new CpsFlowDefinition("build '../dir1/downstream'"));
 
-        WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
-        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("build('proj1/test1');"), "\n")));
-
-        QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
+        QueueTaskFuture<WorkflowRun> q = upstream.scheduleBuild2(0);
         j.assertBuildStatusSuccess(q);
+        assertEquals(1, downstream.getBuilds().size());
     }
 
 
