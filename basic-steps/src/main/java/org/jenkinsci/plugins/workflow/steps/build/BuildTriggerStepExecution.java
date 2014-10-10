@@ -25,6 +25,7 @@ import jenkins.model.ParameterizedJobMixIn;
 public class BuildTriggerStepExecution extends StepExecution {
     @StepContextParameter
     private transient TaskListener listener;
+    @StepContextParameter private transient Job<?,?> invokingJob;
 
     @Inject // used only during the start() method, so no need to be persisted
     transient BuildTriggerStep step;
@@ -35,7 +36,7 @@ public class BuildTriggerStepExecution extends StepExecution {
         Jenkins jenkins = Jenkins.getInstance();
         String job = step.getValue();
         listener.getLogger().println("Starting building project: " + job);
-        final ParameterizedJobMixIn.ParameterizedJob project = jenkins.getItem(job, getContext().get(Job.class), ParameterizedJobMixIn.ParameterizedJob.class);
+        final ParameterizedJobMixIn.ParameterizedJob project = jenkins.getItem(job, invokingJob, ParameterizedJobMixIn.ParameterizedJob.class);
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
         }
