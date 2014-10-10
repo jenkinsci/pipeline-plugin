@@ -51,7 +51,12 @@ public final class SubversionStep extends SCMStep {
         return new SubversionSCM(url); // TODO maybe default to UpdateWithCleanUpdater, etc.
     }
 
-    @Extension public static final class DescriptorImpl extends SCMStepDescriptor {
+    @Extension(optional=true) public static final class DescriptorImpl extends SCMStepDescriptor {
+
+        public DescriptorImpl() {
+             // Fail now if dependency plugin not loaded. Descriptor.<init> will actually fail anyway, but this is just to be sure.
+            SubversionSCM.class.hashCode();
+        }
 
         @Override public String getFunctionName() {
             return "svn";

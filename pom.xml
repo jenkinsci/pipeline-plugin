@@ -77,6 +77,16 @@
                 <artifactId>durable-task</artifactId>
                 <version>0.7</version>
             </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>git</artifactId>
+                <version>2.3-beta-2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>subversion</artifactId>
+                <version>2.5-beta-2</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>

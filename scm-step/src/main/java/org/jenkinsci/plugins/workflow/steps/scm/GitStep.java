@@ -70,7 +70,12 @@ public final class GitStep extends SCMStep {
         return repoList;
     }
 
-    @Extension public static final class DescriptorImpl extends SCMStepDescriptor {
+    @Extension(optional=true) public static final class DescriptorImpl extends SCMStepDescriptor {
+
+        public DescriptorImpl() {
+            // Fail now if dependency plugin not loaded. Descriptor.<init> will actually fail anyway, but this is just to be sure.
+            GitSCM.class.hashCode();
+        }
 
         @Override public String getFunctionName() {
             return "git";
