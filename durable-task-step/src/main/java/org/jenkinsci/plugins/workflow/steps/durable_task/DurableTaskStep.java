@@ -155,7 +155,6 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                 }
             }, 3, TimeUnit.SECONDS);
             try {
-                // cannot use this.listener after restart: TODO: re-inject parameters after deserialization?
                 if (controller.writeLog(workspace, getContext().get(TaskListener.class).getLogger())) {
                     getContext().saveState();
                 }
@@ -165,7 +164,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                 } else {
                     controller.cleanup(workspace);
                     if (exitCode == 0) {
-                        getContext().onSuccess(exitCode); // TODO could add an option to have this be text output from command
+                        getContext().onSuccess(exitCode);
                     } else {
                         getContext().onFailure(new AbortException("script returned exit code " + exitCode));
                     }
