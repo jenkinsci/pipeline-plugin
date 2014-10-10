@@ -24,18 +24,14 @@
 
 package org.jenkinsci.plugins.workflow.steps.durable_task;
 
-import com.google.common.base.Function;
 import com.google.inject.Inject;
 import hudson.AbortException;
 import hudson.EnvVars;
-import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Computer;
-import hudson.model.PeriodicWork;
 import hudson.model.TaskListener;
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -71,13 +67,18 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
      * Represents one task that is believed to still be running.
      */
     @Restricted(NoExternalUse.class)
-    public static final class Execution extends StepExecution {
+    public static final class Execution extends StepExecution implements Runnable {
+
+        private static final long MIN_RECURRENCE_PERIOD = 250; // ¼s
+        private static final long MAX_RECURRENCE_PERIOD = 15000; // 15s
+        private static final float RECURRENCE_PERIOD_BACKOFF = 1.2f;
 
         @Inject private transient DurableTaskStep step;
         @StepContextParameter private transient FilePath ws;
         @StepContextParameter private transient EnvVars env;
         @StepContextParameter private transient Launcher launcher;
         @StepContextParameter private transient TaskListener listener;
+        private transient long recurrencePeriod;
         private Controller controller;
         private String node;
         private String remote;
@@ -94,6 +95,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             }
             controller = step.task().launch(env, ws, launcher, listener);
             this.remote = ws.getRemote();
+            onResume();
             return false;
         }
 
@@ -133,11 +135,22 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
         }
 
         /** Checks for progress or completion of the external task. */
+        @Override public void run() {
+            try {
+                check();
+            } finally {
+                if (recurrencePeriod > 0) {
+                    Timer.get().schedule(this, recurrencePeriod, TimeUnit.MILLISECONDS);
+                }
+            }
+        }
+
         private void check() {
             FilePath workspace;
             try {
                 workspace = getWorkspace();
             } catch (AbortException x) {
+                recurrencePeriod = 0;
                 getContext().onFailure(x);
                 return;
             }
@@ -157,11 +170,15 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             try {
                 if (controller.writeLog(workspace, getContext().get(TaskListener.class).getLogger())) {
                     getContext().saveState();
+                    recurrencePeriod = MIN_RECURRENCE_PERIOD; // got output, maybe we will get more soon
+                } else {
+                    recurrencePeriod = Math.min((long) (recurrencePeriod * RECURRENCE_PERIOD_BACKOFF), MAX_RECURRENCE_PERIOD);
                 }
                 Integer exitCode = controller.exitStatus(workspace);
                 if (exitCode == null) {
                     LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
                 } else {
+                    recurrencePeriod = 0;
                     controller.cleanup(workspace);
                     if (exitCode == 0) {
                         getContext().onSuccess(exitCode);
@@ -180,25 +197,11 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             }
         }
 
-    }
+        @Override public void onResume() {
+            recurrencePeriod = MIN_RECURRENCE_PERIOD;
+            Timer.get().schedule(this, recurrencePeriod, TimeUnit.MILLISECONDS);
+        }
 
-    @Restricted(NoExternalUse.class)
-    @Extension public static final class Checker extends PeriodicWork {
-        @Override public long getRecurrencePeriod() {
-            return 5000; // 5s
-        }
-        @Override protected void doRun() throws ExecutionException {
-            try {
-                StepExecution.applyAll(Execution.class, new Function<Execution,Void>() {
-                    @Override public Void apply(Execution e) {
-                        e.check();
-                        return null;
-                    }
-                }).get();
-            } catch (InterruptedException x) {
-                // can happen during shutdown; probably harmless
-            }
-        }
     }
 
 }
