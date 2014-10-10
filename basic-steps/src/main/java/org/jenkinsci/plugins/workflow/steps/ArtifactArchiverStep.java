@@ -20,8 +20,10 @@ public class ArtifactArchiverStep extends AbstractStepImpl {
     @DataBoundSetter
     String excludes;
 
+    /*
     @DataBoundSetter
     boolean fingerprint = true;
+    */
 
     @DataBoundConstructor
     public ArtifactArchiverStep(String value) {
@@ -36,9 +38,11 @@ public class ArtifactArchiverStep extends AbstractStepImpl {
         return excludes;
     }
 
+    /*
     public boolean isFingerprint() {
         return fingerprint;
     }
+    */
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
