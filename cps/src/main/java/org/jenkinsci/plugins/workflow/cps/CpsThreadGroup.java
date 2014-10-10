@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
+import com.google.common.util.concurrent.Futures;
 import groovy.lang.Closure;
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -47,6 +48,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -170,14 +172,18 @@ public final class CpsThreadGroup implements Serializable {
                 // those include things like notifying listeners or updating various other states
                 // runner is a single-threaded queue, so running a no-op and waiting for its completion
                 // ensures that everything submitted in front of us has finished.
-
-                return runner.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (threads.isEmpty())
-                            runner.shutdown();
-                    }
-                });
+                try {
+                    return runner.submit(new Runnable() {
+                        @Override public void run() {
+                            if (threads.isEmpty()) {
+                                runner.shutdown();
+                            }
+                        }
+                    });
+                } catch (RejectedExecutionException x) {
+                    // Was shut down by a prior task?
+                    return Futures.immediateFuture(null);
+                }
             }
         });
 
