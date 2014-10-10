@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.steps.build;
 
 import hudson.model.BooleanParameterDefinition;
+import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.ParametersDefinitionProperty;
@@ -148,8 +149,12 @@ public class BuildTriggerStepTest extends Assert {
         ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("branch", "master"), new BooleanParameterDefinition("extra", false, null)));
         ds.getBuildersList().add(new Shell("echo branch=$branch extra=$extra"));
         us.setDefinition(new CpsFlowDefinition("build 'ds'"));
-        j.assertBuildStatusSuccess(us.scheduleBuild2(0));
-        j.assertLogContains("branch=master extra=false", ds.getBuildByNumber(1));
+        WorkflowRun us1 = j.assertBuildStatusSuccess(us.scheduleBuild2(0));
+        FreeStyleBuild ds1 = ds.getBuildByNumber(1);
+        j.assertLogContains("branch=master extra=false", ds1);
+        Cause.UpstreamCause cause = ds1.getCause(Cause.UpstreamCause.class);
+        assertNotNull(cause);
+        assertEquals(us1, cause.getUpstreamRun());
         // TODO https://trello.com/c/d4gxlcQJ/78-parameterdefinition-create-object would be useful to let us bind a simple Groovy map
         us.setDefinition(new CpsFlowDefinition("build value: 'ds', parameters: [new hudson.model.StringParameterValue('branch', 'release')]"));
         j.assertBuildStatusSuccess(us.scheduleBuild2(0));

@@ -2,6 +2,8 @@ package org.jenkinsci.plugins.workflow.steps.build;
 
 import hudson.AbortException;
 import hudson.model.Action;
+import hudson.model.Cause;
+import hudson.model.CauseAction;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Job;
@@ -25,7 +27,7 @@ import jenkins.model.ParameterizedJobMixIn;
 public class BuildTriggerStepExecution extends StepExecution {
     @StepContextParameter
     private transient TaskListener listener;
-    @StepContextParameter private transient Job<?,?> invokingJob;
+    @StepContextParameter private transient Run<?,?> invokingRun;
 
     @Inject // used only during the start() method, so no need to be persisted
     transient BuildTriggerStep step;
@@ -36,12 +38,13 @@ public class BuildTriggerStepExecution extends StepExecution {
         Jenkins jenkins = Jenkins.getInstance();
         String job = step.getValue();
         listener.getLogger().println("Starting building project: " + job);
-        final ParameterizedJobMixIn.ParameterizedJob project = jenkins.getItem(job, invokingJob, ParameterizedJobMixIn.ParameterizedJob.class);
+        final ParameterizedJobMixIn.ParameterizedJob project = jenkins.getItem(job, invokingRun.getParent(), ParameterizedJobMixIn.ParameterizedJob.class);
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
         }
         List<Action> actions = new ArrayList<Action>();
         actions.add(new BuildTriggerAction(getContext()));
+        actions.add(new CauseAction(new Cause.UpstreamCause(invokingRun)));
         List<ParameterValue> parameters = step.getParameters();
         if (parameters != null) {
             actions.add(new ParametersAction(parameters));
