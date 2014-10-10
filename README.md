@@ -59,6 +59,21 @@ node('linux') { // grab a slave and allocate a workspace
 }
 ```
 
+A more complete example still in a single workspace:
+
+```
+node('windows_jnlp') {
+  svn url: 'https://…/trunk/…'
+  bat(/
+echo off
+set JAVA_HOME=c:\Program Files\Java\jdk1.7.0_60
+c:\Program Files\Maven\bin\mvn clean install
+/)
+  step $class: 'hudson.tasks.ArtifactArchiver', artifacts: '**/target/*-SNAPSHOT*', fingerprint: true
+  step $class: 'hudson.tasks.junit.JUnitResultArchiver', testResults: '**/target/surefire-reports/*.xml'
+}
+```
+
 # Installation
 
 If you do not want to build from sources, some early releases (as of this writing `0.1-beta-3`) are available on the Jenkins experimental update center.
