@@ -2,7 +2,7 @@ package org.jenkinsci.plugins.workflow.steps;
 
 /**
  * {@link StepExecution} that always executes synchronously.
- *
+ * @param <T> the type of the return value (may be {@link Void})
  * @author Kohsuke Kawaguchi
  */
 public abstract class AbstractSynchronousStepExecution<T> extends StepExecution {
