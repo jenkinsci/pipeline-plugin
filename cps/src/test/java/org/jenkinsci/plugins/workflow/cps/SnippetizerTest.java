@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import hudson.tasks.ArtifactArchiver;
+import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -38,13 +40,17 @@ public class SnippetizerTest {
         assertEquals("echo 'hello world'", Snippetizer.object2Groovy(new EchoStep("hello world")));
     }
 
+    @Test public void coreStep() {
+        ArtifactArchiver aa = new ArtifactArchiver("x.jar");
+        aa.setAllowEmptyArchive(true);
+        assertEquals("step $class: 'hudson.tasks.ArtifactArchiver', allowEmptyArchive: true, artifacts: 'x.jar', defaultExcludes: true, excludes: '', fingerprint: false, onlyIfSuccessful: false", Snippetizer.object2Groovy(new CoreStep(aa)));
+    }
+
     // TODO StageStep probably needs to not override newInstance, should have @DataBoundSetter for concurrency as Integer (though produces "concurrency":"")
     // TODO test block arguments like node {} and node('label') {}
-    // TODO CoreStep
     // TODO BuildTriggerStep incl. parameters
     // TODO escaping '
     // TODO multiline text should produce / or ''' strings
-    // TODO multiple args should be separated by ,
     // TODO null values should be skipped
 
 }

@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import java.util.Collections;
 import java.util.Map;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -39,12 +40,27 @@ class Snippetizer {
             if (d.clazz.equals(clazz)) {
                 StringBuilder b = new StringBuilder(d.getFunctionName());
                 Map<String,Object> args = d.defineArguments((Step) o);
+                args.values().removeAll(Collections.singleton(null)); // do not write null values
+                boolean first = true;
                 for (Map.Entry<String,Object> entry : args.entrySet()) {
-                    String key = entry.getKey();
-                    if (key.equals("value") && args.size() == 1) {
-                        b.append(" '").append(entry.getValue()).append('\'');
+                    if (first) {
+                        first = false;
                     } else {
-                        b.append(' ').append(key).append(": '").append(entry.getValue()).append('\'');
+                        b.append(',');
+                    }
+                    b.append(' ');
+                    String key = entry.getKey();
+                    if (args.size() > 1 || !key.equals("value")) {
+                        b.append(key).append(": ");
+                    }
+                    Object value = entry.getValue();
+                    Class<?> valueC = value.getClass();
+                    if (valueC == String.class || valueC == Character.class) {
+                        b.append('\'').append(value).append('\'');
+                    } else if (valueC == Boolean.class || valueC == Integer.class || valueC == Long.class) {
+                        b.append(value);
+                    } else {
+                        throw new UnsupportedOperationException("not sure how to render value of type " + valueC);
                     }
                 }
                 return b.toString();

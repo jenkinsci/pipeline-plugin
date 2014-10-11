@@ -74,7 +74,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
 
     /**
      * Determine which arguments went into the configuration of a step configured through a form submission.
-     * @param step a fully-configured step
+     * @param step a fully-configured step (assignable to {@link #clazz})
      * @return arguments that could be passed to {@link #newInstance} to create a similar step instance
      * @throws UnsupportedOperationException if this descriptor lacks the ability to do such a calculation
      */

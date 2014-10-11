@@ -27,9 +27,16 @@ package org.jenkinsci.plugins.workflow.steps;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.tasks.Builder;
+import hudson.tasks.Publisher;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import jenkins.model.Jenkins;
@@ -89,8 +96,30 @@ public final class CoreStep extends Step {
             return new CoreStep(delegate);
         }
 
+        @Override public Map<String,Object> defineArguments(Step _step) throws UnsupportedOperationException {
+            CoreStep step = (CoreStep) _step;
+            Map<String,Object> r = AbstractStepDescriptorImpl.uninstantiate(step.delegate);
+            r.put("$class", step.delegate.getClass().getName());
+            return r;
+        }
+
         @Override public String getDisplayName() {
             return "General Build Step";
+        }
+
+        public Collection<? extends Descriptor<?>> getApplicableDescriptors() {
+            // Jenkins.instance.getDescriptorList(SimpleBuildStep) is empty, presumably because that itself is not a Describable.
+            List<Descriptor<?>> r = new ArrayList<Descriptor<?>>();
+            populate(r, Builder.class);
+            populate(r, Publisher.class);
+            return r;
+        }
+        private <T extends Describable<T>,D extends Descriptor<T>> void populate(List<Descriptor<?>> r, Class<T> c) {
+            for (Descriptor<?> d : Jenkins.getInstance().getDescriptorList(c)) {
+                if (SimpleBuildStep.class.isAssignableFrom(d.clazz)) {
+                    r.add(d);
+                }
+            }
         }
 
     }
