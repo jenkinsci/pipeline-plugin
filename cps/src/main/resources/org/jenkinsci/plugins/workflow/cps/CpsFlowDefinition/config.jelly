@@ -35,7 +35,8 @@
           <f:dropdownListBlock title="${stepDescriptor.displayName}" staplerClass="${stepDescriptor.clazz.name}" lazy="stepDescriptor">
               <l:ajax>
                   <j:set var="instance" value="${null}"/>
-                  <st:include from="${stepDescriptor}" page="${stepDescriptor.configPage}" optional="true">
+                  <j:set var="descriptor" value="${stepDescriptor}"/>
+                  <st:include from="${descriptor}" page="${descriptor.configPage}" optional="true">
                       <f:block>
                           ${%This step has not yet defined any visual configuration.}
                       </f:block>
