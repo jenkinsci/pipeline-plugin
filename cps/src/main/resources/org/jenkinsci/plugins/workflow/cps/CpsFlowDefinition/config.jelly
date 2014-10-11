@@ -30,18 +30,28 @@
   <f:entry field="sandbox" title="${%Use Groovy Sandbox}">
     <f:checkbox/>
   </f:entry>
-  <!-- TODO see if this can be made to work:
-  <div id="prototypeBlock">
-      <f:dropdownList name="_" title="Sample Step">…</f:dropdownList>
-      <f:block>
-          <input type="submit" …/>
-      </f:block>
-  </div>
+  <f:dropdownList name="_prototype" title="Sample Step"> <!-- TODO could add help attr -->
+      <j:forEach var="stepDescriptor" items="${descriptor.stepDescriptors}">
+          <f:dropdownListBlock title="${stepDescriptor.displayName}" staplerClass="${stepDescriptor.clazz.name}" lazy="stepDescriptor">
+              <l:ajax>
+                  <j:set var="instance" value="${null}"/>
+                  <st:include from="${stepDescriptor}" page="${stepDescriptor.configPage}" optional="true">
+                      <f:block>
+                          ${%This step has not yet defined any visual configuration.}
+                      </f:block>
+                  </st:include>
+              </l:ajax>
+          </f:dropdownListBlock>
+      </j:forEach>
+  </f:dropdownList>
+  <f:block>
+      <input type="button" value="Generate Groovy" onclick="handlePrototype(); return false" class="submit-button primary"/>
+  </f:block>
   <script>
-    var prototypeForm = document.createElement('form');
-    prototypeForm.name = 'prototype';
-    document.forms.config.parentNode.appendChild(prototypeForm);
-    prototypeForm.appendChild($('prototypeBlock'));
+      function handlePrototype() {
+          buildFormTree(document.forms.config);
+          // TODO POST this to some endpoint on the descriptor to get back Groovy code
+          console.log(JSON.stringify(JSON.parse(document.forms.config.elements.json.value).definition._prototype));
+      }
   </script>
-  -->
 </j:jelly>

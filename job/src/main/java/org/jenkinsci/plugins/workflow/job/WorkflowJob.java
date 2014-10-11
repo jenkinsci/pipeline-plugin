@@ -80,7 +80,6 @@ import jenkins.triggers.SCMTriggerItem;
 import jenkins.util.TimeDuration;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.QueryParameter;
@@ -497,11 +496,6 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
 
         @Override public TopLevelItem newInstance(ItemGroup parent, String name) {
             return new WorkflowJob(parent, name);
-        }
-
-        @Restricted(DoNotUse.class) // j:invokeStatic does not consistently work on plugin classes
-        public Collection<? extends StepDescriptor> getStepDescriptors() {
-            return StepDescriptor.all();
         }
 
     }

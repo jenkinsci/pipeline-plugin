@@ -37,6 +37,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import jenkins.model.Jenkins;
 import org.codehaus.groovy.control.CompilationFailedException;
@@ -45,6 +46,9 @@ import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
@@ -113,6 +117,11 @@ public class CpsFlowDefinition extends FlowDefinition {
                 return FormValidation.error(x.getLocalizedMessage());
             }
             return sandbox ? FormValidation.ok() : ScriptApproval.get().checking(value, GroovyLanguage.get());
+        }
+
+        @Restricted(DoNotUse.class) // j:invokeStatic does not consistently work on plugin classes
+        public Collection<? extends StepDescriptor> getStepDescriptors() {
+            return StepDescriptor.all();
         }
 
     }
