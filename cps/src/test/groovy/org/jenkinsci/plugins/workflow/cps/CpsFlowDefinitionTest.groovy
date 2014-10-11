@@ -27,8 +27,15 @@ package org.jenkinsci.plugins.workflow.cps
 import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep
 import hudson.FilePath
 import org.junit.Test
+import static org.junit.Assert.*;
 
 import javax.inject.Inject
+import com.gargoylesoftware.htmlunit.HttpMethod;
+import com.gargoylesoftware.htmlunit.WebRequestSettings;
+import com.gargoylesoftware.htmlunit.WebResponse;
+import java.net.URL;
+import org.apache.commons.httpclient.NameValuePair;
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  *
@@ -115,4 +122,18 @@ for (int i=0; i<10; i++)
         assert t.getClass()==Throwable.class
         assert t.message=="This is a fire drill, not a real fire";
     }
+
+    @Test public void generateSnippet() throws Exception {
+        JenkinsRule.WebClient wc = jenkins.createWebClient();
+        WebRequestSettings wrs = new WebRequestSettings(new URL(jenkins.getURL(), jenkins.jenkins.getDescriptorByType(CpsFlowDefinition.DescriptorImpl.class).getDescriptorUrl() + "/generateSnippet"), HttpMethod.POST);
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new NameValuePair("json", "{'stapler-class':'org.jenkinsci.plugins.workflow.steps.EchoStep', 'value':'hello world'}"));
+        // WebClient.addCrumb *replaces* rather than *adds*:
+        params.add(new NameValuePair(jenkins.jenkins.getCrumbIssuer().getDescriptor().getCrumbRequestField(), jenkins.jenkins.getCrumbIssuer().getCrumb(null)));
+        wrs.setRequestParameters(params);
+        WebResponse response = wc.getPage(wrs).getWebResponse();
+        assertEquals("text/plain", response.getContentType());
+        assertEquals("echo 'hello world'\n", response.getContentAsString());
+    }
+
 }
