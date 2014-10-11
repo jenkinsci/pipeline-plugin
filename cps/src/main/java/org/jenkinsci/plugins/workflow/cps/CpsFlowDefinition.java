@@ -49,6 +49,8 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
+import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
@@ -122,6 +124,10 @@ public class CpsFlowDefinition extends FlowDefinition {
         @Restricted(DoNotUse.class) // j:invokeStatic does not consistently work on plugin classes
         public Collection<? extends StepDescriptor> getStepDescriptors() {
             return StepDescriptor.all();
+        }
+
+        public HttpResponse doGenerateSnippet(@QueryParameter String json) {
+            return HttpResponses.plainText("TODO process " + json);
         }
 
     }

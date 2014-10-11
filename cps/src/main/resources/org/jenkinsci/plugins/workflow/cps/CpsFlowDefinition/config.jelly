@@ -46,12 +46,19 @@
   </f:dropdownList>
   <f:block>
       <input type="button" value="Generate Groovy" onclick="handlePrototype(); return false" class="submit-button primary"/>
+      <f:textarea id="_prototypeText" readonly="true"/>
   </f:block>
   <script>
       function handlePrototype() {
           buildFormTree(document.forms.config);
-          // TODO POST this to some endpoint on the descriptor to get back Groovy code
-          console.log(JSON.stringify(JSON.parse(document.forms.config.elements.json.value).definition._prototype));
+          var json = JSON.stringify(JSON.parse(document.forms.config.elements.json.value).definition._prototype);
+          new Ajax.Request('${descriptor.descriptorFullUrl}/generateSnippet', {
+              method: 'POST',
+              parameters: {json: json},
+              onSuccess: function(r) {
+                  document.getElementById('_prototypeText').value = r.responseText;
+              }
+          });
       }
   </script>
 </j:jelly>
