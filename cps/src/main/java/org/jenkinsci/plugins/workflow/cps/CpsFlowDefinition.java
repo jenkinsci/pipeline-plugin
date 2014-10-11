@@ -126,8 +126,9 @@ public class CpsFlowDefinition extends FlowDefinition {
             return StepDescriptor.all();
         }
 
+        @Restricted(DoNotUse.class) // from config.jelly
         public HttpResponse doGenerateSnippet(@QueryParameter String json) {
-            return HttpResponses.plainText("TODO process " + json);
+            return HttpResponses.plainText(Snippetizer.json2Groovy(json));
         }
 
     }
