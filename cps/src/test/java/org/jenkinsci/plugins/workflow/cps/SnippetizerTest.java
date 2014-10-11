@@ -26,12 +26,12 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class SnippetizerTest {
 
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @ClassRule public static JenkinsRule r = new JenkinsRule();
     
     @Test public void basics() {
         assertProcess("{'stapler-class':'org.jenkinsci.plugins.workflow.steps.EchoStep', 'value':'hello world'}", "echo 'hello world'");
