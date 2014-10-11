@@ -9,18 +9,18 @@
 node('slave') {
     def src = '/var/lib/jenkins/workflow-plugin-pipeline-demo'
     git url: src
-    sh 'mvn -o clean package'
+    mvn '-o clean package'
     archive 'target/x.war'
 
     stage 'QA'
 
     parallel(longerTests: {
         runWithServer {url ->
-            sh "mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=30"
+            mvn "-o -f sometests/pom.xml test -Durl=${url} -Dduration=30"
         }
     }, quickerTests: {
         runWithServer {url ->
-            sh "mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=20"
+            mvn "-o -f sometests/pom.xml test -Durl=${url} -Dduration=20"
         }
     })
     stage value: 'Staging', concurrency: 1
@@ -33,6 +33,11 @@ node('master') {
     unarchive mapping: ['target/x.war' : 'x.war']
     deploy 'x.war', 'production'
     echo 'Deployed to http://localhost:8080/production/'
+}
+
+def mvn(args) {
+    def home = tool 'Maven 3.x'
+    sh "${home}/bin/mvn ${args}"
 }
 
 def deploy(war, id) {

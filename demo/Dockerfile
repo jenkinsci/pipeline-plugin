@@ -1,6 +1,6 @@
 FROM dockerfile/java
 RUN curl -o /tmp/maven.tgz http://mirror.cogentco.com/pub/apache/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
-RUN cd /usr/local; tar xvzf /tmp/maven.tgz; ln -s apache-maven-3.2.2 maven; cd /usr/bin; ln -s /usr/local/maven/bin/mvn .
+RUN cd /usr/local; tar xvzf /tmp/maven.tgz
 RUN mkdir -p /var/lib/jenkins/plugins /var/lib/jenkins/jobs/cd
 
 # install Jetty
@@ -21,7 +21,7 @@ WORKDIR /var/lib/jenkins/workflow-plugin-pipeline-demo
 # Specify a particular master revision in the Dockerfile so we can track changes (and so Docker cache works correctly):
 RUN git reset --hard 58677d8a2230c7b8e655c2674a42d2cab655c265
 # Prepare local Maven repo:
-RUN mvn install && mvn -f sometests -Dmaven.test.failure.ignore clean install
+RUN /usr/local/apache-maven-3.2.2/bin/mvn install && /usr/local/apache-maven-3.2.2/bin/mvn -f sometests -Dmaven.test.failure.ignore clean install
 
 RUN git config --global user.email "demo@jenkins-ci.org" && git config --global user.name "Workflow Demo"
 
