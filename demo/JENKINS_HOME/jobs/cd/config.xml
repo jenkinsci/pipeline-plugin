@@ -5,49 +5,49 @@
   <keepDependencies>false</keepDependencies>
   <properties/>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition">
-    <script>stage &apos;Dev&apos;
-node(&apos;slave&apos;) {
-    def src = &apos;/var/lib/jenkins/workflow-plugin-pipeline-demo&apos;
+    <script>stage 'Dev'
+node('slave') {
+    def src = '/var/lib/jenkins/workflow-plugin-pipeline-demo'
     git url: src
-    sh &apos;mvn -o clean package&apos;
-    archive &apos;target/x.war&apos;
+    sh 'mvn -o clean package'
+    archive 'target/x.war'
 
-    stage &apos;QA&apos;
+    stage 'QA'
 
     parallel(longerTests: {
-        runWithServer {url -&gt;
-            sh &quot;mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=30&quot;
+        runWithServer {url ->
+            sh "mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=30"
         }
     }, quickerTests: {
-        runWithServer {url -&gt;
-            sh &quot;mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=20&quot;
+        runWithServer {url ->
+            sh "mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=20"
         }
     })
-    stage value: &apos;Staging&apos;, concurrency: 1
-    deploy &apos;target/x.war&apos;, &apos;staging&apos;
+    stage value: 'Staging', concurrency: 1
+    deploy 'target/x.war', 'staging'
 }
-input message: &quot;Does http://localhost:8080/staging/ look good?&quot;
-stage value: &apos;Production&apos;, concurrency: 1
-node(&apos;master&apos;) {
-    sh &apos;curl -I http://localhost:8080/staging/&apos;
-    unarchive mapping: [&apos;target/x.war&apos; : &apos;x.war&apos;]
-    deploy &apos;x.war&apos;, &apos;production&apos;
-    echo &apos;Deployed to http://localhost:8080/production/&apos;
+input message: "Does http://localhost:8080/staging/ look good?"
+stage value: 'Production', concurrency: 1
+node('master') {
+    sh 'curl -I http://localhost:8080/staging/'
+    unarchive mapping: ['target/x.war' : 'x.war']
+    deploy 'x.war', 'production'
+    echo 'Deployed to http://localhost:8080/production/'
 }
 
 def deploy(war, id) {
-    sh &quot;cp ${war} /tmp/webapps/${id}.war&quot;
+    sh "cp ${war} /tmp/webapps/${id}.war"
 }
 
 def undeploy(id) {
-    sh &quot;rm /tmp/webapps/${id}.war&quot;
+    sh "rm /tmp/webapps/${id}.war"
 }
 
 def runWithServer(body) {
     def id = UUID.randomUUID().toString()
-    deploy &apos;target/x.war&apos;, id
+    deploy 'target/x.war', id
     try {
-        body.call &quot;http://localhost:8080/${id}/&quot;
+        body.call "http://localhost:8080/${id}/"
     } finally {
         undeploy id
     }
