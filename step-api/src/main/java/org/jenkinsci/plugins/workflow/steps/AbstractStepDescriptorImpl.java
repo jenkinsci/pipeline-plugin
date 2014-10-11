@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.steps;
 
+import java.beans.Introspector;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -7,6 +8,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import javax.inject.Inject;
 import org.codehaus.groovy.reflection.ReflectionCache;
 import org.kohsuke.stapler.ClassDescriptor;
@@ -122,6 +124,63 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
             }
         }
         return hasArg ? args : null;
+    }
+
+    @Override public Map<String,Object> defineArguments(Step step) {
+        return uninstantiate(step);
+    }
+
+    /**
+     * Computes arguments suitable to pass to {@link #instantiate} to reconstruct this object.
+     * @param o a data-bound object
+     * @return constructor and/or setter parameters
+     * @throws UnsupportedOperationException if the class does not follow the expected structure
+     */
+    public static Map<String,Object> uninstantiate(Object o) throws UnsupportedOperationException {
+        Class<?> clazz = o.getClass();
+        Map<String,Object> r = new TreeMap<String,Object>();
+        ClassDescriptor d = new ClassDescriptor(clazz);
+        for (String name : d.loadConstructorParamNames()) {
+            inspect(r, o, clazz, name);
+        }
+        for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
+            for (Field f : c.getDeclaredFields()) {
+                if (f.isAnnotationPresent(DataBoundSetter.class)) {
+                    inspect(r, o, clazz, f.getName());
+                }
+            }
+            for (Method m : c.getDeclaredMethods()) {
+                if (m.isAnnotationPresent(DataBoundSetter.class) && m.getName().startsWith("set")) {
+                    inspect(r, o, clazz, Introspector.decapitalize(m.getName().substring(3)));
+                }
+            }
+        }
+        return r;
+    }
+    private static void inspect(Map<String,Object> r, Object o, Class<?> clazz, String field) {
+        try {
+            try {
+                r.put(field, clazz.getField(field).get(o));
+                return;
+            } catch (NoSuchFieldException x) {
+                // OK, check for getter instead
+            }
+            try {
+                r.put(field, clazz.getMethod("get" + Character.toUpperCase(field.charAt(0)) + field.substring(1)).invoke(o));
+                return;
+            } catch (NoSuchMethodException x) {
+                // one more check
+            }
+            try {
+                r.put(field, clazz.getMethod("is" + Character.toUpperCase(field.charAt(0)) + field.substring(1)).invoke(o));
+            } catch (NoSuchMethodException x) {
+                throw new UnsupportedOperationException("no public field ‘" + field + "’ (or getter method) found in " + clazz);
+            }
+        } catch (UnsupportedOperationException x) {
+            throw x;
+        } catch (Exception x) {
+            throw new UnsupportedOperationException(x);
+        }
     }
 
     /**

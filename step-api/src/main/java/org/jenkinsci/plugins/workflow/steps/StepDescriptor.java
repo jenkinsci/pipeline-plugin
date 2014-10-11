@@ -72,6 +72,16 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      */
     public abstract Step newInstance(Map<String,Object> arguments) throws Exception;
 
+    /**
+     * Determine which arguments went into the configuration of a step configured through a form submission.
+     * @param step a fully-configured step
+     * @return arguments that could be passed to {@link #newInstance} to create a similar step instance
+     * @throws UnsupportedOperationException if this descriptor lacks the ability to do such a calculation
+     */
+    public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException(getClass().getCanonicalName() + ".defineArguments not implemented"); // TODO or should this just be made abstract?
+    }
+
     public static DescriptorExtensionList<Step,StepDescriptor> all() {
         return Jenkins.getInstance().getDescriptorList(Step.class);
     }

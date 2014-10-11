@@ -39,7 +39,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
@@ -127,8 +130,17 @@ public class CpsFlowDefinition extends FlowDefinition {
         }
 
         @Restricted(DoNotUse.class) // from config.jelly
-        public HttpResponse doGenerateSnippet(@QueryParameter String json) {
-            return HttpResponses.plainText(Snippetizer.json2Groovy(json));
+        public HttpResponse doGenerateSnippet(StaplerRequest req, @QueryParameter String json) throws Exception {
+            // TODO is there not an easier way to do this?
+            JSONObject jsonO = JSONObject.fromObject(json);
+            Class<?> c = Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
+            Object o = req.bindJSON(c, jsonO);
+            try {
+                return HttpResponses.plainText(Snippetizer.object2Groovy(o));
+            } catch (UnsupportedOperationException x) {
+                Logger.getLogger(CpsFlowExecution.class.getName()).log(Level.WARNING, "failed to render " + json, x);
+                return HttpResponses.plainText(x.getMessage());
+            }
         }
 
     }

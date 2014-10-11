@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import org.jenkinsci.plugins.workflow.steps.EchoStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
@@ -34,19 +35,16 @@ public class SnippetizerTest {
     @ClassRule public static JenkinsRule r = new JenkinsRule();
     
     @Test public void basics() {
-        assertProcess("{'stapler-class':'org.jenkinsci.plugins.workflow.steps.EchoStep', 'value':'hello world'}", "echo 'hello world'");
+        assertEquals("echo 'hello world'", Snippetizer.object2Groovy(new EchoStep("hello world")));
     }
 
     // TODO StageStep probably needs to not override newInstance, should have @DataBoundSetter for concurrency as Integer (though produces "concurrency":"")
     // TODO test block arguments like node {} and node('label') {}
-    // TODO CoreStep; perhaps will require some kind of API in StepDescriptor to show how to handle $class
+    // TODO CoreStep
     // TODO BuildTriggerStep incl. parameters
     // TODO escaping '
     // TODO multiline text should produce / or ''' strings
     // TODO multiple args should be separated by ,
-
-    private static void assertProcess(String json, String groovy) {
-        assertEquals(groovy, Snippetizer.json2Groovy(json.replace('\'', '"')));
-    }
+    // TODO null values should be skipped
 
 }

@@ -24,9 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
-import java.util.Set;
-import java.util.TreeSet;
-import net.sf.json.JSONObject;
+import java.util.Map;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 
@@ -35,33 +33,24 @@ import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
  */
 class Snippetizer {
     
-    private static final String CLAZZ = "stapler-class";
-
-    public static String json2Groovy(String json) {
-        JSONObject o = JSONObject.fromObject(json);
-        String clazz = o.getString(CLAZZ);
-        String func = null;
+    public static String object2Groovy(Object o) throws UnsupportedOperationException {
+        Class<? extends Object> clazz = o.getClass();
         for (StepDescriptor d : StepDescriptor.all()) {
-            if (d.getId().equals(clazz)) {
-                func = d.getFunctionName();
-                break;
+            if (d.clazz.equals(clazz)) {
+                StringBuilder b = new StringBuilder(d.getFunctionName());
+                Map<String,Object> args = d.defineArguments((Step) o);
+                for (Map.Entry<String,Object> entry : args.entrySet()) {
+                    String key = entry.getKey();
+                    if (key.equals("value") && args.size() == 1) {
+                        b.append(" '").append(entry.getValue()).append('\'');
+                    } else {
+                        b.append(' ').append(key).append(": '").append(entry.getValue()).append('\'');
+                    }
+                }
+                return b.toString();
             }
         }
-        if (func == null) {
-            return "Unknown step " + clazz;
-        }
-        StringBuilder b = new StringBuilder(func);
-        @SuppressWarnings("unchecked")
-        Set<String> keys = new TreeSet<String>(o.keySet());
-        keys.remove(CLAZZ);
-        for (String key : keys) {
-            if (key.equals("value") && keys.size() == 1) {
-                b.append(" '").append(o.getString(key)).append('\'');
-            } else {
-                b.append(' ').append(key).append(": '").append(o.getString(key)).append('\'');
-            }
-        }
-        return b.toString();
+        throw new UnsupportedOperationException("Unknown step " + clazz);
     }
 
     private Snippetizer() {}
