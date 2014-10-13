@@ -30,12 +30,21 @@
   <f:entry field="sandbox" title="${%Use Groovy Sandbox}">
     <f:checkbox/>
   </f:entry>
+  <!-- Similar to f:dropdownDescriptorSelector, but adds fallback content to block, and JENKINS-25130 adds per-selection help: -->
   <f:dropdownList name="_prototype" title="Sample Step"> <!-- TODO could add help attr -->
       <j:forEach var="stepDescriptor" items="${descriptor.stepDescriptors}">
           <f:dropdownListBlock title="${stepDescriptor.displayName}" staplerClass="${stepDescriptor.clazz.name}" lazy="stepDescriptor">
               <l:ajax>
                   <j:set var="instance" value="${null}"/>
                   <j:set var="descriptor" value="${stepDescriptor}"/>
+                  <j:set var="help" value="${descriptor.helpFile}"/>
+                  <j:if test="${help != null}">
+                      <tr>
+                          <td colspan="3"/>
+                          <f:helpLink url="${help}"/>
+                      </tr>
+                      <f:helpArea/>
+                  </j:if>
                   <st:include from="${descriptor}" page="${descriptor.configPage}" optional="true">
                       <f:block>
                           ${%This step has not yet defined any visual configuration.}
