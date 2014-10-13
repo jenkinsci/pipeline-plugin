@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
@@ -145,6 +146,10 @@ public class ParallelStep extends Step {
                     throw new IllegalArgumentException("Expected a closure but found "+e.getKey()+"="+e.getValue());
             }
             return new ParallelStep((Map)arguments);
+        }
+
+        @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
+            return new TreeMap<String,Object>(((ParallelStep) step).closures);
         }
 
         @Override

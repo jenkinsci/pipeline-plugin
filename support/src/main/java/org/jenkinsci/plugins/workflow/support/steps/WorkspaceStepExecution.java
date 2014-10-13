@@ -13,19 +13,19 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.Serializable;
+import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 
 /**
  * @author Jesse Glick
  */
 public class WorkspaceStepExecution extends StepExecution {
-    public WorkspaceStepExecution(StepContext context) {
-        super(context);
-    }
+
+    @StepContextParameter private transient Computer c;
+    @StepContextParameter private transient Run<?,?> r;
+    @StepContextParameter private transient TaskListener listener;
 
     @Override
     public boolean start() throws Exception {
-        Computer c = getContext().get(Computer.class);
-        Run<?,?> r = getContext().get(Run.class);
         Job<?,?> j = r.getParent();
         if (!(j instanceof TopLevelItem)) {
             throw new Exception(j + " must be a top-level job");
@@ -37,7 +37,7 @@ public class WorkspaceStepExecution extends StepExecution {
         FilePath p = n.getWorkspaceFor((TopLevelItem) j);
         WorkspaceList.Lease lease = c.getWorkspaceList().allocate(p);
         FilePath workspace = lease.path;
-        getContext().get(TaskListener.class).getLogger().println("Running in " + workspace);
+        listener.getLogger().println("Running in " + workspace);
         getContext().invokeBodyLater(new Callback(getContext(), lease), workspace);
         return false;
     }

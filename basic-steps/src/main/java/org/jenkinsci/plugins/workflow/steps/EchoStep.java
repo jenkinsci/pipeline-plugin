@@ -35,15 +35,16 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * @author Kohsuke Kawaguchi
  */
 public class EchoStep extends AbstractStepImpl {
-    private final String message;
+
+    private final String value;
 
     @DataBoundConstructor
     public EchoStep(String value) {
-        this.message = value;
+        this.value = value;
     }
 
-    public String getMessage() {
-        return message;
+    public String getValue() {
+        return value;
     }
 
     @Extension
@@ -70,7 +71,7 @@ public class EchoStep extends AbstractStepImpl {
         @StepContextParameter private transient TaskListener listener;
 
         @Override protected Void run() throws Exception {
-            listener.getLogger().println(step.getMessage());
+            listener.getLogger().println(step.getValue());
             return null;
         }
     }

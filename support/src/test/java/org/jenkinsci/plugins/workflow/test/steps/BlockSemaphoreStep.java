@@ -145,6 +145,10 @@ public final class BlockSemaphoreStep extends Step {
             throw new UnsupportedOperationException();
         }
 
+        @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
+            throw new UnsupportedOperationException();
+        }
+
         @Override public String getDisplayName() {
             return "Test block step";
         }

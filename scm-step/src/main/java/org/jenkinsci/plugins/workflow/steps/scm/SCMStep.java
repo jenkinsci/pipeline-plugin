@@ -33,34 +33,40 @@ import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
 import java.io.File;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * A step which uses some kind of {@link SCM}.
  */
 public abstract class SCMStep extends Step {
 
-    private final boolean poll;
-    private final boolean changelog;
-
-    protected SCMStep(boolean poll, boolean changelog) {
-        this.poll = poll;
-        this.changelog = changelog;
-    }
+    private boolean poll = true;
+    private boolean changelog = true;
 
     public boolean isPoll() {
         return poll;
     }
     
+    @DataBoundSetter public void setPoll(boolean poll) {
+        this.poll = poll;
+    }
+    
     public boolean isChangelog() {
         return changelog;
+    }
+
+    @DataBoundSetter public void setChangelog(boolean changelog) {
+        this.changelog = changelog;
     }
 
     protected abstract @Nonnull SCM createSCM();
@@ -127,6 +133,14 @@ public abstract class SCMStep extends Step {
             s.add(FilePath.class);
             s.add(TaskListener.class);
             return s;
+        }
+
+        @Override public Step newInstance(Map<String,Object> arguments) throws Exception {
+            return AbstractStepDescriptorImpl.instantiate(clazz, arguments);
+        }
+
+        @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
+            return AbstractStepDescriptorImpl.uninstantiate(step);
         }
 
     }

@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.Extension;
+import hudson.Util;
 import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.SubmoduleConfig;
@@ -33,8 +34,6 @@ import hudson.scm.SCM;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import org.jenkinsci.plugins.workflow.steps.Step;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -45,10 +44,9 @@ public final class GitStep extends SCMStep {
     private final String url;
     private final String branch;
 
-    @DataBoundConstructor public GitStep(String url, String branch, boolean poll, boolean changelog) {
-        super(poll, changelog);
+    @DataBoundConstructor public GitStep(String url, String branch) {
         this.url = url;
-        this.branch = branch;
+        this.branch = Util.fixEmpty(branch) == null ? "master" : branch;
     }
 
     public String getUrl() {
@@ -79,14 +77,6 @@ public final class GitStep extends SCMStep {
 
         @Override public String getFunctionName() {
             return "git";
-        }
-
-        @Override public Step newInstance(Map<String,Object> arguments) {
-            String branch = (String) arguments.get("branch");
-            if (branch == null) {
-                branch = "master";
-            }
-            return new GitStep((String) arguments.get("url"), branch, !Boolean.FALSE.equals(arguments.get("poll")), !Boolean.FALSE.equals(arguments.get("changelog")));
         }
 
         @Override public String getDisplayName() {

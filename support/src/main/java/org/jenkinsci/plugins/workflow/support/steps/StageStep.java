@@ -25,18 +25,9 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
 import hudson.Extension;
-import hudson.Util;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import javax.annotation.CheckForNull;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -45,48 +36,27 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * but with the special behavior that only one build may be waiting at any time: the newest.
  * Credit goes to @jtnord for implementing the {@code block} operator in {@code buildflow-extensions}, which inspired this.
  */
-public class StageStep extends Step {
+public final class StageStep extends AbstractStepImpl {
 
-    public final String name;
-    protected final @CheckForNull Integer concurrency;
+    public final String value;
+    public final @CheckForNull Integer concurrency;
 
-    private StageStep(String name, @CheckForNull Integer concurrency) {
-        if (name == null) {
-            throw new IllegalArgumentException("must specify name");
+    @DataBoundConstructor public StageStep(String value, @CheckForNull Integer concurrency) {
+        if (value == null || value.isEmpty()) {
+            throw new IllegalArgumentException("must specify value");
         }
-        this.name = name;
+        this.value = value;
         this.concurrency = concurrency;
     }
 
-    @DataBoundConstructor public StageStep(String name, String concurrency) {
-        this(Util.fixEmpty(name), Util.fixEmpty(concurrency) != null ? Integer.parseInt(concurrency) : null);
-    }
+    @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
 
-    public String getConcurrency() {
-        return concurrency == null ? "" : Integer.toString(concurrency);
-    }
-
-    @Override public StageStepExecution start(StepContext context) throws Exception {
-        return new StageStepExecution(this,context);
-    }
-
-    @Extension public static final class DescriptorImpl extends StepDescriptor {
-
-        @Override public Set<Class<?>> getRequiredContext() {
-            Set<Class<?>> r = new HashSet<Class<?>>();
-            r.add(Run.class);
-            r.add(FlowExecution.class);
-            r.add(FlowNode.class);
-            r.add(TaskListener.class);
-            return r;
+        public DescriptorImpl() {
+            super(StageStepExecution.class);
         }
 
         @Override public String getFunctionName() {
             return "stage";
-        }
-
-        @Override public Step newInstance(Map<String,Object> arguments) {
-            return new StageStep((String) arguments.get("value"), (Integer) arguments.get("concurrency"));
         }
 
         @Override public String getDisplayName() {

@@ -46,12 +46,23 @@ public class AbstractStepDescriptorImplTest {
         assertEquals("C:goodbye/false", AbstractStepDescriptorImpl.instantiate(C.class, args).toString());
     }
 
+    @Test public void uninstantiate() throws Exception {
+        assertEquals("{flag=true, text=stuff}", AbstractStepDescriptorImpl.uninstantiate(new C("stuff", true)).toString());
+        I i = new I("stuff");
+        i.setFlag(true);
+        i.text = "more";
+        assertEquals("{flag=true, text=more, value=stuff}", AbstractStepDescriptorImpl.uninstantiate(i).toString());
+    }
+
     public static final class C {
-        private final String text;
+        public final String text;
         private final boolean flag;
         @DataBoundConstructor public C(String text, boolean flag) {
             this.text = text;
             this.flag = flag;
+        }
+        public boolean isFlag() {
+            return flag;
         }
         @Override public String toString() {
             return "C:" + text + "/" + flag;
@@ -59,17 +70,26 @@ public class AbstractStepDescriptorImplTest {
     }
 
     public static final class I {
-        private final String basics;
+        private final String value;
         @DataBoundSetter private String text;
         private boolean flag;
         @DataBoundConstructor public I(String value) {
-            basics = value;
+            this.value = value;
+        }
+        public String getValue() {
+            return value;
+        }
+        public String getText() {
+            return text;
+        }
+        public boolean isFlag() {
+            return flag;
         }
         @DataBoundSetter public void setFlag(boolean flag) {
             this.flag = flag;
         }
         @Override public String toString() {
-            return "I:" + basics + "/" + text + "/" + flag;
+            return "I:" + value + "/" + text + "/" + flag;
         }
     }
 

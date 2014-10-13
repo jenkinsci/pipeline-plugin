@@ -149,6 +149,10 @@ public final class SemaphoreStep extends Step implements Serializable {
             return new SemaphoreStep((String) arguments.get("value"));
         }
 
+        @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
+            throw new UnsupportedOperationException();
+        }
+
         @Override public String getDisplayName() {
             return "Test step";
         }
