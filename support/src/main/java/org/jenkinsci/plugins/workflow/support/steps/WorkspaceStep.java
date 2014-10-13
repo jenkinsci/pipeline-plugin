@@ -24,54 +24,27 @@
 
 package org.jenkinsci.plugins.workflow.support.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import hudson.Extension;
-import hudson.FilePath;
-import hudson.model.Computer;
-import hudson.model.Job;
-import hudson.model.Node;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import hudson.model.TopLevelItem;
-import hudson.slaves.WorkspaceList;
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Allocates a workspace on the current node and uses that as the default directory for nested steps.
  * {@link ExecutorStep} already does so, but this may be used to allocate additional workspaces.
  */
-public final class WorkspaceStep extends Step {
+public final class WorkspaceStep extends AbstractStepImpl {
 
     @DataBoundConstructor public WorkspaceStep() {}
 
-    @Override public WorkspaceStepExecution start(StepContext context) throws Exception {
-        return new WorkspaceStepExecution(context);
-    }
+    @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
 
-    @Extension public static final class DescriptorImpl extends StepDescriptor {
-
-        @Override public Set<Class<?>> getRequiredContext() {
-            Set<Class<?>> r = new HashSet<Class<?>>();
-            r.add(Run.class);
-            r.add(Computer.class);
-            r.add(TaskListener.class);
-            return r;
+        public DescriptorImpl() {
+            super(WorkspaceStepExecution.class);
         }
 
         @Override public String getFunctionName() {
             return "ws";
-        }
-
-        @Override public Step newInstance(Map<String,Object> arguments) {
-            return new WorkspaceStep();
         }
 
         @Override public String getDisplayName() {

@@ -28,6 +28,7 @@ import hudson.tasks.ArtifactArchiver;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
 import org.jenkinsci.plugins.workflow.support.steps.ExecutorStep;
+import org.jenkinsci.plugins.workflow.support.steps.WorkspaceStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
@@ -50,6 +51,7 @@ public class SnippetizerTest {
     @Test public void blockSteps() {
         assertEquals("node {\n    // some block\n}", Snippetizer.object2Groovy(new ExecutorStep(null)));
         assertEquals("node('linux') {\n    // some block\n}", Snippetizer.object2Groovy(new ExecutorStep("linux")));
+        assertEquals("ws {\n    // some block\n}", Snippetizer.object2Groovy(new WorkspaceStep()));
     }
 
     @Test public void escapes() {
