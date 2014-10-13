@@ -27,8 +27,6 @@ package org.jenkinsci.plugins.workflow.steps.scm;
 import hudson.Extension;
 import hudson.scm.SCM;
 import hudson.scm.SubversionSCM;
-import java.util.Map;
-import org.jenkinsci.plugins.workflow.steps.Step;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -38,8 +36,7 @@ public final class SubversionStep extends SCMStep {
 
     private final String url;
 
-    @DataBoundConstructor public SubversionStep(String url, boolean poll, boolean changelog) {
-        super(poll, changelog);
+    @DataBoundConstructor public SubversionStep(String url) {
         this.url = url;
     }
 
@@ -60,10 +57,6 @@ public final class SubversionStep extends SCMStep {
 
         @Override public String getFunctionName() {
             return "svn";
-        }
-
-        @Override public Step newInstance(Map<String,Object> arguments) {
-            return new SubversionStep((String) arguments.get("url"), !Boolean.FALSE.equals(arguments.get("poll")), !Boolean.FALSE.equals(arguments.get("changelog")));
         }
 
         @Override public String getDisplayName() {

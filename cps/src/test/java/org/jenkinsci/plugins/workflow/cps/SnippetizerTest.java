@@ -24,9 +24,14 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import hudson.model.BooleanParameterValue;
+import hudson.model.Node;
+import hudson.model.StringParameterValue;
 import hudson.tasks.ArtifactArchiver;
+import java.util.Arrays;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
+import org.jenkinsci.plugins.workflow.steps.build.BuildTriggerStep;
 import org.jenkinsci.plugins.workflow.support.steps.ExecutorStep;
 import org.jenkinsci.plugins.workflow.support.steps.StageStep;
 import org.jenkinsci.plugins.workflow.support.steps.WorkspaceStep;
@@ -65,6 +70,26 @@ public class SnippetizerTest {
         assertEquals("echo /echo hello\necho 1\\/2 way\necho goodbye/", Snippetizer.object2Groovy(new EchoStep("echo hello\necho 1/2 way\necho goodbye")));
     }
 
-    // TODO BuildTriggerStep incl. parameters
+    @Test public void javaObjects() {
+        BuildTriggerStep step = new BuildTriggerStep("downstream");
+        assertEquals("build 'downstream'", Snippetizer.object2Groovy(step));
+        step.setParameters(Arrays.asList(new StringParameterValue("branch", "default"), new BooleanParameterValue("correct", true)));
+        assertEquals("build parameters: [new hudson.model.StringParameterValue('branch', 'default'), new hudson.model.BooleanParameterValue('correct', true)], value: 'downstream'", Snippetizer.object2Groovy(step));
+        assertRender("hudson.model.Node.Mode.NORMAL", Node.Mode.NORMAL);
+        assertRender("null", null);
+        assertRender("org.jenkinsci.plugins.workflow.cps.SnippetizerTest.E.ZERO", E.ZERO);
+        assertRender("['foo', 'bar']", new String[] {"foo", "bar"});
+    }
+
+    private enum E {
+        ZERO() {@Override public int v() {return 0;}};
+        public abstract int v();
+    }
+
+    private static void assertRender(String expected, Object o) {
+        StringBuilder b = new StringBuilder();
+        Snippetizer.render(b, o);
+        assertEquals(expected, b.toString());
+    }
 
 }

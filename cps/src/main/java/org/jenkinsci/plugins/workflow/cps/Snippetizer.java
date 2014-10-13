@@ -24,10 +24,15 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.kohsuke.stapler.ClassDescriptor;
+import org.kohsuke.stapler.NoStaplerConstructorException;
 
 /**
  * Takes a {@link Step} as configured through the UI and tries to produce equivalent Groovy code.
@@ -57,20 +62,7 @@ class Snippetizer {
                     if (args.size() > 1 || !key.equals("value")) {
                         b.append(key).append(": ");
                     }
-                    Object value = entry.getValue();
-                    Class<?> valueC = value.getClass();
-                    if (valueC == String.class || valueC == Character.class) {
-                        String text = (String) value;
-                        if (text.contains("\n")) {
-                            b.append('/').append(text.replace("/", "\\/")).append('/');
-                        } else {
-                            b.append('\'').append(text.replace("\\", "\\\\").replace("'", "\\'")).append('\'');
-                        }
-                    } else if (valueC == Boolean.class || valueC == Integer.class || valueC == Long.class) {
-                        b.append(value);
-                    } else {
-                        throw new UnsupportedOperationException("not sure how to render value of type " + valueC);
-                    }
+                    render(b, entry.getValue());
                 }
                 if (d.takesImplicitBlockArgument()) {
                     if (!args.isEmpty()) {
@@ -82,6 +74,67 @@ class Snippetizer {
             }
         }
         throw new UnsupportedOperationException("Unknown step " + clazz);
+    }
+    
+    static void render(StringBuilder b, Object value) {
+        if (value == null) {
+            b.append("null");
+            return;
+        }
+        Class<?> valueC = value.getClass();
+        if (valueC == String.class || valueC == Character.class) {
+            String text = String.valueOf(value);
+            if (text.contains("\n")) {
+                b.append('/').append(text.replace("/", "\\/")).append('/');
+            } else {
+                b.append('\'').append(text.replace("\\", "\\\\").replace("'", "\\'")).append('\'');
+            }
+        } else if (valueC == Boolean.class || valueC == Integer.class || valueC == Long.class) {
+            b.append(value);
+        } else if (value instanceof List || value instanceof Object[]) {
+            List<?> list;
+            if (value instanceof List) {
+                list = (List<?>) value;
+            } else {
+                list = Arrays.asList((Object[]) value);
+            }
+            b.append('[');
+            boolean first = true;
+            for (Object elt : list) {
+                if (first) {
+                    first = false;
+                } else {
+                    b.append(", ");
+                }
+                render(b, elt);
+            }
+            b.append(']');
+        } else if (value instanceof Enum) {
+            Enum e = (Enum) value;
+            b.append(e.getDeclaringClass().getCanonicalName()).append('.').append(e.name());
+        } else {
+            try {
+                Map<String,Object> args = AbstractStepDescriptorImpl.uninstantiate(value);
+                b.append("new ").append(valueC.getCanonicalName()).append('(');
+                ClassDescriptor d = new ClassDescriptor(valueC);
+                boolean first = true;
+                for (String name : d.loadConstructorParamNames()) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        b.append(", ");
+                    }
+                    render(b, args.remove(name));
+                }
+                if (!args.isEmpty()) {
+                    // TODO handle somehow, maybe Groovy with {…}?
+                    throw new UnsupportedOperationException("@DataBoundSetter not yet supported in value of type " + valueC + ": " + args.keySet());
+                }
+                b.append(')');
+            } catch (NoStaplerConstructorException x) {
+                b.append("<object of type ").append(valueC.getCanonicalName()).append('>');
+            }
+        }
     }
 
     private Snippetizer() {}

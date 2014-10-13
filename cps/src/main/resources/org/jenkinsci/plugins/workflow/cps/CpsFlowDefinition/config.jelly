@@ -33,7 +33,7 @@
   <!-- Similar to f:dropdownDescriptorSelector, but adds fallback content to block, and JENKINS-25130 adds per-selection help: -->
   <f:dropdownList name="_prototype" title="Sample Step"> <!-- TODO could add help attr -->
       <j:forEach var="stepDescriptor" items="${descriptor.stepDescriptors}">
-          <f:dropdownListBlock title="${stepDescriptor.displayName}" staplerClass="${stepDescriptor.clazz.name}" lazy="stepDescriptor">
+          <f:dropdownListBlock title="${stepDescriptor.displayName}" staplerClass="${stepDescriptor.clazz.name}" lazy="stepDescriptor,it">
               <l:ajax>
                   <j:set var="instance" value="${null}"/>
                   <j:set var="descriptor" value="${stepDescriptor}"/>
