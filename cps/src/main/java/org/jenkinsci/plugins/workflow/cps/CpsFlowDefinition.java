@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import groovy.lang.GroovyShell;
 import hudson.Extension;
+import hudson.Functions;
 import hudson.model.Action;
 import hudson.model.Item;
 import hudson.util.FormValidation;
@@ -134,7 +135,12 @@ public class CpsFlowDefinition extends FlowDefinition {
             // TODO is there not an easier way to do this?
             JSONObject jsonO = JSONObject.fromObject(json);
             Class<?> c = Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
-            Object o = req.bindJSON(c, jsonO);
+            Object o;
+            try {
+                o = req.bindJSON(c, jsonO);
+            } catch (RuntimeException x) { // e.g. IllegalArgumentException
+                return HttpResponses.plainText(Functions.printThrowable(x));
+            }
             try {
                 return HttpResponses.plainText(Snippetizer.object2Groovy(o));
             } catch (UnsupportedOperationException x) {
