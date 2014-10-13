@@ -52,9 +52,12 @@ public class SnippetizerTest {
         assertEquals("node('linux') {\n    // some block\n}", Snippetizer.object2Groovy(new ExecutorStep("linux")));
     }
 
+    @Test public void escapes() {
+        assertEquals("echo 'Bob\\'s message \\\\/ here'", Snippetizer.object2Groovy(new EchoStep("Bob's message \\/ here")));
+    }
+
     // TODO StageStep probably needs to not override newInstance, should have @DataBoundSetter for concurrency as Integer (though produces "concurrency":"")
     // TODO BuildTriggerStep incl. parameters
-    // TODO escaping '
     // TODO multiline text should produce / or ''' strings
 
 }

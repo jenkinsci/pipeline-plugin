@@ -60,7 +60,8 @@ class Snippetizer {
                     Object value = entry.getValue();
                     Class<?> valueC = value.getClass();
                     if (valueC == String.class || valueC == Character.class) {
-                        b.append('\'').append(value).append('\'');
+                        String text = (String) value;
+                        b.append('\'').append(text.replace("\\", "\\\\").replace("'", "\\'")).append('\'');
                     } else if (valueC == Boolean.class || valueC == Integer.class || valueC == Long.class) {
                         b.append(value);
                     } else {
