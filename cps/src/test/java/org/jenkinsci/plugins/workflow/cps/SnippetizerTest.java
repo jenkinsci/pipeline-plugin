@@ -28,6 +28,7 @@ import hudson.tasks.ArtifactArchiver;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
 import org.jenkinsci.plugins.workflow.support.steps.ExecutorStep;
+import org.jenkinsci.plugins.workflow.support.steps.StageStep;
 import org.jenkinsci.plugins.workflow.support.steps.WorkspaceStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -40,6 +41,8 @@ public class SnippetizerTest {
     
     @Test public void basics() {
         assertEquals("echo 'hello world'", Snippetizer.object2Groovy(new EchoStep("hello world")));
+        assertEquals("stage 'Build'", Snippetizer.object2Groovy(new StageStep("Build", null)));
+        assertEquals("stage concurrency: 1, value: 'Build'", Snippetizer.object2Groovy(new StageStep("Build", 1)));
     }
 
     @Test public void coreStep() {
@@ -62,7 +65,6 @@ public class SnippetizerTest {
         assertEquals("echo /echo hello\necho 1\\/2 way\necho goodbye/", Snippetizer.object2Groovy(new EchoStep("echo hello\necho 1/2 way\necho goodbye")));
     }
 
-    // TODO StageStep probably needs to not override newInstance, should have @DataBoundSetter for concurrency as Integer (though produces "concurrency":"")
     // TODO BuildTriggerStep incl. parameters
 
 }

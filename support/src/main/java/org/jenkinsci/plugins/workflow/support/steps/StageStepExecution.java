@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
+import com.google.inject.Inject;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.XmlFile;
@@ -29,18 +30,17 @@ import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.actions.StageAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 public class StageStepExecution extends StepExecution {
     private static final Logger LOGGER = Logger.getLogger(StageStepExecution.class.getName());
 
     // only used during the start() call, so no need to be persisted
-    private transient final StageStep step;
-
-    public StageStepExecution(StageStep step, StepContext context) {
-        super(context);
-        this.step = step;
-    }
+    @Inject private transient StageStep step;
+    @StepContextParameter private transient Run<?,?> run;
+    @StepContextParameter private transient FlowNode node;
+    @StepContextParameter private transient TaskListener listener; // picked up by getRequiredContext
 
     private static final class StageActionImpl extends InvisibleAction implements StageAction {
         private final String stageName;
@@ -54,11 +54,9 @@ public class StageStepExecution extends StepExecution {
 
     @Override
     public boolean start() throws Exception {
-        FlowNode n = getContext().get(FlowNode.class);
-        n.addAction(new LabelAction(step.name));
-        n.addAction(new StageActionImpl(step.name));
-        Run<?,?> r = getContext().get(Run.class);
-        enter(r, getContext(), step.name, step.concurrency);
+        node.addAction(new LabelAction(step.value));
+        node.addAction(new StageActionImpl(step.value));
+        enter(run, getContext(), step.value, step.concurrency);
         return false; // execute asynchronously
     }
 

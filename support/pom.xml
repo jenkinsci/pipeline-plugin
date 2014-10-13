@@ -54,6 +54,13 @@
             <artifactId>jboss-marshalling-river</artifactId>
             <version>1.4.5.Final</version>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>workflow-step-api</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
