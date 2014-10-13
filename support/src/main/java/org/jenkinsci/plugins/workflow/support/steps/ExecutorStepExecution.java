@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.inject.Inject;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -38,6 +39,7 @@ import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.jenkinsci.plugins.durabletask.executors.ContinuedTask;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
@@ -47,12 +49,13 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
  * @author Kohsuke Kawaguchi
  */
 public class ExecutorStepExecution extends StepExecution {
-    private final String label;
 
-    public ExecutorStepExecution(ExecutorStep step, StepContext context) {
-        super(context);
-        this.label = step.getLabel();
-    }
+    @Inject private transient ExecutorStep step;
+    @StepContextParameter private transient TaskListener listener;
+    // Here just for requiredContext; could perhaps be passed to the PlaceholderTask constructor:
+    @StepContextParameter private transient EnvVars envVars;
+    @StepContextParameter private transient Run<?,?> run;
+    @StepContextParameter private transient FlowExecution flowExecution;
 
     /**
      * General strategy of this step.
@@ -63,7 +66,7 @@ public class ExecutorStepExecution extends StepExecution {
      */
     @Override
     public boolean start() throws Exception {
-        final PlaceholderTask task = new PlaceholderTask(getContext(), label);
+        final PlaceholderTask task = new PlaceholderTask(getContext(), step.getValue());
         if (Queue.getInstance().schedule2(task, 0).getCreateItem() == null) {
             // There can be no duplicates. But could be refused if a QueueDecisionHandler rejects it for some odd reason.
             throw new IllegalStateException("failed to schedule task");
@@ -74,7 +77,7 @@ public class ExecutorStepExecution extends StepExecution {
                 if (item != null) {
                     PrintStream logger;
                     try {
-                        logger = getContext().get(TaskListener.class).getLogger();
+                        logger = listener.getLogger();
                     } catch (Exception x) { // IOException, InterruptedException
                         LOGGER.log(Level.WARNING, null, x);
                         return;

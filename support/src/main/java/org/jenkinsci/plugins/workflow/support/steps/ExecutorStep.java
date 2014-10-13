@@ -24,20 +24,18 @@
 
 package org.jenkinsci.plugins.workflow.support.steps;
 
-import hudson.EnvVars;
 import hudson.Extension;
+import hudson.Util;
+import hudson.model.AutoCompletionCandidates;
 import hudson.model.Executor;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import hudson.model.Label;
+import javax.annotation.CheckForNull;
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.kohsuke.stapler.QueryParameter;
 
 /**
  * Grabs an {@link Executor} on a node of your choice and runs its block with that executor occupied.
@@ -50,40 +48,26 @@ import java.util.Set;
  *     }
  * </pre>
  */
-public final class ExecutorStep extends Step {
+public final class ExecutorStep extends AbstractStepImpl {
 
-    private final String label;
+    private final @CheckForNull String value;
 
-    @DataBoundConstructor public ExecutorStep(String label) {
-        this.label = label;
+    @DataBoundConstructor public ExecutorStep(String value) {
+        this.value = Util.fixEmptyAndTrim(value);
     }
     
-    public String getLabel() {
-        return label;
+    public @CheckForNull String getValue() {
+        return value;
     }
 
-    @Override public StepExecution start(StepContext context) throws Exception {
-        return new ExecutorStepExecution(this,context);
-    }
+    @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
 
-
-    @Extension public static final class DescriptorImpl extends StepDescriptor {
-
-        @Override public Set<Class<?>> getRequiredContext() {
-            Set<Class<?>> r = new HashSet<Class<?>>();
-            // FlowExecution useful but currently not required
-            r.add(TaskListener.class);
-            r.add(EnvVars.class);
-            r.add(Run.class);
-            return r;
+        public DescriptorImpl() {
+            super(ExecutorStepExecution.class);
         }
 
         @Override public String getFunctionName() {
             return "node";
-        }
-
-        @Override public Step newInstance(Map<String,Object> arguments) {
-            return new ExecutorStep((String) arguments.get("value"));
         }
 
         @Override public String getDisplayName() {
@@ -94,7 +78,17 @@ public final class ExecutorStep extends Step {
             return true;
         }
 
-        // TODO completion on label field (cf. AbstractProjectDescriptor)
+        // pending https://trello.com/c/THjT9lwd/131-autocompletioncandidates-for-label
+        public AutoCompletionCandidates doAutoCompleteValue(@QueryParameter String value) {
+            AutoCompletionCandidates c = new AutoCompletionCandidates();
+            for (Label label : Jenkins.getInstance().getLabels()) {
+                if (label.getName().startsWith(value)) {
+                    c.add(label.getName());
+                }
+            }
+            return c;
+        }
+        // proper doCheckValue also requires API requested above
 
     }
 

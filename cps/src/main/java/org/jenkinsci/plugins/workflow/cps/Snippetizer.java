@@ -45,10 +45,14 @@ class Snippetizer {
                 for (Map.Entry<String,Object> entry : args.entrySet()) {
                     if (first) {
                         first = false;
+                        if (d.takesImplicitBlockArgument()) {
+                            b.append('(');
+                        } else {
+                            b.append(' ');
+                        }
                     } else {
-                        b.append(',');
+                        b.append(", ");
                     }
-                    b.append(' ');
                     String key = entry.getKey();
                     if (args.size() > 1 || !key.equals("value")) {
                         b.append(key).append(": ");
@@ -62,6 +66,12 @@ class Snippetizer {
                     } else {
                         throw new UnsupportedOperationException("not sure how to render value of type " + valueC);
                     }
+                }
+                if (d.takesImplicitBlockArgument()) {
+                    if (!args.isEmpty()) {
+                        b.append(')');
+                    }
+                    b.append(" {\n    // some block\n}");
                 }
                 return b.toString();
             }
