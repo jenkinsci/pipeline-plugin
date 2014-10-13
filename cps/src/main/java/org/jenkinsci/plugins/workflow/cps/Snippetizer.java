@@ -61,7 +61,11 @@ class Snippetizer {
                     Class<?> valueC = value.getClass();
                     if (valueC == String.class || valueC == Character.class) {
                         String text = (String) value;
-                        b.append('\'').append(text.replace("\\", "\\\\").replace("'", "\\'")).append('\'');
+                        if (text.contains("\n")) {
+                            b.append('/').append(text.replace("/", "\\/")).append('/');
+                        } else {
+                            b.append('\'').append(text.replace("\\", "\\\\").replace("'", "\\'")).append('\'');
+                        }
                     } else if (valueC == Boolean.class || valueC == Integer.class || valueC == Long.class) {
                         b.append(value);
                     } else {

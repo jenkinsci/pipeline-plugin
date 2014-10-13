@@ -56,8 +56,11 @@ public class SnippetizerTest {
         assertEquals("echo 'Bob\\'s message \\\\/ here'", Snippetizer.object2Groovy(new EchoStep("Bob's message \\/ here")));
     }
 
+    @Test public void multilineStrings() {
+        assertEquals("echo /echo hello\necho 1\\/2 way\necho goodbye/", Snippetizer.object2Groovy(new EchoStep("echo hello\necho 1/2 way\necho goodbye")));
+    }
+
     // TODO StageStep probably needs to not override newInstance, should have @DataBoundSetter for concurrency as Integer (though produces "concurrency":"")
     // TODO BuildTriggerStep incl. parameters
-    // TODO multiline text should produce / or ''' strings
 
 }
