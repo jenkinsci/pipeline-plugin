@@ -78,9 +78,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      * @return arguments that could be passed to {@link #newInstance} to create a similar step instance
      * @throws UnsupportedOperationException if this descriptor lacks the ability to do such a calculation
      */
-    public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(getClass().getCanonicalName() + ".defineArguments not implemented"); // TODO or should this just be made abstract?
-    }
+    public abstract Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException;
 
     public static DescriptorExtensionList<Step,StepDescriptor> all() {
         return Jenkins.getInstance().getDescriptorList(Step.class);
