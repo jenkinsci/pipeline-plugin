@@ -22,12 +22,16 @@ class EvaluateStepTest {
         def p = r.jenkins.createProject(WorkflowJob.class, "p");;
         p.definition = new CpsFlowDefinition("""
 node {
-  sh 'echo "println(42)" > test.groovy'
+  sh 'echo "println(21*2)" > test.groovy'
+  println "control" // make sure that 'println' in groovy script works
   evaluateWorkspaceScript 'test.groovy'
 }
 """);
-        r.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        r.interactiveBreak()
+        def b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+
+        println b.log
+        assert b.log.contains("control\n");
+        assert b.log.contains("42\n");
     }
 
 }

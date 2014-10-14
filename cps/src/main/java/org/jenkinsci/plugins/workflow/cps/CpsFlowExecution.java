@@ -25,12 +25,9 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
-import com.cloudbees.groovy.cps.CpsTransformer;
 import com.cloudbees.groovy.cps.Env;
 import com.cloudbees.groovy.cps.Envs;
-import com.cloudbees.groovy.cps.NonCPS;
 import com.cloudbees.groovy.cps.Outcome;
-import com.cloudbees.groovy.cps.SandboxCpsTransformer;
 import com.cloudbees.groovy.cps.impl.ConstantBlock;
 import com.cloudbees.groovy.cps.impl.ThrowBlock;
 import com.cloudbees.groovy.cps.sandbox.DefaultInvoker;
@@ -47,13 +44,10 @@ import com.thoughtworks.xstream.converters.reflection.ReflectionProvider;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.mapper.Mapper;
-import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import hudson.model.Action;
 import hudson.model.Result;
 import jenkins.model.Jenkins;
-import org.codehaus.groovy.control.CompilerConfiguration;
-import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.jboss.marshalling.Unmarshaller;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
@@ -312,21 +306,8 @@ public class CpsFlowExecution extends FlowExecution {
 
     }
 
-    private GroovyShell buildShell() {
-        ImportCustomizer ic = new ImportCustomizer();
-        ic.addStarImports(NonCPS.class.getPackage().getName());
-        ic.addStarImports("hudson.model","jenkins.model");
-
-        CompilerConfiguration cc = new CompilerConfiguration();
-        cc.addCompilationCustomizers(ic);
-        cc.addCompilationCustomizers(sandbox ? new SandboxCpsTransformer() : new CpsTransformer());
-        cc.setScriptBaseClass(CpsScript.class.getName());
-        Jenkins j = Jenkins.getInstance();
-        return new GroovyShell(j!=null ? j.getPluginManager().uberClassLoader : getClass().getClassLoader(), new Binding(), cc);
-    }
-
     private CpsScript parseScript() throws IOException {
-        shell = buildShell();
+        shell = new CpsGroovyShell(this);
         CpsScript s = (CpsScript) shell.parse(script);
         s.execution = this;
         if (false) {

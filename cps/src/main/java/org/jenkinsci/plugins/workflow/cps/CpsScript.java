@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.SerializableScript;
 import groovy.lang.GroovyShell;
-import groovy.lang.Script;
 import hudson.EnvVars;
 import hudson.model.Queue;
 import hudson.model.Run;
@@ -98,30 +97,12 @@ public abstract class CpsScript extends SerializableScript {
     @Override
     public Object evaluate(String script) throws CompilationFailedException {
         // this might throw the magic CpsCallableInvocation to execute the script asynchronously
-        return runScript(getShell().parse(script));
+        return getShell().evaluate(script);
     }
 
     @Override
     public Object evaluate(File file) throws CompilationFailedException, IOException {
-        return runScript(getShell().parse(file));
-    }
-
-    /**
-     * Executes the given CpsScript like {@link Script#run()} but with setup necessary for {@link CpsScript}.
-     */
-    private Object runScript(Script subscript) {
-        subscript.setBinding(getShell().getContext());
-        if (subscript instanceof CpsScript) {
-            CpsScript cs = (CpsScript) subscript;
-            cs.execution = this.execution;
-            try {
-                cs.initialize();
-            } catch (IOException e) {
-                // TODO: write a library to let me throw this
-                throw new RuntimeException(e);
-            }
-        }
-        return subscript.run();
+        return getShell().evaluate(file);
     }
 
     @Override
