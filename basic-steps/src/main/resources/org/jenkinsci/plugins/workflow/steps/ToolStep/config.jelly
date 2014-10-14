@@ -28,7 +28,7 @@ THE SOFTWARE.
     <f:entry field="type" title="Tool Type">
         <f:select/>
     </f:entry>
-    <f:entry field="value" title="Tool">
+    <f:entry field="name" title="Tool">
         <f:select/>
     </f:entry>
 </j:jelly>

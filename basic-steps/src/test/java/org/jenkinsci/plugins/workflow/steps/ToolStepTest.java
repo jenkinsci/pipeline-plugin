@@ -39,11 +39,11 @@ public class ToolStepTest {
         String type = r.jenkins.getDescriptorByType(JDK.DescriptorImpl.class).getId();
         r.jenkins.getJDKs().add(new JDK(name, "/wherever"));
         ToolStep s = new StepConfigTester(r).configRoundTrip(new ToolStep(name));
-        assertEquals(name, s.getValue());
+        assertEquals(name, s.getName());
         assertEquals(null, s.getType());
         s.setType(type);
         s = new StepConfigTester(r).configRoundTrip(s);
-        assertEquals(name, s.getValue());
+        assertEquals(name, s.getName());
         assertEquals(type, s.getType());
     }
 

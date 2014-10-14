@@ -50,14 +50,14 @@ import org.kohsuke.stapler.QueryParameter;
  */
 public final class ExecutorStep extends AbstractStepImpl {
 
-    private final @CheckForNull String value;
+    private final @CheckForNull String label;
 
-    @DataBoundConstructor public ExecutorStep(String value) {
-        this.value = Util.fixEmptyAndTrim(value);
+    @DataBoundConstructor public ExecutorStep(String label) {
+        this.label = Util.fixEmptyAndTrim(label);
     }
     
-    public @CheckForNull String getValue() {
-        return value;
+    public @CheckForNull String getLabel() {
+        return label;
     }
 
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
@@ -79,7 +79,7 @@ public final class ExecutorStep extends AbstractStepImpl {
         }
 
         // pending https://trello.com/c/THjT9lwd/131-autocompletioncandidates-for-label
-        public AutoCompletionCandidates doAutoCompleteValue(@QueryParameter String value) {
+        public AutoCompletionCandidates doAutoCompleteLabel(@QueryParameter String value) {
             AutoCompletionCandidates c = new AutoCompletionCandidates();
             for (Label label : Jenkins.getInstance().getLabels()) {
                 if (label.getName().startsWith(value)) {

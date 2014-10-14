@@ -35,14 +35,14 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class PushdStep extends AbstractStepImpl {
 
-    private final String value;
+    private final String path;
 
-    @DataBoundConstructor public PushdStep(String value) {
-        this.value = value;
+    @DataBoundConstructor public PushdStep(String path) {
+        this.path = path;
     }
 
-    public String getValue() {
-        return value;
+    public String getPath() {
+        return path;
     }
 
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
@@ -72,7 +72,7 @@ public class PushdStep extends AbstractStepImpl {
         @StepContextParameter private transient FilePath cwd;
 
         @Override public boolean start() throws Exception {
-            FilePath dir = cwd.child(step.getValue());
+            FilePath dir = cwd.child(step.getPath());
             listener.getLogger().println("Running in " + dir);
             getContext().invokeBodyLater(getContext(), dir);
             return false;

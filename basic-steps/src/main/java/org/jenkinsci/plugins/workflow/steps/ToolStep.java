@@ -47,16 +47,16 @@ import org.kohsuke.stapler.QueryParameter;
 public final class ToolStep extends AbstractStepImpl {
 
     /** Same as {@link ToolInstallation#getName}. */
-    private final String value;
+    private final String name;
     /** {@link ToolDescriptor#getId}, optional for disambiguation. */
     private @CheckForNull String type;
 
-    @DataBoundConstructor public ToolStep(String value) {
-        this.value = value;
+    @DataBoundConstructor public ToolStep(String name) {
+        this.name = name;
     }
 
-    public String getValue() {
-        return value;
+    public String getName() {
+        return name;
     }
 
     public String getType() {
@@ -90,7 +90,7 @@ public final class ToolStep extends AbstractStepImpl {
             return r;
         }
 
-        public ListBoxModel doFillValueItems(@QueryParameter String type) {
+        public ListBoxModel doFillNameItems(@QueryParameter String type) {
             type = Util.fixEmpty(type);
             ListBoxModel r = new ListBoxModel();
             for (ToolDescriptor<?> desc : ToolInstallation.all()) {
@@ -114,7 +114,7 @@ public final class ToolStep extends AbstractStepImpl {
         @StepContextParameter Node node;
 
         @Override protected String run() throws Exception {
-            String name = step.getValue();
+            String name = step.getName();
             String type = step.getType();
             for (ToolDescriptor<?> desc : ToolInstallation.all()) {
                 if (type != null && !desc.getId().equals(type)) {

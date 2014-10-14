@@ -34,21 +34,21 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class BatchScriptStep extends DurableTaskStep {
 
-    private final String value;
+    private final String script;
 
-    @DataBoundConstructor public BatchScriptStep(String value) {
-        if (value == null) {
+    @DataBoundConstructor public BatchScriptStep(String script) {
+        if (script == null) {
             throw new IllegalArgumentException();
         }
-        this.value = value;
+        this.script = script;
     }
 
-    public String getValue() {
-        return value;
+    public String getScript() {
+        return script;
     }
 
     @Override protected DurableTask task() {
-        return new WindowsBatchScript(value);
+        return new WindowsBatchScript(script);
     }
 
     @Extension public static final class DescriptorImpl extends DurableTaskStepDescriptor {
