@@ -25,6 +25,10 @@ class CpsGroovyShell extends GroovyShell {
     CpsGroovyShell(CpsFlowExecution execution) {
         super(makeClassLoader(),new Binding(),makeConfig(execution));
         this.execution = execution;
+
+        for (GroovyShellDecorator d : GroovyShellDecorator.all()) {
+            d.configureShell(execution,this);
+        }
     }
 
     private static ClassLoader makeClassLoader() {
@@ -37,10 +41,19 @@ class CpsGroovyShell extends GroovyShell {
         ic.addStarImports(NonCPS.class.getPackage().getName());
         ic.addStarImports("hudson.model","jenkins.model");
 
+        for (GroovyShellDecorator d : GroovyShellDecorator.all()) {
+            d.customizeImports(execution,ic);
+        }
+
         CompilerConfiguration cc = new CompilerConfiguration();
         cc.addCompilationCustomizers(ic);
         cc.addCompilationCustomizers(execution.isSandbox() ? new SandboxCpsTransformer() : new CpsTransformer());
         cc.setScriptBaseClass(CpsScript.class.getName());
+
+        for (GroovyShellDecorator d : GroovyShellDecorator.all()) {
+            d.configureCompiler(execution,cc);
+        }
+
         return cc;
     }
 
