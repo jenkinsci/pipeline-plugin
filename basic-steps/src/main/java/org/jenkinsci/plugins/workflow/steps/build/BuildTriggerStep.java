@@ -1,28 +1,33 @@
 package org.jenkinsci.plugins.workflow.steps.build;
 
 import hudson.Extension;
+import hudson.model.AutoCompletionCandidates;
+import hudson.model.ItemGroup;
 import hudson.model.ParameterValue;
 import java.util.List;
+import jenkins.model.ParameterizedJobMixIn;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
 /**
  * @author Vivek Pandey
  */
 public class BuildTriggerStep extends AbstractStepImpl {
 
-    private final String job;
+    private final String value;
     private List<ParameterValue> parameters;
 
     @DataBoundConstructor
     public BuildTriggerStep(String value) {
-        this.job = value;
+        this.value = value;
     }
 
     public String getValue() {
-        return job;
+        return value;
     }
 
     public List<ParameterValue> getParameters() {
@@ -49,5 +54,10 @@ public class BuildTriggerStep extends AbstractStepImpl {
         public String getDisplayName() {
             return "Build a Job";
         }
+
+        public AutoCompletionCandidates doAutoCompleteValue(@AncestorInPath ItemGroup<?> context, @QueryParameter String value) {
+            return AutoCompletionCandidates.ofJobNames(ParameterizedJobMixIn.ParameterizedJob.class, value, context);
+        }
+
     }
 }
