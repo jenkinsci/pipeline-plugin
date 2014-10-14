@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.workflow.cps.steps;
 
 import com.google.inject.Inject;
-import groovy.lang.Closure;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import hudson.FilePath;
@@ -44,22 +43,12 @@ public class LoadStepExecution extends StepExecution {
         // execute body as another thread that shares the same head as this thread
         // as the body can pause.
         cps.invokeBodyLater(
-                t.getGroup().export(asCallable(script)),
+                t.getGroup().export(script),
                 cps, // when the body is done, the load step is done
                 Collections.<Action>emptyList()
         );
 
         return false;
-    }
-
-    // TODO: this should be another overload of the export method
-    private Closure asCallable(final Script script) {
-        return new Closure(null) {
-            @Override
-            public Object call() {
-                return script.run();
-            }
-        };
     }
 
     @Override
