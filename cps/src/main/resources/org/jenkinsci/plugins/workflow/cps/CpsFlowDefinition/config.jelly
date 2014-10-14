@@ -27,8 +27,8 @@
   <f:entry title="${%Script}" field="script">
     <f:textarea checkMethod="post"/>
   </f:entry>
-  <f:entry field="sandbox" title="${%Use Groovy Sandbox}">
-    <f:checkbox/>
+  <f:entry field="sandbox">
+    <f:checkbox title="${%Use Groovy Sandbox}"/>
   </f:entry>
   <f:optionalBlock name="snippetizer" title="Snippet Generator" help="${descriptor.getHelpFile('snippetizer')}">
   <!-- Similar to f:dropdownDescriptorSelector, but adds fallback content to block, and JENKINS-25130 adds per-selection help: -->
