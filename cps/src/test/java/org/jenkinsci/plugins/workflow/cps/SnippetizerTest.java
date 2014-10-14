@@ -28,6 +28,7 @@ import hudson.model.BooleanParameterValue;
 import hudson.model.Node;
 import hudson.model.StringParameterValue;
 import hudson.tasks.ArtifactArchiver;
+import java.net.URL;
 import java.util.Arrays;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
@@ -70,7 +71,7 @@ public class SnippetizerTest {
         assertEquals("echo /echo hello\necho 1\\/2 way\necho goodbye/", Snippetizer.object2Groovy(new EchoStep("echo hello\necho 1/2 way\necho goodbye")));
     }
 
-    @Test public void javaObjects() {
+    @Test public void javaObjects() throws Exception {
         BuildTriggerStep step = new BuildTriggerStep("downstream");
         assertEquals("build 'downstream'", Snippetizer.object2Groovy(step));
         step.setParameters(Arrays.asList(new StringParameterValue("branch", "default"), new BooleanParameterValue("correct", true)));
@@ -79,6 +80,7 @@ public class SnippetizerTest {
         assertRender("null", null);
         assertRender("org.jenkinsci.plugins.workflow.cps.SnippetizerTest.E.ZERO", E.ZERO);
         assertRender("['foo', 'bar']", new String[] {"foo", "bar"});
+        assertRender("new java.net.URL('http://nowhere.net/')", new URL("http://nowhere.net/"));
     }
 
     private enum E {
