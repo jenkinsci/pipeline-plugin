@@ -26,19 +26,20 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.SerializableScript;
 import groovy.lang.GroovyShell;
+import groovy.lang.Script;
 import hudson.EnvVars;
 import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.util.StreamTaskListener;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
  * The script of a workflow.
@@ -97,12 +98,30 @@ public abstract class CpsScript extends SerializableScript {
     @Override
     public Object evaluate(String script) throws CompilationFailedException {
         // this might throw the magic CpsCallableInvocation to execute the script asynchronously
-        return getShell().evaluate(script);
+        return runScript(getShell().parse(script));
     }
 
     @Override
     public Object evaluate(File file) throws CompilationFailedException, IOException {
-        return getShell().evaluate(file);
+        return runScript(getShell().parse(file));
+    }
+
+    /**
+     * Executes the given CpsScript like {@link Script#run()} but with setup necessary for {@link CpsScript}.
+     */
+    private Object runScript(Script subscript) {
+        subscript.setBinding(getShell().getContext());
+        if (subscript instanceof CpsScript) {
+            CpsScript cs = (CpsScript) subscript;
+            cs.execution = this.execution;
+            try {
+                cs.initialize();
+            } catch (IOException e) {
+                // TODO: write a library to let me throw this
+                throw new RuntimeException(e);
+            }
+        }
+        return subscript.run();
     }
 
     @Override
