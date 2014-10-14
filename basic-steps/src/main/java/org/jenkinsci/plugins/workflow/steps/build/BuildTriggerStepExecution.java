@@ -36,7 +36,7 @@ public class BuildTriggerStepExecution extends StepExecution {
     @Override
     public boolean start() throws Exception {
         Jenkins jenkins = Jenkins.getInstance();
-        String job = step.getValue();
+        String job = step.getJob();
         listener.getLogger().println("Starting building project: " + job);
         final ParameterizedJobMixIn.ParameterizedJob project = jenkins.getItem(job, invokingRun.getParent(), ParameterizedJobMixIn.ParameterizedJob.class);
         if (project == null) {

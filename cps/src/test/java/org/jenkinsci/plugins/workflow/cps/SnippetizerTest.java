@@ -47,8 +47,10 @@ public class SnippetizerTest {
     
     @Test public void basics() {
         assertEquals("echo 'hello world'", Snippetizer.object2Groovy(new EchoStep("hello world")));
-        assertEquals("stage 'Build'", Snippetizer.object2Groovy(new StageStep("Build", null)));
-        assertEquals("stage concurrency: 1, value: 'Build'", Snippetizer.object2Groovy(new StageStep("Build", 1)));
+        StageStep s = new StageStep("Build");
+        assertEquals("stage 'Build'", Snippetizer.object2Groovy(s));
+        s.concurrency = 1;
+        assertEquals("stage concurrency: 1, name: 'Build'", Snippetizer.object2Groovy(s));
     }
 
     @Test public void coreStep() {
@@ -75,7 +77,7 @@ public class SnippetizerTest {
         BuildTriggerStep step = new BuildTriggerStep("downstream");
         assertEquals("build 'downstream'", Snippetizer.object2Groovy(step));
         step.setParameters(Arrays.asList(new StringParameterValue("branch", "default"), new BooleanParameterValue("correct", true)));
-        assertEquals("build parameters: [new hudson.model.StringParameterValue('branch', 'default'), new hudson.model.BooleanParameterValue('correct', true)], value: 'downstream'", Snippetizer.object2Groovy(step));
+        assertEquals("build parameters: [new hudson.model.StringParameterValue('branch', 'default'), new hudson.model.BooleanParameterValue('correct', true)], job: 'downstream'", Snippetizer.object2Groovy(step));
         assertRender("hudson.model.Node.Mode.NORMAL", Node.Mode.NORMAL);
         assertRender("null", null);
         assertRender("org.jenkinsci.plugins.workflow.cps.SnippetizerTest.E.ZERO", E.ZERO);

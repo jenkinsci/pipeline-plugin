@@ -18,16 +18,16 @@ import org.kohsuke.stapler.QueryParameter;
  */
 public class BuildTriggerStep extends AbstractStepImpl {
 
-    private final String value;
+    private final String job;
     private List<ParameterValue> parameters;
 
     @DataBoundConstructor
-    public BuildTriggerStep(String value) {
-        this.value = value;
+    public BuildTriggerStep(String job) {
+        this.job = job;
     }
 
-    public String getValue() {
-        return value;
+    public String getJob() {
+        return job;
     }
 
     public List<ParameterValue> getParameters() {

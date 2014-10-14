@@ -23,11 +23,11 @@ node('slave') {
             mvn "-o -f sometests/pom.xml test -Durl=${url} -Dduration=20"
         }
     })
-    stage value: 'Staging', concurrency: 1
+    stage name: 'Staging', concurrency: 1
     deploy 'target/x.war', 'staging'
 }
 input message: "Does http://localhost:8080/staging/ look good?"
-stage value: 'Production', concurrency: 1
+stage name: 'Production', concurrency: 1
 node('master') {
     sh 'curl -I http://localhost:8080/staging/'
     unarchive mapping: ['target/x.war' : 'x.war']

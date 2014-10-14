@@ -58,10 +58,10 @@ public class StageTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
-                        "stage(value: 'A', concurrency: 2);\n" +
+                        "stage(name: 'A', concurrency: 2);\n" +
                         "echo('in A');\n" +
                         "semaphore('B');\n" +
-                        "stage(value: 'B', concurrency: 1);\n" +
+                        "stage(name: 'B', concurrency: 1);\n" +
                         "echo('in B');\n" +
                         "semaphore('X');\n" +
                         "echo('done')"));

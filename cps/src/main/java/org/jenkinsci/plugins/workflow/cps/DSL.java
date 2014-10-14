@@ -54,6 +54,7 @@ import java.util.TreeMap;
 
 import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 
 /**
  * Scaffolding to experiment with the call into {@link Step}.
@@ -237,13 +238,13 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             case 0:
                 return new NamedArgsAndClosure(Collections.<String,Object>emptyMap(),c);
             case 1:
-                return new NamedArgsAndClosure(Collections.singletonMap("value",a.get(0)),c);
+                return new NamedArgsAndClosure(Collections.singletonMap(AbstractStepDescriptorImpl.KEY_VALUE, a.get(0)), c);
             default:
                 throw new IllegalArgumentException("Expected named arguments but got "+a);
             }
         }
 
-        return new NamedArgsAndClosure(Collections.singletonMap("value",arg),null);
+        return new NamedArgsAndClosure(Collections.singletonMap(AbstractStepDescriptorImpl.KEY_VALUE, arg), null);
     }
 
     /**
