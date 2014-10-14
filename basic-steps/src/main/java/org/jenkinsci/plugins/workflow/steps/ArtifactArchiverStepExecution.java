@@ -39,7 +39,7 @@ public class ArtifactArchiverStepExecution extends AbstractSynchronousStepExecut
 
     @Override
     protected Void run() throws Exception {
-        String includes = envVars.expand(step.getIncludes());
+        String includes = envVars.expand(step.getValue());
         Map<String,String> files = ws.act(new ListFiles(includes, step.getExcludes()));
         build.pickArtifactManager().archive(ws, launcher, new BuildListenerAdapter(listener), files);
         return null;

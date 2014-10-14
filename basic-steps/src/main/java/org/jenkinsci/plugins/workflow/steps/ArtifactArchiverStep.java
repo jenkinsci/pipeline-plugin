@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Extension;
+import hudson.Util;
 import hudson.tasks.BuildStep;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -14,35 +15,26 @@ import org.kohsuke.stapler.DataBoundSetter;
  */
 public class ArtifactArchiverStep extends AbstractStepImpl {
 
-    @DataBoundSetter
-    String includes;
-
-    @DataBoundSetter
-    String excludes;
-
-    /*
-    @DataBoundSetter
-    boolean fingerprint = true;
-    */
+    private final String value;
+    private String excludes;
+    // TBD: boolean fingerprint = true
 
     @DataBoundConstructor
     public ArtifactArchiverStep(String value) {
-        this.includes = value;
+        this.value = value;
     }
 
-    public String getIncludes() {
-        return includes;
+    public String getValue() {
+        return value;
     }
 
     public String getExcludes() {
         return excludes;
     }
 
-    /*
-    public boolean isFingerprint() {
-        return fingerprint;
+    @DataBoundSetter public void setExcludes(String excludes) {
+        this.excludes = Util.fixEmptyAndTrim(excludes);
     }
-    */
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
