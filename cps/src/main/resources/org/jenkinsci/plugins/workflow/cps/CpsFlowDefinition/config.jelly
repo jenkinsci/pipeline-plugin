@@ -62,7 +62,8 @@
   <script>
       function handlePrototype() {
           buildFormTree(document.forms.config);
-          var json = JSON.stringify(JSON.parse(document.forms.config.elements.json.value).definition.snippetizer.prototype);
+          // TODO JSON.stringify fails in some circumstances: https://gist.github.com/jglick/70ec4b15c1f628fdf2e9 due to Array.prototype.toJSON
+          var json = Object.toJSON(JSON.parse(document.forms.config.elements.json.value).definition.snippetizer.prototype);
           new Ajax.Request('${descriptor.descriptorFullUrl}/generateSnippet', {
               method: 'POST',
               parameters: {json: json},
