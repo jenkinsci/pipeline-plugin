@@ -30,8 +30,9 @@
   <f:entry field="sandbox" title="${%Use Groovy Sandbox}">
     <f:checkbox/>
   </f:entry>
+  <f:optionalBlock name="snippetizer" title="Snippet Generator" help="${descriptor.getHelpFile('snippetizer')}">
   <!-- Similar to f:dropdownDescriptorSelector, but adds fallback content to block, and JENKINS-25130 adds per-selection help: -->
-  <f:dropdownList name="_prototype" title="Sample Step"> <!-- TODO could add help attr -->
+  <f:dropdownList name="prototype" title="Sample Step">
       <j:forEach var="stepDescriptor" items="${descriptor.stepDescriptors}">
           <f:dropdownListBlock title="${stepDescriptor.displayName}" staplerClass="${stepDescriptor.clazz.name}" lazy="stepDescriptor,it">
               <l:ajax>
@@ -56,19 +57,20 @@
   </f:dropdownList>
   <f:block>
       <input type="button" value="Generate Groovy" onclick="handlePrototype(); return false" class="submit-button primary"/>
-      <f:textarea id="_prototypeText" readonly="true"/>
+      <f:textarea id="prototypeText" readonly="true"/>
   </f:block>
   <script>
       function handlePrototype() {
           buildFormTree(document.forms.config);
-          var json = JSON.stringify(JSON.parse(document.forms.config.elements.json.value).definition._prototype);
+          var json = JSON.stringify(JSON.parse(document.forms.config.elements.json.value).definition.snippetizer.prototype);
           new Ajax.Request('${descriptor.descriptorFullUrl}/generateSnippet', {
               method: 'POST',
               parameters: {json: json},
               onSuccess: function(r) {
-                  document.getElementById('_prototypeText').value = r.responseText;
+                  document.getElementById('prototypeText').value = r.responseText;
               }
           });
       }
   </script>
+  </f:optionalBlock>
 </j:jelly>
