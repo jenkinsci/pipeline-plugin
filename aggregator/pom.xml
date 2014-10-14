@@ -65,6 +65,11 @@
             <artifactId>workflow-cps</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>workflow-cps-global-lib</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- TODO not implemented:
         <dependency>
             <groupId>${project.groupId}</groupId>
