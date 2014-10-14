@@ -77,7 +77,7 @@ public class SnippetizerTest {
         BuildTriggerStep step = new BuildTriggerStep("downstream");
         assertEquals("build 'downstream'", Snippetizer.object2Groovy(step));
         step.setParameters(Arrays.asList(new StringParameterValue("branch", "default"), new BooleanParameterValue("correct", true)));
-        assertEquals("build parameters: [new hudson.model.StringParameterValue('branch', 'default'), new hudson.model.BooleanParameterValue('correct', true)], job: 'downstream'", Snippetizer.object2Groovy(step));
+        assertEquals("build job: 'downstream', parameters: [new hudson.model.StringParameterValue('branch', 'default'), new hudson.model.BooleanParameterValue('correct', true)]", Snippetizer.object2Groovy(step));
         assertRender("hudson.model.Node.Mode.NORMAL", Node.Mode.NORMAL);
         assertRender("null", null);
         assertRender("org.jenkinsci.plugins.workflow.cps.SnippetizerTest.E.ZERO", E.ZERO);
