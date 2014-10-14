@@ -23,8 +23,12 @@ public class EvaluateStep extends AbstractStepImpl {
     private final String path;
 
     @DataBoundConstructor
-    public EvaluateStep(String value) {
-        this.path = value;
+    public EvaluateStep(String path) {
+        this.path = path;
+    }
+    
+    public String getPath() {
+        return path;
     }
 
     @Extension

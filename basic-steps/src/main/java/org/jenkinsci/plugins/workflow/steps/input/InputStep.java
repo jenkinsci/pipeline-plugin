@@ -56,20 +56,17 @@ public class InputStep extends AbstractStepImpl implements Serializable {
     /**
      * Optional user/group name who can approve this.
      */
-    @DataBoundSetter
     private String submitter;
 
 
     /**
      * Either a single {@link ParameterDefinition} or a list of them.
      */
-    @DataBoundSetter
-    private Object params;
+    private List<ParameterDefinition> parameters = Collections.emptyList();
 
     /**
      * Caption of the OK button.
      */
-    @DataBoundSetter
     private String ok;
 
     @DataBoundConstructor
@@ -81,7 +78,7 @@ public class InputStep extends AbstractStepImpl implements Serializable {
 
     @DataBoundSetter
     public void setId(String id) {
-        this.id = capitalize(id);
+        this.id = capitalize(Util.fixEmpty(id));
     }
 
     public String getId() {
@@ -92,6 +89,10 @@ public class InputStep extends AbstractStepImpl implements Serializable {
 
     public String getSubmitter() {
         return submitter;
+    }
+
+    @DataBoundSetter public void setSubmitter(String submitter) {
+        this.submitter = Util.fixEmptyAndTrim(submitter);
     }
 
     private String capitalize(String id) {
@@ -113,16 +114,16 @@ public class InputStep extends AbstractStepImpl implements Serializable {
         return ok!=null ? ok : "Proceed";
     }
 
+    @DataBoundSetter public void setOk(String ok) {
+        this.ok = Util.fixEmptyAndTrim(ok);
+    }
+
     public List<ParameterDefinition> getParameters() {
-        if (params instanceof ParameterDefinition)
-            return Collections.singletonList((ParameterDefinition)params);
-        if (params instanceof ParameterDefinition[])
-            return Arrays.asList((ParameterDefinition[]) params);
-        if (params instanceof List)
-            return (List)params;
-        if (params==null)
-            return Collections.emptyList();
-        throw new IllegalStateException("Unexpected parameters: "+params);
+        return parameters;
+    }
+
+    @DataBoundSetter public void setParameters(List<ParameterDefinition> parameters) {
+        this.parameters = parameters;
     }
 
     public String getMessage() {

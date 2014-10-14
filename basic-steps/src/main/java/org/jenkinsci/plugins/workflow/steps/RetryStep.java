@@ -35,11 +35,12 @@ import java.io.Serializable;
  * @author Kohsuke Kawaguchi
  */
 public class RetryStep extends AbstractStepImpl implements Serializable {
-    private int count;
+    
+    private final int count;
 
     @DataBoundConstructor
-    public RetryStep(int value) {
-        this.count = value;
+    public RetryStep(int count) {
+        this.count = count;
     }
 
     public int getCount() {
