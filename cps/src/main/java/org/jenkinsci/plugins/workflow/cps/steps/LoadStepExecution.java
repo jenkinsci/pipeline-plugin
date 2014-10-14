@@ -6,8 +6,10 @@ import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import hudson.FilePath;
 import hudson.model.Action;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.cps.CpsThread;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
@@ -25,6 +27,9 @@ public class LoadStepExecution extends StepExecution {
     @Inject
     private transient LoadStep step;
 
+    @StepContextParameter
+    private transient FlowNode node;
+
     @Override
     public boolean start() throws Exception {
         CpsStepContext cps = (CpsStepContext) getContext();
@@ -33,6 +38,8 @@ public class LoadStepExecution extends StepExecution {
         GroovyShell shell = CpsThread.current().getExecution().getShell();
 
         Script script = shell.parse(cwd.child(step.getPath()).readToString());
+
+        node.addAction(new LabelAction("Loaded script: "+step.getPath()));
 
         // execute body as another thread that shares the same head as this thread
         // as the body can pause.
