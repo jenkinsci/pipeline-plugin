@@ -140,8 +140,6 @@ class RestartingLoadStepTest {
 
             println b.log
             assert b.log.contains("o=42\n");
-
-            story.j.interactiveBreak();
         }
     }
 }
