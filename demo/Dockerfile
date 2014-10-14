@@ -25,6 +25,7 @@ RUN /usr/local/apache-maven-3.2.2/bin/mvn install && /usr/local/apache-maven-3.2
 
 RUN git config --global user.email "demo@jenkins-ci.org" && git config --global user.name "Workflow Demo"
 
+# TODO configure http://jenkins-updates.cloudbees.com/update-center/experimental/update-center.json
 ADD JENKINS_HOME /var/lib/jenkins/
 ADD jenkins-war.war /var/lib/jenkins/jenkins.war
 
