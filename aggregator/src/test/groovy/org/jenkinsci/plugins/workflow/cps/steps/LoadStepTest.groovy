@@ -11,7 +11,7 @@ import org.jvnet.hudson.test.JenkinsRule
  *
  * @author Kohsuke Kawaguchi
  */
-class EvaluateStepTest {
+class LoadStepTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
@@ -24,8 +24,7 @@ class EvaluateStepTest {
         p.definition = new CpsFlowDefinition("""
 node {
   sh 'echo "println(21*2)" > test.groovy'
-  println "control" // make sure that 'println' in groovy script works
-  evaluateWorkspaceScript 'test.groovy'
+  println "control" // make sure that 'println' in groovy script works load 'test.groovy'
 }
 """);
         def b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
@@ -44,7 +43,7 @@ node {
         p.definition = new CpsFlowDefinition("""
 node {
   sh 'echo "21*2" > test.groovy'
-  def o = evaluateWorkspaceScript('test.groovy')
+  def o = load('test.groovy')
   println "output="+o
 }
 """);

@@ -16,14 +16,14 @@ import org.kohsuke.stapler.DataBoundConstructor;
  *
  * @author Kohsuke Kawaguchi
  */
-public class EvaluateStep extends AbstractStepImpl {
+public class LoadStep extends AbstractStepImpl {
     /**
      * Relative path of the script within the current workspace.
      */
     private final String path;
 
     @DataBoundConstructor
-    public EvaluateStep(String path) {
+    public LoadStep(String path) {
         this.path = path;
     }
     
@@ -34,12 +34,12 @@ public class EvaluateStep extends AbstractStepImpl {
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
         public DescriptorImpl() {
-            super(EvaluateStepExecution.class);
+            super(LoadStepExecution.class);
         }
 
         @Override
         public String getFunctionName() {
-            return "evaluateWorkspaceScript";
+            return "load";
         }
 
         @Override
@@ -48,12 +48,12 @@ public class EvaluateStep extends AbstractStepImpl {
         }
     }
 
-    public static class EvaluateStepExecution extends StepExecution {
+    public static class LoadStepExecution extends StepExecution {
         @StepContextParameter
         private transient FilePath cwd;
 
         @Inject
-        private EvaluateStep step;
+        private LoadStep step;
 
         @Override
         public boolean start() throws Exception {
