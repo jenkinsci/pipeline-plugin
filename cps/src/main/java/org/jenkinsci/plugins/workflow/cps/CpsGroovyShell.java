@@ -66,4 +66,32 @@ class CpsGroovyShell extends GroovyShell {
         // this method might slow magic CpsCallableInvocation
         return script.run();
     }
+
+    /**
+     * When loading additional scripts, we need to remember its source text so that
+     * when we come back from persistent we can load them again.
+     */
+    @Override
+    public Script parse(GroovyCodeSource codeSource) throws CompilationFailedException {
+        Script s = super.parse(codeSource);
+        execution.loadedScripts.put(s.getClass().getName(), codeSource.getScriptText());
+        return s;
+    }
+
+    /**
+     * Used internally to reload the script back when coming back from the persisted state
+     * (therefore we don't want to record this.)
+     */
+    /*package*/ Script reparse(String className, String text) throws CompilationFailedException {
+        return super.parse(new GroovyCodeSource(text,className,DEFAULT_CODE_BASE));
+    }
+
+    /**
+     * Every script we parse get caught into {@code execution.loadedScripts}, so the size
+     * yields a unique enough ID.
+     */
+    @Override
+    protected synchronized String generateScriptName() {
+        return "Script" + (execution.loadedScripts.size()+1) + ".groovy";
+    }
 }

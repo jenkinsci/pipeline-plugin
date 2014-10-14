@@ -74,8 +74,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Stack;
 import java.util.TreeMap;
@@ -176,7 +178,17 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  */
 @PersistIn(RUN)
 public class CpsFlowExecution extends FlowExecution {
+    /**
+     * Groovy script of the main source file (that the user enters in the GUI)
+     */
     private final String script;
+
+    /**
+     * Any additional scripts {@linkplain CpsGroovyShell#parse(String) parsed} afterward, keyed by
+     * their FQCN.
+     */
+    /*package*/ /*final*/ Map<String,String> loadedScripts = new HashMap<String, String>();
+
     private final boolean sandbox;
     private /*almost final*/ FlowExecutionOwner owner;
 
@@ -226,7 +238,7 @@ public class CpsFlowExecution extends FlowExecution {
      * Groovy compiler with CPS+sandbox transformation correctly setup.
      * By the time the script starts running, this field is set to non-null.
      */
-    private transient GroovyShell shell;
+    private transient CpsGroovyShell shell;
 
     @Deprecated
     CpsFlowExecution(String script, FlowExecutionOwner owner) throws IOException {
@@ -240,6 +252,15 @@ public class CpsFlowExecution extends FlowExecution {
         this.storage = createStorage();
         Authentication auth = Jenkins.getAuthentication();
         this.user = auth.equals(ACL.SYSTEM) ? null : auth.getName();
+    }
+
+    /**
+     * Perform post-deserialization state resurrection that handles version evolution
+     */
+    private Object readResolve() {
+        if (loadedScripts==null)
+            loadedScripts = new HashMap<String,String>();   // field added later
+        return this;
     }
 
     /**
@@ -308,7 +329,12 @@ public class CpsFlowExecution extends FlowExecution {
 
     private CpsScript parseScript() throws IOException {
         shell = new CpsGroovyShell(this);
-        CpsScript s = (CpsScript) shell.parse(script);
+        CpsScript s = (CpsScript) shell.reparse("WorkflowScript",script);
+
+        for (Entry<String, String> e : loadedScripts.entrySet()) {
+            shell.reparse(e.getKey(), e.getValue());
+        }
+
         s.execution = this;
         if (false) {
             System.out.println("scriptName="+s.getClass().getName());
@@ -667,6 +693,7 @@ public class CpsFlowExecution extends FlowExecution {
 
             writeChild(w, context, "result", e.result, Result.class);
             writeChild(w, context, "script", e.script, String.class);
+            writeChild(w, context, "loadedScripts", e.loadedScripts, Map.class);
             writeChild(w, context, "owner", e.owner, Object.class);
             if (e.user != null) {
                 writeChild(w, context, "user", e.user, String.class);
@@ -717,6 +744,10 @@ public class CpsFlowExecution extends FlowExecution {
                     if (nodeName.equals("script")) {
                         String script = readChild(reader, context, String.class, result);
                         setField(result, "script", script);
+                    } else
+                    if (nodeName.equals("loadedScripts")) {
+                        Map loadedScripts = readChild(reader, context, Map.class, result);
+                        setField(result, "loadedScripts", loadedScripts);
                     } else
                     if (nodeName.equals("owner")) {
                         FlowExecutionOwner owner = (FlowExecutionOwner) readChild(reader, context, Object.class, result);
