@@ -24,7 +24,8 @@ class LoadStepTest {
         p.definition = new CpsFlowDefinition("""
 node {
   sh 'echo "println(21*2)" > test.groovy'
-  println "control" // make sure that 'println' in groovy script works load 'test.groovy'
+  println "control" // make sure that 'println' in groovy script works
+  load 'test.groovy'
 }
 """);
         def b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
