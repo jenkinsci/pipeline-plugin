@@ -29,7 +29,6 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import hudson.AbortException;
-import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.XmlFile;
@@ -37,8 +36,6 @@ import hudson.console.AnnotatedLargeText;
 import hudson.model.AbstractBuild;
 import hudson.model.Computer;
 import hudson.model.Executor;
-import hudson.model.ParameterValue;
-import hudson.model.ParametersAction;
 import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -393,18 +390,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     @Override public boolean isLogUpdated() {
         return isBuilding(); // there is no equivalent to a post-production state for flows
-    }
-
-    @Override public EnvVars getEnvironment(TaskListener listener) throws IOException, InterruptedException {
-        EnvVars env = super.getEnvironment(listener);
-        ParametersAction a = getAction(ParametersAction.class);
-        if (a != null) {
-            for (ParameterValue v : a) {
-                v.buildEnvironment(this, env);
-            }
-        }
-        EnvVars.resolve(env);
-        return env;
     }
 
     public synchronized List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets() {

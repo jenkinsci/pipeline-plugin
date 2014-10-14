@@ -40,6 +40,7 @@ import javax.annotation.Nonnull;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl;
 
 /**
@@ -58,7 +59,16 @@ public abstract class DefaultStepContext extends StepContext {
      */
     @Override public final <T> T get(Class<T> key) throws IOException, InterruptedException {
         T value = doGet(key);
-        if (value != null) {
+        if (key == EnvVars.class) {
+            Run<?,?> run = get(Run.class);
+            EnvironmentAction a = run.getAction(EnvironmentAction.class);
+            EnvVars env = a != null ? a.getEnvironment() : run.getEnvironment(get(TaskListener.class));
+            if (value != null) {
+                env = new EnvVars(env);
+                env.putAll((EnvVars) value); // context overrides take precedence over user settings
+            }
+            return key.cast(env);
+        } else if (value != null) {
             return value;
         } else if (key == TaskListener.class) {
             if (listener == null) {
@@ -94,8 +104,6 @@ public abstract class DefaultStepContext extends StepContext {
                 return null;
             }
             return key.cast(n.createLauncher(get(TaskListener.class)));
-        } else if (key == EnvVars.class) {
-            return key.cast(get(Run.class).getEnvironment(get(TaskListener.class)));
         } else if (key == FlowExecution.class) {
             return key.cast(getExecution());
         } else {

@@ -27,16 +27,16 @@ package org.jenkinsci.plugins.workflow.cps;
 import com.cloudbees.groovy.cps.SerializableScript;
 import groovy.lang.GroovyShell;
 import hudson.EnvVars;
+import hudson.model.ParameterValue;
+import hudson.model.ParametersAction;
 import hudson.model.Queue;
 import hudson.model.Run;
-import hudson.util.StreamTaskListener;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
@@ -55,19 +55,22 @@ public abstract class CpsScript extends SerializableScript {
     public CpsScript() {
     }
 
-    @SuppressWarnings("deprecation") // TODO encoding of execution.owner.console?
+    @SuppressWarnings("unchecked") // Binding
     void initialize() throws IOException {
         FlowExecutionOwner owner = execution.getOwner();
         getBinding().setVariable(STEPS_VAR, new DSL(owner));
         Queue.Executable qe = owner.getExecutable();
         if (qe instanceof Run) {
-            PrintStream ps = owner.getConsole();
-            try {
-                EnvVars env = ((Run) qe).getEnvironment(new StreamTaskListener(ps));
-                getBinding().getVariables().putAll(env);
-            } catch (InterruptedException x) {
-                throw new IOException(x);
+            EnvVars paramEnv = new EnvVars();
+            Run<?,?> run = (Run) qe;
+            ParametersAction a = run.getAction(ParametersAction.class);
+            if (a != null) {
+                for (ParameterValue v : a) {
+                    v.buildEnvironment(run, paramEnv);
+                }
             }
+            EnvVars.resolve(paramEnv);
+            getBinding().getVariables().putAll(paramEnv);
         }
     }
 
@@ -90,8 +93,32 @@ public abstract class CpsScript extends SerializableScript {
     public Object getProperty(String property) {
         if (property.equals("out")) {
             return execution.getOwner().getConsole();
+        } else if (property.equals("env")) {
+            return env();
         }
         return super.getProperty(property);
+    }
+
+    private EnvActionImpl env() {
+        FlowExecutionOwner owner = execution.getOwner();
+        try {
+            Queue.Executable qe = owner.getExecutable();
+            if (qe instanceof Run) {
+                Run<?,?> run = (Run) qe;
+                EnvActionImpl action = run.getAction(EnvActionImpl.class);
+                if (action == null) {
+                    action = new EnvActionImpl();
+                    run.addAction(action);
+                }
+                return action;
+            } else {
+                return null;
+            }
+        } catch (RuntimeException x) {
+            throw x;
+        } catch (Exception x) {
+            throw new RuntimeException(x);
+        }
     }
 
     @Override

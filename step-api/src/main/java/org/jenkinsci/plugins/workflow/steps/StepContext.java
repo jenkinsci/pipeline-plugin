@@ -93,10 +93,6 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      */
     public abstract ListenableFuture<Void> saveState();
 
-    public abstract Object getGlobalVariable(String name);
-    public abstract void setGlobalVariable(String name, Object v);
-    // TODO enumerate variable names
-
     /**
      * Sets the overall result of the flow.
      * Like {@link Run#setResult}, can only make the result worse than it already is.

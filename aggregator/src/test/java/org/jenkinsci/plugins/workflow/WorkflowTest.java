@@ -63,7 +63,9 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep;
+import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 import org.junit.AfterClass;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -579,6 +581,38 @@ public class WorkflowTest extends SingleJobTestBase {
                 }
             });
         }
+    }
+
+    @Test public void env() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition("node {sh 'echo tag=$BUILD_TAG'; env.BUILD_TAG='custom'; sh 'echo tag2=$BUILD_TAG'; env.STUFF='more'; watch new File('" + jenkins().getRootDir() + "/touch'); env.BUILD_TAG=\"${env.BUILD_TAG}2\"; sh 'echo tag3=$BUILD_TAG stuff=$STUFF'}"));
+                startBuilding();
+                while (watchDescriptor.getActiveWatches().isEmpty()) {
+                    assertTrue(JenkinsRule.getLog(b), b.isBuilding());
+                    waitForWorkflowToSuspend();
+                }
+                assertTrue(b.isBuilding());
+                story.j.assertLogContains("tag=jenkins-demo-1", b);
+                story.j.assertLogContains("tag2=custom", b);
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                rebuildContext(story.j);
+                assertThatWorkflowIsSuspended();
+                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "here");
+                watchDescriptor.watchUpdate();
+                waitForWorkflowToComplete();
+                assertBuildCompletedSuccessfully();
+                story.j.assertLogContains("tag3=custom2 stuff=more", b);
+                EnvironmentAction a = b.getAction(EnvironmentAction.class);
+                assertNotNull(a);
+                assertEquals("custom2", a.getEnvironment().get("BUILD_TAG"));
+                assertEquals("more", a.getEnvironment().get("STUFF"));
+            }
+        });
     }
 
 }

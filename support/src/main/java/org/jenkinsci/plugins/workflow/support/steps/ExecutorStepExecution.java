@@ -20,6 +20,7 @@ import hudson.model.queue.AbstractQueueTask;
 import hudson.remoting.ChannelClosedException;
 import hudson.remoting.RequestAbortedException;
 import hudson.security.AccessControlled;
+import hudson.slaves.NodeProperty;
 import hudson.slaves.WorkspaceList;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -53,7 +54,6 @@ public class ExecutorStepExecution extends StepExecution {
     @Inject private transient ExecutorStep step;
     @StepContextParameter private transient TaskListener listener;
     // Here just for requiredContext; could perhaps be passed to the PlaceholderTask constructor:
-    @StepContextParameter private transient EnvVars envVars;
     @StepContextParameter private transient Run<?,?> run;
     @StepContextParameter private transient FlowExecution flowExecution;
 
@@ -343,8 +343,11 @@ public class ExecutorStepExecution extends StepExecution {
                         cookie = UUID.randomUUID().toString();
                         // Switches the label to a self-label, so if the executable is killed and restarted via ExecutorPickle, it will run on the same node:
                         label = computer.getName();
-                        EnvVars env = new EnvVars(context.get(EnvVars.class));
+                        EnvVars env = new EnvVars();
                         env.put(COOKIE_VAR, cookie);
+                        for (NodeProperty<?> nodeProperty : node.getNodeProperties()) {
+                            nodeProperty.buildEnvVars(env, listener);
+                        }
                         synchronized (runningTasks) {
                             runningTasks.put(cookie, context);
                         }

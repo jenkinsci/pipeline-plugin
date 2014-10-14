@@ -281,16 +281,6 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         return node;
     }
 
-    @Override
-    public Object getGlobalVariable(String name) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setGlobalVariable(String name, Object v) {
-        throw new UnsupportedOperationException();
-    }
-
     public synchronized void onFailure(Throwable t) {
         if (t==null)
             throw new IllegalArgumentException();
