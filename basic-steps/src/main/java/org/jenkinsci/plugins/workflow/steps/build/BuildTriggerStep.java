@@ -55,7 +55,7 @@ public class BuildTriggerStep extends AbstractStepImpl {
             return "Build a Job";
         }
 
-        public AutoCompletionCandidates doAutoCompleteValue(@AncestorInPath ItemGroup<?> context, @QueryParameter String value) {
+        public AutoCompletionCandidates doAutoCompleteJob(@AncestorInPath ItemGroup<?> context, @QueryParameter String value) {
             return AutoCompletionCandidates.ofJobNames(ParameterizedJobMixIn.ParameterizedJob.class, value, context);
         }
 
