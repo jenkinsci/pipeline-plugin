@@ -127,7 +127,7 @@ for (int i=0; i<10; i++)
         JenkinsRule.WebClient wc = jenkins.createWebClient();
         WebRequestSettings wrs = new WebRequestSettings(new URL(jenkins.getURL(), jenkins.jenkins.getDescriptorByType(CpsFlowDefinition.DescriptorImpl.class).getDescriptorUrl() + "/generateSnippet"), HttpMethod.POST);
         List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new NameValuePair("json", "{'stapler-class':'org.jenkinsci.plugins.workflow.steps.EchoStep', 'value':'hello world'}"));
+        params.add(new NameValuePair("json", "{'stapler-class':'org.jenkinsci.plugins.workflow.steps.EchoStep', 'message':'hello world'}"));
         // WebClient.addCrumb *replaces* rather than *adds*:
         params.add(new NameValuePair(jenkins.jenkins.getCrumbIssuer().getDescriptor().getCrumbRequestField(), jenkins.jenkins.getCrumbIssuer().getCrumb(null)));
         wrs.setRequestParameters(params);

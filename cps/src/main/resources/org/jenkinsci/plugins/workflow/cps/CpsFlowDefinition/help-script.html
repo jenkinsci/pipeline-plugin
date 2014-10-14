@@ -12,4 +12,14 @@
 <p>
     There are many special build steps available, like <code>node</code> and <code>sh</code> in the example.
     Use the <b>Snippet Generator</b> to see them all and see how they should be configured.
+    Step parameters are given as key-value pairs; if there is just one mandatory parameter the name may be omitted, so
 </p>
+<pre>stage 'Build'</pre>
+<p>
+    is a shortcut for
+</p>
+<pre>stage name: 'Build'</pre>
+<p>
+    but if you specify multiple parameters they must all be named:
+</p>
+<pre>stage name: 'Build', concurrency: 1</pre>

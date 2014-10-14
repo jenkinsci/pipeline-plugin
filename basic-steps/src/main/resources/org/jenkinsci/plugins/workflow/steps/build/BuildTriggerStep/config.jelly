@@ -25,10 +25,11 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:entry field="type" title="Tool Type">
-        <f:select/>
+    <f:entry field="job" title="Project to Build">
+        <f:textbox/>
     </f:entry>
-    <f:entry field="name" title="Tool">
-        <f:select/>
+    <f:entry title="Parameters">
+        <!-- https://trello.com/c/d4gxlcQJ/78-parameterdefinition-create-object -->
+        <f:block><code>parameters</code> may be bound to a list of <code>ParameterValue</code>s.</f:block>
     </f:entry>
 </j:jelly>

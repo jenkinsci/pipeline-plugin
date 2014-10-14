@@ -15,17 +15,17 @@ import org.kohsuke.stapler.DataBoundSetter;
  */
 public class ArtifactArchiverStep extends AbstractStepImpl {
 
-    private final String value;
+    private final String includes;
     private String excludes;
     // TBD: boolean fingerprint = true
 
     @DataBoundConstructor
-    public ArtifactArchiverStep(String value) {
-        this.value = value;
+    public ArtifactArchiverStep(String includes) {
+        this.includes = includes;
     }
 
-    public String getValue() {
-        return value;
+    public String getIncludes() {
+        return includes;
     }
 
     public String getExcludes() {

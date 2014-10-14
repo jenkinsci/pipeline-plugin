@@ -35,11 +35,13 @@ public class StageStepTest {
     @Rule public JenkinsRule r = new JenkinsRule();
 
     @Test public void configRoundTrip() throws Exception {
-        StageStep s = new StepConfigTester(r).configRoundTrip(new StageStep("name", null));
-        assertEquals("name", s.value);
+        StageStep s = new StepConfigTester(r).configRoundTrip(new StageStep("name"));
+        assertEquals("name", s.name);
         assertEquals(null, s.concurrency);
-        s = new StepConfigTester(r).configRoundTrip(new StageStep("name", 1));
-        assertEquals("name", s.value);
+        s = new StageStep("name");
+        s.concurrency = 1;
+        s = new StepConfigTester(r).configRoundTrip(s);
+        assertEquals("name", s.name);
         assertEquals(Integer.valueOf(1), s.concurrency);
     }
 

@@ -66,7 +66,7 @@ public class ExecutorStepExecution extends StepExecution {
      */
     @Override
     public boolean start() throws Exception {
-        final PlaceholderTask task = new PlaceholderTask(getContext(), step.getValue());
+        final PlaceholderTask task = new PlaceholderTask(getContext(), step.getLabel());
         if (Queue.getInstance().schedule2(task, 0).getCreateItem() == null) {
             // There can be no duplicates. But could be refused if a QueueDecisionHandler rejects it for some odd reason.
             throw new IllegalStateException("failed to schedule task");

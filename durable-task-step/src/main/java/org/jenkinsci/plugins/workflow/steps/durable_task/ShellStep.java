@@ -34,20 +34,20 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public final class ShellStep extends DurableTaskStep {
 
-    private final String value;
+    private final String script;
 
-    @DataBoundConstructor public ShellStep(String value) {
-        if (value==null)
+    @DataBoundConstructor public ShellStep(String script) {
+        if (script==null)
             throw new IllegalArgumentException();
-        this.value = value;
+        this.script = script;
     }
 
-    public String getValue() {
-        return value;
+    public String getScript() {
+        return script;
     }
 
     @Override protected DurableTask task() {
-        return new BourneShellScript(value);
+        return new BourneShellScript(script);
     }
 
     @Extension public static final class DescriptorImpl extends DurableTaskStepDescriptor {

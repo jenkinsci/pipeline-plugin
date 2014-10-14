@@ -54,9 +54,9 @@ public class StageStepExecution extends StepExecution {
 
     @Override
     public boolean start() throws Exception {
-        node.addAction(new LabelAction(step.value));
-        node.addAction(new StageActionImpl(step.value));
-        enter(run, getContext(), step.value, step.concurrency);
+        node.addAction(new LabelAction(step.name));
+        node.addAction(new StageActionImpl(step.name));
+        enter(run, getContext(), step.name, step.concurrency);
         return false; // execute asynchronously
     }
 

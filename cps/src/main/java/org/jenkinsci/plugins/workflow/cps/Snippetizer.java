@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -45,7 +46,7 @@ class Snippetizer {
         for (StepDescriptor d : StepDescriptor.all()) {
             if (d.clazz.equals(clazz)) {
                 StringBuilder b = new StringBuilder(d.getFunctionName());
-                Map<String,Object> args = d.defineArguments((Step) o);
+                Map<String,Object> args = new TreeMap<String,Object>(d.defineArguments((Step) o));
                 args.values().removeAll(Collections.singleton(null)); // do not write null values
                 boolean first = true;
                 for (Map.Entry<String,Object> entry : args.entrySet()) {
@@ -60,7 +61,7 @@ class Snippetizer {
                         b.append(", ");
                     }
                     String key = entry.getKey();
-                    if (args.size() > 1 || !key.equals("value")) {
+                    if (args.size() > 1 || !key.equals(AbstractStepDescriptorImpl.KEY_VALUE)) {
                         b.append(key).append(": ");
                     }
                     render(b, entry.getValue());

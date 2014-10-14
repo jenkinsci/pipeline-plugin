@@ -29,6 +29,7 @@ import javax.annotation.CheckForNull;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * Marks a flow build as entering a gated “stage”, like a stage in a pipeline.
@@ -38,15 +39,14 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public final class StageStep extends AbstractStepImpl {
 
-    public final String value;
-    public final @CheckForNull Integer concurrency;
+    public final String name;
+    @DataBoundSetter public @CheckForNull Integer concurrency;
 
-    @DataBoundConstructor public StageStep(String value, @CheckForNull Integer concurrency) {
-        if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException("must specify value");
+    @DataBoundConstructor public StageStep(String name) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("must specify name");
         }
-        this.value = value;
-        this.concurrency = concurrency;
+        this.name = name;
     }
 
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {

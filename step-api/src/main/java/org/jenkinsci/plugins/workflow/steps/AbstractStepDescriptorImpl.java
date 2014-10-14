@@ -56,11 +56,21 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
         throw new IllegalArgumentException(clazz+" does not have a constructor with "+length+" arguments");
     }
 
+    /** An argument key for a single default parameter. */
+    public static final String KEY_VALUE = "value";
+
     /**
-     * Instantiate a new object via DataBoundConstructor and DataBoundSetter.
+     * Instantiate a new object via {@link DataBoundConstructor} and {@link DataBoundSetter}.
+     * If the constructor takes one parameter and the arguments have just {@link #KEY_VALUE} then it is bound to that parameter.
      */
     @Override
-    public final Step newInstance(final Map<String, Object> arguments) throws Exception {
+    public final Step newInstance(Map<String,Object> arguments) throws Exception {
+        if (arguments.keySet().equals(Collections.singleton(KEY_VALUE))) {
+            String[] names = new ClassDescriptor(clazz).loadConstructorParamNames();
+            if (names.length == 1) {
+                arguments = Collections.singletonMap(names[0], arguments.get(KEY_VALUE));
+            }
+        }
         return instantiate(clazz, arguments);
     }
 
@@ -127,7 +137,13 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
     }
 
     @Override public Map<String,Object> defineArguments(Step step) {
-        return uninstantiate(step);
+        Map<String,Object> arguments = uninstantiate(step);
+        arguments.values().removeAll(Collections.singleton(null));
+        String[] names = new ClassDescriptor(step.getClass()).loadConstructorParamNames();
+        if (names.length == 1 && arguments.keySet().equals(Collections.singleton(names[0]))) {
+            arguments = Collections.singletonMap(KEY_VALUE, arguments.get(names[0]));
+        }
+        return arguments;
     }
 
     /**
