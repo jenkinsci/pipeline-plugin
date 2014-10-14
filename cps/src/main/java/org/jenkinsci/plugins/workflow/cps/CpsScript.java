@@ -118,7 +118,7 @@ public abstract class CpsScript extends SerializableScript {
         return CpsThreadGroup.current().getExecution().getShell();
     }
 
-    private Object readResolve() {
+    protected Object readResolve() {
         execution = CpsFlowExecution.PROGRAM_STATE_SERIALIZATION.get();
         assert execution!=null;
         return this;
