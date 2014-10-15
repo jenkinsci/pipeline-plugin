@@ -34,7 +34,7 @@ public class LoadStepExecution extends StepExecution {
         CpsStepContext cps = (CpsStepContext) getContext();
         CpsThread t = CpsThread.current();
 
-        GroovyShell shell = CpsThread.current().getExecution().getShell();
+        GroovyShell shell = t.getExecution().getShell();
 
         Script script = shell.parse(cwd.child(step.getPath()).readToString());
 
