@@ -28,6 +28,7 @@ import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.Futures;
 import groovy.lang.Closure;
+import groovy.lang.Script;
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
@@ -120,7 +121,8 @@ public final class CpsThreadGroup implements Serializable {
                     public CpsVmThread newThread(Runnable r) {
                         return new CpsVmThread(CpsThreadGroup.this, r);
                     }
-                });
+                }
+        );
     }
 
     @CpsVmThreadOnly
@@ -152,6 +154,17 @@ public final class CpsThreadGroup implements Serializable {
         int id = iota++;
         closures.put(id, body);
         return new StaticBodyReference(id,body);
+    }
+
+    @CpsVmThreadOnly("root")
+    public BodyReference export(final Script body) {
+        if (body==null)     return null;
+        return export(new Closure(null) {
+            @Override
+            public Object call() {
+                return body.run();
+            }
+        });
     }
 
     @CpsVmThreadOnly("root")
