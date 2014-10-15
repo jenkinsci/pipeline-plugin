@@ -8,6 +8,7 @@ PLUGINS=\
 	org.jenkins-ci.plugins:durable-task \
 	org.jenkins-ci.plugins:git \
 	org.jenkins-ci.plugins:git-client \
+	org.jenkins-ci.plugins:git-server \
 	org.jenkins-ci.plugins:javadoc \
 	org.jenkins-ci.plugins:junit \
 	org.jenkins-ci.plugins:mailer \
@@ -25,6 +26,7 @@ PLUGINS=\
 	org.jenkins-ci.plugins.workflow:workflow-scm-step \
 	org.jenkins-ci.plugins.workflow:workflow-step-api \
 	org.jenkins-ci.plugins.workflow:workflow-support
+#	org.jenkins-ci.plugins.workflow:workflow-cps-global-lib
 #	org.jenkins-ci.plugins.workflow:workflow-stm
 
 # TODO using ADD with a remote URL would be more convenient, but docker-build claims that URLs like http://jenkins-updates.cloudbees.com/download/plugins/mercurial/*latest*/mercurial.hpi give a 404 (in fact they are 302 → 200)
