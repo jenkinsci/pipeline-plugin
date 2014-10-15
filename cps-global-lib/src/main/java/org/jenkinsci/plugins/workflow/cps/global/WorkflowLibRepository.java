@@ -20,7 +20,7 @@ public class WorkflowLibRepository extends FileBackedHttpGitRepository implement
 
     @Override
     protected void checkPushPermission() {
-        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        Jenkins.getInstance().checkPermission(Jenkins.RUN_SCRIPTS);
     }
 
     public String getIconFileName() {
