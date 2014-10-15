@@ -30,6 +30,7 @@ import hudson.model.Run;
 import hudson.util.LogTaskListener;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -53,7 +54,6 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
         this.env = new TreeMap<String,String>();
     }
 
-    @Exported
     @Override public EnvVars getEnvironment() throws IOException, InterruptedException {
         if (ownerEnvironment == null) {
             ownerEnvironment = owner.getEnvironment(new LogTaskListener(LOGGER, Level.INFO));
@@ -61,6 +61,11 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
         EnvVars e = new EnvVars(ownerEnvironment);
         e.putAll(env);
         return e;
+    }
+
+    @Exported(name="environment")
+    public Map<String,String> getOverriddenEnvironment() {
+        return Collections.unmodifiableMap(env);
     }
 
     @Override public Object getProperty(String propertyName) {
