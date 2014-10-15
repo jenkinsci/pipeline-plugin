@@ -7,20 +7,21 @@
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition">
     <script>stage 'Dev'
 node('slave') {
+    env.PATH="${tool 'Maven 3.x'}/bin:${env.PATH}"
     def src = '/var/lib/jenkins/workflow-plugin-pipeline-demo'
     git url: src
-    mvn '-o clean package'
+    sh 'mvn -o clean package'
     archive 'target/x.war'
 
     stage 'QA'
 
     parallel(longerTests: {
         runWithServer {url ->
-            mvn "-o -f sometests/pom.xml test -Durl=${url} -Dduration=30"
+            sh "mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=30"
         }
     }, quickerTests: {
         runWithServer {url ->
-            mvn "-o -f sometests/pom.xml test -Durl=${url} -Dduration=20"
+            sh "mvn -o -f sometests/pom.xml test -Durl=${url} -Dduration=20"
         }
     })
     stage name: 'Staging', concurrency: 1
@@ -33,11 +34,6 @@ node('master') {
     unarchive mapping: ['target/x.war' : 'x.war']
     deploy 'x.war', 'production'
     echo 'Deployed to http://localhost:8080/production/'
-}
-
-def mvn(args) {
-    def home = tool 'Maven 3.x'
-    sh "${home}/bin/mvn ${args}"
 }
 
 def deploy(war, id) {
