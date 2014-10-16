@@ -135,10 +135,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         getRunMixIn().dropLinks();
     }
 
+    @Exported
     @Override public WorkflowRun getPreviousBuild() {
         return getRunMixIn().getPreviousBuild();
     }
 
+    @Exported
     @Override public WorkflowRun getNextBuild() {
         return getRunMixIn().getNextBuild();
     }
@@ -146,6 +148,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     /**
      * Exposed to URL space via Stapler.
      */
+    @Exported
     public FlowGraphTable getFlowGraph() {
         FlowGraphTable t = new FlowGraphTable(getExecution());
         t.build();
@@ -385,6 +388,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return result == null || isInProgress();
     }
 
+    @Exported
     @Override protected boolean isInProgress() {
         return execution != null && !execution.isComplete();
     }
@@ -420,6 +424,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             return HttpResponses.forwardToPreviousPage();
         }
     }
+
+    @Exported
     @Override public Executor getOneOffExecutor() {
         Jenkins j = Jenkins.getInstance();
         if (j != null) {
