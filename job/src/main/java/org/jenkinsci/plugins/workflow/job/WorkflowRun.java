@@ -81,6 +81,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.HttpResponses;
+import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
@@ -392,6 +393,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return isBuilding(); // there is no equivalent to a post-production state for flows
     }
 
+    @Exported
     public synchronized List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets() {
         if (changeSets == null) {
             changeSets = new ArrayList<ChangeLogSet<? extends ChangeLogSet.Entry>>();
