@@ -72,7 +72,7 @@ public class AbstractStepImplTest {
     public static class BogusStep extends AbstractStepImpl {
         int a;
         String b;
-        String c;
+        @DataBoundSetter String c;
         Object d;
 
         @DataBoundConstructor
@@ -82,9 +82,8 @@ public class AbstractStepImplTest {
         }
 
         @DataBoundSetter
-        void setSomething(String c, Object d) {
-            this.c = c;
-            this.d = d;
+        void setD(Object value) {
+            this.d = value;
         }
 
         @Extension

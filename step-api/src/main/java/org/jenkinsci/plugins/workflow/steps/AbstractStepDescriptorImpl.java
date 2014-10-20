@@ -105,10 +105,12 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
             }
             for (Method m : c.getDeclaredMethods()) {
                 if (m.isAnnotationPresent(DataBoundSetter.class)) {
-                    String[] names = ClassDescriptor.loadParameterNames(m);
-
+                    Class<?>[] parameterTypes = m.getParameterTypes();
+                    if (!m.getName().startsWith("set") || parameterTypes.length != 1) {
+                        throw new IllegalStateException(m + " cannot be a @DataBoundSetter");
+                    }
                     m.setAccessible(true);
-                        Object[] args = buildArguments(arguments, m.getParameterTypes(), names, false);
+                        Object[] args = buildArguments(arguments, parameterTypes, new String[] {Introspector.decapitalize(m.getName().substring(3))}, false);
                         if (args!=null)
                             m.invoke(o, args);
                 }
@@ -116,8 +118,6 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
         }
     }
 
-    // TODO: this is Groovy specific and should be removed from here
-    // but some kind of type coercion would be useful to fix mismatch between Long vs Integer, etc.
     private static Object[] buildArguments(Map<String, Object> arguments, Class<?>[] types, String[] names, boolean callEvenIfNoArgs) {
         Object[] args = new Object[names.length];
         boolean hasArg = callEvenIfNoArgs;
@@ -126,10 +126,12 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
             hasArg |= arguments.containsKey(names[i]);
             Object a = arguments.get(names[i]);
             if (a != null) {
+                // TODO: this is Groovy specific and should be removed from here
+                // but some kind of type coercion would be useful to fix mismatch between Long vs Integer, etc.
                 args[i] = ReflectionCache.getCachedClass(types[i]).coerceArgument(a);
             } else if (types[i] == boolean.class) {
                 args[i] = false;
-            } else if (types[i].isPrimitive()) {
+            } else if (types[i].isPrimitive() && callEvenIfNoArgs) {
                 throw new UnsupportedOperationException("not yet handling @DataBoundConstructor default value of " + types[i] + "; pass an explicit value for " + names[i]);
             }
         }
@@ -138,7 +140,6 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
 
     @Override public Map<String,Object> defineArguments(Step step) {
         Map<String,Object> arguments = uninstantiate(step);
-        arguments.values().removeAll(Collections.singleton(null));
         String[] names = new ClassDescriptor(step.getClass()).loadConstructorParamNames();
         if (names.length == 1 && arguments.keySet().equals(Collections.singleton(names[0]))) {
             arguments = Collections.singletonMap(KEY_VALUE, arguments.get(names[0]));
@@ -171,6 +172,7 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
                 }
             }
         }
+        r.values().removeAll(Collections.singleton(null));
         return r;
     }
     private static void inspect(Map<String,Object> r, Object o, Class<?> clazz, String field) {

@@ -47,7 +47,7 @@ public class AbstractStepDescriptorImplTest {
     }
 
     @Test public void uninstantiate() throws Exception {
-        assertEquals("{flag=true, text=stuff}", AbstractStepDescriptorImpl.uninstantiate(new C("stuff", true)).toString());
+        assertEquals("{flag=true, shorty=0, text=stuff}", AbstractStepDescriptorImpl.uninstantiate(new C("stuff", true)).toString());
         I i = new I("stuff");
         i.setFlag(true);
         i.text = "more";
@@ -67,6 +67,9 @@ public class AbstractStepDescriptorImplTest {
         @Override public String toString() {
             return "C:" + text + "/" + flag;
         }
+        // Are not actually trying to inject it; just making sure that unhandled @DataBoundSetter types are ignored if unused.
+        public short getShorty() {return 0;}
+        @DataBoundSetter public void setShorty(short s) {throw new UnsupportedOperationException();}
     }
 
     public static final class I {
@@ -85,8 +88,8 @@ public class AbstractStepDescriptorImplTest {
         public boolean isFlag() {
             return flag;
         }
-        @DataBoundSetter public void setFlag(boolean flag) {
-            this.flag = flag;
+        @DataBoundSetter public void setFlag(boolean f) {
+            this.flag = f;
         }
         @Override public String toString() {
             return "I:" + value + "/" + text + "/" + flag;
