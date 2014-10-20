@@ -4,6 +4,7 @@ build: releases
 run: build
 	docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo
 
+# TODO why is a beta version of mercurial not picked up? LATEST vs. RELEASE problem?
 PLUGINS=\
 	org.jenkins-ci.plugins:durable-task \
 	org.jenkins-ci.plugins:git \
@@ -29,12 +30,14 @@ PLUGINS=\
 #	org.jenkins-ci.plugins.workflow:workflow-cps-global-lib
 #	org.jenkins-ci.plugins.workflow:workflow-stm
 
+# May define as -U to pick up newer releases; do this before make push!
+CHECK_UPDATES=
+
 # TODO using ADD with a remote URL would be more convenient, but docker-build claims that URLs like http://jenkins-updates.cloudbees.com/download/plugins/mercurial/*latest*/mercurial.hpi give a 404 (in fact they are 302 → 200)
 # anyway it seems to download the entire content disregarding Last-Modified, making it unusable
 releases:
-# TODO should we pass -U to mvn? Slower but more precise.
-	[ -f jenkins-war.war ] || mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=org.jenkins-ci.main:jenkins-war:RELEASE:war -DoutputDirectory=. -Dmdep.stripVersion
-	set -e; for ga in $(PLUGINS); do a=$$(echo $$ga | sed 's/.*\://'); [ -f JENKINS_HOME/plugins/$$a.jpi ] || (mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=$$ga:RELEASE:hpi -DoutputDirectory=JENKINS_HOME/plugins -Dmdep.stripVersion && mv JENKINS_HOME/plugins/$$a.hpi JENKINS_HOME/plugins/$$a.jpi); touch JENKINS_HOME/plugins/$$a.jpi.pinned; done
+	[ -f jenkins-war.war ] || mvn $(CHECK_UPDATES) org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=org.jenkins-ci.main:jenkins-war:RELEASE:war -DoutputDirectory=. -Dmdep.stripVersion
+	set -e; for ga in $(PLUGINS); do a=$$(echo $$ga | sed 's/.*\://'); [ -f JENKINS_HOME/plugins/$$a.jpi ] || (mvn $(CHECK_UPDATES) org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=$$ga:RELEASE:hpi -DoutputDirectory=JENKINS_HOME/plugins -Dmdep.stripVersion && mv JENKINS_HOME/plugins/$$a.hpi JENKINS_HOME/plugins/$$a.jpi); touch JENKINS_HOME/plugins/$$a.jpi.pinned; done
 
 build-snapshot: build
 	[ -f ../aggregator/target/workflow-aggregator.hpi ] || mvn -f .. -DskipTests clean install
