@@ -22,12 +22,12 @@ PLUGINS=\
 	org.jenkins-ci.plugins.workflow:workflow-api \
 	org.jenkins-ci.plugins.workflow:workflow-basic-steps \
 	org.jenkins-ci.plugins.workflow:workflow-cps \
+	org.jenkins-ci.plugins.workflow:workflow-cps-global-lib \
 	org.jenkins-ci.plugins.workflow:workflow-durable-task-step \
 	org.jenkins-ci.plugins.workflow:workflow-job \
 	org.jenkins-ci.plugins.workflow:workflow-scm-step \
 	org.jenkins-ci.plugins.workflow:workflow-step-api \
 	org.jenkins-ci.plugins.workflow:workflow-support
-#	org.jenkins-ci.plugins.workflow:workflow-cps-global-lib
 #	org.jenkins-ci.plugins.workflow:workflow-stm
 
 # May define as -U to pick up newer releases; do this before make push!
@@ -37,7 +37,7 @@ CHECK_UPDATES=
 # anyway it seems to download the entire content disregarding Last-Modified, making it unusable
 releases:
 	[ -f jenkins-war.war ] || mvn $(CHECK_UPDATES) org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=org.jenkins-ci.main:jenkins-war:RELEASE:war -DoutputDirectory=. -Dmdep.stripVersion
-	set -e; for ga in $(PLUGINS); do a=$$(echo $$ga | sed 's/.*\://'); [ -f JENKINS_HOME/plugins/$$a.jpi ] || (mvn $(CHECK_UPDATES) org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=$$ga:RELEASE:hpi -DoutputDirectory=JENKINS_HOME/plugins -Dmdep.stripVersion && mv JENKINS_HOME/plugins/$$a.hpi JENKINS_HOME/plugins/$$a.jpi); touch JENKINS_HOME/plugins/$$a.jpi.pinned; done
+	set -e; for ga in $(PLUGINS); do a=$$(echo $$ga | sed 's/.*\://'); [ -f JENKINS_HOME/plugins/$$a.jpi ] || (mvn $(CHECK_UPDATES) org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=$$ga:RELEASE:hpi -DoutputDirectory=JENKINS_HOME/plugins -Dmdep.stripVersion && mv JENKINS_HOME/plugins/$$a.hpi JENKINS_HOME/plugins/$$a.jpi && touch JENKINS_HOME/plugins/$$a.jpi.pinned) || echo skipping $$a; done
 
 build-snapshot: build
 	[ -f ../aggregator/target/workflow-aggregator.hpi ] || mvn -f .. -DskipTests clean install
