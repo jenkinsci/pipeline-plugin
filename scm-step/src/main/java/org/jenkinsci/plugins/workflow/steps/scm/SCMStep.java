@@ -36,13 +36,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.kohsuke.stapler.DataBoundSetter;
 
 /**
@@ -136,11 +136,11 @@ public abstract class SCMStep extends Step {
         }
 
         @Override public Step newInstance(Map<String,Object> arguments) throws Exception {
-            return AbstractStepDescriptorImpl.instantiate(clazz, arguments);
+            return DescribableHelper.instantiate(clazz, arguments);
         }
 
         @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
-            return AbstractStepDescriptorImpl.uninstantiate(step);
+            return DescribableHelper.uninstantiate(step);
         }
 
     }

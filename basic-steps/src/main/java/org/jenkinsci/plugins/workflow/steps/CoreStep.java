@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
+import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -92,13 +93,13 @@ public final class CoreStep extends Step {
         @Override public Step newInstance(Map<String,Object> arguments) throws Exception {
             String className = (String) arguments.get("$class");
             Class<? extends SimpleBuildStep> c = Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(className).asSubclass(SimpleBuildStep.class);
-            SimpleBuildStep delegate = AbstractStepDescriptorImpl.instantiate(c, arguments);
+            SimpleBuildStep delegate = DescribableHelper.instantiate(c, arguments);
             return new CoreStep(delegate);
         }
 
         @Override public Map<String,Object> defineArguments(Step _step) throws UnsupportedOperationException {
             CoreStep step = (CoreStep) _step;
-            Map<String,Object> r = AbstractStepDescriptorImpl.uninstantiate(step.delegate);
+            Map<String,Object> r = DescribableHelper.uninstantiate(step.delegate);
             r.put("$class", step.delegate.getClass().getName());
             return r;
         }

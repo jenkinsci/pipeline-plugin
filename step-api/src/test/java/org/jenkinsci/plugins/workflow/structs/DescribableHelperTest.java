@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.steps;
+package org.jenkinsci.plugins.workflow.structs;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,27 +31,27 @@ import org.junit.Test;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-public class AbstractStepDescriptorImplTest {
+public class DescribableHelperTest {
     
     @Test public void instantiate() throws Exception {
         Map<String,Object> args = new HashMap<String,Object>();
         args.put("text", "hello");
         args.put("flag", true);
         args.put("ignored", "!");
-        assertEquals("C:hello/true", AbstractStepDescriptorImpl.instantiate(C.class, args).toString());
+        assertEquals("C:hello/true", DescribableHelper.instantiate(C.class, args).toString());
         args.put("value", "main");
-        assertEquals("I:main/hello/true", AbstractStepDescriptorImpl.instantiate(I.class, args).toString());
+        assertEquals("I:main/hello/true", DescribableHelper.instantiate(I.class, args).toString());
         args.clear();
         args.put("text", "goodbye");
-        assertEquals("C:goodbye/false", AbstractStepDescriptorImpl.instantiate(C.class, args).toString());
+        assertEquals("C:goodbye/false", DescribableHelper.instantiate(C.class, args).toString());
     }
 
     @Test public void uninstantiate() throws Exception {
-        assertEquals("{flag=true, shorty=0, text=stuff}", AbstractStepDescriptorImpl.uninstantiate(new C("stuff", true)).toString());
+        assertEquals("{flag=true, shorty=0, text=stuff}", DescribableHelper.uninstantiate(new C("stuff", true)).toString());
         I i = new I("stuff");
         i.setFlag(true);
         i.text = "more";
-        assertEquals("{flag=true, text=more, value=stuff}", AbstractStepDescriptorImpl.uninstantiate(i).toString());
+        assertEquals("{flag=true, text=more, value=stuff}", DescribableHelper.uninstantiate(i).toString());
     }
 
     public static final class C {

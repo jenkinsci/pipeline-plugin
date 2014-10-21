@@ -33,6 +33,7 @@ import java.util.TreeMap;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.kohsuke.stapler.ClassDescriptor;
 import org.kohsuke.stapler.NoStaplerConstructorException;
 
@@ -116,11 +117,11 @@ class Snippetizer {
             }
             b.append(']');
         } else if (value instanceof Enum) {
-            Enum e = (Enum) value;
+            Enum<?> e = (Enum) value;
             b.append(e.getDeclaringClass().getCanonicalName()).append('.').append(e.name());
         } else {
             try {
-                Map<String,Object> args = AbstractStepDescriptorImpl.uninstantiate(value);
+                Map<String,Object> args = DescribableHelper.uninstantiate(value);
                 b.append("new ").append(valueC.getCanonicalName()).append('(');
                 ClassDescriptor d = new ClassDescriptor(valueC);
                 boolean first = true;
