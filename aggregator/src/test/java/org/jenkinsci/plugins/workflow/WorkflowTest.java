@@ -260,6 +260,7 @@ public class WorkflowTest extends SingleJobTestBase {
         }
     }
 
+    @RandomlyFails("TODO isBuilding assertion after restart occasionally fails; log ends with: ‘Running: Allocate node : Body : Start’ (no shell step in sight)")
     @Test public void buildShellScriptAcrossRestart() throws Exception {
         story.addStep(new Statement() {
             @SuppressWarnings("SleepWhileInLoop")
