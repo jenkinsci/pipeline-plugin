@@ -39,10 +39,12 @@ public final class ReadFileStep extends AbstractStepImpl {
     private String encoding;
 
     @DataBoundConstructor public ReadFileStep(String file) {
-        if (file.startsWith("/") || file.contains("\\") || file.contains("..")) {
-            throw new IllegalArgumentException("only relative paths using / as the separator are accepted");
-        }
-        this.file = file;
+        this.file = RelativePathValidator.validate(file);
+    }
+
+    private Object readResolve() {
+        RelativePathValidator.validate(file);
+        return this;
     }
 
     public String getFile() {
