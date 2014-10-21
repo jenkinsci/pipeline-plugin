@@ -147,9 +147,19 @@
     <profiles>
         <profile>
             <id>release-profile</id>
-            <properties>
-                <ignore.random.failures>true</ignore.random.failures>
-            </properties>
+            <build>
+              <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <ignore.random.failures>true</ignore.random.failures>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+              </plugins>
+            </build>
         </profile>
     </profiles>
 </project>
