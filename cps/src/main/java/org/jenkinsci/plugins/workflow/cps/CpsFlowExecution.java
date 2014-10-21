@@ -241,7 +241,7 @@ public class CpsFlowExecution extends FlowExecution {
     private transient CpsGroovyShell shell;
 
     @Deprecated
-    CpsFlowExecution(String script, FlowExecutionOwner owner) throws IOException {
+    public CpsFlowExecution(String script, FlowExecutionOwner owner) throws IOException {
         this(script, false, owner);
     }
 
