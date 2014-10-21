@@ -74,6 +74,7 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockQueueItemAuthenticator;
+import org.jvnet.hudson.test.RandomlyFails;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -502,6 +503,7 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
+    @RandomlyFails("TODO does not pass reliably on CI; perhaps need different semaphores")
     @Test public void authentication() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
