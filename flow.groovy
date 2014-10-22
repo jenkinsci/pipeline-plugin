@@ -1,4 +1,4 @@
-def devQAStaging() {
+def devQAStaging = { ->
     env.PATH="${tool 'Maven 3.x'}/bin:${env.PATH}"
     stage 'Dev'
     sh 'mvn -o clean package'
