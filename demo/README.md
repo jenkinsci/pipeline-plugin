@@ -11,6 +11,7 @@ Run it like:
 Jenkins runs on port 8081, and Jetty runs on port 8080. The continuous delivery pipeline consists of the following sequence.
 
 * Check out source code from a Git repository and build it via Maven with unit testing
+* Loads the main logic of the workflow from [flow.groovy](https://github.com/jenkinsci/workflow-plugin-pipeline-demo/blob/master/flow.groovy) in the workspace
 * Run two parallel integration tests that involve deploying the app to a PaaS-like ephemeral server instances, which get
   thrown away when tests are done (this is done by using auto-deployment of Jetty)
 * Once integration tests are successful, the webapp gets to the staging server at http://localhost:8080/staging/
