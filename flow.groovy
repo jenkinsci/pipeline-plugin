@@ -21,6 +21,11 @@ def devQAStaging() {
 
 def production() {
     input message: "Does http://localhost:8080/staging/ look good?"
+    try {
+        checkpoint('Before production')
+    } catch (NoSuchMethodError _) {
+        echo 'Checkpoint feature available in Jenkins Enterprise by CloudBees.'
+    }
     stage name: 'Production', concurrency: 1
     node('master') {
         sh 'curl -I http://localhost:8080/staging/'
