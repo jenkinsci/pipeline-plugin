@@ -1,4 +1,4 @@
-devQAStaging = { ->
+def devQAStaging() {
     env.PATH="${tool 'Maven 3.x'}/bin:${env.PATH}"
     stage 'Dev'
     sh 'mvn -o clean package'
@@ -19,7 +19,7 @@ devQAStaging = { ->
     deploy 'target/x.war', 'staging'
 }
 
-production = { ->
+def production() {
     input message: "Does http://localhost:8080/staging/ look good?"
     stage name: 'Production', concurrency: 1
     node('master') {
@@ -47,3 +47,5 @@ def runWithServer(body) {
         undeploy id
     }
 }
+
+return this;
