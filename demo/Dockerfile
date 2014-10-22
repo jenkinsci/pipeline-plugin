@@ -16,10 +16,12 @@ RUN echo 'root:root' | chpasswd
 
 # make a local checkout of the demo workspace
 WORKDIR /var/lib/jenkins
+# Set this before clone so if we have to go to a newer head revision, docker-build will rerun git-clone:
+ENV REV 5962235edb4deba19471c6bebef067a69ef8b0e6
 RUN git clone https://github.com/jenkinsci/workflow-plugin-pipeline-demo && cd workflow-plugin-pipeline-demo
 WORKDIR /var/lib/jenkins/workflow-plugin-pipeline-demo
 # Specify a particular master revision in the Dockerfile so we can track changes (and so Docker cache works correctly):
-RUN git reset --hard 58677d8a2230c7b8e655c2674a42d2cab655c265
+RUN git reset --hard $ENV
 # Prepare local Maven repo:
 RUN /usr/local/apache-maven-3.2.2/bin/mvn install && /usr/local/apache-maven-3.2.2/bin/mvn -f sometests -Dmaven.test.failure.ignore clean install
 
