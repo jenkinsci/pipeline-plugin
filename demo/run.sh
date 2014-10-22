@@ -2,6 +2,7 @@
 mkdir /var/run/sshd
 /usr/sbin/sshd &
 
+# TODO consider setting jetty.port=8081 and using 8080 for Jenkins
 cat << EOF > /usr/bin/jetty
 #/bin/bash
 exec /opt/jetty/bin/jetty.sh -d supervise
