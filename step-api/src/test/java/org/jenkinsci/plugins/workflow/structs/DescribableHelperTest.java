@@ -24,15 +24,26 @@
 
 package org.jenkinsci.plugins.workflow.structs;
 
+import hudson.Extension;
+import hudson.Main;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.TreeMap;
 import net.sf.json.JSONObject;
 import static org.junit.Assert.*;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 public class DescribableHelperTest {
-    
+
+    @BeforeClass public static void isUnitTest() {
+        Main.isUnitTest = true; // suppress HsErrPidList
+    }
+
     @Test public void instantiate() throws Exception {
         JSONObject args = new JSONObject();
         args.put("text", "hello");
@@ -93,6 +104,42 @@ public class DescribableHelperTest {
         }
         @Override public String toString() {
             return "I:" + value + "/" + text + "/" + flag;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+
+    @Test public void findSubtypes() throws Exception {
+        assertEquals(new HashSet<Class<?>>(Arrays.asList(Impl1.class, Impl2.class)), DescribableHelper.findSubtypes(Base.class));
+    }
+
+    public static abstract class Base extends AbstractDescribableImpl<Base> {}
+
+    public static final class Impl1 extends Base {
+        private final String text;
+        @DataBoundConstructor public Impl1(String text) {
+            this.text = text;
+        }
+        @Extension public static final class DescriptorImpl extends Descriptor<Base> {
+            @Override public String getDisplayName() {
+                return "Impl1";
+            }
+        }
+    }
+
+    public static final class Impl2 extends Base {
+        private boolean flag;
+        @DataBoundConstructor public Impl2() {}
+        public boolean isFlag() {
+            return flag;
+        }
+        @DataBoundSetter public void setFlag(boolean flag) {
+            this.flag = flag;
+        }
+        @Extension public static final class DescriptorImpl extends Descriptor<Base> {
+            @Override public String getDisplayName() {
+                return "Impl2";
+            }
         }
     }
 

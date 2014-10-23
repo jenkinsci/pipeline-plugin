@@ -24,12 +24,22 @@
 
 package org.jenkinsci.plugins.workflow.structs;
 
+import hudson.DescriptorExtensionList;
+import hudson.Extension;
 import hudson.model.Describable;
+import hudson.model.Descriptor;
 import java.beans.Introspector;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import jenkins.model.Jenkins;
+import net.java.sezpoz.Index;
+import net.java.sezpoz.IndexItem;
 import net.sf.json.JSONObject;
 import org.codehaus.groovy.reflection.ReflectionCache;
 import org.kohsuke.stapler.ClassDescriptor;
@@ -172,6 +182,44 @@ public class DescribableHelper {
             throw x;
         } catch (Exception x) {
             throw new UnsupportedOperationException(x);
+        }
+    }
+
+    static <T> Set<Class<? extends T>> findSubtypes(Class<T> supertype) {
+        if (Describable.class.isAssignableFrom(supertype)) {
+            Set<Class<? extends T>> clazzes = new HashSet<Class<? extends T>>();
+            for (Descriptor<?> d : getDescriptorList(supertype/*.asSubclass(Describable.class)*/)) {
+                clazzes.add(d.clazz.asSubclass(supertype));
+            }
+            return clazzes;
+        } else {
+            return Collections.emptySet();
+        }
+    }
+
+    private static List<? extends Descriptor<?>> getDescriptorList(Class<? /* extends Describable*/> supertype) {
+        Jenkins j = Jenkins.getInstance();
+        if (j != null) {
+            @SuppressWarnings("unchecked")
+            DescriptorExtensionList<?,?> descriptors = j.getDescriptorList(supertype.asSubclass(Describable.class));
+            return descriptors;
+        } else {
+            // TODO should be part of ExtensionList.lookup in core, but here now for benefit of tests:
+            List<Descriptor<?>> descriptors = new ArrayList<Descriptor<?>>();
+            for (IndexItem<Extension,Object> item : Index.load(Extension.class, Object.class)) {
+                try {
+                    Object o = item.instance();
+                    if (o instanceof Descriptor) {
+                        Descriptor<?> d = (Descriptor) o;
+                        if (supertype.isAssignableFrom(d.clazz)) {
+                            descriptors.add(d);
+                        }
+                    }
+                } catch (InstantiationException x) {
+                    // ignore for now
+                }
+            }
+            return descriptors;
         }
     }
 
