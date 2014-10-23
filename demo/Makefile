@@ -4,7 +4,6 @@ build: releases
 run: build
 	docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo
 
-# TODO why is a beta version of mercurial not picked up? LATEST vs. RELEASE problem?
 PLUGINS=\
 	org.jenkins-ci.plugins:durable-task \
 	org.jenkins-ci.plugins:git \
