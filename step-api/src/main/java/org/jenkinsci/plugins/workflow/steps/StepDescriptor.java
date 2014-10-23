@@ -29,8 +29,8 @@ import hudson.DescriptorExtensionList;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
 
-import java.util.Map;
 import java.util.Set;
+import net.sf.json.JSONObject;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -70,7 +70,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      *      Named arguments and values, à la Ant task or Maven mojos.
      * @return an instance of {@link #clazz}
      */
-    public abstract Step newInstance(Map<String,Object> arguments) throws Exception;
+    public abstract Step newInstance(JSONObject arguments) throws Exception;
 
     /**
      * Determine which arguments went into the configuration of a step configured through a form submission.
@@ -78,7 +78,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      * @return arguments that could be passed to {@link #newInstance} to create a similar step instance
      * @throws UnsupportedOperationException if this descriptor lacks the ability to do such a calculation
      */
-    public abstract Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException;
+    public abstract JSONObject defineArguments(Step step) throws UnsupportedOperationException;
 
     public static DescriptorExtensionList<Step,StepDescriptor> all() {
         return Jenkins.getInstance().getDescriptorList(Step.class);
