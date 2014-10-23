@@ -30,8 +30,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
-import java.util.Map;
-import java.util.TreeMap;
+import net.sf.json.JSONObject;
 import org.codehaus.groovy.reflection.ReflectionCache;
 import org.kohsuke.stapler.ClassDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -46,7 +45,7 @@ public class DescribableHelper {
     /**
      * Creates an instance of a class via {@link DataBoundConstructor} and {@link DataBoundSetter}.
      */
-    public static <T> T instantiate(Class<? extends T> clazz, Map<String,Object> arguments) throws Exception {
+    public static <T> T instantiate(Class<? extends T> clazz, JSONObject arguments) throws Exception {
         ClassDescriptor d = new ClassDescriptor(clazz);
         String[] names = d.loadConstructorParamNames();
         Constructor<T> c = findConstructor(clazz, names.length);
@@ -62,9 +61,9 @@ public class DescribableHelper {
      * @return constructor and/or setter parameters
      * @throws UnsupportedOperationException if the class does not follow the expected structure
      */
-    public static Map<String,Object> uninstantiate(Object o) throws UnsupportedOperationException {
+    public static JSONObject uninstantiate(Object o) throws UnsupportedOperationException {
         Class<?> clazz = o.getClass();
-        Map<String, Object> r = new TreeMap<String, Object>();
+        JSONObject r = new JSONObject();
         ClassDescriptor d = new ClassDescriptor(clazz);
         for (String name : d.loadConstructorParamNames()) {
             inspect(r, o, clazz, name);
@@ -81,11 +80,10 @@ public class DescribableHelper {
                 }
             }
         }
-        r.values().removeAll(Collections.singleton(null));
         return r;
     }
 
-    private static Object[] buildArguments(Map<String, Object> arguments, Class<?>[] types, String[] names, boolean callEvenIfNoArgs) {
+    private static Object[] buildArguments(JSONObject arguments, Class<?>[] types, String[] names, boolean callEvenIfNoArgs) {
         Object[] args = new Object[names.length];
         boolean hasArg = callEvenIfNoArgs;
         for (int i = 0; i < args.length; i++) {
@@ -124,7 +122,7 @@ public class DescribableHelper {
     /**
      * Injects via {@link DataBoundSetter}
      */
-    private static void injectSetters(Object o, Map<String,Object> arguments) throws Exception {
+    private static void injectSetters(Object o, JSONObject arguments) throws Exception {
         for (Class<?> c = o.getClass(); c != null; c = c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {
                 if (f.isAnnotationPresent(DataBoundSetter.class)) {
@@ -151,7 +149,7 @@ public class DescribableHelper {
         }
     }
 
-    private static void inspect(Map<String, Object> r, Object o, Class<?> clazz, String field) {
+    private static void inspect(JSONObject r, Object o, Class<?> clazz, String field) {
         try {
             try {
                 r.put(field, clazz.getField(field).get(o));

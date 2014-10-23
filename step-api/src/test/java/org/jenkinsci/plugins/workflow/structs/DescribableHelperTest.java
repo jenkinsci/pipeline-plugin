@@ -24,8 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.structs;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.TreeMap;
+import net.sf.json.JSONObject;
 import static org.junit.Assert.*;
 import org.junit.Test;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -34,7 +34,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 public class DescribableHelperTest {
     
     @Test public void instantiate() throws Exception {
-        Map<String,Object> args = new HashMap<String,Object>();
+        JSONObject args = new JSONObject();
         args.put("text", "hello");
         args.put("flag", true);
         args.put("ignored", "!");
@@ -47,11 +47,11 @@ public class DescribableHelperTest {
     }
 
     @Test public void uninstantiate() throws Exception {
-        assertEquals("{flag=true, shorty=0, text=stuff}", DescribableHelper.uninstantiate(new C("stuff", true)).toString());
+        assertEquals("{flag=true, shorty=0, text=stuff}", new TreeMap<String,Object>(DescribableHelper.uninstantiate(new C("stuff", true))).toString());
         I i = new I("stuff");
         i.setFlag(true);
         i.text = "more";
-        assertEquals("{flag=true, text=more, value=stuff}", DescribableHelper.uninstantiate(i).toString());
+        assertEquals("{flag=true, text=more, value=stuff}", new TreeMap<String,Object>(DescribableHelper.uninstantiate(i)).toString());
     }
 
     public static final class C {
