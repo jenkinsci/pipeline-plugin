@@ -56,7 +56,7 @@ public class SnippetizerTest {
     @Test public void coreStep() {
         ArtifactArchiver aa = new ArtifactArchiver("x.jar");
         aa.setAllowEmptyArchive(true);
-        assertEquals("step $class: 'hudson.tasks.ArtifactArchiver', allowEmptyArchive: true, artifacts: 'x.jar', defaultExcludes: true, excludes: '', fingerprint: false, onlyIfSuccessful: false", Snippetizer.object2Groovy(new CoreStep(aa)));
+        assertEquals("step [$class: 'ArtifactArchiver', allowEmptyArchive: true, artifacts: 'x.jar', defaultExcludes: true, excludes: '', fingerprint: false, onlyIfSuccessful: false]", Snippetizer.object2Groovy(new CoreStep(aa)));
     }
 
     @Test public void blockSteps() {
@@ -77,6 +77,7 @@ public class SnippetizerTest {
         BuildTriggerStep step = new BuildTriggerStep("downstream");
         assertEquals("build 'downstream'", Snippetizer.object2Groovy(step));
         step.setParameters(Arrays.asList(new StringParameterValue("branch", "default"), new BooleanParameterValue("correct", true)));
+        // TODO figure out how to add support for ParameterValue without those having Descriptor’s yet
         assertEquals("build job: 'downstream', parameters: [new hudson.model.StringParameterValue('branch', 'default'), new hudson.model.BooleanParameterValue('correct', true)]", Snippetizer.object2Groovy(step));
         assertRender("hudson.model.Node.Mode.NORMAL", Node.Mode.NORMAL);
         assertRender("null", null);

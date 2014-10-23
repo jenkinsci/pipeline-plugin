@@ -33,9 +33,9 @@ import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
 import java.io.File;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
+import net.sf.json.JSONObject;
 
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
 import org.jenkinsci.plugins.workflow.steps.Step;
@@ -135,11 +135,11 @@ public abstract class SCMStep extends Step {
             return s;
         }
 
-        @Override public Step newInstance(Map<String,Object> arguments) throws Exception {
+        @Override public Step newInstance(JSONObject arguments) throws Exception {
             return DescribableHelper.instantiate(clazz, arguments);
         }
 
-        @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
+        @Override public JSONObject defineArguments(Step step) throws UnsupportedOperationException {
             return DescribableHelper.uninstantiate(step);
         }
 

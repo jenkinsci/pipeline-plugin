@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 /**
@@ -145,11 +146,11 @@ public final class SemaphoreStep extends Step implements Serializable {
             return "semaphore";
         }
 
-        @Override public Step newInstance(Map<String,Object> arguments) {
+        @Override public Step newInstance(JSONObject arguments) {
             return new SemaphoreStep((String) arguments.get("value"));
         }
 
-        @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
+        @Override public JSONObject defineArguments(Step step) throws UnsupportedOperationException {
             throw new UnsupportedOperationException();
         }
 

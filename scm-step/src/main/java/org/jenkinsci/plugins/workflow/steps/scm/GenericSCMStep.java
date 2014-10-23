@@ -31,11 +31,7 @@ import hudson.scm.SCMDescriptor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.CheckForNull;
-import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -60,32 +56,7 @@ public final class GenericSCMStep extends SCMStep {
     @Extension public static final class DescriptorImpl extends SCMStepDescriptor {
 
         @Override public String getFunctionName() {
-            return "scm";
-        }
-
-        @Override public Step newInstance(Map<String,Object> arguments) throws Exception {
-            String className = (String) arguments.get("$class");
-            Class<? extends SCM> c = Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(className).asSubclass(SCM.class);
-            SCM scm = DescribableHelper.instantiate(c, arguments);
-            GenericSCMStep step = new GenericSCMStep(scm);
-            Boolean poll = (Boolean) arguments.get("poll");
-            if (poll != null) {
-                step.setPoll(poll);
-            }
-            Boolean changelog = (Boolean) arguments.get("changelog");
-            if (changelog != null) {
-                step.setChangelog(changelog);
-            }
-            return step;
-        }
-
-        @Override public Map<String,Object> defineArguments(Step _step) throws UnsupportedOperationException {
-            GenericSCMStep step = (GenericSCMStep) _step;
-            Map<String,Object> r = DescribableHelper.uninstantiate(step.scm);
-            r.put("$class", step.scm.getClass().getName());
-            r.put("poll", step.isPoll()); // could instead set to false iff Boolean.FALSE.equals(poll), though the super definition using uninstantiate does not grok default values
-            r.put("changelog", step.isChangelog());
-            return r;
+            return "checkout";
         }
 
         @Override public String getDisplayName() {
