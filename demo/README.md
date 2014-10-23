@@ -8,7 +8,12 @@ Run it like:
 
     docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo
 
-Jenkins runs on port 8081, and Jetty runs on port 8080. The continuous delivery pipeline consists of the following sequence.
+Jenkins runs on port 8081, and Jetty runs on port 8080.
+
+__Note__: If using [boot2docker](https://github.com/boot2docker/boot2docker), you will need to connect using the boot2docker
+VM's IP (instead of `localhost`).  You can get this by running `boot2docker ip` on the command line.
+
+The continuous delivery pipeline consists of the following sequence.
 
 * Check out source code from a Git repository and build it via Maven with unit testing
 * Loads the main logic of the workflow from [flow.groovy](https://github.com/jenkinsci/workflow-plugin-pipeline-demo/blob/master/flow.groovy) in the workspace
