@@ -108,5 +108,6 @@ While the implementation is divided into a number of plugins, for ease of protot
 * `durable-task-step` uses the `durable-task` plugin to define a shell script step that can survive restarts.
 * `scm-step` adds SCM-related steps. There is [more documentation there](scm-step/README.md).
 * `cps` is the flow engine implementation based on the Groovy language, and supporting long-running flows using a _continuation passing style_ transformation of the script.
+* `cps-global-lib` adds a Git-backed repository for Groovy libraries available to scripts.
 * `stm` is a simple engine implementation using a _state transition machine_, less intended for end users than as a reference for how engines can work. Currently only partly implemented.
-* `aggregator` is a placeholder plugin allowing you to `mvn hpi:run` and see everything working together.
+* `aggregator` is a placeholder plugin allowing you to `mvn hpi:run` and see everything working together, as well as holding integration tests.
