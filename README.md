@@ -77,9 +77,13 @@ c:\Program Files\Maven\bin\mvn clean install
 # Installation
 
 If you do not want to build from sources, some early releases (as of this writing `0.1-beta-3`) are available on the Jenkins experimental update center.
-You need to be running a recent Jenkins weekly release, currently 1.577 or newer.
+You need to be running a recent Jenkins weekly release, currently 1.580 or newer.
+
 For OSS Jenkins users, follow [these instructions](http://jenkins-ci.org/content/experimental-plugins-update-center) and install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
-Jenkins Enterprise by CloudBees users can click _Enable access_ under _Access to experimental plugin releases_ in the main Jenkins configuration screen, and then install both _Workflow: Aggregator_ and the proprietary add-on _Workflow: Groovy CPS Execution Checkpoint_.
+You will need to restart Jenkins to complete installation.
+
+Jenkins Enterprise by CloudBees users can click _Enable access_ under _Access to experimental plugin releases_ in the main Jenkins configuration screen, and then install _CloudBees Workflow: Aggregator_.
+Again dependencies will be pulled in automatically, including all the OSS plugins.
 
 # Demo
 
