@@ -38,3 +38,9 @@ Sample demo scenario
 * Get another build going, but this time restart the Jenkins instance while the workflow is in progress
   via [restart UI](http://localhost:8081/restart). Doing this while the integration test is running,
   as steps like Git checkout will get disrupted by restart.
+
+Jenkins Enterprise variant
+--------------------------
+
+If you would like to see Jenkins Enterprise features (such as checkpoints and the stage pipeline view),
+see the [extended demo page](https://registry.hub.docker.com/u/cloudbees/workflow-demo/).
