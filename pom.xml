@@ -116,6 +116,8 @@
                 <artifactId>gmaven-plugin</artifactId>
                 <configuration>
                     <providerSelection>1.8</providerSelection>
+                    <!-- Use a more conventional location: -->
+                    <outputDirectory>${project.build.directory}/generated-test-sources/groovy-stubs</outputDirectory>
                 </configuration>
             </plugin>
             <plugin>
