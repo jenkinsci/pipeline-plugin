@@ -33,6 +33,8 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
+import static java.util.logging.Level.WARNING;
+
 public class StageStepExecution extends StepExecution {
     private static final Logger LOGGER = Logger.getLogger(StageStepExecution.class.getName());
 
@@ -87,7 +89,7 @@ public class StageStepExecution extends StepExecution {
                 try {
                     stagesByNameByJob = (Map<String,Map<String,Stage>>) configFile.read();
                 } catch (IOException x) {
-                    LOGGER.log(Level.WARNING, null, x);
+                    LOGGER.log(WARNING, null, x);
                 }
             }
             LOGGER.log(Level.FINE, "load: {0}", stagesByNameByJob);
@@ -98,7 +100,7 @@ public class StageStepExecution extends StepExecution {
         try {
             getConfigFile().write(stagesByNameByJob);
         } catch (IOException x) {
-            LOGGER.log(Level.WARNING, null, x);
+            LOGGER.log(WARNING, null, x);
         }
         LOGGER.log(Level.FINE, "save: {0}", stagesByNameByJob);
     }
@@ -128,14 +130,14 @@ public class StageStepExecution extends StepExecution {
                 try {
                     cancel(stage.waitingContext, context);
                 } catch (Exception x) {
-                    LOGGER.log(Level.WARNING, "could not cancel an older flow (perhaps since deleted?)", x);
+                    LOGGER.log(WARNING, "could not cancel an older flow (perhaps since deleted?)", x);
                 }
             } else if (stage.waitingBuild > build) {
                 // Cancel this one. And work with the older one below, instead of the one initiating this call.
                 try {
                     cancel(context, stage.waitingContext);
                 } catch (Exception x) {
-                    LOGGER.log(Level.WARNING, "could not cancel the current flow", x);
+                    LOGGER.log(WARNING, "could not cancel the current flow", x);
                 }
                 build = stage.waitingBuild;
                 context = stage.waitingContext;
@@ -213,7 +215,7 @@ public class StageStepExecution extends StepExecution {
                 Integer number = it2.next();
                 if (job.getBuildByNumber(number) == null) {
                     // Deleted at some point but did not properly clean up from exit(…).
-                    LOGGER.log(Level.WARNING, "Cleaning up apparently deleted {0}#{1}", new Object[] {jobName, number});
+                    LOGGER.log(WARNING, "Cleaning up apparently deleted {0}#{1}", new Object[] {jobName, number});
                     it2.remove();
                 }
             }
@@ -231,7 +233,7 @@ public class StageStepExecution extends StepExecution {
         try {
             context.get(TaskListener.class).getLogger().println(message);
         } catch (Exception x) {
-            LOGGER.log(Level.WARNING, null, x);
+            LOGGER.log(WARNING, null, x);
         }
     }
 
