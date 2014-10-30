@@ -131,7 +131,8 @@
                 <version>2.5</version>
                 <configuration>
                     <!-- https://jira.codehaus.org/browse/MRELEASE-271 workaround -->
-                    <preparationGoals>clean install</preparationGoals>
+                    <preparationGoals>-Dignore.random.failures clean install</preparationGoals>
+                    <goals>-DskipTests deploy</goals>
                     <tagNameFormat>workflow-@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
@@ -146,22 +147,4 @@
             </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>release-profile</id>
-            <build>
-              <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <ignore.random.failures>true</ignore.random.failures>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-              </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
