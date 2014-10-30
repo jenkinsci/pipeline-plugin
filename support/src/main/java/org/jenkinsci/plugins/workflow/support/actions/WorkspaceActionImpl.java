@@ -83,6 +83,7 @@ public final class WorkspaceActionImpl extends WorkspaceAction implements FlowNo
     }
 
     // Analogous to AbstractProject.doWs.
+    // TODO this trick fails when a file or dir is named parent/node/path/workspace/iconFileName/displayName/urlName; how to convince Stapler that this method should take precedence?
     public DirectoryBrowserSupport doDynamic() throws IOException {
         Queue.Executable executable = parent.getExecution().getOwner().getExecutable();
         if (executable instanceof AccessControlled) {
