@@ -37,6 +37,9 @@ public class ArtifactUnarchiverStepExecution extends AbstractSynchronousStepExec
 
         List<FilePath> files = new ArrayList<FilePath>();
 
+        if (step.mapping == null)
+            throw new AbortException("'mapping' has not been defined for this 'unarchive' step");
+
         for (Entry<String, String> e : step.mapping.entrySet()) {
             FilePath dst = new FilePath(ws,e.getValue());
             String src = e.getKey();
