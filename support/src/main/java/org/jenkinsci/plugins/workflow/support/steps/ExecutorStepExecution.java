@@ -202,7 +202,7 @@ public class ExecutorStepExecution extends StepExecution {
             if (r != null && r.getParent() instanceof Queue.Task) {
                 return (Queue.Task) r.getParent();
             } else {
-                return null;
+                return this;
             }
         }
 
