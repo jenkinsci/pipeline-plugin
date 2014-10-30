@@ -13,7 +13,9 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.Serializable;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 
 /**
  * @author Jesse Glick
@@ -23,6 +25,7 @@ public class WorkspaceStepExecution extends StepExecution {
     @StepContextParameter private transient Computer c;
     @StepContextParameter private transient Run<?,?> r;
     @StepContextParameter private transient TaskListener listener;
+    @StepContextParameter private transient FlowNode flowNode;
 
     @Override
     public boolean start() throws Exception {
@@ -37,6 +40,7 @@ public class WorkspaceStepExecution extends StepExecution {
         FilePath p = n.getWorkspaceFor((TopLevelItem) j);
         WorkspaceList.Lease lease = c.getWorkspaceList().allocate(p);
         FilePath workspace = lease.path;
+        flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
         listener.getLogger().println("Running in " + workspace);
         getContext().invokeBodyLater(new Callback(getContext(), lease), workspace);
         return false;

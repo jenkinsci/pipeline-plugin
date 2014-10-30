@@ -39,9 +39,11 @@ import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.jenkinsci.plugins.durabletask.executors.ContinuedTask;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -56,6 +58,7 @@ public class ExecutorStepExecution extends StepExecution {
     // Here just for requiredContext; could perhaps be passed to the PlaceholderTask constructor:
     @StepContextParameter private transient Run<?,?> run;
     @StepContextParameter private transient FlowExecution flowExecution;
+    @StepContextParameter private transient FlowNode flowNode;
 
     /**
      * General strategy of this step.
@@ -359,6 +362,8 @@ public class ExecutorStepExecution extends StepExecution {
                         FilePath p = node.getWorkspaceFor((TopLevelItem) j);
                         WorkspaceList.Lease lease = computer.getWorkspaceList().allocate(p);
                         FilePath workspace = lease.path;
+                        FlowNode flowNode = context.get(FlowNode.class);
+                        flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
                         listener.getLogger().println("Running on " + computer.getDisplayName() + " in " + workspace); // TODO hyperlink
                         context.invokeBodyLater(new Callback(cookie, lease), exec, computer, env, workspace);
                         LOGGER.log(Level.FINE, "started {0}", cookie);
