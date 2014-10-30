@@ -2,6 +2,13 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
+## 0.1-beta-6
+* Now based on Jenkins core 1.580.1.
+* Elementary support for tracking workspaces used by a flow. Currently visible only by clicking on the flow node starting a `node` (or `ws`) step.
+* Properly reporting the job owning an executor slot (`node` step); useful for CloudBees Folders Plus controlled slaves, and perhaps other plugins as well.
+* Updated dependencies on Git and Subversion plugins to pick up important fixes.
+* Some utility functions used by steps with unusual configuration factored out into a new API class `DescribableHelper`.
+
 ## 0.1-beta-5
 * _Incompatible_: some steps formerly using `value` as the name for a principal parameter now use a more descriptive name. You can still call them without specifying the field name; the difference is only visible if you were also specifying other optional parameters.
 * `evaluate` function may now be used to evaluate Groovy code CPS-transformed as if it were part of the main script. New `load` step lets you load and run a Groovy script from the workspace. A work in progress.
