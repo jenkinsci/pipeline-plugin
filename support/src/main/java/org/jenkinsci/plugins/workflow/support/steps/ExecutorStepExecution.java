@@ -16,15 +16,18 @@ import hudson.model.ResourceList;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
-import hudson.model.queue.AbstractQueueTask;
+import hudson.model.queue.CauseOfBlockage;
+import hudson.model.queue.SubTask;
 import hudson.remoting.ChannelClosedException;
 import hudson.remoting.RequestAbortedException;
+import hudson.security.ACL;
 import hudson.security.AccessControlled;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.WorkspaceList;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -126,7 +129,7 @@ public class ExecutorStepExecution extends StepExecution {
         // and Item.cancel(Queue) is private and cannot be overridden; the only workaround for now is to have a custom QueueListener
     }
 
-    private static final class PlaceholderTask extends AbstractQueueTask implements ContinuedTask, Serializable {
+    private static final class PlaceholderTask implements ContinuedTask, Serializable {
 
         // TODO can this be replaced with StepExecutionIterator?
         /** map from cookies to contexts of tasks thought to be running */
@@ -182,6 +185,31 @@ public class ExecutorStepExecution extends StepExecution {
 
         @Deprecated
         @Override public String getWhyBlocked() {
+            return null;
+        }
+
+        @Override public CauseOfBlockage getCauseOfBlockage() {
+            return null;
+        }
+
+        @Override public boolean isConcurrentBuild() {
+            return false;
+        }
+
+        @Override public Collection<? extends SubTask> getSubTasks() {
+            return Collections.singleton(this);
+        }
+
+        @Override public Queue.Task getOwnerTask() {
+            Run<?,?> r = run();
+            if (r != null && r.getParent() instanceof Queue.Task) {
+                return (Queue.Task) r.getParent();
+            } else {
+                return this;
+            }
+        }
+
+        @Override public Object getSameNodeConstraint() {
             return null;
         }
 
@@ -263,7 +291,7 @@ public class ExecutorStepExecution extends StepExecution {
         }
 
         @Override public Authentication getDefaultAuthentication() {
-            return super.getDefaultAuthentication(); // TODO should pick up credentials from configuring user or something
+            return ACL.SYSTEM; // TODO should pick up credentials from configuring user or something
         }
 
         @Override public boolean isContinued() {
