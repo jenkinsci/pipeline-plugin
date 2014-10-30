@@ -189,7 +189,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     @CheckForNull CpsThread getThread(CpsThreadGroup g) {
         CpsThread thread = g.threads.get(threadId);
         if (thread == null) {
-            LOGGER.log(Level.WARNING, "no thread {0} among {1}", new Object[] {threadId, g.threads.keySet()});
+            LOGGER.log(Level.FINE, "no thread " + threadId + " among " + g.threads.keySet(), new IllegalStateException());
         }
         return thread;
     }
