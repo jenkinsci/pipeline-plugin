@@ -60,9 +60,9 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      * <dt>{@link Computer}<dd>a slave we are running on
      * <dt>{@link Executor}<dd>an executor slot on a slave we are running on
      * <dt>{@link TaskListener}<dd>a place to send output (see {@code LogAction} for a flow)
-     * <dt>{@code AtomNode}<dd>a running node in a flow
      * <dt>{@link Run}<dd>a running build
      * <dt>{@code FlowExecution} a running flow
+     * <dt>{@code FlowNode}<dd>a running node in a flow
      * </dl>
      * @param key the kind of thing we want
      * @return that service, if available (which it should be if {@link StepDescriptor#getRequiredContext} includes it), else null
