@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.steps.build;
+package org.jenkinsci.plugins.workflow.support.steps.build;
 
 import hudson.AbortException;
 import hudson.model.Action;
@@ -20,6 +20,8 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import javax.inject.Inject;
 import jenkins.model.ParameterizedJobMixIn;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
 /**
  * @author Vivek Pandey
@@ -28,6 +30,7 @@ public class BuildTriggerStepExecution extends StepExecution {
     @StepContextParameter
     private transient TaskListener listener;
     @StepContextParameter private transient Run<?,?> invokingRun;
+    @StepContextParameter private transient FlowNode node;
 
     @Inject // used only during the start() method, so no need to be persisted
     transient BuildTriggerStep step;
@@ -42,6 +45,7 @@ public class BuildTriggerStepExecution extends StepExecution {
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
         }
+        node.addAction(new LabelAction(Messages.BuildTriggerStepExecution_building_(project.getFullDisplayName())));
         List<Action> actions = new ArrayList<Action>();
         actions.add(new BuildTriggerAction(getContext()));
         actions.add(new CauseAction(new Cause.UpstreamCause(invokingRun)));
