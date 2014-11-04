@@ -77,7 +77,7 @@ c:\Program Files\Maven\bin\mvn clean install
 # Installation
 
 If you do not want to build from sources, early releases (see the [changelog](CHANGES.md) for details on which) are available on the Jenkins experimental update center.
-You need to be running a recent Jenkins weekly release, currently 1.580 or newer.
+You need to be running a sufficiently recent Jenkins release, currently an LTS in the 1.580.x line, or a newer weekly release.
 
 For OSS Jenkins users, follow [these instructions](http://jenkins-ci.org/content/experimental-plugins-update-center) and install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
 You will need to restart Jenkins to complete installation.
