@@ -3,4 +3,4 @@
  *
  * The workflow version of {@link javax.swing.JOptionPane}.
  */
-package org.jenkinsci.plugins.workflow.steps.input;
+package org.jenkinsci.plugins.workflow.support.steps.input;

@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.steps.input;
+package org.jenkinsci.plugins.workflow.support.steps.input;
 
 import hudson.FilePath;
 import hudson.Util;

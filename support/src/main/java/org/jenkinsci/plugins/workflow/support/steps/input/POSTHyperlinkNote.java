@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.steps.input;
+package org.jenkinsci.plugins.workflow.support.steps.input;
 
 import hudson.Extension;
 import hudson.console.ConsoleAnnotationDescriptor;
