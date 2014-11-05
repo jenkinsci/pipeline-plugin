@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.workflow.support;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.model.Computer;
+import hudson.model.EnvironmentContributor;
 import hudson.model.Job;
 import hudson.model.Node;
 import hudson.model.Run;
@@ -37,6 +38,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import jenkins.model.CoreEnvironmentContributor;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
@@ -62,7 +65,7 @@ public abstract class DefaultStepContext extends StepContext {
         if (key == EnvVars.class) {
             Run<?,?> run = get(Run.class);
             EnvironmentAction a = run.getAction(EnvironmentAction.class);
-            EnvVars env = a != null ? a.getEnvironment() : run.getEnvironment(get(TaskListener.class));
+            EnvVars env = a != null ? a.getEnvironment() : getEnvironment(run, get(TaskListener.class));
             if (value != null) {
                 env = new EnvVars(env);
                 env.putAll((EnvVars) value); // context overrides take precedence over user settings
@@ -126,5 +129,27 @@ public abstract class DefaultStepContext extends StepContext {
      * Finds the associated node.
      */
     protected abstract @Nonnull FlowNode getNode() throws IOException;
+
+    /**
+     * Temporary replacement for broken {@link Run#getEnvironment(TaskListener)}.
+     * TODO remove once https://github.com/jenkinsci/jenkins/pull/1454 is merged into our baseline
+     */
+    public static EnvVars getEnvironment(Run<?,?> run, TaskListener listener) throws IOException, InterruptedException {
+        EnvVars env = run.getParent().getEnvironment(null, listener);
+        env.putAll(run.getCharacteristicEnvVars());
+        for (EnvironmentContributor ec : EnvironmentContributor.all().reverseView()) {
+            if (ec instanceof CoreEnvironmentContributor) {
+                env.put("BUILD_DISPLAY_NAME", run.getDisplayName());
+                Jenkins j = Jenkins.getInstance();
+                String rootUrl = j.getRootUrl();
+                if (rootUrl != null) {
+                    env.put("BUILD_URL", rootUrl + run.getUrl());
+                }
+            } else {
+                ec.buildEnvironmentFor(run, env, listener);
+            }
+        }
+        return env;
+    }
 
 }

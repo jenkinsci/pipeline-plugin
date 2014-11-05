@@ -22,7 +22,6 @@ import hudson.remoting.ChannelClosedException;
 import hudson.remoting.RequestAbortedException;
 import hudson.security.ACL;
 import hudson.security.AccessControlled;
-import hudson.slaves.NodeProperty;
 import hudson.slaves.WorkspaceList;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -374,11 +373,8 @@ public class ExecutorStepExecution extends StepExecution {
                         cookie = UUID.randomUUID().toString();
                         // Switches the label to a self-label, so if the executable is killed and restarted via ExecutorPickle, it will run on the same node:
                         label = computer.getName();
-                        EnvVars env = new EnvVars();
+                        EnvVars env = computer.buildEnvironment(listener);
                         env.put(COOKIE_VAR, cookie);
-                        for (NodeProperty<?> nodeProperty : node.getNodeProperties()) {
-                            nodeProperty.buildEnvVars(env, listener);
-                        }
                         synchronized (runningTasks) {
                             runningTasks.put(cookie, context);
                         }
