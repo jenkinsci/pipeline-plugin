@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import groovy.lang.GroovyObjectSupport;
 import hudson.EnvVars;
+import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.util.LogTaskListener;
 import java.io.IOException;
@@ -73,7 +74,10 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
         try {
             String val = getEnvironment().get(propertyName);
             if (val == null) {
-                return EnvVars.masterEnvVars.get(propertyName); // TODO placeholder; only appropriate if running inside node('master') {…}
+                Computer computer = CpsThread.current().getContextVariable(Computer.class);
+                if (computer != null) {
+                    return computer.getEnvironment().get(propertyName);
+                }
             }
             return val;
         } catch (Exception x) {
