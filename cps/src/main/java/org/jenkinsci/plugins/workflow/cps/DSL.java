@@ -167,7 +167,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
     }
 
-    private static class NamedArgsAndClosure {
+    static class NamedArgsAndClosure {
         final Map<String,Object> namedArgs;
         final Closure body;
 
@@ -208,7 +208,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
      * <p>
      * This handling is designed after how Java defines literal syntax for {@link Annotation}.
      */
-    private NamedArgsAndClosure parseArgs(StepDescriptor d, Object arg) {
+    static NamedArgsAndClosure parseArgs(StepDescriptor d, Object arg) {
         boolean expectsBlock = d.takesImplicitBlockArgument();
 
         if (arg instanceof Map)
