@@ -14,6 +14,8 @@ import hudson.model.User;
 import hudson.util.HttpResponses;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.jenkinsci.plugins.workflow.support.actions.PauseAction;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.HttpResponse;
@@ -39,6 +41,8 @@ public class InputStepExecution extends StepExecution implements ModelObject {
 
     @StepContextParameter private transient TaskListener listener;
 
+    @StepContextParameter private transient FlowNode node;
+
     /**
      * Result of the input.
      */
@@ -51,6 +55,10 @@ public class InputStepExecution extends StepExecution implements ModelObject {
     public boolean start() throws Exception {
         // record this input
         getPauseAction().add(this);
+
+        // This node causes the flow to pause at this point so we mark it as a "Pause Node".
+        node.addAction(new PauseAction("Input"));
+
         String baseUrl = '/' + run.getUrl() + getPauseAction().getUrlName() + '/';
         if (input.getParameters().isEmpty()) {
             String thisUrl = baseUrl + Util.rawEncode(getId()) + '/';
@@ -182,8 +190,12 @@ public class InputStepExecution extends StepExecution implements ModelObject {
     }
 
     private void postSettlement() throws IOException {
-        getPauseAction().remove(this);
-        run.save();
+        try {
+            getPauseAction().remove(this);
+            run.save();
+        } finally {
+            PauseAction.endCurrentPause(node);
+        }
     }
 
     /**
