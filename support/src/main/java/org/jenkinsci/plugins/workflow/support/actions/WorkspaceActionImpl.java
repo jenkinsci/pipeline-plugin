@@ -27,10 +27,15 @@ package org.jenkinsci.plugins.workflow.support.actions;
 import hudson.FilePath;
 import hudson.model.DirectoryBrowserSupport;
 import hudson.model.Item;
+import hudson.model.Node;
 import hudson.model.Queue;
+import hudson.model.labels.LabelAtom;
 import hudson.security.AccessControlled;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Set;
+import java.util.TreeSet;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.actions.FlowNodeAction;
 import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -42,6 +47,7 @@ public final class WorkspaceActionImpl extends WorkspaceAction implements FlowNo
     
     private final String node;
     private final String path;
+    private final Set<LabelAtom> labels;
     private transient FlowNode parent;
 
     public WorkspaceActionImpl(FilePath workspace, FlowNode parent) {
@@ -49,6 +55,13 @@ public final class WorkspaceActionImpl extends WorkspaceAction implements FlowNo
         node = FilePathPickle.Listener.channelNames.get(workspace.getChannel());
         if (node == null) {
             throw new IllegalStateException("no known slave for " + workspace);
+        }
+        Jenkins j = Jenkins.getInstance();
+        Node n = j == null ? null : node.isEmpty() ? j : j.getNode(node);
+        labels = new TreeSet<LabelAtom>();
+        if (n != null) {
+            labels.addAll(n.getAssignedLabels());
+            labels.remove(n.getSelfLabel());
         }
         path = workspace.getRemote();
         this.parent = parent;
@@ -60,6 +73,10 @@ public final class WorkspaceActionImpl extends WorkspaceAction implements FlowNo
 
     @Override public String getPath() {
         return path;
+    }
+
+    @Override public Set<LabelAtom> getLabels() {
+        return labels;
     }
     
     public FlowNode getParent() {

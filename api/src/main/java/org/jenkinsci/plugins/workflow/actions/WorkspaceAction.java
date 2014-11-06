@@ -28,7 +28,9 @@ import hudson.FilePath;
 import hudson.model.Action;
 import hudson.model.Computer;
 import hudson.model.Node;
+import hudson.model.labels.LabelAtom;
 import hudson.remoting.VirtualChannel;
+import java.util.Set;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
@@ -43,6 +45,14 @@ public abstract class WorkspaceAction implements Action {
 
     /** The {@link FilePath#getRemote} of the workspace. */
     public abstract @Nonnull String getPath();
+
+    /**
+     * The {@link Node#getAssignedLabels} of the node owning the workspace.
+     * {@link Node#getSelfLabel} should be exempted, so this set may be empty in the typical case.
+     * (Could be reconstructed in most cases via {@link Jenkins#getNode} on {@link #getNode},
+     * but not for a slave which has since been removed, common with clouds.)
+     */
+    public abstract @Nonnull Set<LabelAtom> getLabels();
 
     /** Reconstructs the live workspace, if possible. */
     public final @CheckForNull FilePath getWorkspace() {
