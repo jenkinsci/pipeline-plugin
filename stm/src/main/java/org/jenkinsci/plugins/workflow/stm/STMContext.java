@@ -85,14 +85,6 @@ final class STMContext extends DefaultStepContext {
         return true; // TODO
     }
 
-    @Override public Object getGlobalVariable(String name) {
-        throw new UnsupportedOperationException("TODO");
-    }
-
-    @Override public void setGlobalVariable(String name, Object v) {
-        throw new UnsupportedOperationException("TODO");
-    }
-
     @Override public void setResult(Result r) {
         throw new UnsupportedOperationException("TODO");
     }
