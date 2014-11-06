@@ -45,6 +45,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.support.actions.ExecutorActionImpl;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
@@ -387,6 +388,7 @@ public class ExecutorStepExecution extends StepExecution {
                         WorkspaceList.Lease lease = computer.getWorkspaceList().allocate(p);
                         FilePath workspace = lease.path;
                         FlowNode flowNode = context.get(FlowNode.class);
+                        flowNode.addAction(new ExecutorActionImpl(getAssignedLabel()));
                         flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
                         listener.getLogger().println("Running on " + computer.getDisplayName() + " in " + workspace); // TODO hyperlink
                         context.invokeBodyLater(new Callback(cookie, lease), exec, computer, env, workspace);
