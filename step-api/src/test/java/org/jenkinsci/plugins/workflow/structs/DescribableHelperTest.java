@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.structs;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import static org.junit.Assert.*;
@@ -52,6 +53,19 @@ public class DescribableHelperTest {
         i.setFlag(true);
         i.text = "more";
         assertEquals("{flag=true, text=more, value=stuff}", DescribableHelper.uninstantiate(i).toString());
+    }
+
+    @Test public void mismatchedTypes() throws Exception {
+        try {
+            DescribableHelper.instantiate(I.class, Collections.singletonMap("value", 99));
+            fail();
+        } catch (ClassCastException x) {
+            String message = x.getMessage();
+            assertTrue(message, message.contains(I.class.getName()));
+            assertTrue(message, message.contains("value"));
+            assertTrue(message, message.contains("java.lang.String"));
+            assertTrue(message, message.contains("java.lang.Integer"));
+        }
     }
 
     public static final class C {
