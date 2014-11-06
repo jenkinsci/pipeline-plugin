@@ -29,6 +29,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -40,7 +41,7 @@ import java.util.logging.Logger;
  */
 public class PauseAction extends InvisibleAction {
 
-    private static Logger LOGGER = Logger.getLogger(PauseAction.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PauseAction.class.getName());
 
     private String cause;
     private long startTime = System.currentTimeMillis();
@@ -111,7 +112,7 @@ public class PauseAction extends InvisibleAction {
             currentPause.setEndTime(System.currentTimeMillis());
         }
 
-        LOGGER.fine(String.format("'endCurrentPause' was called for a FlowNode ('%s') that does not have an active pause. 'endCurrentPause' may have already been called.", node.getDisplayName()));
+        LOGGER.log(Level.FINE, "‘endCurrentPause’ was called for a FlowNode (‘{0}’) that does not have an active pause. ‘endCurrentPause’ may have already been called.", node.getDisplayName());
     }
 
     /**
