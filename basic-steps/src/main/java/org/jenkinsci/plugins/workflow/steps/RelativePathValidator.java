@@ -24,9 +24,21 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
+import hudson.LauncherDecorator;
+
 class RelativePathValidator {
 
+    /**
+     * Pointless normally, since shell steps can anyway read and write files anywhere on the slave.
+     * Could be necessary in case a plugin installs a {@link LauncherDecorator} which keeps commands inside some kind of jail.
+     * In that case we would need some API to determine that such a jail is in effect and this validation must be enforced.
+     */
+    private static final boolean ENABLED = Boolean.getBoolean(RelativePathValidator.class.getName() + ".ENABLED");
+
     public static String validate(String path) throws IllegalArgumentException {
+        if (!ENABLED) {
+            return path;
+        }
         if (path.startsWith("/")) {
             throw new IllegalArgumentException("only relative paths are accepted");
         }

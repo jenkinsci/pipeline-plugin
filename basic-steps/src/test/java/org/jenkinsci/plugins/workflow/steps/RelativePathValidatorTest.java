@@ -26,8 +26,13 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.BeforeClass;
 
 public class RelativePathValidatorTest {
+
+    @BeforeClass public static void enable() {
+        System.setProperty(RelativePathValidator.class.getName() + ".ENABLED", "true");
+    }
 
     @Test public void ok() {
         assertEquals("foo", RelativePathValidator.validate("foo"));
