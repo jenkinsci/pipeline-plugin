@@ -1,19 +1,20 @@
-package org.jenkinsci.plugins.workflow.support.steps.input;
+package org.jenkinsci.plugins.workflow.steps.input;
 
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.model.BooleanParameterDefinition;
 import hudson.model.queue.QueueTaskFuture;
+import java.util.Arrays;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.support.steps.input.InputAction;
+import org.jenkinsci.plugins.workflow.support.steps.input.InputStepExecution;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import java.util.Arrays;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -49,10 +50,10 @@ public class InputStepTest extends Assert {
         assertEquals(1, a.getExecutions().size());
 
         InputStepExecution is = a.getExecution("Icecream");
-        assertEquals("Do you want chocolate?", is.input.getMessage());
-        assertEquals(1,is.input.getParameters().size());
+        assertEquals("Do you want chocolate?", is.getInput().getMessage());
+        assertEquals(1, is.getInput().getParameters().size());
 
-        j.assertEqualDataBoundBeans(is.input.getParameters().get(0), new BooleanParameterDefinition("chocolate",false,"Favorite icecream flavor"));
+        j.assertEqualDataBoundBeans(is.getInput().getParameters().get(0), new BooleanParameterDefinition("chocolate", false, "Favorite icecream flavor"));
 
         // submit the input, and run workflow to the completion
         HtmlPage p = j.createWebClient().getPage(b, a.getUrlName());
