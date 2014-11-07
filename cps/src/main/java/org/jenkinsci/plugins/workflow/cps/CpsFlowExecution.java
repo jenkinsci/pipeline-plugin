@@ -47,6 +47,7 @@ import com.thoughtworks.xstream.mapper.Mapper;
 import groovy.lang.GroovyShell;
 import hudson.model.Action;
 import hudson.model.Result;
+import hudson.util.Iterators;
 import jenkins.model.Jenkins;
 import org.jboss.marshalling.Unmarshaller;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -585,7 +586,7 @@ public class CpsFlowExecution extends FlowExecution {
         Futures.addCallback(getCurrentExecutions(), new FutureCallback<List<StepExecution>>() {
             @Override
             public void onSuccess(List<StepExecution> l) {
-                for (StepExecution e : l) {
+                for (StepExecution e : Iterators.reverse(l)) {
                     try {
                         e.stop();
                     } catch (Exception x) {
