@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
 import com.google.inject.Inject;
-import hudson.AbortException;
 import hudson.Extension;
 import hudson.XmlFile;
 import hudson.model.InvisibleAction;
@@ -12,7 +11,6 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,20 +18,19 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import static java.util.logging.Level.WARNING;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import jenkins.model.CauseOfInterruption;
-import jenkins.model.InterruptedBuildAction;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.actions.StageAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
-
-import static java.util.logging.Level.WARNING;
 
 public class StageStepExecution extends StepExecution {
     private static final Logger LOGGER = Logger.getLogger(StageStepExecution.class.getName());
@@ -241,12 +238,7 @@ public class StageStepExecution extends StepExecution {
     private static void cancel(StepContext context, StepContext newer) throws IOException, InterruptedException {
         println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
         println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
-        context.get(Run.class).addAction(new InterruptedBuildAction(Collections.singleton(new CanceledCause(newer.get(Run.class)))));
-        /* TODO not yet implemented
-        context.get(FlowExecution.class).abort();
-        */
-        context.setResult(Result.NOT_BUILT);
-        context.onFailure(new AbortException("Aborting flow"));
+        context.onFailure(new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(newer.get(Run.class))));
     }
 
     /**

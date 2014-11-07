@@ -50,6 +50,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 
 /**
  * State of a currently executing workflow.
@@ -132,14 +133,11 @@ public abstract class FlowExecution implements FlowActionStorage {
      * <p>
      * If it's evaluating bodies (see {@link StepContext#invokeBodyLater(FutureCallback, Object...)},
      * then it's callback needs to be invoked.
-     *
+     * <p>
+     * Do not use this from a step. Throw {@link FlowInterruptedException} or some other exception instead.
      * @see StepExecution#stop()
      */
     public abstract void finish(Result r) throws IOException, InterruptedException;
-
-    public final void abort() throws IOException, InterruptedException {
-        finish(Result.ABORTED);
-    }
 
     public abstract void addListener(GraphListener listener);
 

@@ -58,6 +58,7 @@ import java.util.logging.Logger;
 import static java.util.logging.Level.*;
 import static org.jenkinsci.plugins.workflow.cps.CpsFlowExecution.*;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 
 /**
  * List of {@link CpsThread}s that form a single {@link CpsFlowExecution}.
@@ -273,8 +274,13 @@ public final class CpsThreadGroup implements Serializable {
                         assert !t.isAlive();    // failed thread is non-resumable
 
                         // workflow produced an exception
-                        execution.setResult(Result.FAILURE);
-                        t.head.get().addAction(new ErrorAction(o.getAbnormal()));
+                        Result result = Result.FAILURE;
+                        Throwable error = o.getAbnormal();
+                        if (error instanceof FlowInterruptedException) {
+                            result = ((FlowInterruptedException) error).getResult();
+                        }
+                        execution.setResult(result);
+                        t.head.get().addAction(new ErrorAction(error));
                     }
 
                     if (!t.isAlive()) {

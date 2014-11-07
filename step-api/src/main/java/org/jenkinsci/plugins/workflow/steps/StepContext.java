@@ -97,6 +97,7 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      * Sets the overall result of the flow.
      * Like {@link Run#setResult}, can only make the result worse than it already is.
      * Since some flows may have try-catch semantics, if a step fails to complete normally it is better to use {@link #onFailure(Throwable)} instead.
+     * (For example with {@link FlowInterruptedException}.)
      * @param r {@link Result#UNSTABLE}, typically
      */
     public abstract void setResult(Result r);

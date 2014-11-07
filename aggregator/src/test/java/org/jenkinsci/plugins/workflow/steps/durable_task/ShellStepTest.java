@@ -88,7 +88,7 @@ public class ShellStepTest extends Assert {
             }
         });
 
-        e.abort();
+        e.finish(Result.ABORTED);
 
         // touching should have stopped
         final long refTimestamp = tmp.lastModified();

@@ -8,6 +8,7 @@ import hudson.model.FileParameterValue;
 import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.User;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -167,7 +169,7 @@ public class InputStepExecution extends StepExecution implements ModelObject {
     public HttpResponse doAbort() throws IOException, ServletException {
         preSubmissionCheck();
 
-        RejectionException e = new RejectionException(User.current());
+        FlowInterruptedException e = new FlowInterruptedException(Result.ABORTED, new Rejection(User.current()));
         outcome = new Outcome(null,e);
         getContext().onFailure(e);
 

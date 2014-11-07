@@ -68,6 +68,8 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
+import jenkins.model.CauseOfInterruption;
+import jenkins.model.InterruptedBuildAction;
 import jenkins.model.Jenkins;
 import jenkins.model.lazy.BuildReference;
 import jenkins.model.lazy.LazyBuildMixIn;
@@ -78,6 +80,7 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.HttpResponses;
@@ -211,7 +214,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     completed.wait(1000);
                 } catch (InterruptedException x) {
                     try {
-                        execution.abort();
+                        execution.finish(Result.ABORTED);
                     } catch (Exception x2) {
                         LOGGER.log(Level.WARNING, null, x2);
                     }
@@ -342,6 +345,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         Throwable t = execution.getCauseOfFailure();
         if (t instanceof AbortException) {
             listener.error(t.getMessage());
+        } else if (t instanceof FlowInterruptedException) {
+            List<CauseOfInterruption> causes = ((FlowInterruptedException) t).getCauses();
+            addAction(new InterruptedBuildAction(causes));
+            for (CauseOfInterruption cause : causes) {
+                cause.print(listener);
+            }
         } else if (t != null) {
             t.printStackTrace(listener.getLogger());
         }
