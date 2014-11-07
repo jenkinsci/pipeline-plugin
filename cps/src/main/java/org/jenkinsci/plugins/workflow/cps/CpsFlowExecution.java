@@ -32,6 +32,7 @@ import com.cloudbees.groovy.cps.impl.ConstantBlock;
 import com.cloudbees.groovy.cps.impl.ThrowBlock;
 import com.cloudbees.groovy.cps.sandbox.DefaultInvoker;
 import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -532,14 +533,16 @@ public class CpsFlowExecution extends FlowExecution {
         runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
             @Override
             public void onSuccess(CpsThreadGroup g) {
-                List<StepExecution> l = new ArrayList<StepExecution>();
+                // to exclude outer StepExecutions, first build a map by FlowHead
+                // younger threads with their StepExecutions will overshadow old threads, leaving inner-most threads alone.
+                Map<FlowHead,StepExecution> m = new HashMap<FlowHead, StepExecution>();
                 for (CpsThread t : g.threads.values()) {
-                    // TODO: we need to exclude outer StepExecutions
                     StepExecution e = t.getStep();
                     if (e!=null)
-                        l.add(e);
+                        m.put(t.head,e);
                 }
-                r.set(l);
+
+                r.set(ImmutableList.copyOf(m.values()));
             }
 
             @Override
