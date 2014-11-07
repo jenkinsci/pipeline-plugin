@@ -36,10 +36,12 @@ class WorkflowLibRepositoryTest {
     @Test
     public void globalLib() throws Exception {
         story.step {
-            def dir = new File(repo.workspace,"src");
+            def dir = new File(repo.workspace,"src/foo");
             dir.mkdirs();
 
             new File(dir,"Foo.groovy").text = """
+package foo;
+
 def answer() {
   println "control"
   watch new File("${jenkins.rootPath}/go");
@@ -50,7 +52,7 @@ def answer() {
             WorkflowJob p = jenkins.createProject(WorkflowJob.class, "p");
 
             p.definition = new CpsFlowDefinition("""
-              o=new Foo().answer()
+              o=new foo.Foo().answer()
               println "o="+o;
             """);
 

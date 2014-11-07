@@ -52,13 +52,15 @@ public abstract class CpsScript extends SerializableScript {
     transient CpsFlowExecution execution;
 
     /** Default constructor for {@link CpsFlowExecution}. */
-    public CpsScript() {
+    public CpsScript() throws IOException {
         // if the script is instantiated in workflow, automatically set up the contextual
         // 'execution' object. This allows those scripts to invoke workflow steps without
         // any special setup, making it easy to write reusable functions.
         CpsThread c = CpsThread.current();
-        if (c!=null)
+        if (c!=null) {
             execution = c.getExecution();
+            initialize();
+        }
     }
 
     @SuppressWarnings("unchecked") // Binding

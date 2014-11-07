@@ -33,3 +33,35 @@ The repository is exposed in two endpoints:
 
  * `http://server/jenkins/workflowLibs.git` (when your Jenkins is `http://server/jenkins/`.
  * `ssh://USERNAME@server:PORT/workflowLibs.git` through [Jenkins SSH](https://wiki.jenkins-ci.org/display/JENKINS/Jenkins+SSH)
+
+Having the shared library script in Git allows you to track changes, perform
+tested deployments, and reuse the same scripts across a large number of instances.
+
+### Writing shared code
+At the base level, any valid Groovy code is OK. So you can define data structures,
+utility functions, and etc., like this:
+
+    $ cat src/org/foo/Bar.groovy
+    package org.foo;
+
+    // point in 3D space
+    class Point {
+      float x,y,z;
+    }
+
+More often than not, what you want to define is a series of functions that in turn invoke
+other workflow step functions. You can do this by not explicitly defining the enclosing class,
+just like your main workflow script itself:
+
+    $ cat src/org/foo/Zot.groovy
+    package org.foo;
+
+    def checkOutFrom(repo) {
+      git url: "git@github.com:jenkinsci/${repo}"
+    }
+
+You can then call such function from your main workflow script like this:
+
+    def z = new org.foo.Zot()
+    z.checkOutFrom(repo)
+
