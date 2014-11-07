@@ -178,6 +178,7 @@ public class WorkflowTest extends SingleJobTestBase {
      * This ensures that the context variable overrides are working as expected, and
      * that they are persisted and resurrected.
      */
+    @RandomlyFails("TODO assertBuildCompletedSuccessfully sometimes fails even though Allocate node : End has been printed")
     @Test public void buildShellScriptOnSlave() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
