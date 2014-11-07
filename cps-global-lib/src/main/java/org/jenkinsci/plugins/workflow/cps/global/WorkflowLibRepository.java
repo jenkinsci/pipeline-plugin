@@ -15,12 +15,24 @@ import java.io.File;
 @Extension
 public class WorkflowLibRepository extends FileBackedHttpGitRepository implements RootAction {
     public WorkflowLibRepository() {
-        super(new File(Jenkins.getInstance().root, "workflow-libs"));
+        super(workspace());
+    }
+
+    private static File workspace() {
+        Jenkins j = Jenkins.getInstance();
+        if (j == null) {
+            throw new IllegalStateException("Jenkins is not running");
+        }
+        return new File(j.root, "workflow-libs");
     }
 
     @Override
     protected void checkPushPermission() {
-        Jenkins.getInstance().checkPermission(Jenkins.RUN_SCRIPTS);
+        Jenkins j = Jenkins.getInstance();
+        if (j == null) {
+            throw new IllegalStateException("Jenkins is not running");
+        }
+        j.checkPermission(Jenkins.RUN_SCRIPTS);
     }
 
     public String getIconFileName() {

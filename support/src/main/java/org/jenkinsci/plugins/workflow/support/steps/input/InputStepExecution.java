@@ -222,6 +222,9 @@ public class InputStepExecution extends StepExecution implements ModelObject {
                     throw new IllegalArgumentException("No such parameter definition: " + name);
 
                 ParameterValue v = d.createValue(request, jo);
+                if (v == null) {
+                    continue;
+                }
                 mapResult.put(name, convert(name, v));
             }
         }

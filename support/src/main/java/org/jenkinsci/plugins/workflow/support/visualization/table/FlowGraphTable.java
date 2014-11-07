@@ -209,7 +209,7 @@ public class FlowGraphTable {
         return rows;
     }
 
-    public class Row {
+    public static class Row {
         private final FlowNode node;
 
         /**

@@ -26,7 +26,7 @@ public class ArtifactUnarchiverStepExecution extends AbstractSynchronousStepExec
     private transient Run build;
 
     @Inject
-    ArtifactUnarchiverStep step;
+    private transient ArtifactUnarchiverStep step;
 
     @Override
     protected List<FilePath> run() throws Exception {
@@ -83,5 +83,7 @@ public class ArtifactUnarchiverStepExecution extends AbstractSynchronousStepExec
         if (idx>=0) s=s.substring(idx+1);
         return s;
     }
-}
 
+    private static final long serialVersionUID = 1L;
+
+}

@@ -104,12 +104,14 @@ public abstract class SCMStep extends Step {
             SCMRevisionState pollingBaseline = null;
             if (poll || changelog) {
                 pollingBaseline = scm.calcRevisionsFromBuild(run, workspace, launcher, listener);
-                MultiSCMRevisionState state = run.getAction(MultiSCMRevisionState.class);
-                if (state == null) {
-                    state = new MultiSCMRevisionState();
-                    run.addAction(state);
+                if (pollingBaseline != null) {
+                    MultiSCMRevisionState state = run.getAction(MultiSCMRevisionState.class);
+                    if (state == null) {
+                        state = new MultiSCMRevisionState();
+                        run.addAction(state);
+                    }
+                    state.add(scm, pollingBaseline);
                 }
-                state.add(scm, pollingBaseline);
             }
             for (SCMListener l : SCMListener.all()) {
                 l.onCheckout(run, scm, workspace, listener, changelogFile, pollingBaseline);

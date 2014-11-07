@@ -88,6 +88,9 @@ public class PushdStep extends AbstractStepImpl {
             // TODO: see RetyrStepExecution.stop()
             throw new UnsupportedOperationException();
         }
+
+        private static final long serialVersionUID = 1L;
+
     }
 
 }

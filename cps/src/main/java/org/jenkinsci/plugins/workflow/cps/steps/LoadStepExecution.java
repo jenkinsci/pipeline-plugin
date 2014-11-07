@@ -57,4 +57,7 @@ public class LoadStepExecution extends StepExecution {
         //
         // the head of the CPS thread that's executing the body should stop and that's all we need to do.
     }
+
+    private static final long serialVersionUID = 1L;
+
 }

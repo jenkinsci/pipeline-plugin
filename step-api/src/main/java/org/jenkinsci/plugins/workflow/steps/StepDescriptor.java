@@ -25,9 +25,8 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.common.util.concurrent.FutureCallback;
-import hudson.DescriptorExtensionList;
+import hudson.ExtensionList;
 import hudson.model.Descriptor;
-import jenkins.model.Jenkins;
 
 import java.util.Map;
 import java.util.Set;
@@ -80,8 +79,8 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      */
     public abstract Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException;
 
-    public static DescriptorExtensionList<Step,StepDescriptor> all() {
-        return Jenkins.getInstance().getDescriptorList(Step.class);
+    public static ExtensionList<StepDescriptor> all() {
+        return ExtensionList.lookup(StepDescriptor.class);
     }
 
 }

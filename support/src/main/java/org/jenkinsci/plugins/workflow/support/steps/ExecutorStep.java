@@ -81,9 +81,12 @@ public final class ExecutorStep extends AbstractStepImpl {
         // pending https://trello.com/c/THjT9lwd/131-autocompletioncandidates-for-label
         public AutoCompletionCandidates doAutoCompleteLabel(@QueryParameter String value) {
             AutoCompletionCandidates c = new AutoCompletionCandidates();
-            for (Label label : Jenkins.getInstance().getLabels()) {
-                if (label.getName().startsWith(value)) {
-                    c.add(label.getName());
+            Jenkins j = Jenkins.getInstance();
+            if (j != null) {
+                for (Label label : j.getLabels()) {
+                    if (label.getName().startsWith(value)) {
+                        c.add(label.getName());
+                    }
                 }
             }
             return c;

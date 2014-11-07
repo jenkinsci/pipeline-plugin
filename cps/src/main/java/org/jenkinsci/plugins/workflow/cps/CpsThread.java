@@ -140,7 +140,7 @@ public final class CpsThread implements Serializable {
      * Executes CPS code synchronously a little bit more, until it hits
      * the point the workflow needs to be dehydrated.
      */
-    Outcome runNextChunk() throws IOException {
+    @Nonnull Outcome runNextChunk() throws IOException {
         assert program!=null;
 
         while (true) {
@@ -154,7 +154,7 @@ public final class CpsThread implements Serializable {
                 Outcome o = resumeValue;
                 resumeValue = null;
                 outcome = program.run0(o);
-                if (outcome != null && outcome.getAbnormal() != null) {
+                if (outcome.getAbnormal() != null) {
                     LOGGER.log(FINE, "ran and produced error", outcome.getAbnormal());
                 } else {
                     LOGGER.log(FINE, "ran and produced {0}", outcome);

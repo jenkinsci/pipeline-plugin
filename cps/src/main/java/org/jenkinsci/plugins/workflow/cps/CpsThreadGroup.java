@@ -29,6 +29,7 @@ import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.Futures;
 import groovy.lang.Closure;
 import groovy.lang.Script;
+import hudson.Util;
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
@@ -69,6 +70,7 @@ import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
  * @author Kohsuke Kawaguchi
  */
 @PersistIn(PROGRAM)
+@edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // bogus warning about closures
 public final class CpsThreadGroup implements Serializable {
     /**
      * {@link CpsThreadGroup} always belong to the same {@link CpsFlowExecution}.
@@ -346,8 +348,10 @@ public final class CpsThreadGroup implements Serializable {
             } finally {
                 w.close();
             }
-            f.delete();
-            tmpFile.renameTo(f);
+            Util.deleteFile(f);
+            if (!tmpFile.renameTo(f)) {
+                throw new IOException("rename " + tmpFile + " to " + f + " failed");
+            }
             LOGGER.log(FINE, "program state saved");
         } catch (RuntimeException e) {
             LOGGER.log(WARNING, "program state save failed",e);
@@ -359,7 +363,7 @@ public final class CpsThreadGroup implements Serializable {
             throw new IOException("Failed to persist "+f,e);
         } finally {
             PROGRAM_STATE_SERIALIZATION.set(old);
-            tmpFile.delete();
+            Util.deleteFile(tmpFile);
         }
     }
 

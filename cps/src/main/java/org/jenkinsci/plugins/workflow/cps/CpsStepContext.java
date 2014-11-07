@@ -57,6 +57,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nonnull;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
@@ -81,6 +82,7 @@ import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
  * @author Kohsuke Kawaguchi
  */
 @PersistIn(ANYWHERE)
+@edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED") // bodyInvokers, syncMode handled specially
 public class CpsStepContext extends DefaultStepContext { // TODO add XStream class mapper
 
     private static final Logger LOGGER = Logger.getLogger(CpsStepContext.class.getName());
@@ -172,8 +174,12 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      *      such as when the plugin that implements this was removed. So the caller should defend against null.
      */
     public @CheckForNull StepDescriptor getStepDescriptor() {
+        Jenkins j = Jenkins.getInstance();
+        if (j == null) {
+            return null;
+        }
         if (stepDescriptor==null)
-            stepDescriptor = (StepDescriptor) Jenkins.getInstance().getDescriptor(stepDescriptorId);
+            stepDescriptor = (StepDescriptor) j.getDescriptor(stepDescriptorId);
         return stepDescriptor;
     }
 
@@ -228,7 +234,12 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
 
         final BodyInvoker b = new BodyInvoker(this,body,callback,startNodeActions,contextOverrides);
 
-        if (syncMode) {
+        boolean _syncMode;
+        synchronized (this) { // TODO should this whole method be synchronized? mainly getExecution() is a concern
+            _syncMode = syncMode;
+        }
+
+        if (_syncMode) {
             // we process this in ThreadTaskImpl
             bodyInvokers.add(b);
         } else {
@@ -276,8 +287,12 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     }
 
     @Override protected FlowNode getNode() throws IOException {
-        if (node==null)
+        if (node == null) {
             node = getFlowExecution().getNode(id);
+            if (node == null) {
+                throw new IOException("no node found for " + id);
+            }
+        }
         return node;
     }
 
@@ -356,7 +371,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         }
     }
 
-    private CpsFlowExecution getFlowExecution() throws IOException {
+    private @Nonnull CpsFlowExecution getFlowExecution() throws IOException {
         return (CpsFlowExecution)executionRef.get();
     }
 

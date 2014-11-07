@@ -21,7 +21,7 @@ public class BuildTriggerListener extends RunListener<Run<?,?>>{
             if(run.getResult() == Result.SUCCESS) {
                 action.getStepContext().onSuccess(run.getResult());
             }else{
-                action.getStepContext().onFailure(new Exception(run.getResult().toString()));
+                action.getStepContext().onFailure(new Exception(String.valueOf(run.getResult())));
             }
         }
     }

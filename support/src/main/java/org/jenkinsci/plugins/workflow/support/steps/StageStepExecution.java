@@ -65,8 +65,12 @@ public class StageStepExecution extends StepExecution {
         throw new UnsupportedOperationException();
     }
 
-    private static XmlFile getConfigFile() {
-        return new XmlFile(new File(Jenkins.getInstance().getRootDir(), StageStep.class.getName() + ".xml"));
+    private static XmlFile getConfigFile() throws IOException {
+        Jenkins j = Jenkins.getInstance();
+        if (j == null) {
+            throw new IOException("Jenkins is not running");
+        }
+        return new XmlFile(new File(j.getRootDir(), StageStep.class.getName() + ".xml"));
     }
 
     // TODO can this be replaced with StepExecutionIterator?
@@ -81,13 +85,13 @@ public class StageStepExecution extends StepExecution {
     private static synchronized void load() {
         if (stagesByNameByJob == null) {
             stagesByNameByJob = new TreeMap<String,Map<String,Stage>>();
-            XmlFile configFile = getConfigFile();
-            if (configFile.exists()) {
-                try {
+            try {
+                XmlFile configFile = getConfigFile();
+                if (configFile.exists()) {
                     stagesByNameByJob = (Map<String,Map<String,Stage>>) configFile.read();
-                } catch (IOException x) {
-                    LOGGER.log(WARNING, null, x);
                 }
+            } catch (IOException x) {
+                LOGGER.log(WARNING, null, x);
             }
             LOGGER.log(Level.FINE, "load: {0}", stagesByNameByJob);
         }
@@ -284,4 +288,7 @@ public class StageStepExecution extends StepExecution {
             exit(r);
         }
     }
+
+    private static final long serialVersionUID = 1L;
+
 }

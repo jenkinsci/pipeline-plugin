@@ -73,6 +73,8 @@ public final class CoreStep extends Step {
             return null;
         }
 
+        private static final long serialVersionUID = 1L;
+
     }
 
     @Extension public static final class DescriptorImpl extends StepDescriptor {
@@ -92,7 +94,11 @@ public final class CoreStep extends Step {
 
         @Override public Step newInstance(Map<String,Object> arguments) throws Exception {
             String className = (String) arguments.get("$class");
-            Class<? extends SimpleBuildStep> c = Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(className).asSubclass(SimpleBuildStep.class);
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                throw new IllegalStateException("Jenkins is not running");
+            }
+            Class<? extends SimpleBuildStep> c = j.getPluginManager().uberClassLoader.loadClass(className).asSubclass(SimpleBuildStep.class);
             SimpleBuildStep delegate = DescribableHelper.instantiate(c, arguments);
             return new CoreStep(delegate);
         }
@@ -116,7 +122,11 @@ public final class CoreStep extends Step {
             return r;
         }
         private <T extends Describable<T>,D extends Descriptor<T>> void populate(List<Descriptor<?>> r, Class<T> c) {
-            for (Descriptor<?> d : Jenkins.getInstance().getDescriptorList(c)) {
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                return;
+            }
+            for (Descriptor<?> d : j.getDescriptorList(c)) {
                 if (SimpleBuildStep.class.isAssignableFrom(d.clazz)) {
                     r.add(d);
                 }

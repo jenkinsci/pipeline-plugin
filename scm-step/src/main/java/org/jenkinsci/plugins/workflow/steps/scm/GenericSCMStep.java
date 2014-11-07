@@ -65,7 +65,11 @@ public final class GenericSCMStep extends SCMStep {
 
         @Override public Step newInstance(Map<String,Object> arguments) throws Exception {
             String className = (String) arguments.get("$class");
-            Class<? extends SCM> c = Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(className).asSubclass(SCM.class);
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                throw new IllegalStateException("Jenkins is not running");
+            }
+            Class<? extends SCM> c = j.getPluginManager().uberClassLoader.loadClass(className).asSubclass(SCM.class);
             SCM scm = DescribableHelper.instantiate(c, arguments);
             GenericSCMStep step = new GenericSCMStep(scm);
             Boolean poll = (Boolean) arguments.get("poll");

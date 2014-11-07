@@ -1,10 +1,8 @@
 package org.jenkinsci.plugins.workflow.visualization.table;
 
-import hudson.DescriptorExtensionList;
+import hudson.ExtensionList;
 import hudson.model.Descriptor;
-import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.kohsuke.accmod.Restricted;
 
 import javax.annotation.CheckForNull;
 import java.util.ArrayList;
@@ -38,8 +36,8 @@ public abstract class FlowNodeViewColumnDescriptor extends Descriptor<FlowNodeVi
         return null;
     }
 
-    public static DescriptorExtensionList<FlowNodeViewColumn,FlowNodeViewColumnDescriptor> all() {
-        return Jenkins.getInstance().getDescriptorList(FlowNodeViewColumn.class);
+    public static ExtensionList<FlowNodeViewColumnDescriptor> all() {
+        return ExtensionList.lookup(FlowNodeViewColumnDescriptor.class);
     }
 
     /**

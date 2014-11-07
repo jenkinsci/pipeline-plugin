@@ -10,11 +10,12 @@ import java.io.Serializable;
  */
 public class RetryStepExecution extends StepExecution {
     @Inject
-    RetryStep step;
+    private transient RetryStep step;
 
     @Override
     public boolean start() throws Exception {
-        getContext().invokeBodyLater(new Callback());
+        StepContext context = getContext();
+        context.invokeBodyLater(new Callback(context, step.getCount()));
         return false;   // execution is asynchronous
     }
 
@@ -27,16 +28,19 @@ public class RetryStepExecution extends StepExecution {
         throw new UnsupportedOperationException();
     }
 
-    private class Callback implements FutureCallback<Object>, Serializable {
+    private static class Callback implements FutureCallback<Object>, Serializable {
+
+        private final StepContext context;
         private int left;
 
-        Callback() {
-            left = step.getCount();
+        Callback(StepContext context, int count) {
+            this.context = context;
+            left = count;
         }
 
         @Override
         public void onSuccess(Object result) {
-            getContext().onSuccess(result);
+            context.onSuccess(result);
         }
 
         @Override
@@ -53,15 +57,17 @@ public class RetryStepExecution extends StepExecution {
                     /*
                     l.getLogger().println("Retrying");
                     */
-                    getContext().invokeBodyLater(this);
+                    context.invokeBodyLater(this);
                 } else {
-                    getContext().onFailure(t);
+                    context.onFailure(t);
                 }
             } catch (Throwable p) {
-                getContext().onFailure(p);
+                context.onFailure(p);
             }
         }
 
         private static final long serialVersionUID = 1L;
     }
+
+    private static final long serialVersionUID = 1L;
 }

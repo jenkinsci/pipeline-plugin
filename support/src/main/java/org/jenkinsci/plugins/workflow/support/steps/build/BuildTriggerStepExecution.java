@@ -38,9 +38,12 @@ public class BuildTriggerStepExecution extends StepExecution {
     @SuppressWarnings({"unchecked", "rawtypes"}) // cannot get from ParameterizedJob back to ParameterizedJobMixIn trivially
     @Override
     public boolean start() throws Exception {
-        Jenkins jenkins = Jenkins.getInstance();
         String job = step.getJob();
         listener.getLogger().println("Starting building project: " + job);
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins == null) {
+            throw new IllegalStateException("Jenkins is not running");
+        }
         final ParameterizedJobMixIn.ParameterizedJob project = jenkins.getItem(job, invokingRun.getParent(), ParameterizedJobMixIn.ParameterizedJob.class);
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
@@ -64,6 +67,9 @@ public class BuildTriggerStepExecution extends StepExecution {
     @Override
     public void stop() {
         Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins == null) {
+            return;
+        }
 
         Queue q = jenkins.getQueue();
 
@@ -81,8 +87,9 @@ public class BuildTriggerStepExecution extends StepExecution {
         // so this method shouldn't call getContext().onFailure()
         for (Computer c : jenkins.getComputers()) {
             for (Executor e : c.getExecutors()) {
-                if (e.getCurrentExecutable() instanceof Run) {
-                    Run<?,?> b = (Run) e.getCurrentExecutable();
+                Queue.Executable exec = e.getCurrentExecutable();
+                if (exec instanceof Run) {
+                    Run<?,?> b = (Run) exec;
 
                     BuildTriggerAction bta = b.getAction(BuildTriggerAction.class);
                     if (bta!=null && bta.getStepContext().equals(getContext())) {
@@ -92,4 +99,7 @@ public class BuildTriggerStepExecution extends StepExecution {
             }
         }
     }
+
+    private static final long serialVersionUID = 1L;
+
 }

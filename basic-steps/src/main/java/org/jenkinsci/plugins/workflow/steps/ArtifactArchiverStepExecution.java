@@ -36,7 +36,7 @@ public class ArtifactArchiverStepExecution extends AbstractSynchronousStepExecut
     private transient Launcher launcher;
 
     @Inject
-    ArtifactArchiverStep step;
+    private transient ArtifactArchiverStep step;
 
     @Override
     protected Void run() throws Exception {
@@ -62,4 +62,7 @@ public class ArtifactArchiverStepExecution extends AbstractSynchronousStepExecut
             return r;
         }
     }
+
+    private static final long serialVersionUID = 1L;
+
 }

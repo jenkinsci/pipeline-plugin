@@ -34,7 +34,7 @@ import java.io.Serializable;
  *
  * @author Kohsuke Kawaguchi
  */
-public class RetryStep extends AbstractStepImpl implements Serializable {
+public class RetryStep extends AbstractStepImpl {
     
     private final int count;
 
@@ -75,5 +75,4 @@ public class RetryStep extends AbstractStepImpl implements Serializable {
         }
     }
 
-    private static final long serialVersionUID = 1L;
 }

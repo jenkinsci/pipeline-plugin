@@ -88,6 +88,7 @@ import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
+@edu.umd.cs.findbugs.annotations.SuppressWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER") // completed is an unusual usage
 public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Queue.Executable, LazyBuildMixIn.LazyLoadingRun<WorkflowJob,WorkflowRun> {
 
     private static final Logger LOGGER = Logger.getLogger(WorkflowRun.class.getName());
@@ -512,7 +513,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 if (candidate != null && candidate.getParent().getFullName().equals(job) && candidate.getId().equals(id)) {
                     run = candidate;
                 } else {
-                    WorkflowJob j = Jenkins.getInstance().getItemByFullName(job, WorkflowJob.class);
+                    Jenkins jenkins = Jenkins.getInstance();
+                    if (jenkins == null) {
+                        throw new IOException("Jenkins is not running");
+                    }
+                    WorkflowJob j = jenkins.getItemByFullName(job, WorkflowJob.class);
                     if (j == null) {
                         throw new IOException("no such WorkflowJob " + job);
                     }
@@ -578,6 +583,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         public int hashCode() {
             return job.hashCode() ^ id.hashCode();
         }
+        private static final long serialVersionUID = 1;
     }
 
     private final class GraphL implements GraphListener {

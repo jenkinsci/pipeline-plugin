@@ -108,10 +108,10 @@ public final class ToolStep extends AbstractStepImpl {
 
     public static final class Execution extends AbstractSynchronousStepExecution<String> {
 
-        @Inject private ToolStep step;
-        @StepContextParameter TaskListener listener;
-        @StepContextParameter EnvVars env;
-        @StepContextParameter Node node;
+        @Inject private transient ToolStep step;
+        @StepContextParameter transient TaskListener listener;
+        @StepContextParameter transient EnvVars env;
+        @StepContextParameter transient Node node;
 
         @Override protected String run() throws Exception {
             String name = step.getName();
@@ -134,6 +134,8 @@ public final class ToolStep extends AbstractStepImpl {
             }
             throw new AbortException("No " + (type != null ? type : "tool") + " named " + name + " found");
         }
+
+        private static final long serialVersionUID = 1L;
 
     }
 

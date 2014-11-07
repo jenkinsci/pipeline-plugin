@@ -38,6 +38,9 @@ public class WorkspaceStepExecution extends StepExecution {
             throw new Exception("computer does not correspond to a live node");
         }
         FilePath p = n.getWorkspaceFor((TopLevelItem) j);
+        if (p == null) {
+            throw new IllegalStateException(n + " is offline");
+        }
         WorkspaceList.Lease lease = c.getWorkspaceList().allocate(p);
         FilePath workspace = lease.path;
         flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
@@ -52,6 +55,7 @@ public class WorkspaceStepExecution extends StepExecution {
         throw new UnsupportedOperationException();
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // lease is pickled
     private static final class Callback implements FutureCallback<Object>, Serializable {
 
         private final StepContext context;
@@ -73,4 +77,7 @@ public class WorkspaceStepExecution extends StepExecution {
         }
 
     }
+
+    private static final long serialVersionUID = 1L;
+
 }

@@ -4,7 +4,6 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.ListenableFuture;
 import hudson.ExtensionList;
 import hudson.ExtensionPoint;
-import jenkins.model.Jenkins;
 
 /**
  * Enumerates active running {@link StepExecution}s in the system.
@@ -25,6 +24,6 @@ public abstract class StepExecutionIterator implements ExtensionPoint {
     public abstract ListenableFuture<?> apply(Function<StepExecution,Void> f);
 
     public static ExtensionList<StepExecutionIterator> all() {
-        return Jenkins.getInstance().getExtensionList(StepExecutionIterator.class);
+        return ExtensionList.lookup(StepExecutionIterator.class);
     }
 }

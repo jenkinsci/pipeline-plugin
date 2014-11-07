@@ -141,9 +141,11 @@ public abstract class DefaultStepContext extends StepContext {
             if (ec instanceof CoreEnvironmentContributor) {
                 env.put("BUILD_DISPLAY_NAME", run.getDisplayName());
                 Jenkins j = Jenkins.getInstance();
-                String rootUrl = j.getRootUrl();
-                if (rootUrl != null) {
-                    env.put("BUILD_URL", rootUrl + run.getUrl());
+                if (j != null) {
+                    String rootUrl = j.getRootUrl();
+                    if (rootUrl != null) {
+                        env.put("BUILD_URL", rootUrl + run.getUrl());
+                    }
                 }
             } else {
                 ec.buildEnvironmentFor(run, env, listener);

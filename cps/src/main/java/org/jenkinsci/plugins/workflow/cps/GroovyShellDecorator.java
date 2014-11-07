@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.workflow.cps;
 import groovy.lang.GroovyShell;
 import hudson.ExtensionList;
 import hudson.ExtensionPoint;
-import jenkins.model.Jenkins;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 
@@ -31,6 +30,6 @@ public abstract class GroovyShellDecorator implements ExtensionPoint {
     public void configureShell(CpsFlowExecution context, GroovyShell shell) {}
 
     public static ExtensionList<GroovyShellDecorator> all() {
-        return Jenkins.getInstance().getExtensionList(GroovyShellDecorator.class);
+        return ExtensionList.lookup(GroovyShellDecorator.class);
     }
 }

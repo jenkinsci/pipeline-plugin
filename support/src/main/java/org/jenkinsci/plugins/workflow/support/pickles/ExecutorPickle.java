@@ -82,7 +82,11 @@ public class ExecutorPickle extends Pickle {
                 Queue.Executable exec = future.get();
 
                 // TODO extract this from Run to a utility method in Executables: https://trello.com/c/6FVhT94X/39-executables-getexecutor
-                for (Computer c : Jenkins.getInstance().getComputers()) {
+                Jenkins j = Jenkins.getInstance();
+                if (j == null) {
+                    return null;
+                }
+                for (Computer c : j.getComputers()) {
                     for (Executor e : c.getExecutors()) {
                         if (e.getCurrentExecutable() == exec) {
                             return e;

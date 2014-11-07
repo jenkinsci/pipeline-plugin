@@ -168,14 +168,22 @@ public class ExecutorStepExecution extends StepExecution {
             if (label == null) {
                 return null;
             } else if (label.isEmpty()) {
-                return Jenkins.getInstance().getSelfLabel();
+                Jenkins j = Jenkins.getInstance();
+                if (j == null) {
+                    return null;
+                }
+                return j.getSelfLabel();
             } else {
                 return Label.get(label);
             }
         }
 
         @Override public Node getLastBuiltOn() {
-            return Jenkins.getInstance().getNode(label);
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                return null;
+            }
+            return j.getNode(label);
         }
 
         @Override public boolean isBuildBlocked() {
@@ -314,6 +322,7 @@ public class ExecutorStepExecution extends StepExecution {
         /**
          * Called when the body closure is complete.
          */
+        @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // lease is pickled
         private static final class Callback implements FutureCallback<Object>, Serializable {
 
             private final String cookie;
@@ -384,6 +393,9 @@ public class ExecutorStepExecution extends StepExecution {
                             throw new Exception(j + " must be a top-level job");
                         }
                         FilePath p = node.getWorkspaceFor((TopLevelItem) j);
+                        if (p == null) {
+                            throw new IllegalStateException(node + " is offline");
+                        }
                         WorkspaceList.Lease lease = computer.getWorkspaceList().allocate(p);
                         FilePath workspace = lease.path;
                         FlowNode flowNode = context.get(FlowNode.class);

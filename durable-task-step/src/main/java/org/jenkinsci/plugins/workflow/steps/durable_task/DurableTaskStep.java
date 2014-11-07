@@ -67,6 +67,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
      * Represents one task that is believed to still be running.
      */
     @Restricted(NoExternalUse.class)
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED") // recurrencePeriod is set in onResume, not deserialization
     public static final class Execution extends StepExecution implements Runnable {
 
         private static final long MIN_RECURRENCE_PERIOD = 250; // ¼s
@@ -84,7 +85,11 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
         private String remote;
 
         @Override public boolean start() throws Exception {
-            for (Computer c : Jenkins.getInstance().getComputers()) {
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                throw new IllegalStateException("Jenkins is not running");
+            }
+            for (Computer c : j.getComputers()) {
                 if (c.getChannel() == ws.getChannel()) {
                     node = c.getName();
                     break;
@@ -101,7 +106,12 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
 
         private @CheckForNull FilePath getWorkspace() throws AbortException {
             if (ws == null) {
-                Computer c = Jenkins.getInstance().getComputer(node);
+                Jenkins j = Jenkins.getInstance();
+                if (j == null) {
+                    LOGGER.fine("Jenkins is not running");
+                    return null;
+                }
+                Computer c = j.getComputer(node);
                 if (c == null) {
                     LOGGER.log(Level.FINE, "no such computer {0}", node);
                     return null;
@@ -209,6 +219,8 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             recurrencePeriod = MIN_RECURRENCE_PERIOD;
             Timer.get().schedule(this, recurrencePeriod, TimeUnit.MILLISECONDS);
         }
+
+        private static final long serialVersionUID = 1L;
 
     }
 

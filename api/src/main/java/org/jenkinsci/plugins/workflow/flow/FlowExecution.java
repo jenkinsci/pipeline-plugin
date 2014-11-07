@@ -194,6 +194,7 @@ public abstract class FlowExecution implements FlowActionStorage {
         return HttpResponses.plainText(sw.toString());
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings("DM_DEFAULT_ENCODING")
     public void doGraphViz(StaplerResponse rsp) throws IOException {
         Process p = new ProcessBuilder("dot", "-Tpng").start();
         writeDot(new PrintWriter(p.getOutputStream()));
@@ -209,22 +210,22 @@ public abstract class FlowExecution implements FlowActionStorage {
             FlowNode n;
             while ((n=walker.next())!=null) {
                 for (FlowNode p : n.getParents()) {
-                    w.printf("%s -> %s\n",
+                    w.printf("%s -> %s%n",
                             p.getId(), n.getId());
                 }
 
                 if (n instanceof BlockStartNode) {
                     BlockStartNode sn = (BlockStartNode) n;
-                    w.printf("%s [shape=trapezium]\n", n.getId());
+                    w.printf("%s [shape=trapezium]%n", n.getId());
                 } else
                 if (n instanceof BlockEndNode) {
                     BlockEndNode sn = (BlockEndNode) n;
-                    w.printf("%s [shape=invtrapezium]\n", n.getId());
-                    w.printf("%s -> %s [style=dotted]\n",
+                    w.printf("%s [shape=invtrapezium]%n", n.getId());
+                    w.printf("%s -> %s [style=dotted]%n",
                             sn.getStartNode().getId(), n.getId());
                 }
 
-                w.printf("%s [label=\"%s: %s\"]\n", n.getId(), n.getId(), n.getDisplayName());
+                w.printf("%s [label=\"%s: %s\"]%n", n.getId(), n.getId(), n.getDisplayName());
             }
 
             w.println("}");

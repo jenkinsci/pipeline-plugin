@@ -81,13 +81,15 @@ public final class WriteFileStep extends AbstractStepImpl {
 
     public static final class Execution extends AbstractSynchronousStepExecution<Void> {
 
-        @Inject private WriteFileStep step;
-        @StepContextParameter private FilePath workspace;
+        @Inject private transient WriteFileStep step;
+        @StepContextParameter private transient FilePath workspace;
 
         @Override protected Void run() throws Exception {
             workspace.child(step.file).write(step.text, /* TODO consider specifying encoding */ null);
             return null;
         }
+
+        private static final long serialVersionUID = 1L;
 
     }
 

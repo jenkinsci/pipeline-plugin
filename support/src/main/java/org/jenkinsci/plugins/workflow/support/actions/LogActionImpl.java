@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.support.actions;
 
+import com.google.common.base.Charsets;
 import org.apache.commons.jelly.XMLOutput;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -35,6 +36,7 @@ import org.kohsuke.stapler.framework.io.ByteBuffer;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 /**
@@ -69,11 +71,16 @@ public class LogActionImpl extends LogAction implements FlowNodeAction {
             return new AnnotatedLargeText<FlowNode>(log, getCharset(), !parent.isRunning(), parent);
         } catch (IOException e) {
             ByteBuffer buf = new ByteBuffer();
-            PrintStream ps = new PrintStream(buf);
+            PrintStream ps;
+            try {
+                ps = new PrintStream(buf, false, "UTF-8");
+            } catch (UnsupportedEncodingException x) {
+                throw new AssertionError(x);
+            }
             ps.println("Failed to find log file for id="+parent.getId());
             e.printStackTrace(ps);
             ps.close();
-            return new AnnotatedLargeText<FlowNode>(buf, Charset.defaultCharset(),true,parent);
+            return new AnnotatedLargeText<FlowNode>(buf, Charsets.UTF_8, true, parent);
         }
     }
 
