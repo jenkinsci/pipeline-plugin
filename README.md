@@ -4,9 +4,9 @@ Building continuous delivery pipelines and similarly complex tasks in Jenkins us
 You need to mix Parameterized Trigger, Copy Artifact, Promoted Builds, Conditional Build Step, and more just to express what should be a simple script.
 This project attempts to make it possible to directly write that script, what people often call a _workflow_ (sometimes abbreviated _flow_), while integrating with Jenkins features like slaves and publishers.
 
-[JUC Boston slides](http://www.cloudbees.com/sites/default/files/2014-0618-Boston-Jesse_Glick-Workflow.pdf) and [video](https://www.youtube.com/watch?v=gpaV6x9QwDo&index=9&list=UUKlF3GIFy9KVUefVbycx_vw)
+JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJY)
 
-[Early slides](https://docs.google.com/a/cloudbees.com/presentation/d/1ysu71kGpEjvsikKAXdPXTJULadHh9cRbpd0gJaIkVtA)
+JUC Boston (Jun 2014): [slides](http://www.cloudbees.com/sites/default/files/2014-0618-Boston-Jesse_Glick-Workflow.pdf) and [video](https://www.youtube.com/watch?v=gpaV6x9QwDo&index=9&list=UUKlF3GIFy9KVUefVbycx_vw)
 
 # Core features
 
