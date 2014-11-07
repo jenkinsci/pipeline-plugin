@@ -41,7 +41,7 @@ public class ErrorAction implements Action {
     /** For convenience, unwraps {@link UndeclaredThrowableException} automatically. */
     public ErrorAction(Throwable error) {
         if (error instanceof UndeclaredThrowableException) {
-            error = ((UndeclaredThrowableException) error).getCause();
+            error = error.getCause();
         }
         assert error!=null;
         this.error = error;
