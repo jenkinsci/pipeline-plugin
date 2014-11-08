@@ -144,6 +144,7 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
         synchronized (this) {
             if (callbacks != null) {
                 callbacks.add(callback);
+                return;
             }
         }
 
