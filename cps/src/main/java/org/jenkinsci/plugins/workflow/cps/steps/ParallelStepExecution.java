@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.cps.steps;
 
+import edu.umd.cs.findbugs.annotations.*;
 import groovy.lang.Closure;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
@@ -24,6 +25,7 @@ class ParallelStepExecution extends StepExecution {
         this.parallelStep = parallelStep;
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings("NP_NULL_ON_SOME_PATH")
     @Override
     public StepDescriptor getStepDescriptor() {
         return Jenkins.getInstance().getDescriptorByType(ParallelStep.DescriptorImpl.class);

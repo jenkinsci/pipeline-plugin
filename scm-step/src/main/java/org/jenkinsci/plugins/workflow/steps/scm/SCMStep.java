@@ -32,6 +32,7 @@ import hudson.model.listeners.SCMListener;
 import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
 import java.io.File;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +50,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 /**
  * A step which uses some kind of {@link SCM}.
  */
-public abstract class SCMStep extends Step {
+public abstract class SCMStep extends Step implements Serializable {
 
     private boolean poll = true;
     private boolean changelog = true;
@@ -122,6 +123,8 @@ public abstract class SCMStep extends Step {
             // TODO should we call buildEnvVars and return the result?
             return null;
         }
+
+        private static final long serialVersionUID = 1L;
     }
 
     @Override public StepExecution start(StepContext context) throws Exception {
@@ -149,4 +152,5 @@ public abstract class SCMStep extends Step {
 
     }
 
+    private static final long serialVersionUID = 1L;
 }
