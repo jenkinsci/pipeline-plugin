@@ -31,14 +31,6 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Computer;
 import hudson.model.TaskListener;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
-
 import jenkins.model.Jenkins;
 import jenkins.util.Timer;
 import org.jenkinsci.plugins.durabletask.Controller;
@@ -47,9 +39,16 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Runs an durable task on a slave, such as a shell script.
@@ -107,7 +106,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             }
             controller = step.task().launch(env, ws, launcher, listener);
             this.remote = ws.getRemote();
-            onResume();
+            setupTimer();
             return false;
         }
 
@@ -216,6 +215,10 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
 
         @Override public void onResume() {
             super.onResume();
+            setupTimer();
+        }
+
+        private void setupTimer() {
             recurrencePeriod = MIN_RECURRENCE_PERIOD;
             Timer.get().schedule(this, recurrencePeriod, TimeUnit.MILLISECONDS);
         }

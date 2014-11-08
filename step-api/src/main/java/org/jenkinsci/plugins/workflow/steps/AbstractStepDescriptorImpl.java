@@ -1,31 +1,17 @@
 package org.jenkinsci.plugins.workflow.steps;
 
-import java.io.IOException;
+import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
+import org.kohsuke.stapler.ClassDescriptor;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+
+import javax.inject.Inject;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-
-import com.google.inject.AbstractModule;
-import com.google.inject.Injector;
-import com.google.inject.MembersInjector;
-import com.google.inject.Provider;
-import com.google.inject.ProvisionException;
-import com.google.inject.TypeLiteral;
-import com.google.inject.matcher.Matchers;
-import com.google.inject.spi.TypeEncounter;
-import com.google.inject.spi.TypeListener;
-import com.google.inject.util.Providers;
-import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
-import org.kohsuke.stapler.ClassDescriptor;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -102,105 +88,4 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
 
         return contextTypes;
     }
-
-
-    /**
-     * Creates an {@link Injector} that performs injection to {@link Inject} and {@link StepContextParameter}.
-     */
-    protected Injector prepareInjector(final StepContext context, @Nullable final Step step) {
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
-        return j.getInjector().createChildInjector(new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(StepContext.class).toInstance(context);
-
-                        // make the outer 'this' object available at arbitrary super type of the actual concrete type
-                        // this will allow Step to subtype another Step and work as expected
-                        for (Class c=clazz; c!=Step.class; c=c.getSuperclass()) {
-                            if (step==null)
-                                bind(c).toProvider(NULL_PROVIDER);
-                            else
-                                bind(c).toInstance(step);
-                        }
-
-                        bindListener(Matchers.any(), new TypeListener() {
-                            @Override
-                            public <I> void hear(TypeLiteral<I> type, TypeEncounter<I> encounter) {
-                                for (Field f : type.getRawType().getDeclaredFields()) {
-                                    if (f.isAnnotationPresent(StepContextParameter.class)) {
-                                        encounter.register(new FieldInjector<I>(f));
-                                    }
-                                }
-                                for (Method m : type.getRawType().getDeclaredMethods()) {
-                                    if (m.isAnnotationPresent(StepContextParameter.class)) {
-                                        encounter.register(new MethodInjector<I>(m));
-                                    }
-                                }
-                            }
-
-                            abstract class ParameterInjector<T> implements MembersInjector<T> {
-                                Object value(Class type) throws IOException, InterruptedException {
-                                    return context.get(type);
-                                }
-                            }
-
-                            class FieldInjector<T> extends ParameterInjector<T> {
-                                final Field f;
-
-                                FieldInjector(Field f) {
-                                    this.f = f;
-                                    f.setAccessible(true);
-                                }
-
-                                @Override
-                                public void injectMembers(T instance) {
-                                    try {
-                                        f.set(instance, context.get(f.getType()));
-                                    } catch (IllegalAccessException e) {
-                                        throw (Error) new IllegalAccessError(e.getMessage()).initCause(e);
-                                    } catch (InterruptedException e) {
-                                        throw new ProvisionException("Failed to set a context parameter", e);
-                                    } catch (IOException e) {
-                                        throw new ProvisionException("Failed to set a context parameter", e);
-                                    }
-                                }
-                            }
-
-                            class MethodInjector<T> extends ParameterInjector<T> {
-                                final Method m;
-
-                                MethodInjector(Method m) {
-                                    this.m = m;
-                                    m.setAccessible(true);
-                                }
-
-                                @Override
-                                public void injectMembers(T instance) {
-                                    try {
-                                        Class<?>[] types = m.getParameterTypes();
-                                        Object[] args = new Object[types.length];
-                                        for (int i = 0; i < args.length; i++) {
-                                            args[i] = context.get(types[i]);
-                                        }
-                                        m.invoke(instance, args);
-                                    } catch (IllegalAccessException e) {
-                                        throw (Error) new IllegalAccessError(e.getMessage()).initCause(e);
-                                    } catch (InvocationTargetException e) {
-                                        throw new ProvisionException("Failed to set a context parameter", e);
-                                    } catch (InterruptedException e) {
-                                        throw new ProvisionException("Failed to set a context parameter", e);
-                                    } catch (IOException e) {
-                                        throw new ProvisionException("Failed to set a context parameter", e);
-                                    }
-                                }
-                            }
-                        });
-                    }
-        });
-    }
-
-    private static final Provider<Object> NULL_PROVIDER = Providers.of(null);
 }
