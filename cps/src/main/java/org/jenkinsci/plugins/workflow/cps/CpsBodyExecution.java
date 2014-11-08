@@ -58,7 +58,7 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
     @Override
     public boolean cancel(boolean b) {
         // 'stopped' and 'thread' are updated atomically
-        CpsThread t;
+        final CpsThread t;
         synchronized (this) {
             if (isDone())  return false;   // already complete
             stopped = new InterruptedException();
@@ -66,17 +66,28 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
         }
 
         if (t!=null) {
-            // TODO: if it's not running inside a StepExecution, we need to set an interrupt flag
-            // and interrupt at an earliest convenience
-            // TODO: this should probably only happen from CpsVmThread
-            StepExecution s = t.getStep();
-            if (s!=null)
-                try {
-                    s.stop();
-                } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, "Failed to stop "+s, e);
-                    return false;
+            t.getExecution().runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+                @Override
+                public void onSuccess(CpsThreadGroup g) {
+                    StepExecution s = t.getStep();  // this is the part that should run in CpsVmThread
+                    if (s == null) {
+                        // TODO: if it's not running inside a StepExecution, we need to set an interrupt flag
+                        // and interrupt at an earliest convenience
+                        return;
+                    }
+
+                    try {
+                        s.stop();
+                    } catch (Exception e) {
+                        LOGGER.log(Level.WARNING, "Failed to stop " + s, e);
+                    }
                 }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    // couldn't cancel
+                }
+            });
         } else {
             // if it hasn't begun executing, we'll stop it when
             // it begins.
