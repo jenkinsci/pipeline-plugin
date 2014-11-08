@@ -40,6 +40,7 @@ import javax.annotation.Nonnull;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
@@ -72,13 +73,17 @@ public abstract class SCMStep extends Step {
     protected abstract @Nonnull SCM createSCM();
 
     class StepExecutionImpl extends AbstractSynchronousStepExecution<Void> {
+        @StepContextParameter private transient Run run;
+        @StepContextParameter private transient FilePath workspace;
+        @StepContextParameter private transient TaskListener listener;
+        @StepContextParameter private transient Launcher launcher;
+
         StepExecutionImpl(StepContext context) {
             super(context);
         }
 
         @Override
         protected Void run() throws Exception {
-            Run<?,?> run = getContext().get(Run.class);
             File changelogFile = null;
             if (changelog) {
                 for (int i = 0; ; i++) {
@@ -89,9 +94,6 @@ public abstract class SCMStep extends Step {
                 }
             }
             SCM scm = createSCM();
-            FilePath workspace = getContext().get(FilePath.class);
-            TaskListener listener = getContext().get(TaskListener.class);
-            Launcher launcher = getContext().get(Launcher.class);
             SCMRevisionState baseline = null;
             Run<?,?> prev = run.getPreviousBuild();
             if (prev != null) {

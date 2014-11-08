@@ -63,13 +63,18 @@ public final class CoreStep extends Step {
 
         private transient final SimpleBuildStep delegate;
 
+        @StepContextParameter private transient Run run;
+        @StepContextParameter private transient FilePath pwd;
+        @StepContextParameter private transient Launcher launcher;
+        @StepContextParameter private transient TaskListener listener;
+
         Execution(SimpleBuildStep delegate, StepContext context) {
             super(context);
             this.delegate = delegate;
         }
 
         @Override protected Void run() throws Exception {
-            delegate.perform(getContext().get(Run.class), getContext().get(FilePath.class), getContext().get(Launcher.class), getContext().get(TaskListener.class));
+            delegate.perform(run, pwd, launcher, listener);
             return null;
         }
 

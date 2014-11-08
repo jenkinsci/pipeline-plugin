@@ -70,6 +70,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
@@ -579,14 +580,17 @@ public class WorkflowTest extends SingleJobTestBase {
             }
         }
         public static final class Execution extends AbstractStepExecutionImpl {
+            @StepContextParameter transient TaskListener listener;
+            @StepContextParameter transient FlowExecution flow;
             @Override public boolean start() throws Exception {
-                getContext().get(TaskListener.class).getLogger().println("running as " + Jenkins.getAuthentication().getName() + " from " + Thread.currentThread().getName());
+                listener.getLogger().println("running as " + Jenkins.getAuthentication().getName() + " from " + Thread.currentThread().getName());
                 return false;
             }
             @Override public void stop() throws Exception {}
             @Override public void onResume() {
+                super.onResume();
                 try {
-                    getContext().get(TaskListener.class).getLogger().println("again running as " + getContext().get(FlowExecution.class).getAuthentication().getName() + " from " + Thread.currentThread().getName());
+                    listener.getLogger().println("again running as " + flow.getAuthentication().getName() + " from " + Thread.currentThread().getName());
                 } catch (Exception x) {
                     getContext().onFailure(x);
                 }
@@ -596,7 +600,7 @@ public class WorkflowTest extends SingleJobTestBase {
             StepExecution.applyAll(Execution.class, new Function<Execution,Void>() {
                 @Override public Void apply(Execution input) {
                     try {
-                        input.getContext().get(TaskListener.class).getLogger().println((terminate ? "finally" : "still") + " running as " + input.getContext().get(FlowExecution.class).getAuthentication().getName() + " from " + Thread.currentThread().getName());
+                        input.listener.getLogger().println((terminate ? "finally" : "still") + " running as " + input.flow.getAuthentication().getName() + " from " + Thread.currentThread().getName());
                         if (terminate) {
                             input.getContext().onSuccess(null);
                         }

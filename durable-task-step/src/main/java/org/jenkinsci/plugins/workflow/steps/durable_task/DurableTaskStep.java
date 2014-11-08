@@ -221,6 +221,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
         }
 
         @Override public void onResume() {
+            super.onResume();
             recurrencePeriod = MIN_RECURRENCE_PERIOD;
             Timer.get().schedule(this, recurrencePeriod, TimeUnit.MILLISECONDS);
         }
