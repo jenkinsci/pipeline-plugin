@@ -37,7 +37,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     private static final Logger LOGGER = Logger.getLogger(StageStepExecution.class.getName());
 
     // only used during the start() call, so no need to be persisted
-    @Inject private transient StageStep step;
+    @Inject(optional=true) private transient StageStep step;
     @StepContextParameter private transient Run<?,?> run;
     @StepContextParameter private transient FlowNode node;
     @StepContextParameter private transient TaskListener listener; // picked up by getRequiredContext
