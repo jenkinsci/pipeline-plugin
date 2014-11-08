@@ -26,9 +26,7 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Continuation;
-import com.cloudbees.groovy.cps.Env;
 import com.cloudbees.groovy.cps.Next;
-import com.cloudbees.groovy.cps.Outcome;
 import com.cloudbees.groovy.cps.impl.CpsCallableInvocation;
 import com.cloudbees.groovy.cps.impl.FunctionCallEnv;
 import com.cloudbees.groovy.cps.impl.SourceLocation;
@@ -44,11 +42,8 @@ import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.steps.Step;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,14 +58,6 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  */
 @PersistIn(NONE)
 final class BodyInvoker {
-    /**
-     * If {@link Step} requests an invocation of body, the target address is set here.
-     */
-    private final FutureCallback bodyCallback;
-
-    /**
-     * When {@link #bodyCallback} is set,
-     */
     private final List<Object> contextOverrides;
 
     private final BodyReference body;
@@ -79,14 +66,12 @@ final class BodyInvoker {
 
     private final List<? extends Action> startNodeActions;
 
-    BodyInvoker(CpsStepContext owner, BodyReference body, FutureCallback c, List<? extends Action> startNodeActions, Object... contextOverrides) {
+    final CpsBodyExecution bodyExecution = new CpsBodyExecution();
+
+    BodyInvoker(CpsStepContext owner, BodyReference body, List<? extends Action> startNodeActions, Object... contextOverrides) {
         this.body = body;
         this.owner = owner;
         this.startNodeActions = startNodeActions;
-
-        if (!(c instanceof Serializable))
-            throw new IllegalStateException("Callback must be persistable");
-        this.bodyCallback = c;
 
         this.contextOverrides = ImmutableList.copyOf(contextOverrides);
     }
@@ -97,18 +82,14 @@ final class BodyInvoker {
      * If the body is a synchronous closure, this method evaluates the closure synchronously.
      * Otherwise, the body is asynchronous and the method schedules another thread to evaluate the body.
      *
-     * In either case, the result of the evaluation is passed to {@link #bodyCallback}.
+     * In either case, the result of the evaluation is passed to {@link #bodyExecution}.
      *
      * @param currentThread
      *      The thread whose context the new thread will inherit.
-     * @param callback
-     *      If non-null, this gets called back in addition to {@link #bodyCallback}
      */
-    /*package*/ void start(CpsThread currentThread, FlowHead head, @Nullable FutureCallback callback) {
-        FutureCallback c = bodyCallback;
-
-        if (callback!=null)
-            c = new TeeFutureCallback(callback,c);
+    @CpsVmThreadOnly
+    /*package*/ void start(CpsThread currentThread, FlowHead head) {
+        FutureCallback c = bodyExecution.broadcast;
 
         StepStartNode sn = addBodyStartFlowNode(head);
 
@@ -123,7 +104,8 @@ final class BodyInvoker {
             // this problem is captured as https://trello.com/c/v6Pbwqxj/70-allowing-steps-to-build-flownodes
             CpsThread t = currentThread.group.addThread(createContinuable(currentThread, e, c, sn), head,
                     ContextVariableSet.from(currentThread.getContextVariables(), contextOverrides));
-            t.resume(new Outcome(null, null));  // get the new thread going
+
+            bodyExecution.startExecution(t);
         } catch (Throwable t) {
             // body has completed synchronously and abnormally
             c.onFailure(t);
@@ -152,8 +134,9 @@ final class BodyInvoker {
      *
      * The net effect is as if the body evaluation happens in the same thread as in the caller thread.
      */
+    @CpsVmThreadOnly
     /*package*/ void start(CpsThread currentThread) {
-        start(currentThread, currentThread.head, null);
+        start(currentThread, currentThread.head);
     }
 
     /**

@@ -41,6 +41,7 @@ import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.BodyExecution;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -220,19 +221,19 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     }
 
     @Override
-    public void invokeBodyLater(final FutureCallback callback, Object... contextOverrides) {
-        invokeBodyLater(body,callback,Collections.<Action>emptyList(),contextOverrides);
+    public BodyExecution invokeBodyLater(Object... contextOverrides) {
+        return invokeBodyLater(body,Collections.<Action>emptyList(),contextOverrides);
     }
 
     /**
      * @param startNodeActions
      *      actions to be added to {@link StepStartNode} that indicates the beginning of a body invocation.
      */
-    public void invokeBodyLater(BodyReference body, final FutureCallback callback, List<? extends Action> startNodeActions, Object... contextOverrides) {
+    public BodyExecution invokeBodyLater(BodyReference body, List<? extends Action> startNodeActions, Object... contextOverrides) {
         if (body==null)
             throw new IllegalStateException("There's no body to invoke");
 
-        final BodyInvoker b = new BodyInvoker(this,body,callback,startNodeActions,contextOverrides);
+        final BodyInvoker b = new BodyInvoker(this,body,startNodeActions,contextOverrides);
 
         boolean _syncMode;
         synchronized (this) { // TODO should this whole method be synchronized? mainly getExecution() is a concern
@@ -255,13 +256,15 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
 
                     @Override
                     public void onFailure(Throwable t) {
-                        callback.onFailure(t);
+                        b.bodyExecution.broadcast.onFailure(t);
                     }
                 });
             } catch (IOException e) {
-                callback.onFailure(e);
+                b.bodyExecution.broadcast.onFailure(e);
             }
         }
+
+        return b.bodyExecution;
     }
 
     @Override

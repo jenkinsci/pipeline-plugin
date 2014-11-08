@@ -44,9 +44,8 @@ public class LoadStepExecution extends StepExecution {
         // as the body can pause.
         cps.invokeBodyLater(
                 t.getGroup().export(script),
-                cps, // when the body is done, the load step is done
                 Collections.<Action>emptyList()
-        );
+        ).addCallback(cps); // when the body is done, the load step is done
 
         return false;
     }

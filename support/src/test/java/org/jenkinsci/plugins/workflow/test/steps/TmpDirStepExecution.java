@@ -16,7 +16,7 @@ public class TmpDirStepExecution extends StepExecution {
     @Override
     public boolean start() throws Exception {
         File dir = Util.createTempDir();
-        getContext().invokeBodyLater(new Callback(getContext(), dir), new FilePath(dir));
+        getContext().invokeBodyLater(new FilePath(dir)).addCallback(new Callback(getContext(), dir));
         return false;
     }
 

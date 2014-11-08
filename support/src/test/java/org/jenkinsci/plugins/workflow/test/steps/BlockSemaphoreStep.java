@@ -86,7 +86,7 @@ public final class BlockSemaphoreStep extends Step {
 
     public void startBlock(Object... contextOverrides) {
         moveFrom(State.STARTED);
-        context.invokeBodyLater(new Callback(), contextOverrides);
+        context.invokeBodyLater(contextOverrides).addCallback(new Callback());
     }
     
     private class Callback implements FutureCallback {

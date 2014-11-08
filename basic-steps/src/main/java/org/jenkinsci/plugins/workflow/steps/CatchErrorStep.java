@@ -69,7 +69,7 @@ public final class CatchErrorStep extends AbstractStepImpl {
 
         @Override public boolean start() throws Exception {
             StepContext context = getContext();
-            context.invokeBodyLater(new Callback(context));
+            context.invokeBodyLater().addCallback(new Callback(context));
             return false;
         }
 

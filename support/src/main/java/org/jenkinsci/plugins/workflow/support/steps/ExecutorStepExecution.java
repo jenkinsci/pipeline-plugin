@@ -401,7 +401,7 @@ public class ExecutorStepExecution extends StepExecution {
                         FlowNode flowNode = context.get(FlowNode.class);
                         flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
                         listener.getLogger().println("Running on " + computer.getDisplayName() + " in " + workspace); // TODO hyperlink
-                        context.invokeBodyLater(new Callback(cookie, lease), exec, computer, env, workspace);
+                        context.invokeBodyLater(exec, computer, env, workspace).addCallback(new Callback(cookie, lease));
                         LOGGER.log(Level.FINE, "started {0}", cookie);
                     } else {
                         // just rescheduled after a restart; wait for task to complete

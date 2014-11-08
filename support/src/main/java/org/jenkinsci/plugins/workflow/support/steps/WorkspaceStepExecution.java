@@ -45,7 +45,7 @@ public class WorkspaceStepExecution extends StepExecution {
         FilePath workspace = lease.path;
         flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
         listener.getLogger().println("Running in " + workspace);
-        getContext().invokeBodyLater(new Callback(getContext(), lease), workspace);
+        getContext().invokeBodyLater(workspace).addCallback(new Callback(getContext(), lease));
         return false;
     }
 

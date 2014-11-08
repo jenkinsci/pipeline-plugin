@@ -37,9 +37,8 @@ class ParallelStepExecution extends StepExecution {
         for (Entry<String,Closure> e : parallelStep.closures.entrySet()) {
             cps.invokeBodyLater(
                     t.getGroup().export(e.getValue()),
-                    r.callbackFor(e.getKey()),
                     Collections.singletonList(new ParallelLabelAction(e.getKey()))
-            );
+            ).addCallback(r.callbackFor(e.getKey()));
         }
 
         return false;

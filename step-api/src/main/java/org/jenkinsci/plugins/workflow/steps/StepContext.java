@@ -115,7 +115,7 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      *      Only allowed values are instances of the predefined types (see {@link #get(Class)} above.)
      *      TODO: more restrictive list here; do NOT pass Launcher
      */
-    public abstract void invokeBodyLater(FutureCallback<Object> callback, Object... contextOverrides);
+    public abstract BodyExecution invokeBodyLater(Object... contextOverrides);
 
     /**
      * {@link StepContext}s get persisted, so they may not have the identity equality, but equals

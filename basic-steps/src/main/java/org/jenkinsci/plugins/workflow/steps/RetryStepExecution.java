@@ -15,7 +15,7 @@ public class RetryStepExecution extends StepExecution {
     @Override
     public boolean start() throws Exception {
         StepContext context = getContext();
-        context.invokeBodyLater(new Callback(context, step.getCount()));
+        context.invokeBodyLater().addCallback(new Callback(context, step.getCount()));
         return false;   // execution is asynchronous
     }
 
@@ -57,7 +57,7 @@ public class RetryStepExecution extends StepExecution {
                     /*
                     l.getLogger().println("Retrying");
                     */
-                    context.invokeBodyLater(this);
+                    context.invokeBodyLater().addCallback(this);
                 } else {
                     context.onFailure(t);
                 }

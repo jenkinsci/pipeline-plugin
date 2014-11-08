@@ -290,7 +290,10 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             for (BodyInvoker b : context.bodyInvokers) {
                 // don't collect the first head, which is what we borrowed from our parent.
                 FlowHead h = heads[idx];
-                b.start(cur, h, idx>0 ?  new HeadCollector(context, h) : null);
+                b.start(cur, h);
+
+                if (idx>0)
+                    b.bodyExecution.addCallback(new HeadCollector(context, h));
                 idx++;
             }
 
