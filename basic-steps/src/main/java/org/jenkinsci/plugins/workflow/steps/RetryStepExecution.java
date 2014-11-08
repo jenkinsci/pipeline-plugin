@@ -11,21 +11,20 @@ import java.io.Serializable;
 public class RetryStepExecution extends StepExecution {
     @Inject
     private transient RetryStep step;
+    private volatile BodyExecution body;
 
     @Override
     public boolean start() throws Exception {
         StepContext context = getContext();
-        context.invokeBodyLater().addCallback(new Callback(context, step.getCount()));
+        body = context.invokeBodyLater();
+        body.addCallback(new Callback(context, step.getCount()));
         return false;   // execution is asynchronous
     }
 
     @Override
     public void stop() throws Exception {
-        // TODO
-        // requiring finding the tip and aborting it
-        // Perhaps StepContext should support stopping the execution
-        // started by the invokeBodyLater method
-        throw new UnsupportedOperationException();
+        if (body!=null)
+            body.cancel(true);
     }
 
     private static class Callback implements FutureCallback<Object>, Serializable {
