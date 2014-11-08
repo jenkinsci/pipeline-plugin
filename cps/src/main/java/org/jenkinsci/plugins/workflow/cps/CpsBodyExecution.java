@@ -141,16 +141,18 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
         if (!(callback instanceof Serializable))
             throw new IllegalStateException("Callback must be persistable, but got "+callback.getClass());
 
+        Outcome o;
         synchronized (this) {
             if (callbacks != null) {
                 callbacks.add(callback);
                 return;
             }
+            o = outcome;
         }
 
         // if the computation has completed,
-        if (outcome.isSuccess())    callback.onSuccess(outcome.getNormal());
-        else                        callback.onFailure(outcome.getAbnormal());
+        if (o.isSuccess())    callback.onSuccess(o.getNormal());
+        else                  callback.onFailure(o.getAbnormal());
     }
 
     public synchronized boolean isDone() {
