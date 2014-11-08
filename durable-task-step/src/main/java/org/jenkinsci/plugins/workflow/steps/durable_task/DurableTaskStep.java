@@ -37,6 +37,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
+
 import jenkins.model.Jenkins;
 import jenkins.util.Timer;
 import org.jenkinsci.plugins.durabletask.Controller;
@@ -75,7 +77,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
         private static final long MAX_RECURRENCE_PERIOD = 15000; // 15s
         private static final float RECURRENCE_PERIOD_BACKOFF = 1.2f;
 
-        @Inject private transient DurableTaskStep step;
+        @Inject @Nullable private transient DurableTaskStep step;
         @StepContextParameter private transient FilePath ws;
         @StepContextParameter private transient EnvVars env;
         @StepContextParameter private transient Launcher launcher;

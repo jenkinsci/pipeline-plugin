@@ -14,11 +14,13 @@ import javax.inject.Inject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.MembersInjector;
+import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.spi.TypeEncounter;
 import com.google.inject.spi.TypeListener;
+import com.google.inject.util.Providers;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.kohsuke.stapler.ClassDescriptor;
@@ -117,8 +119,12 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
 
                         // make the outer 'this' object available at arbitrary super type of the actual concrete type
                         // this will allow Step to subtype another Step and work as expected
-                        for (Class c=clazz; c!=Step.class; c=c.getSuperclass())
-                            bind(c).toInstance(step);
+                        for (Class c=clazz; c!=Step.class; c=c.getSuperclass()) {
+                            if (step==null)
+                                bind(c).toProvider(NULL_PROVIDER);
+                            else
+                                bind(c).toInstance(step);
+                        }
 
                         bindListener(Matchers.any(), new TypeListener() {
                             @Override
@@ -195,4 +201,6 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
                     }
         });
     }
+
+    private static final Provider<Object> NULL_PROVIDER = Providers.of(null);
 }
