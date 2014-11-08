@@ -81,6 +81,7 @@ public abstract class SCMStep extends Step implements Serializable {
 
         StepExecutionImpl(StepContext context) {
             super(context);
+            inject();
         }
 
         @Override
