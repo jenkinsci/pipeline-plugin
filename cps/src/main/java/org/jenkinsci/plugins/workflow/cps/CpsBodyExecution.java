@@ -137,6 +137,23 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
 
     }
 
+    public void prependCallback(FutureCallback<Object> callback) {
+        if (!(callback instanceof Serializable))
+            throw new IllegalStateException("Callback must be persistable, but got "+callback.getClass());
+
+        Outcome o;
+        synchronized (this) {
+            if (callbacks != null) {
+                callbacks.add(0,callback);
+                return;
+            }
+            o = outcome;
+        }
+
+        // if the computation has completed,
+        fire(callback, o);
+    }
+
     public void addCallback(FutureCallback<Object> callback) {
         if (!(callback instanceof Serializable))
             throw new IllegalStateException("Callback must be persistable, but got "+callback.getClass());
@@ -151,6 +168,10 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
         }
 
         // if the computation has completed,
+        fire(callback, o);
+    }
+
+    private void fire(FutureCallback<Object> callback, Outcome o) {
         if (o.isSuccess())    callback.onSuccess(o.getNormal());
         else                  callback.onFailure(o.getAbnormal());
     }
