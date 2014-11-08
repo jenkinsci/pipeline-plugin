@@ -11,16 +11,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * {@link BodyExecution} impl for CPS.
  *
  * This object is serializable while {@link BodyInvoker} isn't.
  *
+ * When the body finishes execution, this object should be notified as {@link FutureCallback}.
+ *
  * @author Kohsuke Kawaguchi
  * @see BodyInvoker#bodyExecution
  */
-class CpsBodyExecution extends BodyExecution {
+class CpsBodyExecution extends BodyExecution implements FutureCallback {
     /**
      * Thread that's executing
      */
@@ -33,10 +40,11 @@ class CpsBodyExecution extends BodyExecution {
     @GuardedBy("this")
     private InterruptedException stopped;
 
-    /**
-     * Distributes the result to a list of {@link FutureCallback}s.
-     */
-    final FutureCallbackBroadcast broadcast = new FutureCallbackBroadcast();
+    @GuardedBy("this")
+    private List<FutureCallback<Object>> callbacks = new ArrayList<FutureCallback<Object>>();
+
+    @GuardedBy("this")
+    private Outcome outcome;
 
     @Override
     public synchronized Collection<StepExecution> getCurrentExecutions() {
@@ -48,20 +56,11 @@ class CpsBodyExecution extends BodyExecution {
     }
 
     @Override
-    public boolean isDone() {
-        return broadcast.isDone();
-    }
-
-    @Override
-    public void addCallback(FutureCallback<Object> callback) {
-        broadcast.addCallback(callback);
-    }
-
-    @Override
-    public void stop() throws Exception {
+    public boolean cancel(boolean b) {
         // 'stopped' and 'thread' are updated atomically
         CpsThread t;
         synchronized (this) {
+            if (isDone())  return false;   // already complete
             stopped = new InterruptedException();
             t = this.thread;
         }
@@ -69,13 +68,49 @@ class CpsBodyExecution extends BodyExecution {
         if (t!=null) {
             // TODO: if it's not running inside a StepExecution, we need to set an interrupt flag
             // and interrupt at an earliest convenience
+            // TODO: this should probably only happen from CpsVmThread
             StepExecution s = t.getStep();
             if (s!=null)
-                s.stop();
+                try {
+                    s.stop();
+                } catch (Exception e) {
+                    LOGGER.log(Level.WARNING, "Failed to stop "+s, e);
+                    return false;
+                }
         } else {
             // if it hasn't begun executing, we'll stop it when
             // it begins.
         }
+        return true;
+    }
+
+    @Override
+    public synchronized boolean isCancelled() {
+        return stopped!=null && isDone();
+    }
+
+    @Override
+    public synchronized Object get() throws InterruptedException, ExecutionException {
+        while (outcome==null) {
+            wait();
+        }
+        if (outcome.isSuccess())    return outcome.getNormal();
+        else    throw new ExecutionException(outcome.getAbnormal());
+    }
+
+    @Override
+    public synchronized Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        long endTime = System.currentTimeMillis() + unit.toMillis(timeout);
+        long remaining;
+        while (outcome==null && (remaining=endTime-System.currentTimeMillis()) > 0) {
+            wait(remaining);
+        }
+
+        if (outcome==null)
+            throw new TimeoutException();
+
+        if (outcome.isSuccess())    return outcome.getNormal();
+        else    throw new ExecutionException(outcome.getAbnormal());
     }
 
     /**
@@ -91,64 +126,53 @@ class CpsBodyExecution extends BodyExecution {
 
     }
 
-    class FutureCallbackBroadcast implements FutureCallback, Serializable {
-        @GuardedBy("this")
-        private List<FutureCallback<Object>> callbacks = new ArrayList<FutureCallback<Object>>();
+    public void addCallback(FutureCallback<Object> callback) {
+        if (!(callback instanceof Serializable))
+            throw new IllegalStateException("Callback must be persistable, but got "+callback.getClass());
 
-        @GuardedBy("this")
-        private Outcome outcome;
-
-
-        public FutureCallbackBroadcast() {
-        }
-
-        public void addCallback(FutureCallback<Object> callback) {
-            if (!(callback instanceof Serializable))
-                throw new IllegalStateException("Callback must be persistable, but got "+callback.getClass());
-
-            synchronized (this) {
-                if (callbacks != null) {
-                    callbacks.add(callback);
-                }
-            }
-
-            // if the computation has completed,
-            if (outcome.isSuccess())    callback.onSuccess(outcome.getNormal());
-            else                        callback.onFailure(outcome.getAbnormal());
-        }
-        
-        public synchronized boolean isDone() {
-            return outcome!=null;
-        }
-
-        /**
-         * Atomically commits the outcome and then grabs all the callbacks.
-         */
-        private synchronized List<FutureCallback<Object>> grabCallbacks(Outcome o) {
-            this.outcome = o;
-            List<FutureCallback<Object>> r = callbacks;
-            callbacks = null;
-            if (r==null)        r = Collections.emptyList();
-            return r;
-        }
-
-        @Override
-        public void onSuccess(Object result) {
-            for (FutureCallback<Object> c : grabCallbacks(new Outcome(result,null))) {
-                c.onSuccess(result);
+        synchronized (this) {
+            if (callbacks != null) {
+                callbacks.add(callback);
             }
         }
 
-        @Override
-        public void onFailure(Throwable t) {
-            for (FutureCallback<Object> c : grabCallbacks(new Outcome(null,t))) {
-                c.onFailure(t);
-            }
-        }
+        // if the computation has completed,
+        if (outcome.isSuccess())    callback.onSuccess(outcome.getNormal());
+        else                        callback.onFailure(outcome.getAbnormal());
+    }
 
-        private static final long serialVersionUID = 1L;
+    public synchronized boolean isDone() {
+        return outcome!=null;
+    }
+
+    /**
+     * Atomically commits the outcome and then grabs all the callbacks.
+     */
+    private synchronized List<FutureCallback<Object>> grabCallbacks(Outcome o) {
+        if (this.outcome!=null)     return Collections.emptyList(); // already completed
+
+        this.outcome = o;
+        List<FutureCallback<Object>> r = callbacks;
+        callbacks = null;
+        return r;
+    }
+
+    @Override
+    public void onSuccess(Object result) {
+        for (FutureCallback<Object> c : grabCallbacks(new Outcome(result,null))) {
+            c.onSuccess(result);
+        }
+    }
+
+    @Override
+    public void onFailure(Throwable t) {
+        for (FutureCallback<Object> c : grabCallbacks(new Outcome(null,t))) {
+            c.onFailure(t);
+        }
     }
 
 
     private static final long serialVersionUID = 1L;
+
+    private static final Logger LOGGER = Logger.getLogger(CpsBodyExecution.class.getName());
 }

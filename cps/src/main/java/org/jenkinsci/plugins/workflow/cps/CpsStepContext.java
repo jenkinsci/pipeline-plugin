@@ -256,11 +256,11 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
 
                     @Override
                     public void onFailure(Throwable t) {
-                        b.bodyExecution.broadcast.onFailure(t);
+                        b.bodyExecution.onFailure(t);
                     }
                 });
             } catch (IOException e) {
-                b.bodyExecution.broadcast.onFailure(e);
+                b.bodyExecution.onFailure(e);
             }
         }
 

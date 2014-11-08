@@ -27,14 +27,22 @@ import com.google.common.util.concurrent.FutureCallback;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.concurrent.Future;
 
 /**
  * Represents the executing body block of {@link Step}.
  *
+ * <p>
+ * As a representation of asynchronous computation, this object implements {@link Future},
+ * so that you can cancel the execution, install a listener, etc.
+ *
  * @author Kohsuke Kawaguchi
  * @see StepContext#invokeBodyLater(Object...)
  */
-public abstract class BodyExecution implements Serializable {
+public abstract class BodyExecution implements Future<Object>, Serializable {
+    // I wanted to make this extend from ListenableFuture, but its addListener method takes
+    // Executor & Runnable that makes it unsuitable for persistence.
+
     /**
      * Returns the inner-most {@link StepExecution}s that are currently executing.
      */
@@ -46,16 +54,6 @@ public abstract class BodyExecution implements Serializable {
      * If the execution is already completed, the callback will be invoked immediately.
      */
     public abstract void addCallback(FutureCallback<Object> callback);
-
-    /**
-     * Has the body finished executing?
-     */
-    public abstract boolean isDone();
-
-    /**
-     * Convenience method to interrupt this execution.
-     */
-    public abstract void stop() throws Exception;
 
     private static final long serialVersionUID = 1L;
 }

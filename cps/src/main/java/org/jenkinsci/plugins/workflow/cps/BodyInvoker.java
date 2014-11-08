@@ -89,7 +89,6 @@ final class BodyInvoker {
      */
     @CpsVmThreadOnly
     /*package*/ void start(CpsThread currentThread, FlowHead head) {
-        FutureCallback c = bodyExecution.broadcast;
 
         StepStartNode sn = addBodyStartFlowNode(head);
 
@@ -97,18 +96,18 @@ final class BodyInvoker {
             // TODO: handle arguments to closure
             Object x = body.getBody(currentThread).call();
 
-            c.onSuccess(x);   // body has completed synchronously
+            bodyExecution.onSuccess(x);   // body has completed synchronously
         } catch (CpsCallableInvocation e) {
             // execute this closure asynchronously
             // TODO: does it make sense that the new thread shares the same head?
             // this problem is captured as https://trello.com/c/v6Pbwqxj/70-allowing-steps-to-build-flownodes
-            CpsThread t = currentThread.group.addThread(createContinuable(currentThread, e, c, sn), head,
+            CpsThread t = currentThread.group.addThread(createContinuable(currentThread, e, sn), head,
                     ContextVariableSet.from(currentThread.getContextVariables(), contextOverrides));
 
             bodyExecution.startExecution(t);
         } catch (Throwable t) {
             // body has completed synchronously and abnormally
-            c.onFailure(t);
+            bodyExecution.onFailure(t);
         }
     }
 
@@ -146,21 +145,21 @@ final class BodyInvoker {
      * execution a failure if any of the threads fail, so this behaviour ensures that a problem in the closure
      * body won't terminate the workflow.
      */
-    private Continuable createContinuable(CpsThread currentThread, CpsCallableInvocation inv, final FutureCallback callback, BlockStartNode sn) {
+    private Continuable createContinuable(CpsThread currentThread, CpsCallableInvocation inv, BlockStartNode sn) {
         // we need FunctionCallEnv that acts as the back drop of try/catch block.
         // TODO: we need to capture the surrounding calling context to capture variables, and switch to ClosureCallEnv
-        FunctionCallEnv caller = new FunctionCallEnv(null, new SuccessAdapter(callback,sn), null, null);
+        FunctionCallEnv caller = new FunctionCallEnv(null, new SuccessAdapter(bodyExecution,sn), null, null);
         if (currentThread.getExecution().isSandbox())
             caller.setInvoker(new SandboxInvoker());
 
         // catch an exception thrown from body and treat that as a failure
         TryBlockEnv env = new TryBlockEnv(caller, null);
-        env.addHandler(Throwable.class, new FailureAdapter(callback,sn));
+        env.addHandler(Throwable.class, new FailureAdapter(bodyExecution,sn));
 
         return new Continuable(
             // this source location is a place holder for the step implementation.
             // perhaps at some point in the future we'll let the Step implementation control this.
-            inv.invoke(env, SourceLocation.UNKNOWN, new SuccessAdapter(callback,sn)));
+            inv.invoke(env, SourceLocation.UNKNOWN, new SuccessAdapter(bodyExecution,sn)));
     }
 
     private static abstract class Adapter implements Continuation {
