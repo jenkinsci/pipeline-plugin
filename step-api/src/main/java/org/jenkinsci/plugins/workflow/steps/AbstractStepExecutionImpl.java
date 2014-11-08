@@ -31,6 +31,10 @@ public abstract class AbstractStepExecutionImpl extends StepExecution {
      */
     @Override
     public void onResume() {
-        getStepDescriptor().prepareInjector(getContext(),null).injectMembers(this);
+        try {
+            getStepDescriptor().prepareInjector(getContext(),null).injectMembers(this);
+        } catch (Exception e) {
+            getContext().onFailure(e);
+        }
     }
 }

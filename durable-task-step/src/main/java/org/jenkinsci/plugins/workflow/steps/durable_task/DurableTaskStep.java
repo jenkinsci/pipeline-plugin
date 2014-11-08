@@ -182,16 +182,8 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                     }
                 }
             }, 3, TimeUnit.SECONDS);
-            TaskListener _listener;
             try {
-                _listener = getContext().get(TaskListener.class);
-            } catch (Exception x) {
-                recurrencePeriod = 0;
-                getContext().onFailure(x);
-                return;
-            }
-            try {
-                if (controller.writeLog(workspace, _listener.getLogger())) {
+                if (controller.writeLog(workspace, listener.getLogger())) {
                     getContext().saveState();
                     recurrencePeriod = MIN_RECURRENCE_PERIOD; // got output, maybe we will get more soon
                 } else {
