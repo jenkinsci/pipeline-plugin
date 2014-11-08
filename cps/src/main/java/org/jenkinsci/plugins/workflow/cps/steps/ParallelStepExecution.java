@@ -1,11 +1,13 @@
 package org.jenkinsci.plugins.workflow.cps.steps;
 
 import groovy.lang.Closure;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.cps.CpsThread;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ParallelLabelAction;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ResultHandler;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.util.Collections;
@@ -20,6 +22,11 @@ class ParallelStepExecution extends StepExecution {
     public ParallelStepExecution(ParallelStep parallelStep, StepContext context) {
         super(context);
         this.parallelStep = parallelStep;
+    }
+
+    @Override
+    public StepDescriptor getStepDescriptor() {
+        return Jenkins.getInstance().getDescriptorByType(ParallelStep.DescriptorImpl.class);
     }
 
     @Override

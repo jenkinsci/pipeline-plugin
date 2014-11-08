@@ -5,7 +5,7 @@ package org.jenkinsci.plugins.workflow.steps;
  * @param <T> the type of the return value (may be {@link Void})
  * @author Kohsuke Kawaguchi
  */
-public abstract class AbstractSynchronousStepExecution<T> extends StepExecution {
+public abstract class AbstractSynchronousStepExecution<T> extends AbstractStepExecutionImpl {
     private transient volatile Thread executing;
 
     protected AbstractSynchronousStepExecution() {

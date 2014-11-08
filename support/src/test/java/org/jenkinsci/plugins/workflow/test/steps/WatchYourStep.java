@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.workflow.test.steps;
 import hudson.Extension;
 import hudson.model.PeriodicWork;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -108,7 +109,7 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
         }
     }
 
-    public static class Execution extends StepExecution {
+    public static class Execution extends AbstractStepExecutionImpl {
         
         @Inject private WatchYourStep step;
 

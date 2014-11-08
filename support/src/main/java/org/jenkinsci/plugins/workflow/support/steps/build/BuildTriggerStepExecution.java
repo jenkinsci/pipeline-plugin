@@ -15,6 +15,7 @@ import hudson.model.TaskListener;
 import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
@@ -26,7 +27,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 /**
  * @author Vivek Pandey
  */
-public class BuildTriggerStepExecution extends StepExecution {
+public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
     @StepContextParameter
     private transient TaskListener listener;
     @StepContextParameter private transient Run<?,?> invokingRun;

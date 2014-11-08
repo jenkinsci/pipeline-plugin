@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.workflow.test.steps;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.FilePath;
 import hudson.Util;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
@@ -12,7 +13,7 @@ import java.io.Serializable;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class TmpDirStepExecution extends StepExecution {
+public class TmpDirStepExecution extends AbstractStepExecutionImpl {
     @Override
     public boolean start() throws Exception {
         File dir = Util.createTempDir();

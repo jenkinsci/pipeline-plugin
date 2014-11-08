@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class RetryStepExecution extends StepExecution {
+public class RetryStepExecution extends AbstractStepExecutionImpl {
     @Inject
     private transient RetryStep step;
     private volatile BodyExecution body;

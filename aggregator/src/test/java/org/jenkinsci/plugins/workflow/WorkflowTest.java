@@ -68,6 +68,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep;
@@ -577,7 +578,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 return getFunctionName(); // TODO would be nice for this to be the default, perhaps?
             }
         }
-        public static final class Execution extends StepExecution {
+        public static final class Execution extends AbstractStepExecutionImpl {
             @Override public boolean start() throws Exception {
                 getContext().get(TaskListener.class).getLogger().println("running as " + Jenkins.getAuthentication().getName() + " from " + Thread.currentThread().getName());
                 return false;

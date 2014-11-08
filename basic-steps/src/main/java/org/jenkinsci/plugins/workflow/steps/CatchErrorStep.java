@@ -61,7 +61,7 @@ public final class CatchErrorStep extends AbstractStepImpl {
 
     }
 
-    public static final class Execution extends StepExecution {
+    public static final class Execution extends AbstractStepExecutionImpl {
 
         /** TODO unused since it is transient, just as a marker that we will need it later: https://trello.com/c/cyXGkuVv/91-stepcontextparameter-should-be-reinjected-after-restart */
         @StepContextParameter private transient Run<?,?> run;

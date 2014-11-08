@@ -9,6 +9,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.slaves.WorkspaceList;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
@@ -20,7 +21,7 @@ import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 /**
  * @author Jesse Glick
  */
-public class WorkspaceStepExecution extends StepExecution {
+public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
 
     @StepContextParameter private transient Computer c;
     @StepContextParameter private transient Run<?,?> r;

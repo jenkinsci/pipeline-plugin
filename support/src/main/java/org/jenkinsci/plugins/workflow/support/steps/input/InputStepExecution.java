@@ -15,6 +15,7 @@ import hudson.model.User;
 import hudson.util.HttpResponses;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.support.actions.PauseAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
@@ -34,7 +35,7 @@ import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class InputStepExecution extends StepExecution implements ModelObject {
+public class InputStepExecution extends AbstractStepExecutionImpl implements ModelObject {
     /**
      * Pause gets added here.
      */

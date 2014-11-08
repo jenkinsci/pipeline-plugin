@@ -70,7 +70,7 @@ public class PushdStep extends AbstractStepImpl {
 
     }
 
-    public static class Execution extends StepExecution {
+    public static class Execution extends AbstractStepExecutionImpl {
         
         @Inject private transient PushdStep step;
         @StepContextParameter private transient TaskListener listener;

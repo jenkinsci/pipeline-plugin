@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.test.steps;
 
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -80,6 +81,11 @@ public final class BlockSemaphoreStep extends Step {
             public void stop() throws Exception {
                 state = State.STOPPED; // force the state change regardless of the current state
                 context.onFailure(new InterruptedException());
+            }
+
+            @Override
+            public StepDescriptor getStepDescriptor() {
+                return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
             }
         };
     }

@@ -9,6 +9,7 @@ import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.cps.CpsThread;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
@@ -19,7 +20,7 @@ import java.util.Collections;
  *
  * @author Kohsuke Kawaguchi
  */
-public class LoadStepExecution extends StepExecution {
+public class LoadStepExecution extends AbstractStepExecutionImpl {
     @StepContextParameter
     private transient FilePath cwd;
 

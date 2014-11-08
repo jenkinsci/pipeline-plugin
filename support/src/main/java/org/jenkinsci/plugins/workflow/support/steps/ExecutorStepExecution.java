@@ -42,6 +42,7 @@ import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.jenkinsci.plugins.durabletask.executors.ContinuedTask;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
@@ -53,7 +54,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class ExecutorStepExecution extends StepExecution {
+public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
     @Inject private transient ExecutorStep step;
     @StepContextParameter private transient TaskListener listener;
