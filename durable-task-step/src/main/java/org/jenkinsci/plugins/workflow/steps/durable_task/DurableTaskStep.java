@@ -43,7 +43,6 @@ import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -76,7 +75,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
         private static final long MAX_RECURRENCE_PERIOD = 15000; // 15s
         private static final float RECURRENCE_PERIOD_BACKOFF = 1.2f;
 
-        @Inject @Nullable private transient DurableTaskStep step;
+        @Inject(optional=true) private transient DurableTaskStep step;
         @StepContextParameter private transient FilePath ws;
         @StepContextParameter private transient EnvVars env;
         @StepContextParameter private transient Launcher launcher;
