@@ -24,9 +24,14 @@
 
 package org.jenkinsci.plugins.workflow.support.steps;
 
+import com.google.common.collect.ImmutableSet;
+import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AutoCompletionCandidates;
+import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Label;
 import javax.annotation.CheckForNull;
@@ -36,6 +41,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.QueryParameter;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * Grabs an {@link Executor} on a node of your choice and runs its block with that executor occupied.
@@ -93,6 +101,10 @@ public final class ExecutorStep extends AbstractStepImpl {
         }
         // proper doCheckValue also requires API requested above
 
+        @Override
+        public Set<Class<?>> getProvidedContext() {
+            return ImmutableSet.of(Executor.class, Computer.class, FilePath.class, EnvVars.class, Launcher.class);
+        }
     }
 
 }

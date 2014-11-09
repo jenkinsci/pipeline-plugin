@@ -31,6 +31,7 @@ import groovy.lang.Closure;
 import groovy.lang.GString;
 import groovy.lang.GroovyObject;
 import groovy.lang.GroovyObjectSupport;
+import hudson.model.TaskListener;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
@@ -38,11 +39,13 @@ import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.MissingContextVariableException;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -126,11 +129,14 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         Step s;
         boolean sync;
         try {
+            d.checkContextAvailability(context);
             s = d.newInstance(ps.namedArgs);
             StepExecution e = s.start(context);
             thread.setStep(e);
             sync = e.start();
         } catch (Exception e) {
+            if (e instanceof MissingContextVariableException)
+                reportMissingContextVariableException(context, (MissingContextVariableException)e);
             context.onFailure(e);
             s = null;
             sync = true;
@@ -165,6 +171,32 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             // so the execution will never reach here.
             throw new AssertionError();
         }
+    }
+
+    /**
+     * Reports a user-friendly error message for {@link MissingContextVariableException}.
+     */
+    private void reportMissingContextVariableException(CpsStepContext context, MissingContextVariableException e) {
+        TaskListener tl;
+        try {
+            tl = context.get(TaskListener.class);
+            if (tl==null)       return; // if we can't report an error, give up
+        } catch (IOException _) {
+            return;
+        } catch (InterruptedException _) {
+            return;
+        }
+
+        StringBuilder names = new StringBuilder();
+        for (StepDescriptor p : e.getProviders()) {
+            if (names.length()>0)   names.append(',');
+            names.append(p.getFunctionName());
+        }
+
+        PrintStream logger = tl.getLogger();
+        logger.println(e.getMessage());
+        if (names.length()>0)
+            logger.println("Perhaps you forgot to surround the code with a step that provides this, such as: "+names);
     }
 
     static class NamedArgsAndClosure {

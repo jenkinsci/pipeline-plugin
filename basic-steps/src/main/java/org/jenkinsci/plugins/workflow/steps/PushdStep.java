@@ -24,11 +24,18 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
+import com.google.common.collect.ImmutableSet;
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.Launcher;
+import hudson.model.Computer;
+import hudson.model.Executor;
 import hudson.model.TaskListener;
 import javax.inject.Inject;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import java.util.Set;
 
 /**
  * Temporarily changes the working directory.
@@ -68,6 +75,10 @@ public class PushdStep extends AbstractStepImpl {
             return true;
         }
 
+        @Override
+        public Set<Class<?>> getProvidedContext() {
+            return ImmutableSet.<Class<?>>of(FilePath.class);
+        }
     }
 
     public static class Execution extends AbstractStepExecutionImpl {
