@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import hudson.ExtensionList;
 import hudson.model.Descriptor;
 
@@ -41,7 +40,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      *
      * This allows the system to statically infer which steps are applicable in which context
      * (say in freestyle or in workflow).
-     * @see StepContext#getContext
+     * @see StepContext#get(Class)
      */
     public abstract Set<Class<?>> getRequiredContext();
 
@@ -56,7 +55,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
     /**
      * Returns true if this step can accept implicit block as the argument.
      *
-     * @see StepContext#invokeBodyLater(FutureCallback, Object...)
+     * @see StepContext#invokeBodyLater(Object...)
      */
     public boolean takesImplicitBlockArgument() {
         return false;
