@@ -104,7 +104,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      * Makes sure that the given {@link StepContext} has all the context parameters this descriptor wants to see,
      * and if not, throw {@link MissingContextVariableException} indicating which variable is missing.
      */
-    public void checkContextAvailability(StepContext c) throws MissingContextVariableException, IOException, InterruptedException {
+    public final void checkContextAvailability(StepContext c) throws MissingContextVariableException, IOException, InterruptedException {
         for (Class<?> type : getRequiredContext()) {
             Object v = c.get(type);
             if (v==null)
