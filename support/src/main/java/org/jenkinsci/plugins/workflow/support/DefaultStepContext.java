@@ -132,7 +132,7 @@ public abstract class DefaultStepContext extends StepContext {
 
     /**
      * Temporary replacement for broken {@link Run#getEnvironment(TaskListener)}.
-     * TODO remove once https://github.com/jenkinsci/jenkins/pull/1454 is merged into our baseline
+     * TODO 1.591+ replace with standard version
      */
     public static EnvVars getEnvironment(Run<?,?> run, TaskListener listener) throws IOException, InterruptedException {
         EnvVars env = run.getParent().getEnvironment(null, listener);
