@@ -85,11 +85,6 @@ public abstract class StepExecution implements Serializable {
     public void onResume() {}
 
     /**
-     * Which step did this come from?
-     */
-    public abstract StepDescriptor getStepDescriptor();
-
-    /**
      * Apply the given function to all the active running {@link StepExecution}s in the system.
      *
      * @return

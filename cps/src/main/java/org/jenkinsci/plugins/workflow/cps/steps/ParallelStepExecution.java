@@ -1,14 +1,11 @@
 package org.jenkinsci.plugins.workflow.cps.steps;
 
-import edu.umd.cs.findbugs.annotations.*;
 import groovy.lang.Closure;
-import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.cps.CpsThread;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ParallelLabelAction;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ResultHandler;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.util.Collections;
@@ -25,14 +22,6 @@ class ParallelStepExecution extends StepExecution {
         this.parallelStep = parallelStep;
     }
 
-    @Override
-    public StepDescriptor getStepDescriptor() {
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
-        return j.getDescriptorByType(ParallelStep.DescriptorImpl.class);
-    }
 
     @Override
     public boolean start() throws Exception {
