@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Extension;
+import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -62,6 +63,15 @@ public class TimeoutStep extends AbstractStepImpl implements Serializable {
         public String getDisplayName() {
             return "Executes the body with a timeout";
         }
+
+        public ListBoxModel doFillUnitItems() {
+            ListBoxModel r = new ListBoxModel();
+            for (TimeUnit unit : TimeUnit.values()) {
+                r.add(unit.name());
+            }
+            return r;
+        }
+
     }
 
     private static final long serialVersionUID = 1L;
