@@ -25,10 +25,13 @@ class ParallelStepExecution extends StepExecution {
         this.parallelStep = parallelStep;
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("NP_NULL_ON_SOME_PATH")
     @Override
     public StepDescriptor getStepDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(ParallelStep.DescriptorImpl.class);
+        Jenkins j = Jenkins.getInstance();
+        if (j == null) {
+            throw new IllegalStateException("Jenkins is not running");
+        }
+        return j.getDescriptorByType(ParallelStep.DescriptorImpl.class);
     }
 
     @Override
