@@ -91,10 +91,6 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                 throw new IllegalStateException("Jenkins is not running");
             }
             for (Computer c : j.getComputers()) {
-                if (c==null)
-                    throw new NullPointerException();
-                if (ws==null)
-                    throw new NullPointerException();
                 if (c.getChannel() == ws.getChannel()) {
                     node = c.getName();
                     break;
