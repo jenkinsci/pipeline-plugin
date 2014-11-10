@@ -98,7 +98,7 @@ public class MercurialStepTest {
         System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
         System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(otherRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
         Thread.sleep(1000); // TODO can we force SCMTrigger$Runner.run to have completed?
-        r.waitUntilNoActivity();
+        WaitUntilNoActivityHack.waitUntilNoActivity(p, 2, r);
         FileUtils.copyFile(p.getSCMTrigger().getLogFile(), System.out);
         b = p.getLastBuild();
         assertEquals(2, b.number);
