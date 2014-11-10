@@ -103,7 +103,7 @@ public final class ExecutorStep extends AbstractStepImpl {
 
         @Override
         public Set<Class<?>> getProvidedContext() {
-            return ImmutableSet.of(Executor.class, Computer.class, FilePath.class, EnvVars.class, Launcher.class);
+            return ImmutableSet.of(Executor.class, Computer.class, FilePath.class, EnvVars.class);
         }
     }
 
