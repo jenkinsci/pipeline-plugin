@@ -86,11 +86,6 @@ public final class SemaphoreStep extends Step implements Serializable {
             }
 
             @Override
-            public StepDescriptor getStepDescriptor() {
-                return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
-            }
-
-            @Override
             public void stop() {
                 contexts.remove(k);
                 getContext().onFailure(new InterruptedException("aborted"));
