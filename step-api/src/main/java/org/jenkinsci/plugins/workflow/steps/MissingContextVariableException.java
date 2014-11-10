@@ -17,12 +17,12 @@ import java.util.Set;
 public class MissingContextVariableException extends Exception {
     private final @Nonnull Class<?> type;
 
-    public MissingContextVariableException(@Nonnull Class type) {
+    public MissingContextVariableException(@Nonnull Class<?> type) {
         super("Required context "+type+" is missing");
         this.type = type;
     }
 
-    public Class getType() {
+    public Class<?> getType() {
         return type;
     }
 
