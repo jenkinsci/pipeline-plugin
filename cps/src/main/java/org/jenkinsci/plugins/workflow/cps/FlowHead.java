@@ -93,7 +93,9 @@ final class FlowHead implements Serializable {
     }
 
     void newStartNode(BlockStartNode n) throws IOException {
-        this.head = execution.startNodes.push(n);
+        synchronized (execution) {
+            this.head = execution.startNodes.push(n);
+        }
         execution.storage.storeNode(head);
     }
 

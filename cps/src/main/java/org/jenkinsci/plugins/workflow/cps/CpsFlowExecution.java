@@ -33,6 +33,7 @@ import com.cloudbees.groovy.cps.impl.ThrowBlock;
 import com.cloudbees.groovy.cps.sandbox.DefaultInvoker;
 import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -88,6 +89,7 @@ import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -96,6 +98,8 @@ import static com.thoughtworks.xstream.io.ExtendedHierarchicalStreamWriterHelper
 import hudson.model.User;
 import hudson.security.ACL;
 import javax.annotation.CheckForNull;
+import javax.annotation.concurrent.GuardedBy;
+
 import org.acegisecurity.Authentication;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -217,9 +221,11 @@ public class CpsFlowExecution extends FlowExecution {
     /**
      * Start nodes that have been created, whose {@link BlockEndNode} is not yet created.
      */
+    @GuardedBy("this")
     /*package*/ final Stack<BlockStartNode> startNodes = new Stack<BlockStartNode>();
 
-    private final NavigableMap<Integer,FlowHead> heads = new TreeMap<Integer, FlowHead>(); // TODO inconsistent synchronization can cause ConcurrentModificationException in marshal
+    @GuardedBy("this")
+    private final NavigableMap<Integer,FlowHead> heads = new TreeMap();
 
     private final AtomicInteger iota = new AtomicInteger();
 
@@ -309,7 +315,9 @@ public class CpsFlowExecution extends FlowExecution {
         s.initialize();
 
         final FlowHead h = new FlowHead(this);
-        heads.put(h.getId(),h);
+        synchronized (this) {
+            heads.put(h.getId(), h);
+        }
         h.newStartNode(new FlowStartNode(this, iotaStr()));
 
         final CpsThreadGroup g = new CpsThreadGroup(this);
@@ -426,28 +434,28 @@ public class CpsFlowExecution extends FlowExecution {
      * @param promise same as {@link #programPromise} but more strongly typed
      */
     private void loadProgramFailed(final Throwable problem, SettableFuture<CpsThreadGroup> promise) {
-        final FlowHead head;
-        switch (heads.size()) {
-        case 0:
+        FlowHead head;
+
+        synchronized(this) {
+            if (heads.isEmpty())
+                head = null;
+            else
+                head = getFirstHead();
+        }
+
+        if (head==null) {
             // something went catastrophically wrong and there's no live head. fake one
             head = new FlowHead(this);
             try {
                 head.newStartNode(new FlowStartNode(this, iotaStr()));
             } catch (IOException e) {
-                LOGGER.log(Level.FINE, "Failed to persist",e);
+                LOGGER.log(Level.FINE, "Failed to persist", e);
             }
-            break;
-        case 1:
-            head = getFirstHead();
-            break;
-        default:
-            // TODO: if there are multiple heads, this will leave all but one dangling. What's the right thing to do?
-            head = getFirstHead();
-            break;
         }
 
 
         CpsThreadGroup g = new CpsThreadGroup(this);
+        final FlowHead head_ = head;
 
         promise.set(g);
         runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
@@ -455,7 +463,7 @@ public class CpsFlowExecution extends FlowExecution {
                 CpsThread t = g.addThread(
                         new Continuable(new ThrowBlock(new ConstantBlock(
                             new IOException("Failed to load persisted workflow state", problem)))),
-                        head, null
+                        head_, null
                 );
                 t.resume(new Outcome(null,null));
             }
@@ -562,7 +570,7 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     @Override
-    public boolean isCurrentHead(FlowNode n) {
+    public synchronized boolean isCurrentHead(FlowNode n) {
         for (FlowHead h : heads.values()) {
             if (h.get().equals(n))
                 return true;
@@ -571,11 +579,11 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     // called by FlowHead to add a new head
-    void addHead(FlowHead h) {
-        heads.put(h.getId(),h);
+    synchronized void addHead(FlowHead h) {
+        heads.put(h.getId(), h);
     }
 
-    void removeHead(FlowHead h) {
+    synchronized void removeHead(FlowHead h) {
         heads.remove(h.getId());
     }
 
@@ -656,7 +664,7 @@ public class CpsFlowExecution extends FlowExecution {
         heads.put(first.getId(),first);
     }
 
-    FlowHead getFirstHead() {
+    synchronized FlowHead getFirstHead() {
         assert !heads.isEmpty();
         return heads.firstEntry().getValue();
     }
@@ -711,13 +719,14 @@ public class CpsFlowExecution extends FlowExecution {
             if (e.user != null) {
                 writeChild(w, context, "user", e.user, String.class);
             }
-            for (FlowHead h : e.heads.values()) { // TODO synchronize access to e.heads: https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/org.jenkins-ci.plugins.workflow$workflow-aggregator/362/testReport/junit/org.jenkinsci.plugins.workflow.steps.parallel/ParallelStepTest/localMethodCallWithinLotsOfBranches/
-                writeChild(w, context, "head", h.getId()+":"+h.get().getId(), String.class);
-            }
             writeChild(w, context, "iota", e.iota.get(), Integer.class);
-
-            for (BlockStartNode st : e.startNodes) {
-                writeChild(w, context, "start", st.getId(), String.class);
+            synchronized (e) {
+                for (FlowHead h : e.heads.values()) {
+                    writeChild(w, context, "head", h.getId() + ":" + h.get().getId(), String.class);
+                }
+                for (BlockStartNode st : e.startNodes) {
+                    writeChild(w, context, "start", st.getId(), String.class);
+                }
             }
         }
 
