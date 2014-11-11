@@ -45,7 +45,7 @@ public class ShellStepTest extends Assert {
         WorkflowRun b = j.assertBuildStatus(Result.FAILURE, foo.scheduleBuild2(0).get());
 
         boolean found = false;
-        FlowGraphTable t = b.getFlowGraph();
+        FlowGraphTable t = new FlowGraphTable(b.getExecution());
         for (Row r : t.getRows()) {
             if (r.getNode() instanceof StepAtomNode) {
                 StepAtomNode sa = (StepAtomNode) r.getNode();
