@@ -30,7 +30,6 @@
     <l:main-panel>
       <flow:nodeCaption node="${it}">
         ${%Node} ${it.displayName}
-        <!-- (<i:formatDate value="${it.timestamp.time}" type="both" dateStyle="medium" timeStyle="medium"/>) -->
       </flow:nodeCaption>
     </l:main-panel>
   </l:layout>
