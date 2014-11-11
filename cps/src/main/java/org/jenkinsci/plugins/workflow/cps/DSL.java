@@ -243,7 +243,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
     static NamedArgsAndClosure parseArgs(StepDescriptor d, Object arg) {
         boolean expectsBlock = d.takesImplicitBlockArgument();
 
-        if (arg instanceof Map)
+        if (arg instanceof Map) // TODO is this clause actually used?
             return new NamedArgsAndClosure((Map) arg, null);
         if (arg instanceof Closure && expectsBlock)
             return new NamedArgsAndClosure(Collections.<String,Object>emptyMap(),(Closure)arg);
@@ -261,7 +261,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
                 a = a.subList(0,a.size()-1);
             }
 
-            if (a.size()==1 && a.get(0) instanceof Map) {
+            if (a.size()==1 && a.get(0) instanceof Map && !((Map) a.get(0)).containsKey("$class")) {
                 // this is how Groovy passes in Map
                 return new NamedArgsAndClosure((Map)a.get(0),c);
             }
