@@ -13,7 +13,7 @@ As an example, you can write a flow:
 ```
 node {
     sh 'make something'
-    step $class: 'hudson.tasks.ArtifactArchiver', artifacts: 'something'
+    step [$class: 'ArtifactArchiver', artifacts: 'something']
 }
 ```
 
@@ -60,7 +60,7 @@ node {
     catchError {
         sh 'might fail'
     }
-    step $class: 'hudson.tasks.Mailer', recipients: 'admin@somewhere'
+    step [$class: 'Mailer', recipients: 'admin@somewhere']
 }
 ```
 

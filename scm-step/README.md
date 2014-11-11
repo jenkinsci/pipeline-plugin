@@ -69,15 +69,15 @@ Richer configuration may come in the future.
 
 # Generic SCM step
 
-The `scm` step may be used to run any other SCM plugin, provided that it has been brought up to date as described below.
+The `checkout` step may be used to run any other SCM plugin, provided that it has been brought up to date as described below.
 It could also be used to run an SCM for which there is a special integration that lacks support for an exotic feature.
-The step takes a `$class` parameter giving the full class name of the desired `SCM` implementation, and the standard `poll` and `changelog` parameters.
+The step takes an `scm` parameter which is a map containing at least a `$class` parameter giving the full or simple class name of the desired `SCM` implementation, and the standard `poll` and `changelog` parameters.
 
 It also takes any other parameters supported by the SCM plugin in its configuration form, using their internal names and values, which you can see examples of in the `config.xml` of a freestyle project.
 Optional parameters can be omitted and will take their default values.
 For example, to run Mercurial (1.51-beta-2 or higher):
 
-    scm $class: 'hudson.plugins.mercurial.MercurialSCM', poll: false, source: 'ssh://hg@bitbucket.org/user/repo, clean: true, credentialsId: '1234-5678-abcd'
+    checkout scm: [$class: 'MercurialSCM', source: 'ssh://hg@bitbucket.org/user/repo, clean: true, credentialsId: '1234-5678-abcd'], poll: false
 
 Here `source` is a mandatory parameter (_Repository URL_ in the UI), and `clean` (_Clean Build_) and `credentialsId` (_Credentials_) are optional parameters.
 This would correspond roughly to a freestyle project configured as follows:
