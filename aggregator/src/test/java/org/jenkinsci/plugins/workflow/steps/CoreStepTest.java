@@ -57,7 +57,7 @@ public class CoreStepTest {
 
     @Test public void fingerprinter() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("node {sh 'touch x.txt'; step delegate: [$class: 'Fingerprinter', targets: 'x.txt']}"));
+        p.setDefinition(new CpsFlowDefinition("node {sh 'touch x.txt'; step([$class: 'Fingerprinter', targets: 'x.txt'])}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         Fingerprinter.FingerprintAction fa = b.getAction(Fingerprinter.FingerprintAction.class);
         assertNotNull(fa);
