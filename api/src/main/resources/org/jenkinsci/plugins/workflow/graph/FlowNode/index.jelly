@@ -31,6 +31,14 @@
       <flow:nodeCaption node="${it}">
         ${%Node} ${it.displayName}
       </flow:nodeCaption>
+      <h2>${%Parents}</h2>
+      <ul>
+          <j:forEach var="parent" items="${it.parents}">
+              <li>
+                  <a href="${rootURL}/${parent.url}">${parent.displayName}</a>
+              </li>
+          </j:forEach>
+      </ul>
     </l:main-panel>
   </l:layout>
 </j:jelly>
