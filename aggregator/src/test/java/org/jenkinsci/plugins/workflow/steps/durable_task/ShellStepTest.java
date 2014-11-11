@@ -46,6 +46,7 @@ public class ShellStepTest extends Assert {
 
         boolean found = false;
         FlowGraphTable t = new FlowGraphTable(b.getExecution());
+        t.build();
         for (Row r : t.getRows()) {
             if (r.getNode() instanceof StepAtomNode) {
                 StepAtomNode sa = (StepAtomNode) r.getNode();
