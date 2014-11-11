@@ -2,9 +2,16 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Result;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep;
+import org.jenkinsci.plugins.workflow.steps.durable_task.ShellStep;
+import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
+import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -12,7 +19,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class TimeoutStepTest {
+public class TimeoutStepTest extends Assert {
     @Rule
     public JenkinsRule r = new JenkinsRule();
 
@@ -43,10 +50,23 @@ public class TimeoutStepTest {
                     "echo 'NotHere'",
                 "}")));
         WorkflowRun b = r.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
+
+        // make sure things that are supposed to run do, and things that are NOT supposed to run do not.
         r.assertLogNotContains("NotHere", b);
         r.assertLogContains("ShouldBeHere1",b);
-        r.assertLogContains("ShouldBeHere2",b);
-        r.interactiveBreak();
+        r.assertLogContains("ShouldBeHere2", b);
+
+        // we expect every shell step to have failed
+        FlowGraphTable t = new FlowGraphTable(b.getExecution());
+        t.build();
+        for (Row r : t.getRows()) {
+            if (r.getNode() instanceof StepAtomNode) {
+                StepAtomNode a = (StepAtomNode) r.getNode();
+                if (a.getDescriptor().getClass()==ShellStep.DescriptorImpl.class) {
+                    assertTrue(a.getAction(ErrorAction.class)!=null);
+                }
+            }
+        }
     }
 
     // TODO: timeout inside parallel
