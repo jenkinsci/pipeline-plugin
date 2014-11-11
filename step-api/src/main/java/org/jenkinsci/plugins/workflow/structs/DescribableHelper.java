@@ -33,6 +33,7 @@ import java.beans.Introspector;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -143,13 +144,31 @@ public class DescribableHelper {
             }
 
             String clazzS = (String) m.remove("$class");
+            Class<?> clazz;
             if (clazzS == null) {
-                // TODO infer it from context
-                return null;
+                if (Modifier.isAbstract(type.getModifiers())) {
+                    throw new UnsupportedOperationException("must specify $class with an implementation of " + type.getName());
+                }
+                clazz = type;
+            } else if (clazzS.contains(".")) {
+                Jenkins j = Jenkins.getInstance();
+                ClassLoader loader = j != null ? j.getPluginManager().uberClassLoader : DescribableHelper.class.getClassLoader();
+                clazz = loader.loadClass(clazzS);
+            } else {
+                clazz = null;
+                for (Class<?> c : findSubtypes(type)) {
+                    if (c.getSimpleName().equals(clazzS)) {
+                        if (clazz != null) {
+                            throw new UnsupportedOperationException(clazzS + " as a " + type.getName() +  " could mean either " + clazz.getName() + " or " + c.getName());
+                        }
+                        clazz = c;
+                    }
+                }
+                if (clazz == null) {
+                    throw new UnsupportedOperationException("no known implementation of " + type.getName() + " is named " + clazzS);
+                }
             }
-            Jenkins j = Jenkins.getInstance();
-            ClassLoader loader = j != null ? j.getPluginManager().uberClassLoader : DescribableHelper.class.getClassLoader();
-            return instantiate(loader.loadClass(clazzS).asSubclass(type), m);
+            return instantiate(clazz.asSubclass(type), m);
         }
         return null;
     }

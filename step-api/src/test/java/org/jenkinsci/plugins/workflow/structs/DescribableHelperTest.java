@@ -134,6 +134,17 @@ public class DescribableHelperTest {
         assertEquals("UsesBase[Impl1[hello]]", DescribableHelper.instantiate(UsesBase.class, Collections.singletonMap("base", impl1)).toString());
     }
 
+    @Test public void bindMapsSimpleName() throws Exception {
+        Map<String,Object> impl1 = new HashMap<String,Object>();
+        impl1.put("$class", "Impl1");
+        impl1.put("text", "hello");
+        assertEquals("UsesBase[Impl1[hello]]", DescribableHelper.instantiate(UsesBase.class, Collections.singletonMap("base", impl1)).toString());
+    }
+
+    @Test public void bindMapsImplicitName() throws Exception {
+        assertEquals("UsesImpl2[Impl2[true]]", DescribableHelper.instantiate(UsesImpl2.class, Collections.singletonMap("impl2", Collections.singletonMap("flag", true))).toString());
+    }
+
     public static class UsesBase {
         public final Base base;
         @DataBoundConstructor public UsesBase(Base base) {
@@ -141,6 +152,16 @@ public class DescribableHelperTest {
         }
         @Override public String toString() {
             return "UsesBase[" + base + "]";
+        }
+    }
+
+    public static class UsesImpl2 {
+        public final Impl2 impl2;
+        @DataBoundConstructor public UsesImpl2(Impl2 impl2) {
+            this.impl2 = impl2;
+        }
+        @Override public String toString() {
+            return "UsesImpl2[" + impl2 + "]";
         }
     }
 
