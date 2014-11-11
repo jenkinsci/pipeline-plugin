@@ -85,7 +85,8 @@ public abstract class FlowExecutionOwner implements Serializable {
      * relative to the context root of Jenkins.
      *
      * This is usually not the same object as 'this'. This object
-     * must have the {@code getExecution()} method to bind {@link FlowExecution} to the URL space.
+     * must have the {@code getExecution()} method to bind {@link FlowExecution} to the URL space
+     * (or otherwise override {@link #getUrlOfExecution}).
      *
      * @return
      *      String like "job/foo/32/" with trailing slash but no leading slash.
