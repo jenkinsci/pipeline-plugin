@@ -249,15 +249,20 @@ public class DescribableHelper {
     }
 
     static <T> Set<Class<? extends T>> findSubtypes(Class<T> supertype) {
+        Set<Class<? extends T>> clazzes = new HashSet<Class<? extends T>>();
         if (Describable.class.isAssignableFrom(supertype)) {
-            Set<Class<? extends T>> clazzes = new HashSet<Class<? extends T>>();
             for (Descriptor<?> d : getDescriptorList(supertype/*.asSubclass(Describable.class)*/)) {
                 clazzes.add(d.clazz.asSubclass(supertype));
             }
-            return clazzes;
         } else {
-            return Collections.emptySet();
+            // SimpleBuildStep is not Describable yet its implementations are. Unfortunately there is no efficient way to get them all.
+            for (Descriptor<?> d : getDescriptorList(Describable.class)) {
+                if (supertype.isAssignableFrom(d.clazz)) {
+                    clazzes.add(d.clazz.asSubclass(supertype));
+                }
+            }
         }
+        return clazzes;
     }
 
     private static List<? extends Descriptor<?>> getDescriptorList(Class<? /* extends Describable*/> supertype) {

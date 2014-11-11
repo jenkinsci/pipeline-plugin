@@ -125,6 +125,7 @@ public class DescribableHelperTest {
 
     @Test public void findSubtypes() throws Exception {
         assertEquals(new HashSet<Class<?>>(Arrays.asList(Impl1.class, Impl2.class)), DescribableHelper.findSubtypes(Base.class));
+        assertEquals(Collections.singleton(Impl1.class), DescribableHelper.findSubtypes(Marker.class));
     }
 
     @Test public void bindMapsFQN() throws Exception {
@@ -167,7 +168,9 @@ public class DescribableHelperTest {
 
     public static abstract class Base extends AbstractDescribableImpl<Base> {}
 
-    public static final class Impl1 extends Base {
+    public interface Marker {}
+
+    public static final class Impl1 extends Base implements Marker {
         private final String text;
         @DataBoundConstructor public Impl1(String text) {
             this.text = text;
