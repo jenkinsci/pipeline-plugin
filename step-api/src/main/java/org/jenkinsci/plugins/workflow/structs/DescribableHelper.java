@@ -56,6 +56,15 @@ public class DescribableHelper {
 
     /**
      * Creates an instance of a class via {@link DataBoundConstructor} and {@link DataBoundSetter}.
+     * <p>The arguments may be primitives (as wrappers) or {@link String}s if that is their declared type.
+     * {@link Character}s, {@link Enum}s, and {@link URL}s may be represented by {@link String}s.
+     * Other object types may be passed in “raw” as well, but JSON-like structures are encouraged instead.
+     * Specifically a {@link List} may be used to represent any list- or array-valued argument.
+     * A {@link Map} with {@link String} keys may be used to represent any class which is itself data-bound.
+     * In that case the special key {@code $class} is used to specify the {@link Class#getName};
+     * or it may be omitted if the argument is declared to take a concrete type;
+     * or {@link Class#getSimpleName} may be used in case the argument type is {@link Describable}
+     * and only one subtype is registered (as a {@link Descriptor}) with that simple name.
      */
     public static <T> T instantiate(Class<? extends T> clazz, Map<String,?> arguments) throws Exception {
         ClassDescriptor d = new ClassDescriptor(clazz);
