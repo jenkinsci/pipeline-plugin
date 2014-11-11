@@ -76,10 +76,10 @@ public class MercurialStepTest {
             "node {\n" +
             "    ws {\n" +
             "        dir('main') {\n" +
-            "            checkout [$class: 'MercurialSCM', source: '" + sampleRepo + "']\n" +
+            "            checkout scm: [$class: 'MercurialSCM', source: '" + sampleRepo + "']\n" +
             "        }\n" +
             "        dir('other') {\n" +
-            "            checkout [$class: 'MercurialSCM', source: '" + otherRepo + "', clean: true]\n" +
+            "            checkout scm: [$class: 'MercurialSCM', source: '" + otherRepo + "', clean: true]\n" +
             "            sh 'echo stuff >> unversioned; wc -l unversioned'\n" +
             "        }\n" +
             "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +

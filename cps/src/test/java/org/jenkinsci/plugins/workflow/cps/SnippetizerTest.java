@@ -60,7 +60,7 @@ public class SnippetizerTest {
     @Test public void coreStep() throws Exception {
         ArtifactArchiver aa = new ArtifactArchiver("x.jar");
         aa.setAllowEmptyArchive(true);
-        assertRoundTrip(new CoreStep(aa), "step [$class: 'ArtifactArchiver', allowEmptyArchive: true, artifacts: 'x.jar', defaultExcludes: true, excludes: '', fingerprint: false, onlyIfSuccessful: false]");
+        assertRoundTrip(new CoreStep(aa), "step delegate: [$class: 'ArtifactArchiver', allowEmptyArchive: true, artifacts: 'x.jar', defaultExcludes: true, excludes: '', fingerprint: false, onlyIfSuccessful: false]");
     }
 
     @Test public void blockSteps() throws Exception {

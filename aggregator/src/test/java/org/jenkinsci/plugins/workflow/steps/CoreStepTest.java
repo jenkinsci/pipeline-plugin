@@ -45,7 +45,7 @@ public class CoreStepTest {
 
     @Test public void artifactArchiver() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("node {sh 'touch x.txt'; step [$class: 'ArtifactArchiver', artifacts: 'x.txt', fingerprint: true]}"));
+        p.setDefinition(new CpsFlowDefinition("node {sh 'touch x.txt'; step delegate: [$class: 'ArtifactArchiver', artifacts: 'x.txt', fingerprint: true]}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         List<WorkflowRun.Artifact> artifacts = b.getArtifacts();
         assertEquals(1, artifacts.size());
@@ -57,7 +57,7 @@ public class CoreStepTest {
 
     @Test public void fingerprinter() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("node {sh 'touch x.txt'; step [$class: 'Fingerprinter', targets: 'x.txt']}"));
+        p.setDefinition(new CpsFlowDefinition("node {sh 'touch x.txt'; step delegate: [$class: 'Fingerprinter', targets: 'x.txt']}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         Fingerprinter.FingerprintAction fa = b.getAction(Fingerprinter.FingerprintAction.class);
         assertNotNull(fa);
@@ -71,7 +71,7 @@ public class CoreStepTest {
                 // Quote hell! " is Java, ''' is Groovy, ' is shell, \" is " inside XML
                 + "    sh '''echo '<testsuite name=\"a\"><testcase name=\"a1\"/><testcase name=\"a2\"><error>a2 failed</error></testcase></testsuite>' > a.xml'''\n"
                 + "    sh '''echo '<testsuite name=\"b\"><testcase name=\"b1\"/><testcase name=\"b2\"/></testsuite>' > b.xml'''\n"
-                + "    step [$class: 'JUnitResultArchiver', testResults: '*.xml']\n"
+                + "    step delegate: [$class: 'JUnitResultArchiver', testResults: '*.xml']\n"
                 + "}"));
         WorkflowRun b = r.assertBuildStatus(Result.UNSTABLE, p.scheduleBuild2(0).get());
         TestResultAction a = b.getAction(TestResultAction.class);
@@ -85,7 +85,7 @@ public class CoreStepTest {
         p.setDefinition(new CpsFlowDefinition(
                   "node {\n"
                 + "    sh 'mkdir docs && echo hello world > docs/index.html'\n"
-                + "    step [$class: 'JavadocArchiver', javadocDir: 'docs']\n"
+                + "    step delegate: [$class: 'JavadocArchiver', javadocDir: 'docs']\n"
                 + "}"));
         r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertEquals("hello world\n", r.createWebClient().getPage(p, "javadoc/").getWebResponse().getContentAsString());
@@ -97,8 +97,8 @@ public class CoreStepTest {
         p.setDefinition(new CpsFlowDefinition(
                   "node {\n"
                 + "    sh '''echo '<testsuite name=\"s\"><testcase name=\"c\"><error>failed</error></testcase></testsuite>' > r.xml'''\n"
-                + "    step [$class: 'JUnitResultArchiver', testResults: 'r.xml']\n"
-                + "    step [$class: 'Mailer', recipients: '" + recipient + "']\n"
+                + "    step delegate: [$class: 'JUnitResultArchiver', testResults: 'r.xml']\n"
+                + "    step delegate: [$class: 'Mailer', recipients: '" + recipient + "']\n"
                 + "}"));
         Mailbox inbox = Mailbox.get(new InternetAddress(recipient));
         inbox.clear();
@@ -108,7 +108,7 @@ public class CoreStepTest {
         p.setDefinition(new CpsFlowDefinition(
                   "node {\n"
                 + "    catchError {sh 'false'}\n"
-                + "    step [$class: 'Mailer', recipients: '" + recipient + "']\n"
+                + "    step delegate: [$class: 'Mailer', recipients: '" + recipient + "']\n"
                 + "}"));
         inbox.clear();
         b = r.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
