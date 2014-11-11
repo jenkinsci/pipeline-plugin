@@ -7,7 +7,6 @@ import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.visualization.table.FlowNodeViewColumn;
 import org.jenkinsci.plugins.workflow.visualization.table.FlowNodeViewColumnDescriptor;
-import org.kohsuke.stapler.export.ExportedBean;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -22,7 +21,6 @@ import java.util.Stack;
  *
  * @author Kohsuke Kawaguchi
  */
-@ExportedBean
 public class FlowGraphTable {
     private final FlowExecution execution;
     /**

@@ -44,7 +44,7 @@
           <tr>
             <!-- tooltip is for now debugging only -->
             <td style="padding-left: ${row.treeDepth*20+5}px" tooltip="ID: ${node.id}">
-              <a href="execution/node/${node.id}/">
+              <a href="${rootURL}/${node.url}">
                 ${row.displayName}
               </a>
             </td>

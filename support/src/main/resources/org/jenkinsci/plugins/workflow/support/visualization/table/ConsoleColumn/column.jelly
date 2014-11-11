@@ -28,7 +28,7 @@ THE SOFTWARE.
   <td>
     <j:forEach var="a" items="${node.allActions}">
       <j:if test="${a.urlName == 'log'}"> <!-- easier in Jelly than calling getAction(LogAction.class) -->
-        <a href="./execution/node/${node.id}/log/">
+        <a href="${rootURL}/${node.url}log/">
           <img src="${resURL}/plugin/workflow-support/images/32x32/terminal.png" alt="Console Output" class="icon32x32"/>
         </a>
       </j:if>

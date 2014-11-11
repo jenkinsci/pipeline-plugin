@@ -1,7 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 The MIT License
 
-Copyright (c) 2004-2009, Sun Microsystems, Inc., Kohsuke Kawaguchi
+Copyright 2014 Jesse Glick.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,16 +24,16 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <st:documentation>
-    Generate a caption for the main panel that renders the status of the flow node.
-
-    <st:attribute name="node" />
-  </st:documentation>
-
-	<h1 class="build-caption page-headline">
-	  <img class="build-caption-status-icon" src="${imagesURL}/48x48/${node.iconColor.image}" width="48" height="48"
-         alt="${node.iconColor.description}" tooltip="${node.iconColor.description}" />
-	  <d:invokeBody />
-	</h1>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+    <l:layout title="${it.run.fullDisplayName} Running Steps">
+        <st:include page="sidepanel.jelly" it="${it.run}"/>
+        <l:main-panel>
+            <st:include it="${it.flowGraph}" page="ajax"/>
+            <j:if test="${it.run.building}">
+              <script>
+                refreshPart('nodeGraph','./flowGraph/ajax')
+              </script>
+            </j:if>
+        </l:main-panel>
+    </l:layout>
 </j:jelly>

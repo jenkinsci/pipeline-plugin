@@ -33,7 +33,9 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
  */
 public class TimingAction implements Action {
 
-    private long startTime = System.currentTimeMillis();
+    // TODO perhaps add a FlowNodeViewColumn rendering <i:formatDate value="…" type="both" dateStyle="medium" timeStyle="medium"/>
+
+    private final long startTime = System.currentTimeMillis();
 
     public long getStartTime() {
         return startTime;

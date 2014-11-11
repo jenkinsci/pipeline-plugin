@@ -30,8 +30,15 @@
     <l:main-panel>
       <flow:nodeCaption node="${it}">
         ${%Node} ${it.displayName}
-        <!-- (<i:formatDate value="${it.timestamp.time}" type="both" dateStyle="medium" timeStyle="medium"/>) -->
       </flow:nodeCaption>
+      <h2>${%Parents}</h2>
+      <ul>
+          <j:forEach var="parent" items="${it.parents}">
+              <li>
+                  <a href="${rootURL}/${parent.url}">${parent.displayName}</a>
+              </li>
+          </j:forEach>
+      </ul>
     </l:main-panel>
   </l:layout>
 </j:jelly>

@@ -81,7 +81,6 @@ import org.jenkinsci.plugins.workflow.flow.GraphListener;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
-import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.export.Exported;
@@ -147,16 +146,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     @Exported
     @Override public WorkflowRun getNextBuild() {
         return getRunMixIn().getNextBuild();
-    }
-
-    /**
-     * Exposed to URL space via Stapler.
-     */
-    @Exported
-    public FlowGraphTable getFlowGraph() {
-        FlowGraphTable t = new FlowGraphTable(getExecution());
-        t.build();
-        return t;
     }
 
     /**
