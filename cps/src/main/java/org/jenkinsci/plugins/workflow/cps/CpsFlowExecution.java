@@ -274,6 +274,10 @@ public class CpsFlowExecution extends FlowExecution {
         return shell;
     }
 
+    public FlowNodeStorage getStorage() {
+        return storage;
+    }
+
     /**
      * True if executing with groovy-sandbox, false if executing with approval.
      */
