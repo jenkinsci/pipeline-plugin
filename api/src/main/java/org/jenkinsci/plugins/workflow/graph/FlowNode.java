@@ -29,32 +29,31 @@ import hudson.model.Action;
 import hudson.model.Actionable;
 import hudson.model.BallColor;
 import hudson.search.SearchItem;
-import org.jenkinsci.plugins.workflow.actions.ErrorAction;
-import org.jenkinsci.plugins.workflow.actions.LabelAction;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import java.io.IOError;
 import java.io.IOException;
 import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Logger;
-
 import static java.util.logging.Level.*;
+import java.util.logging.Logger;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import org.jenkinsci.plugins.workflow.actions.ErrorAction;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
 /**
- * TODO: document
- *
- * @author Kohsuke Kawaguchi
- * @author Jesse Glick
+ * One node in a flow graph.
  */
+@ExportedBean
 public abstract class FlowNode extends Actionable {
-// there's no forward direction allow
-//    List<FlowNode> next;
 
-    private final List<FlowNode> parents;    // TODO: this will be getter
+    private final List<FlowNode> parents;
 
     private final String id;
 
@@ -81,6 +80,7 @@ public abstract class FlowNode extends Actionable {
      * such as a completed fork branch which is waiting for the join node to be created.
      * <p>This can only go from true to false and is a shortcut for {@link FlowExecution#isCurrentHead}.
      */
+    @Exported
     public final boolean isRunning() {
         return getExecution().isCurrentHead(this);
     }
@@ -104,6 +104,16 @@ public abstract class FlowNode extends Actionable {
         return parents;
     }
 
+    @Restricted(DoNotUse.class)
+    @Exported(name="parents")
+    public List<String> getParentIds() {
+        List<String> ids = new ArrayList<String>(2);
+        for (FlowNode parent : getParents()) {
+            ids.add(parent.getId());
+        }
+        return ids;
+    }
+
     /**
      * Has to be unique within a {@link FlowExecution}.
      *
@@ -111,6 +121,7 @@ public abstract class FlowNode extends Actionable {
      *
      * @see FlowExecution#getNode(String)
      */
+    @Exported
     public String getId() {
         return id;
     }
@@ -122,6 +133,7 @@ public abstract class FlowNode extends Actionable {
         return getId();
     }
 
+    @Exported
     public String getDisplayName() {
         LabelAction a = getAction(LabelAction.class);
         if (a!=null)    return a.getDisplayName();
@@ -134,6 +146,7 @@ public abstract class FlowNode extends Actionable {
      * TODO: this makes me wonder if we should support other colored states,
      * like unstable and aborted --- seems useful.
      */
+    @Exported
     public BallColor getIconColor() {
         BallColor c = getError()!=null ? BallColor.RED : BallColor.BLUE;
         // TODO this should probably also be _anime in case this is a step node with a body and the body is still running (try FlowGraphTable for example)
@@ -154,6 +167,7 @@ public abstract class FlowNode extends Actionable {
      * @return
      *      String like "job/foo/32/execution/node/abcde/" with no leading slash but trailing slash.
      */
+    @Exported
     public String getUrl() throws IOException {
         return getExecution().getUrl()+"node/"+getId()+'/';
     }
@@ -178,6 +192,7 @@ public abstract class FlowNode extends Actionable {
 
     So we create a separate transient field and store List of them there, and intercept every mutation.
  */
+    @Exported
     @Override
     public synchronized List<Action> getActions() {
                 if (actions==null) {
