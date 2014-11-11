@@ -35,11 +35,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
 import net.java.sezpoz.Index;
 import net.java.sezpoz.IndexItem;
@@ -105,7 +107,7 @@ public class DescribableHelper {
         return r;
     }
 
-    private static Object[] buildArguments(Class<?> clazz, Map<String,?> arguments, Class<?>[] types, String[] names, boolean callEvenIfNoArgs) {
+    private static Object[] buildArguments(Class<?> clazz, Map<String,?> arguments, Class<?>[] types, String[] names, boolean callEvenIfNoArgs) throws Exception {
         Object[] args = new Object[names.length];
         boolean hasArg = callEvenIfNoArgs;
         for (int i = 0; i < args.length; i++) {
@@ -116,7 +118,12 @@ public class DescribableHelper {
             if (a != null) {
                 Object coerced = ReflectionCache.getCachedClass(type).coerceArgument(a);
                 if (!Primitives.wrap(type).isInstance(coerced)) {
-                    throw new ClassCastException(clazz.getName() + "." + name + " expects " + type.getName() + " but received " + coerced.getClass().getName());
+                    Object bound = tryToBind(type, coerced);
+                    if (bound != null) {
+                        coerced = bound;
+                    } else {
+                        throw new ClassCastException(clazz.getName() + "." + name + " expects " + type.getName() + " but received " + coerced.getClass().getName());
+                    }
                 }
                 args[i] = coerced;
             } else if (type == boolean.class) {
@@ -126,6 +133,25 @@ public class DescribableHelper {
             }
         }
         return hasArg ? args : null;
+    }
+
+    private static @CheckForNull Object tryToBind(Class<?> type, Object o) throws Exception {
+        if (o instanceof Map) {
+            Map<String,Object> m = new HashMap<String,Object>();
+            for (Map.Entry<?,?> entry : ((Map<?,?>) o).entrySet()) {
+                m.put((String) entry.getKey(), entry.getValue());
+            }
+
+            String clazzS = (String) m.remove("$class");
+            if (clazzS == null) {
+                // TODO infer it from context
+                return null;
+            }
+            Jenkins j = Jenkins.getInstance();
+            ClassLoader loader = j != null ? j.getPluginManager().uberClassLoader : DescribableHelper.class.getClassLoader();
+            return instantiate(loader.loadClass(clazzS).asSubclass(type), m);
+        }
+        return null;
     }
 
     // copied from RequestImpl

@@ -127,12 +127,32 @@ public class DescribableHelperTest {
         assertEquals(new HashSet<Class<?>>(Arrays.asList(Impl1.class, Impl2.class)), DescribableHelper.findSubtypes(Base.class));
     }
 
+    @Test public void bindMapsFQN() throws Exception {
+        Map<String,Object> impl1 = new HashMap<String,Object>();
+        impl1.put("$class", Impl1.class.getName());
+        impl1.put("text", "hello");
+        assertEquals("UsesBase[Impl1[hello]]", DescribableHelper.instantiate(UsesBase.class, Collections.singletonMap("base", impl1)).toString());
+    }
+
+    public static class UsesBase {
+        public final Base base;
+        @DataBoundConstructor public UsesBase(Base base) {
+            this.base = base;
+        }
+        @Override public String toString() {
+            return "UsesBase[" + base + "]";
+        }
+    }
+
     public static abstract class Base extends AbstractDescribableImpl<Base> {}
 
     public static final class Impl1 extends Base {
         private final String text;
         @DataBoundConstructor public Impl1(String text) {
             this.text = text;
+        }
+        @Override public String toString() {
+            return "Impl1[" + text + "]";
         }
         @Extension public static final class DescriptorImpl extends Descriptor<Base> {
             @Override public String getDisplayName() {
@@ -149,6 +169,9 @@ public class DescribableHelperTest {
         }
         @DataBoundSetter public void setFlag(boolean flag) {
             this.flag = flag;
+        }
+        @Override public String toString() {
+            return "Impl2[" + flag + "]";
         }
         @Extension public static final class DescriptorImpl extends Descriptor<Base> {
             @Override public String getDisplayName() {
