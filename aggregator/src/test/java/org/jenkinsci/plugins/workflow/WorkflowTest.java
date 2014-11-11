@@ -75,8 +75,6 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 import org.junit.AfterClass;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -587,7 +585,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 listener.getLogger().println("running as " + Jenkins.getAuthentication().getName() + " from " + Thread.currentThread().getName());
                 return false;
             }
-            @Override public void stop() throws Exception {}
+            @Override public void stop(Throwable cause) throws Exception {}
             @Override public void onResume() {
                 super.onResume();
                 try {

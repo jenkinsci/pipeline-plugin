@@ -4,8 +4,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import hudson.FilePath;
 import hudson.Util;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.File;
 import java.io.Serializable;
@@ -22,7 +22,7 @@ public class TmpDirStepExecution extends AbstractStepExecutionImpl {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop(Throwable cause) throws Exception {
     }
 
     /**

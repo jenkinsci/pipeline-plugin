@@ -25,12 +25,13 @@
 package org.jenkinsci.plugins.workflow.flow;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import hudson.model.Executor;
+import jenkins.model.CauseOfInterruption;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.graph.FlowActionStorage;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
-import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Result;
 import hudson.security.ACL;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
@@ -114,7 +115,7 @@ public abstract class FlowExecution implements FlowActionStorage {
     }
 
     /**
-     * Terminates the execution of a flow.
+     * Interrupts the execution of a flow.
      *
      * If any computation is going on synchronously, it will be interrupted/killed/etc.
      * If it's in a suspended state waiting to be resurrected (such as waiting for
@@ -122,13 +123,19 @@ public abstract class FlowExecution implements FlowActionStorage {
      * with the specified status.
      *
      * <p>
-     * If it's evaluating bodies (see {@link StepContext#invokeBodyLater(FutureCallback, Object...)},
+     * If it's evaluating bodies (see {@link StepContext#invokeBodyLater(Object...)},
      * then it's callback needs to be invoked.
      * <p>
      * Do not use this from a step. Throw {@link FlowInterruptedException} or some other exception instead.
-     * @see StepExecution#stop()
+     *
+     * @see StepExecution#stop(Throwable)
+     * @see Executor#interrupt(Result)
      */
-    public abstract void finish(Result r) throws IOException, InterruptedException;
+    public abstract void interrupt(Result r, CauseOfInterruption... causes) throws IOException, InterruptedException;
+
+    public void interrupt(Result r) throws IOException, InterruptedException {
+        this.interrupt(r,new CauseOfInterruption[0]);
+    }
 
     public abstract void addListener(GraphListener listener);
 

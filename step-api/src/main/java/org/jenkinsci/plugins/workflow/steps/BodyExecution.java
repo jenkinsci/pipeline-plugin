@@ -24,6 +24,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.common.util.concurrent.FutureCallback;
+import jenkins.model.CauseOfInterruption;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -47,6 +48,34 @@ public abstract class BodyExecution implements Future<Object>, Serializable {
      * Returns the inner-most {@link StepExecution}s that are currently executing.
      */
     public abstract Collection<StepExecution> getCurrentExecutions();
+
+    /**
+     * Attempts to cancel an executing body block.
+     *
+     * <p>
+     * If the body has finished executing, or is cancelled already, the attempt will
+     * fail. This method is asynchronous. There's no guarantee that the cancellation
+     * has happened or completed before this method returns.
+     *
+     * @return false if the task cannot be cancelled.
+     */
+    public abstract boolean cancel(CauseOfInterruption... causes);
+
+    /**
+     * @deprecated
+     *      Use other overloaded forms of the cancel method to provide richer context.
+     */
+    public boolean cancel(boolean b) {
+        return cancel(new Exception());
+    }
+
+    /**
+     * Convenience method around {@link #cancel(CauseOfInterruption...)} in case
+     * the cause is a random exception.
+     */
+    public boolean cancel(Throwable t) {
+        return cancel(new ExceptionCause(t));
+    }
 
     /**
      * Adds a callback that gets invoked when the body finishes execution.

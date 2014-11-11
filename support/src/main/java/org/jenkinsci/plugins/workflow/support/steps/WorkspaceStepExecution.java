@@ -10,8 +10,9 @@ import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.slaves.WorkspaceList;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.BodyExecution;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.Serializable;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -27,6 +28,7 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
     @StepContextParameter private transient Run<?,?> r;
     @StepContextParameter private transient TaskListener listener;
     @StepContextParameter private transient FlowNode flowNode;
+    private BodyExecution body;
 
     @Override
     public boolean start() throws Exception {
@@ -46,14 +48,15 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
         FilePath workspace = lease.path;
         flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
         listener.getLogger().println("Running in " + workspace);
-        getContext().invokeBodyLater(workspace).addCallback(new Callback(getContext(), lease));
+        body = getContext().invokeBodyLater(workspace);
+        body.addCallback(new Callback(getContext(), lease));
         return false;
     }
 
     @Override
-    public void stop() throws Exception {
-        // TODO: see RetyrStepExecution.stop()
-        throw new UnsupportedOperationException();
+    public void stop(Throwable cause) throws Exception {
+        if (body!=null)
+            body.cancel(cause);
     }
 
     @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // lease is pickled

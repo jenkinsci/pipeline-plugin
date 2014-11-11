@@ -10,14 +10,15 @@ import hudson.model.Job;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import javax.inject.Inject;
 import jenkins.model.ParameterizedJobMixIn;
@@ -66,7 +67,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
     }
 
     @Override
-    public void stop() {
+    public void stop(Throwable cause) {
         Jenkins jenkins = Jenkins.getInstance();
         if (jenkins == null) {
             return;
@@ -94,7 +95,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
 
                     BuildTriggerAction bta = b.getAction(BuildTriggerAction.class);
                     if (bta!=null && bta.getStepContext().equals(getContext())) {
-                        e.interrupt();
+                        e.interrupt(Result.ABORTED, new BuildTriggerCancelledCause(cause));
                     }
                 }
             }

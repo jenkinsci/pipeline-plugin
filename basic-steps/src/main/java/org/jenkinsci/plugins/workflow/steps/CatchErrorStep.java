@@ -73,7 +73,7 @@ public final class CatchErrorStep extends AbstractStepImpl {
             return false;
         }
 
-        @Override public void stop() throws Exception {
+        @Override public void stop(Throwable cause) throws Exception {
             // nothing to do
         }
 

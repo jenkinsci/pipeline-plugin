@@ -1,5 +1,10 @@
 package org.jenkinsci.plugins.workflow.steps;
 
+import hudson.model.Executor;
+import hudson.model.Result;
+
+import static hudson.model.Result.ABORTED;
+
 /**
  * {@link StepExecution} that always executes synchronously.
  * @param <T> the type of the return value (may be {@link Void})
@@ -39,9 +44,14 @@ public abstract class AbstractSynchronousStepExecution<T> extends AbstractStepEx
      * If the computation is going synchronously, try to cancel that.
      */
     @Override
-    public void stop() throws Exception {
+    public void stop(Throwable cause) throws Exception {
         Thread e = executing;   // capture
-        if (e!=null)
-            e.interrupt();
+        if (e!=null) {
+            if (e instanceof Executor) {
+                ((Executor) e).interrupt(ABORTED, new ExceptionCause(cause));
+            } else {
+                e.interrupt();
+            }
+        }
     }
 }

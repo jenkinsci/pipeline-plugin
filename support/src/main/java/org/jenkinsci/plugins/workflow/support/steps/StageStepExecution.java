@@ -31,7 +31,6 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 public class StageStepExecution extends AbstractStepExecutionImpl {
     private static final Logger LOGGER = Logger.getLogger(StageStepExecution.class.getName());
@@ -61,7 +60,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop(Throwable cause) throws Exception {
         // TODO
         throw new UnsupportedOperationException();
     }

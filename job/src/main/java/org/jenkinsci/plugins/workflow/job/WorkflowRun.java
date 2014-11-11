@@ -204,7 +204,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     completed.wait(1000);
                 } catch (InterruptedException x) {
                     try {
-                        execution.finish(Result.ABORTED);
+                        execution.interrupt(Result.ABORTED);
                     } catch (Exception x2) {
                         LOGGER.log(Level.WARNING, null, x2);
                     }

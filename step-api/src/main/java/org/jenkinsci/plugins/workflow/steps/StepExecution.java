@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -75,8 +76,17 @@ public abstract class StepExecution implements Serializable {
      * It is always responsible for calling {@link StepContext#onSuccess(Object)} or (more likely)
      * {@link StepContext#onFailure(Throwable)} eventually,
      * whether or not it was asked to stop.
+     *
+     * <p>
+     * In the workflow context, this method is meant to be used by {@code FlowExecution}, and not
+     * to be called willy-nilly from UI or other human requests to pause. Use {@link BodyExecution#cancel(boolean)}
+     * and {@code FlowExec}
+     *
+     * @param cause
+     *      Contextual information that lets the step know what resulted in stopping an executing step,
+     *      passed in the hope that this will assist diagnostics.
      */
-    public abstract void stop() throws Exception;
+    public abstract void stop(@Nullable Throwable cause) throws Exception;
 
     /**
      * Called when {@link StepExecution} is brought back into memory after restart.

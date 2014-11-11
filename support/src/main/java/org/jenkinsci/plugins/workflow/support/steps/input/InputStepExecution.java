@@ -19,7 +19,6 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.support.actions.PauseAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.interceptor.RequirePOST;
@@ -77,7 +76,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop(Throwable cause) throws Exception {
         doAbort();
     }
 

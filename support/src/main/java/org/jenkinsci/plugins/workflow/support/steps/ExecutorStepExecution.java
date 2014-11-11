@@ -43,9 +43,9 @@ import org.jenkinsci.plugins.durabletask.executors.ContinuedTask;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
@@ -100,7 +100,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
     }
 
     @Override
-    public void stop() {
+    public void stop(Throwable cause) {
         for (Queue.Item item : Queue.getInstance().getItems()) {
             // if we are still in the queue waiting to be scheduled, just retract that
             if (item.task instanceof PlaceholderTask && ((PlaceholderTask) item.task).context.equals(getContext())) {
@@ -123,8 +123,8 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             }
         }
         // Whether or not either of the above worked (and they would not if for example our item were canceled), make sure we die.
-        getContext().onFailure(new InterruptedException());
-        // TODO also would like to listen for our queue item being canceled directly (Queue.cancel(Item)) and finish automatically,
+        getContext().onFailure(cause);
+        // TODO also would like to listen for our queue item being canceled directly (Queue.cancel(Item)) and interrupt automatically,
         // but ScheduleResult.getCreateItem().getFuture().getStartCondition() is not a ListenableFuture so we cannot wait for it to be cancelled without consuming a thread,
         // and Item.cancel(Queue) is private and cannot be overridden; the only workaround for now is to have a custom QueueListener
     }

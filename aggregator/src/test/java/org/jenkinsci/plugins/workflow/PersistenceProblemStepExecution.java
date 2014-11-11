@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow;
 
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 /**
@@ -23,7 +24,7 @@ public class PersistenceProblemStepExecution extends AbstractStepExecutionImpl {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop(Throwable cause) throws Exception {
         // nothing to do here
     }
 }

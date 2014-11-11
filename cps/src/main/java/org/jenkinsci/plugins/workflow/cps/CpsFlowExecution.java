@@ -49,6 +49,7 @@ import groovy.lang.GroovyShell;
 import hudson.model.Action;
 import hudson.model.Result;
 import hudson.util.Iterators;
+import jenkins.model.CauseOfInterruption;
 import jenkins.model.Jenkins;
 import org.jboss.marshalling.Unmarshaller;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -61,6 +62,7 @@ import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
@@ -420,7 +422,7 @@ public class CpsFlowExecution extends FlowExecution {
     /**
      * Used by {@link #loadProgramAsync(File)} to propagate a failure to load the persisted execution state.
      * <p>
-     * Let the workflow finish by throwing an exception that indicates how it failed.
+     * Let the workflow interrupt by throwing an exception that indicates how it failed.
      * @param promise same as {@link #programPromise} but more strongly typed
      */
     private void loadProgramFailed(final Throwable problem, SettableFuture<CpsThreadGroup> promise) {
@@ -587,8 +589,10 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     @Override
-    public void finish(Result result) throws IOException, InterruptedException {
+    public void interrupt(Result result, CauseOfInterruption... causes) throws IOException, InterruptedException {
         setResult(result);
+
+        final FlowInterruptedException ex = new FlowInterruptedException(result,causes);
 
         // stop all ongoing activities
         Futures.addCallback(getCurrentExecutions(), new FutureCallback<List<StepExecution>>() {
@@ -596,7 +600,7 @@ public class CpsFlowExecution extends FlowExecution {
             public void onSuccess(List<StepExecution> l) {
                 for (StepExecution e : Iterators.reverse(l)) {
                     try {
-                        e.stop();
+                        e.stop(ex);
                     } catch (Exception x) {
                         LOGGER.log(Level.WARNING, "Failed to abort " + CpsFlowExecution.this.toString(), x);
                     }

@@ -25,12 +25,8 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.common.collect.ImmutableSet;
-import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
-import hudson.Launcher;
-import hudson.model.Computer;
-import hudson.model.Executor;
 import hudson.model.TaskListener;
 import javax.inject.Inject;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -86,18 +82,20 @@ public class PushdStep extends AbstractStepImpl {
         @Inject private transient PushdStep step;
         @StepContextParameter private transient TaskListener listener;
         @StepContextParameter private transient FilePath cwd;
+        private BodyExecution body;
 
         @Override public boolean start() throws Exception {
             FilePath dir = cwd.child(step.getPath());
             listener.getLogger().println("Running in " + dir);
-            getContext().invokeBodyLater(dir).addCallback(getContext());
+            body = getContext().invokeBodyLater(dir);
+            body.addCallback(getContext());
             return false;
         }
 
         @Override
-        public void stop() throws Exception {
-            // TODO: see RetyrStepExecution.stop()
-            throw new UnsupportedOperationException();
+        public void stop(Throwable cause) throws Exception {
+            if (body!=null)
+                body.cancel(cause);
         }
 
         private static final long serialVersionUID = 1L;

@@ -10,8 +10,8 @@ import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.cps.CpsThread;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.util.Collections;
 
@@ -52,7 +52,7 @@ public class LoadStepExecution extends AbstractStepExecutionImpl {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop(Throwable cause) throws Exception {
         // noop
         //
         // the head of the CPS thread that's executing the body should stop and that's all we need to do.

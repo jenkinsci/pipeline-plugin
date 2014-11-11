@@ -55,9 +55,9 @@ class ParallelStepExecution extends StepExecution {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop(Throwable cause) throws Exception {
         for (BodyExecution body : bodies) {
-            body.cancel(true);
+            body.cancel(cause);
         }
     }
 

@@ -29,6 +29,8 @@ import hudson.Extension;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
+
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -89,9 +91,9 @@ public final class SemaphoreStep extends Step implements Serializable {
             }
 
             @Override
-            public void stop() {
+            public void stop(Throwable cause) {
                 contexts.remove(k);
-                getContext().onFailure(new InterruptedException("aborted"));
+                getContext().onFailure(cause);
             }
         };
     }

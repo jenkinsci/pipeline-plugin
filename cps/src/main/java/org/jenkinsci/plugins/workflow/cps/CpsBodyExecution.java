@@ -2,7 +2,10 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
+import hudson.model.Result;
+import jenkins.model.CauseOfInterruption;
 import org.jenkinsci.plugins.workflow.steps.BodyExecution;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import javax.annotation.concurrent.GuardedBy;
@@ -38,7 +41,7 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
      * Set to non-null if the body execution is stopped.
      */
     @GuardedBy("this")
-    private InterruptedException stopped;
+    private FlowInterruptedException stopped;
 
     @GuardedBy("this")
     private List<FutureCallback<Object>> callbacks = new ArrayList<FutureCallback<Object>>();
@@ -56,12 +59,12 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
     }
 
     @Override
-    public boolean cancel(boolean b) {
+    public boolean cancel(final CauseOfInterruption... causes) {
         // 'stopped' and 'thread' are updated atomically
         final CpsThread t;
         synchronized (this) {
             if (isDone())  return false;   // already complete
-            stopped = new InterruptedException();
+            stopped = new FlowInterruptedException(Result.ABORTED, causes); // TODO: the fact that I'm hard-coding exception seems to indicate an abstraction leak. Come back and think about this.
             t = this.thread;
         }
 
@@ -77,7 +80,7 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
                     }
 
                     try {
-                        s.stop();
+                        s.stop(stopped);
                     } catch (Exception e) {
                         LOGGER.log(Level.WARNING, "Failed to stop " + s, e);
                     }

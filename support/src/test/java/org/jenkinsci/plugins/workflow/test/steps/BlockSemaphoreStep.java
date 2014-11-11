@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.test.steps;
 
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -49,7 +50,7 @@ public final class BlockSemaphoreStep extends Step {
         BLOCK_ENDED,
         /** {@link FutureCallback} from {@link Step} has been notified, so the whole step has ended. */
         DONE,
-        /** Aborted through {@link StepExecution#stop()}. */
+        /** Aborted through {@link StepExecution#stop(FlowInterruptedException)}. */
         STOPPED
     }
 
@@ -77,9 +78,9 @@ public final class BlockSemaphoreStep extends Step {
             }
 
             @Override
-            public void stop() throws Exception {
+            public void stop(Throwable cause) throws Exception {
                 state = State.STOPPED; // force the state change regardless of the current state
-                context.onFailure(new InterruptedException());
+                context.onFailure(cause);
             }
         };
     }

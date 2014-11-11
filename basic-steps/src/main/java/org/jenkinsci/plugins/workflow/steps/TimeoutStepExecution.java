@@ -45,9 +45,9 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop(Throwable cause) throws Exception {
         if (body!=null)
-            body.cancel(true);
+            body.cancel(cause);
     }
 
     private class Callback implements FutureCallback<Object>, Serializable {

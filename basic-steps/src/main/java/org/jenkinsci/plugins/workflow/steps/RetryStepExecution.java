@@ -22,9 +22,9 @@ public class RetryStepExecution extends AbstractStepExecutionImpl {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop(Throwable cause) throws Exception {
         if (body!=null)
-            body.cancel(true);
+            body.cancel(cause);
     }
 
     private static class Callback implements FutureCallback<Object>, Serializable {

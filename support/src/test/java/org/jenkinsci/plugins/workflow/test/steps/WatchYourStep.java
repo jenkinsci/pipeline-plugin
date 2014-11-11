@@ -30,6 +30,7 @@ import hudson.model.PeriodicWork;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
@@ -128,8 +129,8 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
         }
 
         @Override
-        public void stop() throws Exception {
-            getContext().onFailure(new InterruptedException());
+        public void stop(Throwable cause) throws Exception {
+            getContext().onFailure(cause);
         }
 
         public File getPath() {
