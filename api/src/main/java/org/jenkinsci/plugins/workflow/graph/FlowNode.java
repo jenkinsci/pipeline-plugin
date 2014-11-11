@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableList;
 import hudson.model.Action;
 import hudson.model.Actionable;
 import hudson.model.BallColor;
+import hudson.model.Saveable;
 import hudson.search.SearchItem;
 import java.io.IOException;
 import java.util.AbstractList;
@@ -50,8 +51,7 @@ import org.kohsuke.stapler.export.ExportedBean;
  * One node in a flow graph.
  */
 @ExportedBean
-public abstract class FlowNode extends Actionable {
-
+public abstract class FlowNode extends Actionable implements Saveable {
     private final List<FlowNode> parents;
 
     private final String id;
@@ -236,12 +236,20 @@ public abstract class FlowNode extends Actionable {
 
             private void persist() {
                 try {
-                    exec.saveActions(FlowNode.this, actions);
+                    save();
                 } catch (IOException e) {
                     LOGGER.log(WARNING, "failed to save actions for FlowNode id=" + id, e);
                 }
             }
         };
+    }
+
+    /**
+     * Explicitly save all the actions in this {@link FlowNode}.
+     * Useful when an existing {@link Action} gets updated.
+     */
+    public void save() throws IOException {
+        exec.saveActions(this, actions);
     }
 
     @Override
