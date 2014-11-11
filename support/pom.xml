@@ -52,7 +52,7 @@
         <dependency>
             <groupId>org.jboss.marshalling</groupId>
             <artifactId>jboss-marshalling-river</artifactId>
-            <version>1.4.5.Final</version>
+            <version>1.4.9.Final</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
