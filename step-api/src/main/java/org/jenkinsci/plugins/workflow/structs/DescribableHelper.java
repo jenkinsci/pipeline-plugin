@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow.structs;
 
-import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import com.google.common.primitives.Primitives;
 import hudson.model.Describable;
@@ -34,6 +33,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -250,27 +250,20 @@ public class DescribableHelper {
 
     static <T> Set<Class<? extends T>> findSubtypes(Class<T> supertype) {
         Set<Class<? extends T>> clazzes = new HashSet<Class<? extends T>>();
-        if (Describable.class.isAssignableFrom(supertype)) {
-            for (Descriptor<?> d : getDescriptorList(supertype/*.asSubclass(Describable.class)*/)) {
+        for (Descriptor<?> d : getDescriptorList()) {
+            if (supertype.isAssignableFrom(d.clazz)) {
                 clazzes.add(d.clazz.asSubclass(supertype));
-            }
-        } else {
-            // SimpleBuildStep is not Describable yet its implementations are. Unfortunately there is no efficient way to get them all.
-            for (Descriptor<?> d : getDescriptorList(Describable.class)) {
-                if (supertype.isAssignableFrom(d.clazz)) {
-                    clazzes.add(d.clazz.asSubclass(supertype));
-                }
             }
         }
         return clazzes;
     }
 
-    private static List<? extends Descriptor<?>> getDescriptorList(Class<? /* extends Describable*/> supertype) {
+    @SuppressWarnings("rawtypes")
+    private static List<? extends Descriptor> getDescriptorList() {
         Jenkins j = Jenkins.getInstance();
         if (j != null) {
-            @SuppressWarnings("unchecked")
-            DescriptorExtensionList<?,?> descriptors = j.getDescriptorList(supertype.asSubclass(Describable.class));
-            return descriptors;
+            // Jenkins.getDescriptorList does not work well since it is limited to descriptors declaring one supertype, and does not work at all for SimpleBuildStep.
+            return j.getExtensionList(Descriptor.class);
         } else {
             // TODO should be part of ExtensionList.lookup in core, but here now for benefit of tests:
             List<Descriptor<?>> descriptors = new ArrayList<Descriptor<?>>();
@@ -278,10 +271,7 @@ public class DescribableHelper {
                 try {
                     Object o = item.instance();
                     if (o instanceof Descriptor) {
-                        Descriptor<?> d = (Descriptor) o;
-                        if (supertype.isAssignableFrom(d.clazz)) {
-                            descriptors.add(d);
-                        }
+                        descriptors.add((Descriptor) o);
                     }
                 } catch (InstantiationException x) {
                     // ignore for now
