@@ -25,26 +25,17 @@
 package org.jenkinsci.plugins.workflow.flow;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import hudson.util.HttpResponses;
-import hudson.util.IOUtils;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
-import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
-import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowActionStorage;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
-import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Result;
 import hudson.security.ACL;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
-import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.StaplerResponse;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -183,54 +174,4 @@ public abstract class FlowExecution implements FlowActionStorage {
      */
     public abstract @Nonnull Authentication getAuthentication();
 
-    /**
-     * Dumps the current {@link FlowNode} graph in the GraphViz dot notation.
-     *
-     * Primarily for diagnosing the visualization issue.
-     */
-    public HttpResponse doDot() throws IOException {
-        StringWriter sw = new StringWriter();
-        writeDot(new PrintWriter(sw));
-        return HttpResponses.plainText(sw.toString());
-    }
-
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("DM_DEFAULT_ENCODING")
-    public void doGraphViz(StaplerResponse rsp) throws IOException {
-        Process p = new ProcessBuilder("dot", "-Tpng").start();
-        writeDot(new PrintWriter(p.getOutputStream()));
-
-        rsp.setContentType("image/png");
-        IOUtils.copy(p.getInputStream(), rsp.getOutputStream());
-    }
-
-    private void writeDot(PrintWriter w) throws IOException {
-        try {
-            w.println("digraph G {");
-            FlowGraphWalker walker = new FlowGraphWalker(this);
-            FlowNode n;
-            while ((n=walker.next())!=null) {
-                for (FlowNode p : n.getParents()) {
-                    w.printf("%s -> %s%n",
-                            p.getId(), n.getId());
-                }
-
-                if (n instanceof BlockStartNode) {
-                    BlockStartNode sn = (BlockStartNode) n;
-                    w.printf("%s [shape=trapezium]%n", n.getId());
-                } else
-                if (n instanceof BlockEndNode) {
-                    BlockEndNode sn = (BlockEndNode) n;
-                    w.printf("%s [shape=invtrapezium]%n", n.getId());
-                    w.printf("%s -> %s [style=dotted]%n",
-                            sn.getStartNode().getId(), n.getId());
-                }
-
-                w.printf("%s [label=\"%s: %s\"]%n", n.getId(), n.getId(), n.getDisplayName());
-            }
-
-            w.println("}");
-        } finally {
-            w.close();
-        }
-    }
 }
