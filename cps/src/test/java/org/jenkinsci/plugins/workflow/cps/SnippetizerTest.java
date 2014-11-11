@@ -32,7 +32,6 @@ import hudson.model.StringParameterValue;
 import hudson.tasks.ArtifactArchiver;
 import java.net.URL;
 import java.util.Arrays;
-import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
 import org.jenkinsci.plugins.workflow.steps.Step;
@@ -104,9 +103,7 @@ public class SnippetizerTest {
             @Override public Object invokeMethod(String name, Object args) {
                 if (name.equals(desc.getFunctionName())) {
                     try {
-                        JSONObject o = new JSONObject();
-                        o.putAll(DSL.parseArgs(desc, args).namedArgs);
-                        return desc.newInstance(o);
+                        return desc.newInstance(DSL.parseArgs(desc, args).namedArgs);
                     } catch (RuntimeException x) {
                         throw x;
                     } catch (Exception x) {

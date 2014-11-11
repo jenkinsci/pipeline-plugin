@@ -1,16 +1,17 @@
 package org.jenkinsci.plugins.workflow.steps;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import javax.inject.Inject;
-import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.kohsuke.stapler.ClassDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+
+import javax.inject.Inject;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -39,22 +40,22 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
      * If the constructor takes one parameter and the arguments have just {@link #KEY_VALUE} then it is bound to that parameter.
      */
     @Override
-    public final Step newInstance(JSONObject arguments) throws Exception {
+    public final Step newInstance(Map<String,Object> arguments) throws Exception {
         if (arguments.keySet().equals(Collections.singleton(KEY_VALUE))) {
             String[] names = new ClassDescriptor(clazz).loadConstructorParamNames();
             if (names.length == 1) {
-                arguments = new JSONObject().element(names[0], arguments.get(KEY_VALUE));
+                arguments = Collections.singletonMap(names[0], arguments.get(KEY_VALUE));
             }
         }
         return DescribableHelper.instantiate(clazz, arguments);
     }
 
 
-    @Override public JSONObject defineArguments(Step step) {
-        JSONObject arguments = DescribableHelper.uninstantiate(step);
+    @Override public Map<String,Object> defineArguments(Step step) {
+        Map<String,Object> arguments = DescribableHelper.uninstantiate(step);
         String[] names = new ClassDescriptor(step.getClass()).loadConstructorParamNames();
         if (names.length == 1 && arguments.keySet().equals(Collections.singleton(names[0]))) {
-            arguments = new JSONObject().element(KEY_VALUE, arguments.get(names[0]));
+            arguments = Collections.singletonMap(KEY_VALUE, arguments.get(names[0]));
         }
         return arguments;
     }

@@ -29,9 +29,10 @@ import hudson.Main;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.TreeMap;
-import net.sf.json.JSONObject;
+import java.util.Map;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,7 +46,7 @@ public class DescribableHelperTest {
     }
 
     @Test public void instantiate() throws Exception {
-        JSONObject args = new JSONObject();
+        Map<String,Object> args = new HashMap<String,Object>();
         args.put("text", "hello");
         args.put("flag", true);
         args.put("ignored", "!");
@@ -58,16 +59,16 @@ public class DescribableHelperTest {
     }
 
     @Test public void uninstantiate() throws Exception {
-        assertEquals("{flag=true, shorty=0, text=stuff}", new TreeMap<String,Object>(DescribableHelper.uninstantiate(new C("stuff", true))).toString());
+        assertEquals("{flag=true, shorty=0, text=stuff}", DescribableHelper.uninstantiate(new C("stuff", true)).toString());
         I i = new I("stuff");
         i.setFlag(true);
         i.text = "more";
-        assertEquals("{flag=true, text=more, value=stuff}", new TreeMap<String,Object>(DescribableHelper.uninstantiate(i)).toString());
+        assertEquals("{flag=true, text=more, value=stuff}", DescribableHelper.uninstantiate(i).toString());
     }
 
     @Test public void mismatchedTypes() throws Exception {
         try {
-            DescribableHelper.instantiate(I.class, new JSONObject().element("value", 99));
+            DescribableHelper.instantiate(I.class, Collections.singletonMap("value", 99));
             fail();
         } catch (ClassCastException x) {
             String message = x.getMessage();

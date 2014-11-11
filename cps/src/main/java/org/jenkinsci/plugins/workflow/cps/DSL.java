@@ -54,7 +54,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import net.sf.json.JSONObject;
 
 import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -131,9 +130,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         boolean sync;
         try {
             d.checkContextAvailability(context);
-            JSONObject o = new JSONObject();
-            o.putAll(ps.namedArgs);
-            s = d.newInstance(o);
+            s = d.newInstance(ps.namedArgs);
             StepExecution e = s.start(context);
             thread.setStep(e);
             sync = e.start();

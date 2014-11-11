@@ -13,7 +13,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.inject.Inject;
-import net.sf.json.JSONObject;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Mockito.*;
 
@@ -35,7 +36,7 @@ public class AbstractStepImplTest {
     @Test
     public void inject() throws Exception {
 
-        JSONObject r = new JSONObject();
+        Map r = new HashMap();
         r.put("a",3);
         r.put("b","bbb");
         r.put("c",null);
@@ -59,7 +60,7 @@ public class AbstractStepImplTest {
      */
     @Test
     public void coercion() throws Exception {
-        JSONObject r = new JSONObject();
+        Map r = new HashMap();
         r.put("a",10L); // long -> int
         r.put("b",new GStringImpl(new Object[]{1},new String[]{"pre","post"})); // GString -> String
         BogusStep step = (BogusStep) d.newInstance(r);

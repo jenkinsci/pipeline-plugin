@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import net.sf.json.JSONObject;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
@@ -144,17 +143,16 @@ public class ParallelStep extends Step {
         }
 
         @Override
-        public Step newInstance(JSONObject arguments) {
-            for (Entry e : (Set<Map.Entry<?,?>>) arguments.entrySet()) {
-                // TODO how can we support a Closure in a JSONObject?
+        public Step newInstance(Map<String,Object> arguments) {
+            for (Entry<String,Object> e : arguments.entrySet()) {
                 if (!(e.getValue() instanceof Closure))
                     throw new IllegalArgumentException("Expected a closure but found "+e.getKey()+"="+e.getValue());
             }
             return new ParallelStep((Map)arguments);
         }
 
-        @Override public JSONObject defineArguments(Step step) throws UnsupportedOperationException {
-            throw new UnsupportedOperationException("TODO");
+        @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
+            return new TreeMap<String,Object>(((ParallelStep) step).closures);
         }
 
         @Override

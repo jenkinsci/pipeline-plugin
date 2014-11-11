@@ -30,8 +30,8 @@ import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import com.google.common.util.concurrent.FutureCallback;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
+import java.util.Map;
 import java.util.Set;
-import net.sf.json.JSONObject;
 
 /**
  * Block step that can be externally controlled.
@@ -141,11 +141,11 @@ public final class BlockSemaphoreStep extends Step {
             throw new UnsupportedOperationException();
         }
 
-        @Override public Step newInstance(JSONObject arguments) {
+        @Override public Step newInstance(Map<String,Object> arguments) {
             throw new UnsupportedOperationException();
         }
 
-        @Override public JSONObject defineArguments(Step step) throws UnsupportedOperationException {
+        @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
             throw new UnsupportedOperationException();
         }
 
