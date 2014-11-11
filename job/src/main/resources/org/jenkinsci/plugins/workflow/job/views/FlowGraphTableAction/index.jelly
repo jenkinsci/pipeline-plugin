@@ -1,8 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
-
 The MIT License
 
-Copyright (c) 2004-2009, Sun Microsystems, Inc., Kohsuke Kawaguchi, Martin Eigenbrodt
+Copyright 2014 Jesse Glick.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,16 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
-  <td>
-    <j:forEach var="a" items="${node.allActions}">
-      <j:if test="${a.urlName == 'log'}"> <!-- easier in Jelly than calling getAction(LogAction.class) -->
-        <a href="${rootURL}/${node.url}log/">
-          <img src="${resURL}/plugin/workflow-support/images/32x32/terminal.png" alt="Console Output" class="icon32x32"/>
-        </a>
-      </j:if>
-    </j:forEach>
-  </td>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+    <l:layout title="${it.run.fullDisplayName} Running Steps">
+        <st:include page="sidepanel.jelly" it="${it.run}"/>
+        <l:main-panel>
+            <st:include it="${it.flowGraph}" page="ajax"/>
+            <j:if test="${it.run.building}">
+              <script>
+                refreshPart('nodeGraph','./flowGraph/ajax')
+              </script>
+            </j:if>
+        </l:main-panel>
+    </l:layout>
 </j:jelly>

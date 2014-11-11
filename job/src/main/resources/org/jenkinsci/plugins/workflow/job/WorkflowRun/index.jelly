@@ -66,14 +66,6 @@
                 </j:forEach>
             </table>
             <!-- TODO no upstream/downstream builds; DependencyGraph uses AP, for no obvious reason -->
-
-            <!-- TODO: make this extensible so that other plugins can contribute more views -->
-            <st:include it="${it.flowGraph}" page="ajax"/>
-            <j:if test="${it.isBuilding()}">
-              <script>
-                refreshPart('nodeGraph','./flowGraph/ajax')
-              </script>
-            </j:if>
         </l:main-panel>
     </l:layout>
 </j:jelly>
