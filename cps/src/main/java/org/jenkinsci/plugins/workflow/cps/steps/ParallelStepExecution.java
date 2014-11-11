@@ -5,17 +5,24 @@ import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.cps.CpsThread;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ParallelLabelAction;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ResultHandler;
+import org.jenkinsci.plugins.workflow.steps.BodyExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
 
 /**
+ * {@link StepExecution} for {@link ParallelStep}.
+ *
  * @author Kohsuke Kawaguchi
  */
 class ParallelStepExecution extends StepExecution {
     private transient ParallelStep parallelStep;
+
+    private final List<BodyExecution> bodies = new ArrayList<BodyExecution>();
 
     public ParallelStepExecution(ParallelStep parallelStep, StepContext context) {
         super(context);
@@ -36,10 +43,12 @@ class ParallelStepExecution extends StepExecution {
         ResultHandler r = new ResultHandler(cps);
 
         for (Entry<String,Closure> e : parallelStep.closures.entrySet()) {
-            cps.invokeBodyLater(
+            BodyExecution body = cps.invokeBodyLater(
                     t.getGroup().export(e.getValue()),
                     Collections.singletonList(new ParallelLabelAction(e.getKey()))
-            ).addCallback(r.callbackFor(e.getKey()));
+            );
+            body.addCallback(r.callbackFor(e.getKey()));
+            bodies.add(body);
         }
 
         return false;
@@ -47,8 +56,9 @@ class ParallelStepExecution extends StepExecution {
 
     @Override
     public void stop() throws Exception {
-        // TODO: see RetyrStepExecution.stop()
-        throw new UnsupportedOperationException();
+        for (BodyExecution body : bodies) {
+            body.cancel(true);
+        }
     }
 
     private static final long serialVersionUID = 1L;
