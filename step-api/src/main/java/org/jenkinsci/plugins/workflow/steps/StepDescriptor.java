@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -87,6 +88,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      *
      * @param arguments
      *      Named arguments and values, à la Ant task or Maven mojos.
+     *      Generally should follow the semantics of {@link DescribableHelper#instantiate}.
      * @return an instance of {@link #clazz}
      */
     public abstract Step newInstance(Map<String,Object> arguments) throws Exception;
