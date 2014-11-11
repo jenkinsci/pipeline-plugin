@@ -16,15 +16,17 @@ import hudson.model.ResourceList;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
-import hudson.model.queue.AbstractQueueTask;
+import hudson.model.queue.CauseOfBlockage;
+import hudson.model.queue.SubTask;
 import hudson.remoting.ChannelClosedException;
 import hudson.remoting.RequestAbortedException;
+import hudson.security.ACL;
 import hudson.security.AccessControlled;
-import hudson.slaves.NodeProperty;
 import hudson.slaves.WorkspaceList;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,9 +41,12 @@ import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.jenkinsci.plugins.durabletask.executors.ContinuedTask;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -49,13 +54,14 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class ExecutorStepExecution extends StepExecution {
+public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
     @Inject private transient ExecutorStep step;
     @StepContextParameter private transient TaskListener listener;
     // Here just for requiredContext; could perhaps be passed to the PlaceholderTask constructor:
     @StepContextParameter private transient Run<?,?> run;
     @StepContextParameter private transient FlowExecution flowExecution;
+    @StepContextParameter private transient FlowNode flowNode;
 
     /**
      * General strategy of this step.
@@ -123,7 +129,7 @@ public class ExecutorStepExecution extends StepExecution {
         // and Item.cancel(Queue) is private and cannot be overridden; the only workaround for now is to have a custom QueueListener
     }
 
-    private static final class PlaceholderTask extends AbstractQueueTask implements ContinuedTask, Serializable {
+    private static final class PlaceholderTask implements ContinuedTask, Serializable {
 
         // TODO can this be replaced with StepExecutionIterator?
         /** map from cookies to contexts of tasks thought to be running */
@@ -163,14 +169,22 @@ public class ExecutorStepExecution extends StepExecution {
             if (label == null) {
                 return null;
             } else if (label.isEmpty()) {
-                return Jenkins.getInstance().getSelfLabel();
+                Jenkins j = Jenkins.getInstance();
+                if (j == null) {
+                    return null;
+                }
+                return j.getSelfLabel();
             } else {
                 return Label.get(label);
             }
         }
 
         @Override public Node getLastBuiltOn() {
-            return Jenkins.getInstance().getNode(label);
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                return null;
+            }
+            return j.getNode(label);
         }
 
         @Override public boolean isBuildBlocked() {
@@ -179,6 +193,31 @@ public class ExecutorStepExecution extends StepExecution {
 
         @Deprecated
         @Override public String getWhyBlocked() {
+            return null;
+        }
+
+        @Override public CauseOfBlockage getCauseOfBlockage() {
+            return null;
+        }
+
+        @Override public boolean isConcurrentBuild() {
+            return false;
+        }
+
+        @Override public Collection<? extends SubTask> getSubTasks() {
+            return Collections.singleton(this);
+        }
+
+        @Override public Queue.Task getOwnerTask() {
+            Run<?,?> r = run();
+            if (r != null && r.getParent() instanceof Queue.Task) {
+                return (Queue.Task) r.getParent();
+            } else {
+                return this;
+            }
+        }
+
+        @Override public Object getSameNodeConstraint() {
             return null;
         }
 
@@ -260,7 +299,7 @@ public class ExecutorStepExecution extends StepExecution {
         }
 
         @Override public Authentication getDefaultAuthentication() {
-            return super.getDefaultAuthentication(); // TODO should pick up credentials from configuring user or something
+            return ACL.SYSTEM; // TODO should pick up credentials from configuring user or something
         }
 
         @Override public boolean isContinued() {
@@ -284,6 +323,7 @@ public class ExecutorStepExecution extends StepExecution {
         /**
          * Called when the body closure is complete.
          */
+        @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // lease is pickled
         private static final class Callback implements FutureCallback<Object>, Serializable {
 
             private final String cookie;
@@ -343,11 +383,8 @@ public class ExecutorStepExecution extends StepExecution {
                         cookie = UUID.randomUUID().toString();
                         // Switches the label to a self-label, so if the executable is killed and restarted via ExecutorPickle, it will run on the same node:
                         label = computer.getName();
-                        EnvVars env = new EnvVars();
+                        EnvVars env = computer.buildEnvironment(listener);
                         env.put(COOKIE_VAR, cookie);
-                        for (NodeProperty<?> nodeProperty : node.getNodeProperties()) {
-                            nodeProperty.buildEnvVars(env, listener);
-                        }
                         synchronized (runningTasks) {
                             runningTasks.put(cookie, context);
                         }
@@ -357,10 +394,15 @@ public class ExecutorStepExecution extends StepExecution {
                             throw new Exception(j + " must be a top-level job");
                         }
                         FilePath p = node.getWorkspaceFor((TopLevelItem) j);
+                        if (p == null) {
+                            throw new IllegalStateException(node + " is offline");
+                        }
                         WorkspaceList.Lease lease = computer.getWorkspaceList().allocate(p);
                         FilePath workspace = lease.path;
+                        FlowNode flowNode = context.get(FlowNode.class);
+                        flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
                         listener.getLogger().println("Running on " + computer.getDisplayName() + " in " + workspace); // TODO hyperlink
-                        context.invokeBodyLater(new Callback(cookie, lease), exec, computer, env, workspace);
+                        context.invokeBodyLater(exec, computer, env, workspace).addCallback(new Callback(cookie, lease));
                         LOGGER.log(Level.FINE, "started {0}", cookie);
                     } else {
                         // just rescheduled after a restart; wait for task to complete

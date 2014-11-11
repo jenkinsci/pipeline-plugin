@@ -179,9 +179,7 @@ public abstract class FlowNode extends Actionable {
     So we create a separate transient field and store List of them there, and intercept every mutation.
  */
     @Override
-    public List<Action> getActions() {
-        if (actions==null) {
-            synchronized (this) {
+    public synchronized List<Action> getActions() {
                 if (actions==null) {
                     try {
                         actions = new CopyOnWriteArrayList<Action>(exec.loadActions(this));
@@ -190,8 +188,6 @@ public abstract class FlowNode extends Actionable {
                         actions = new CopyOnWriteArrayList<Action>();
                     }
                 }
-            }
-        }
 
         return new AbstractList<Action>() {
             @Override

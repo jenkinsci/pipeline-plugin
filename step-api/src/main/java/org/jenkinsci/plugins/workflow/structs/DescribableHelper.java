@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.structs;
 
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
+import com.google.common.primitives.Primitives;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import java.beans.Introspector;
@@ -59,7 +60,7 @@ public class DescribableHelper {
         ClassDescriptor d = new ClassDescriptor(clazz);
         String[] names = d.loadConstructorParamNames();
         Constructor<T> c = findConstructor(clazz, names.length);
-        Object[] args = buildArguments(arguments, c.getParameterTypes(), names, true);
+        Object[] args = buildArguments(clazz, arguments, c.getParameterTypes(), names, true);
         T o = c.newInstance(args);
         injectSetters(o, arguments);
         return o;
@@ -93,18 +94,24 @@ public class DescribableHelper {
         return r;
     }
 
-    private static Object[] buildArguments(JSONObject arguments, Class<?>[] types, String[] names, boolean callEvenIfNoArgs) {
+    private static Object[] buildArguments(Class<?> clazz, JSONObject arguments, Class<?>[] types, String[] names, boolean callEvenIfNoArgs) {
         Object[] args = new Object[names.length];
         boolean hasArg = callEvenIfNoArgs;
         for (int i = 0; i < args.length; i++) {
-            hasArg |= arguments.containsKey(names[i]);
-            Object a = arguments.get(names[i]);
+            String name = names[i];
+            hasArg |= arguments.containsKey(name);
+            Object a = arguments.get(name);
+            Class<?> type = types[i];
             if (a != null) {
-                args[i] = ReflectionCache.getCachedClass(types[i]).coerceArgument(a);
-            } else if (types[i] == boolean.class) {
+                Object coerced = ReflectionCache.getCachedClass(type).coerceArgument(a);
+                if (!Primitives.wrap(type).isInstance(coerced)) {
+                    throw new ClassCastException(clazz.getName() + "." + name + " expects " + type.getName() + " but received " + coerced.getClass().getName());
+                }
+                args[i] = coerced;
+            } else if (type == boolean.class) {
                 args[i] = false;
-            } else if (types[i].isPrimitive() && callEvenIfNoArgs) {
-                throw new UnsupportedOperationException("not yet handling @DataBoundConstructor default value of " + types[i] + "; pass an explicit value for " + names[i]);
+            } else if (type.isPrimitive() && callEvenIfNoArgs) {
+                throw new UnsupportedOperationException("not yet handling @DataBoundConstructor default value of " + type + "; pass an explicit value for " + name);
             }
         }
         return hasArg ? args : null;
@@ -150,7 +157,7 @@ public class DescribableHelper {
                         throw new IllegalStateException(m + " cannot be a @DataBoundSetter");
                     }
                     m.setAccessible(true);
-                    Object[] args = buildArguments(arguments, parameterTypes, new String[] {Introspector.decapitalize(m.getName().substring(3))}, false);
+                    Object[] args = buildArguments(c, arguments, parameterTypes, new String[] {Introspector.decapitalize(m.getName().substring(3))}, false);
                     if (args != null) {
                         m.invoke(o, args);
                     }

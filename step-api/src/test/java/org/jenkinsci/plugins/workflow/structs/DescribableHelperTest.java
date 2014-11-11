@@ -65,6 +65,19 @@ public class DescribableHelperTest {
         assertEquals("{flag=true, text=more, value=stuff}", new TreeMap<String,Object>(DescribableHelper.uninstantiate(i)).toString());
     }
 
+    @Test public void mismatchedTypes() throws Exception {
+        try {
+            DescribableHelper.instantiate(I.class, new JSONObject().element("value", 99));
+            fail();
+        } catch (ClassCastException x) {
+            String message = x.getMessage();
+            assertTrue(message, message.contains(I.class.getName()));
+            assertTrue(message, message.contains("value"));
+            assertTrue(message, message.contains("java.lang.String"));
+            assertTrue(message, message.contains("java.lang.Integer"));
+        }
+    }
+
     public static final class C {
         public final String text;
         private final boolean flag;

@@ -29,21 +29,21 @@ import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.Futures;
 import groovy.lang.Closure;
 import groovy.lang.Script;
+import hudson.Util;
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverWriter;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -68,6 +68,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  * @author Kohsuke Kawaguchi
  */
 @PersistIn(PROGRAM)
+@edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // bogus warning about closures
 public final class CpsThreadGroup implements Serializable {
     /**
      * {@link CpsThreadGroup} always belong to the same {@link CpsFlowExecution}.
@@ -80,7 +81,7 @@ public final class CpsThreadGroup implements Serializable {
     /**
      * All the member threads by their {@link CpsThread#id}
      */
-    final Map<Integer,CpsThread> threads = new HashMap<Integer, CpsThread>();
+    final NavigableMap<Integer,CpsThread> threads = new TreeMap<Integer, CpsThread>();
 
     /**
      * Unique thread ID generator.
@@ -273,8 +274,13 @@ public final class CpsThreadGroup implements Serializable {
                         assert !t.isAlive();    // failed thread is non-resumable
 
                         // workflow produced an exception
-                        execution.setResult(Result.FAILURE);
-                        t.head.get().addAction(new ErrorAction(o.getAbnormal()));
+                        Result result = Result.FAILURE;
+                        Throwable error = o.getAbnormal();
+                        if (error instanceof FlowInterruptedException) {
+                            result = ((FlowInterruptedException) error).getResult();
+                        }
+                        execution.setResult(result);
+                        t.head.get().addAction(new ErrorAction(error));
                     }
 
                     if (!t.isAlive()) {
@@ -340,8 +346,10 @@ public final class CpsThreadGroup implements Serializable {
             } finally {
                 w.close();
             }
-            f.delete();
-            tmpFile.renameTo(f);
+            Util.deleteFile(f);
+            if (!tmpFile.renameTo(f)) {
+                throw new IOException("rename " + tmpFile + " to " + f + " failed");
+            }
             LOGGER.log(FINE, "program state saved");
         } catch (RuntimeException e) {
             LOGGER.log(WARNING, "program state save failed",e);
@@ -353,7 +361,7 @@ public final class CpsThreadGroup implements Serializable {
             throw new IOException("Failed to persist "+f,e);
         } finally {
             PROGRAM_STATE_SERIALIZATION.set(old);
-            tmpFile.delete();
+            Util.deleteFile(tmpFile);
         }
     }
 
@@ -366,14 +374,7 @@ public final class CpsThreadGroup implements Serializable {
         // as that's the ony more likely to have caused the problem.
         // TODO: when we start tracking which thread is just waiting for the body, then
         // that information would help. or maybe we should just remember the thread that has run the last time
-        List<CpsThread> all = new ArrayList<CpsThread>(threads.values());
-        Collections.sort(all,new Comparator<CpsThread>() {
-            @Override
-            public int compare(CpsThread o1, CpsThread o2) {
-                return o2.id-o1.id;
-            }
-        });
-        all.get(0).resume(new Outcome(null,t));
+        threads.lastEntry().getValue().resume(new Outcome(null,t));
     }
 
     private static final Logger LOGGER = Logger.getLogger(CpsThreadGroup.class.getName());

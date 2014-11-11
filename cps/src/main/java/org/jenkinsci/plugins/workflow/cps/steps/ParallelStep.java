@@ -81,32 +81,35 @@ public class ParallelStep extends Step {
 
         Callback callbackFor(String name) {
             outcomes.put(name, null);
-            return new Callback(name);
+            return new Callback(this, name);
         }
 
-        class Callback implements FutureCallback, Serializable {
+        private static class Callback implements FutureCallback, Serializable {
+
+            private final ResultHandler handler;
             private final String name;
 
-            Callback(String name) {
+            Callback(ResultHandler handler, String name) {
+                this.handler = handler;
                 this.name = name;
             }
 
             @Override
             public void onSuccess(Object result) {
-                outcomes.put(name,new Outcome(result,null));
+                handler.outcomes.put(name, new Outcome(result, null));
                 checkAllDone();
             }
 
             @Override
             public void onFailure(Throwable t) {
-                outcomes.put(name,new Outcome(null,t));
+                handler.outcomes.put(name, new Outcome(null, t));
                 checkAllDone();
             }
 
             private void checkAllDone() {
                 Map<String,Object> success = new HashMap<String, Object>();
                 Entry<String,Outcome> failure = null;
-                for (Entry<String,Outcome> e : outcomes.entrySet()) {
+                for (Entry<String,Outcome> e : handler.outcomes.entrySet()) {
                     Outcome o = e.getValue();
 
                     if (o==null)
@@ -121,9 +124,9 @@ public class ParallelStep extends Step {
                 // all done
                 if (failure!=null) {
                     // wrap the exception so that the call stack leading up to parallel is visible
-                    context.onFailure(new ParallelStepException(failure.getKey(), failure.getValue().getAbnormal()));
+                    handler.context.onFailure(new ParallelStepException(failure.getKey(), failure.getValue().getAbnormal()));
                 } else {
-                    context.onSuccess(success);
+                    handler.context.onSuccess(success);
                 }
             }
 

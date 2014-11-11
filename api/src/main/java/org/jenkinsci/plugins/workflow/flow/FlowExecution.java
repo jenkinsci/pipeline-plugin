@@ -50,6 +50,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 
 /**
  * State of a currently executing workflow.
@@ -132,14 +133,11 @@ public abstract class FlowExecution implements FlowActionStorage {
      * <p>
      * If it's evaluating bodies (see {@link StepContext#invokeBodyLater(FutureCallback, Object...)},
      * then it's callback needs to be invoked.
-     *
+     * <p>
+     * Do not use this from a step. Throw {@link FlowInterruptedException} or some other exception instead.
      * @see StepExecution#stop()
      */
     public abstract void finish(Result r) throws IOException, InterruptedException;
-
-    public final void abort() throws IOException, InterruptedException {
-        finish(Result.ABORTED);
-    }
 
     public abstract void addListener(GraphListener listener);
 
@@ -196,6 +194,7 @@ public abstract class FlowExecution implements FlowActionStorage {
         return HttpResponses.plainText(sw.toString());
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings("DM_DEFAULT_ENCODING")
     public void doGraphViz(StaplerResponse rsp) throws IOException {
         Process p = new ProcessBuilder("dot", "-Tpng").start();
         writeDot(new PrintWriter(p.getOutputStream()));
@@ -211,22 +210,22 @@ public abstract class FlowExecution implements FlowActionStorage {
             FlowNode n;
             while ((n=walker.next())!=null) {
                 for (FlowNode p : n.getParents()) {
-                    w.printf("%s -> %s\n",
+                    w.printf("%s -> %s%n",
                             p.getId(), n.getId());
                 }
 
                 if (n instanceof BlockStartNode) {
                     BlockStartNode sn = (BlockStartNode) n;
-                    w.printf("%s [shape=trapezium]\n", n.getId());
+                    w.printf("%s [shape=trapezium]%n", n.getId());
                 } else
                 if (n instanceof BlockEndNode) {
                     BlockEndNode sn = (BlockEndNode) n;
-                    w.printf("%s [shape=invtrapezium]\n", n.getId());
-                    w.printf("%s -> %s [style=dotted]\n",
+                    w.printf("%s [shape=invtrapezium]%n", n.getId());
+                    w.printf("%s -> %s [style=dotted]%n",
                             sn.getStartNode().getId(), n.getId());
                 }
 
-                w.printf("%s [label=\"%s: %s\"]\n", n.getId(), n.getId(), n.getDisplayName());
+                w.printf("%s [label=\"%s: %s\"]%n", n.getId(), n.getId(), n.getDisplayName());
             }
 
             w.println("}");

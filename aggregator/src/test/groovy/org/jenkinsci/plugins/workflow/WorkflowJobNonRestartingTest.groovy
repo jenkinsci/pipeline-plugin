@@ -36,6 +36,7 @@ import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl
 import hudson.model.Result
 import org.junit.Before
 import org.junit.Test
+import org.jvnet.hudson.test.Issue
 
 import javax.inject.Inject
 
@@ -203,6 +204,25 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
 
         System.out.println(b.log)
         assert b.log.contains("org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException: Scripts not permitted to use staticMethod jenkins.model.Jenkins getInstance")
+        assert b.result == Result.FAILURE: b.log
+    }
+
+    /**
+     * Trying to run a step without having the required context should result in a graceful error.
+     */
+    @Issue("https://trello.com/c/00MaoBTK/121-provide-explicit-error-if-required-context-missing")
+    @Test
+    public void missingContextCheck() {
+        p.definition = new CpsFlowDefinition("""
+            sh 'true'
+        """,true);
+
+        def f = p.scheduleBuild2(0)
+        WorkflowRun b = f.get()
+
+        System.out.println(b.log)
+        assert b.log.contains("such as: node"); // make sure the 'node' is a suggested message. this comes from MissingContextVariableException
+//        assert !b.log.contains("Exception")   // haven't figured out how to hide this
         assert b.result == Result.FAILURE: b.log
     }
 }

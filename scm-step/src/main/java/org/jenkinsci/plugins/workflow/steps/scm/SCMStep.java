@@ -32,6 +32,7 @@ import hudson.model.listeners.SCMListener;
 import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
 import java.io.File;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
@@ -40,6 +41,7 @@ import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
@@ -48,7 +50,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 /**
  * A step which uses some kind of {@link SCM}.
  */
-public abstract class SCMStep extends Step {
+public abstract class SCMStep extends Step implements Serializable {
 
     private boolean poll = true;
     private boolean changelog = true;
@@ -72,13 +74,18 @@ public abstract class SCMStep extends Step {
     protected abstract @Nonnull SCM createSCM();
 
     class StepExecutionImpl extends AbstractSynchronousStepExecution<Void> {
+        @StepContextParameter private transient Run run;
+        @StepContextParameter private transient FilePath workspace;
+        @StepContextParameter private transient TaskListener listener;
+        @StepContextParameter private transient Launcher launcher;
+
         StepExecutionImpl(StepContext context) {
             super(context);
+            inject();
         }
 
         @Override
         protected Void run() throws Exception {
-            Run<?,?> run = getContext().get(Run.class);
             File changelogFile = null;
             if (changelog) {
                 for (int i = 0; ; i++) {
@@ -89,9 +96,6 @@ public abstract class SCMStep extends Step {
                 }
             }
             SCM scm = createSCM();
-            FilePath workspace = getContext().get(FilePath.class);
-            TaskListener listener = getContext().get(TaskListener.class);
-            Launcher launcher = getContext().get(Launcher.class);
             SCMRevisionState baseline = null;
             Run<?,?> prev = run.getPreviousBuild();
             if (prev != null) {
@@ -104,12 +108,14 @@ public abstract class SCMStep extends Step {
             SCMRevisionState pollingBaseline = null;
             if (poll || changelog) {
                 pollingBaseline = scm.calcRevisionsFromBuild(run, workspace, launcher, listener);
-                MultiSCMRevisionState state = run.getAction(MultiSCMRevisionState.class);
-                if (state == null) {
-                    state = new MultiSCMRevisionState();
-                    run.addAction(state);
+                if (pollingBaseline != null) {
+                    MultiSCMRevisionState state = run.getAction(MultiSCMRevisionState.class);
+                    if (state == null) {
+                        state = new MultiSCMRevisionState();
+                        run.addAction(state);
+                    }
+                    state.add(scm, pollingBaseline);
                 }
-                state.add(scm, pollingBaseline);
             }
             for (SCMListener l : SCMListener.all()) {
                 l.onCheckout(run, scm, workspace, listener, changelogFile, pollingBaseline);
@@ -118,6 +124,8 @@ public abstract class SCMStep extends Step {
             // TODO should we call buildEnvVars and return the result?
             return null;
         }
+
+        private static final long serialVersionUID = 1L;
     }
 
     @Override public StepExecution start(StepContext context) throws Exception {
@@ -145,4 +153,5 @@ public abstract class SCMStep extends Step {
 
     }
 
+    private static final long serialVersionUID = 1L;
 }

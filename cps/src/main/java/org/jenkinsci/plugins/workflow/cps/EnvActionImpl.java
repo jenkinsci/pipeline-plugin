@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import groovy.lang.GroovyObjectSupport;
 import hudson.EnvVars;
+import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.util.LogTaskListener;
 import java.io.IOException;
@@ -36,6 +37,7 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.RunAction2;
+import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
@@ -56,7 +58,7 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
 
     @Override public EnvVars getEnvironment() throws IOException, InterruptedException {
         if (ownerEnvironment == null) {
-            ownerEnvironment = owner.getEnvironment(new LogTaskListener(LOGGER, Level.INFO));
+            ownerEnvironment = DefaultStepContext.getEnvironment(owner, new LogTaskListener(LOGGER, Level.INFO));
         }
         EnvVars e = new EnvVars(ownerEnvironment);
         e.putAll(env);
@@ -70,7 +72,14 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
 
     @Override public Object getProperty(String propertyName) {
         try {
-            return getEnvironment().get(propertyName);
+            String val = getEnvironment().get(propertyName);
+            if (val == null) {
+                Computer computer = CpsThread.current().getContextVariable(Computer.class);
+                if (computer != null) {
+                    return computer.getEnvironment().get(propertyName);
+                }
+            }
+            return val;
         } catch (Exception x) {
             LOGGER.log(Level.WARNING, null, x);
             return null;

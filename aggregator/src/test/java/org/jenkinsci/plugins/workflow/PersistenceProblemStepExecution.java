@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow;
 
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 /**
@@ -9,7 +10,7 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
  *
  * @author Kohsuke Kawaguchi
  */
-public class PersistenceProblemStepExecution extends StepExecution {
+public class PersistenceProblemStepExecution extends AbstractStepExecutionImpl {
     public final Object notSerializable = new Object();
 
     private Object writeReplace() {

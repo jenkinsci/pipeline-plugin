@@ -61,14 +61,15 @@ public final class CatchErrorStep extends AbstractStepImpl {
 
     }
 
-    public static final class Execution extends StepExecution {
+    public static final class Execution extends AbstractStepExecutionImpl {
 
         /** TODO unused since it is transient, just as a marker that we will need it later: https://trello.com/c/cyXGkuVv/91-stepcontextparameter-should-be-reinjected-after-restart */
         @StepContextParameter private transient Run<?,?> run;
         @StepContextParameter private transient TaskListener listener;
 
         @Override public boolean start() throws Exception {
-            getContext().invokeBodyLater(new Callback());
+            StepContext context = getContext();
+            context.invokeBodyLater().addCallback(new Callback(context));
             return false;
         }
 
@@ -76,34 +77,43 @@ public final class CatchErrorStep extends AbstractStepImpl {
             // nothing to do
         }
 
-        private final class Callback implements FutureCallback<Object>, Serializable {
+        private static final class Callback implements FutureCallback<Object>, Serializable {
+
+            private final StepContext context;
+
+            Callback(StepContext context) {
+                this.context = context;
+            }
 
             @Override public void onSuccess(Object result) {
                 try {
-                    getContext().get(Run.class).setResult(Result.SUCCESS);
+                    context.get(Run.class).setResult(Result.SUCCESS);
                 } catch (Exception x) {
-                    getContext().onFailure(x);
+                    context.onFailure(x);
                     return;
                 }
-                getContext().onSuccess(null); // we do not pass up a result, since onFailure cannot
+                context.onSuccess(null); // we do not pass up a result, since onFailure cannot
             }
 
             @Override public void onFailure(Throwable t) {
-                // TODO as in RetryStep, we cannot actually print the error message here
-                if (t instanceof AbortException) {
-                    listener.error(t.getMessage());
-                } else {
-                    t.printStackTrace(listener.getLogger());
-                }
                 try {
-                    getContext().get(Run.class).setResult(Result.FAILURE);
-                    getContext().onSuccess(null);
+                    // TODO as in RetryStep, we cannot actually print the error message here
+                    TaskListener listener = context.get(TaskListener.class);
+                    if (t instanceof AbortException) {
+                        listener.error(t.getMessage());
+                    } else {
+                        t.printStackTrace(listener.getLogger());
+                    }
+                    context.get(Run.class).setResult(Result.FAILURE);
+                    context.onSuccess(null);
                 } catch (Exception x) {
-                    getContext().onFailure(x);
+                    context.onFailure(x);
                 }
             }
 
         }
+
+        private static final long serialVersionUID = 1L;
 
     }
 

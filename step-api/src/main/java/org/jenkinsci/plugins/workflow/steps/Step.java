@@ -26,23 +26,28 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.AbstractDescribableImpl;
 
-import java.util.Map;
+import hudson.model.Describable;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * One thing that can be done, perhaps asynchronously.
- *
+ * A {@link Step} is merely the definition of how this task is configured;
+ * {@link StepExecution} represents any state associated with one actual run of it.
  * <p>
  * Extends from {@link Describable} to support UI-based instantiation.
- *
- * @author Kohsuke Kawaguchi
- * @author Jesse Glick
+ * Your step should have a {@code config.jelly} allowing a user to configure its properties,
+ * and may have a {@code help.html} and/or {@code help-fieldName.html},
+ * plus {@code doEtc} methods on the {@link StepDescriptor} for form validation, completion, and so on.
+ * It should have a {@link DataBoundConstructor} specifying mandatory properties.
+ * It may also use {@link DataBoundSetter} for optional properties.
+ * All properties also need public getters (or to be public fields) for data binding to work.
  */
-// the intent is that this is generic enough for BuildSteps interop
 public abstract class Step extends AbstractDescribableImpl<Step> {
     /**
      * Start execution of something and report the end result back to the given callback.
      *
-     * Arguments are passed when {@linkplain StepDescriptor#newInstance(Map) instantiating steps}.
+     * Arguments are passed when {@linkplain StepDescriptor#newInstance instantiating steps}.
      *
      * @return
      *      true if the execution of this step has synchronously completed before this method returns.

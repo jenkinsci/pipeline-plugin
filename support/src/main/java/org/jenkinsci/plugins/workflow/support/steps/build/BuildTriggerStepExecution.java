@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.steps.build;
+package org.jenkinsci.plugins.workflow.support.steps.build;
 
 import hudson.AbortException;
 import hudson.model.Action;
@@ -15,19 +15,23 @@ import hudson.model.TaskListener;
 import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import javax.inject.Inject;
 import jenkins.model.ParameterizedJobMixIn;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
 /**
  * @author Vivek Pandey
  */
-public class BuildTriggerStepExecution extends StepExecution {
+public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
     @StepContextParameter
     private transient TaskListener listener;
     @StepContextParameter private transient Run<?,?> invokingRun;
+    @StepContextParameter private transient FlowNode node;
 
     @Inject // used only during the start() method, so no need to be persisted
     transient BuildTriggerStep step;
@@ -35,13 +39,17 @@ public class BuildTriggerStepExecution extends StepExecution {
     @SuppressWarnings({"unchecked", "rawtypes"}) // cannot get from ParameterizedJob back to ParameterizedJobMixIn trivially
     @Override
     public boolean start() throws Exception {
-        Jenkins jenkins = Jenkins.getInstance();
         String job = step.getJob();
         listener.getLogger().println("Starting building project: " + job);
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins == null) {
+            throw new IllegalStateException("Jenkins is not running");
+        }
         final ParameterizedJobMixIn.ParameterizedJob project = jenkins.getItem(job, invokingRun.getParent(), ParameterizedJobMixIn.ParameterizedJob.class);
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
         }
+        node.addAction(new LabelAction(Messages.BuildTriggerStepExecution_building_(project.getFullDisplayName())));
         List<Action> actions = new ArrayList<Action>();
         actions.add(new BuildTriggerAction(getContext()));
         actions.add(new CauseAction(new Cause.UpstreamCause(invokingRun)));
@@ -60,6 +68,9 @@ public class BuildTriggerStepExecution extends StepExecution {
     @Override
     public void stop() {
         Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins == null) {
+            return;
+        }
 
         Queue q = jenkins.getQueue();
 
@@ -77,8 +88,9 @@ public class BuildTriggerStepExecution extends StepExecution {
         // so this method shouldn't call getContext().onFailure()
         for (Computer c : jenkins.getComputers()) {
             for (Executor e : c.getExecutors()) {
-                if (e.getCurrentExecutable() instanceof Run) {
-                    Run<?,?> b = (Run) e.getCurrentExecutable();
+                Queue.Executable exec = e.getCurrentExecutable();
+                if (exec instanceof Run) {
+                    Run<?,?> b = (Run) exec;
 
                     BuildTriggerAction bta = b.getAction(BuildTriggerAction.class);
                     if (bta!=null && bta.getStepContext().equals(getContext())) {
@@ -88,4 +100,7 @@ public class BuildTriggerStepExecution extends StepExecution {
             }
         }
     }
+
+    private static final long serialVersionUID = 1L;
+
 }

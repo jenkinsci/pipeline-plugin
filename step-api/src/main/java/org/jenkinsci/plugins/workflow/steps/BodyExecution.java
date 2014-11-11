@@ -21,18 +21,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package org.jenkinsci.plugins.workflow.steps;
 
-package org.jenkinsci.plugins.workflow.actions;
+import com.google.common.util.concurrent.FutureCallback;
 
-import hudson.model.Action;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.concurrent.Future;
 
 /**
- * TODO: it'd be useful to capture the notion of "where was this step defined?"
+ * Represents the executing body block of {@link Step}.
  *
- * Perhaps just a URL to somewhere else.
+ * <p>
+ * As a representation of asynchronous computation, this object implements {@link Future},
+ * so that you can cancel the execution, install a listener, etc.
  *
  * @author Kohsuke Kawaguchi
- * @author Jesse Glick
+ * @see StepContext#invokeBodyLater(Object...)
  */
-public abstract class SourceLocationAction implements Action {
+public abstract class BodyExecution implements Future<Object>, Serializable {
+    // I wanted to make this extend from ListenableFuture, but its addListener method takes
+    // Executor & Runnable that makes it unsuitable for persistence.
+
+    /**
+     * Returns the inner-most {@link StepExecution}s that are currently executing.
+     */
+    public abstract Collection<StepExecution> getCurrentExecutions();
+
+    /**
+     * Adds a callback that gets invoked when the body finishes execution.
+     *
+     * If the execution is already completed, the callback will be invoked immediately.
+     */
+    public abstract void addCallback(FutureCallback<Object> callback);
+
+    private static final long serialVersionUID = 1L;
 }

@@ -24,20 +24,20 @@
 
 package org.jenkinsci.plugins.workflow.test.steps;
 
+import com.google.inject.Inject;
 import hudson.Extension;
 import hudson.model.PeriodicWork;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 /**
  * Sample asynchronous step that suspends until a file of the specified name is created.
@@ -108,9 +108,9 @@ public class WatchYourStep extends AbstractStepImpl implements Serializable {
         }
     }
 
-    public static class Execution extends StepExecution {
+    public static class Execution extends AbstractStepExecutionImpl {
         
-        @Inject private WatchYourStep step;
+        @Inject(optional=true) private WatchYourStep step;
 
         @Override
         public boolean start() {

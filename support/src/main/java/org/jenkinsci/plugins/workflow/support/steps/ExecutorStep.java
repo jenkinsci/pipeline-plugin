@@ -24,9 +24,14 @@
 
 package org.jenkinsci.plugins.workflow.support.steps;
 
+import com.google.common.collect.ImmutableSet;
+import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AutoCompletionCandidates;
+import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Label;
 import javax.annotation.CheckForNull;
@@ -36,6 +41,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.QueryParameter;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * Grabs an {@link Executor} on a node of your choice and runs its block with that executor occupied.
@@ -81,15 +89,22 @@ public final class ExecutorStep extends AbstractStepImpl {
         // pending https://trello.com/c/THjT9lwd/131-autocompletioncandidates-for-label
         public AutoCompletionCandidates doAutoCompleteLabel(@QueryParameter String value) {
             AutoCompletionCandidates c = new AutoCompletionCandidates();
-            for (Label label : Jenkins.getInstance().getLabels()) {
-                if (label.getName().startsWith(value)) {
-                    c.add(label.getName());
+            Jenkins j = Jenkins.getInstance();
+            if (j != null) {
+                for (Label label : j.getLabels()) {
+                    if (label.getName().startsWith(value)) {
+                        c.add(label.getName());
+                    }
                 }
             }
             return c;
         }
         // proper doCheckValue also requires API requested above
 
+        @Override
+        public Set<Class<?>> getProvidedContext() {
+            return ImmutableSet.of(Executor.class, Computer.class, FilePath.class, EnvVars.class);
+        }
     }
 
 }

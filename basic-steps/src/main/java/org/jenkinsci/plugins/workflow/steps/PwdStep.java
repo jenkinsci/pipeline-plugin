@@ -66,6 +66,8 @@ public class PwdStep extends AbstractStepImpl {
             return cwd.getRemote();
         }
 
+        private static final long serialVersionUID = 1L;
+
     }
 
 }

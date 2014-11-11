@@ -9,20 +9,24 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.slaves.WorkspaceList;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.Serializable;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 
 /**
  * @author Jesse Glick
  */
-public class WorkspaceStepExecution extends StepExecution {
+public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
 
     @StepContextParameter private transient Computer c;
     @StepContextParameter private transient Run<?,?> r;
     @StepContextParameter private transient TaskListener listener;
+    @StepContextParameter private transient FlowNode flowNode;
 
     @Override
     public boolean start() throws Exception {
@@ -35,10 +39,14 @@ public class WorkspaceStepExecution extends StepExecution {
             throw new Exception("computer does not correspond to a live node");
         }
         FilePath p = n.getWorkspaceFor((TopLevelItem) j);
+        if (p == null) {
+            throw new IllegalStateException(n + " is offline");
+        }
         WorkspaceList.Lease lease = c.getWorkspaceList().allocate(p);
         FilePath workspace = lease.path;
+        flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
         listener.getLogger().println("Running in " + workspace);
-        getContext().invokeBodyLater(new Callback(getContext(), lease), workspace);
+        getContext().invokeBodyLater(workspace).addCallback(new Callback(getContext(), lease));
         return false;
     }
 
@@ -48,6 +56,7 @@ public class WorkspaceStepExecution extends StepExecution {
         throw new UnsupportedOperationException();
     }
 
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // lease is pickled
     private static final class Callback implements FutureCallback<Object>, Serializable {
 
         private final StepContext context;
@@ -69,4 +78,7 @@ public class WorkspaceStepExecution extends StepExecution {
         }
 
     }
+
+    private static final long serialVersionUID = 1L;
+
 }

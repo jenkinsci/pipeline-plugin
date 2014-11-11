@@ -9,6 +9,7 @@ import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.cps.CpsThread;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
@@ -19,7 +20,7 @@ import java.util.Collections;
  *
  * @author Kohsuke Kawaguchi
  */
-public class LoadStepExecution extends StepExecution {
+public class LoadStepExecution extends AbstractStepExecutionImpl {
     @StepContextParameter
     private transient FilePath cwd;
 
@@ -44,9 +45,8 @@ public class LoadStepExecution extends StepExecution {
         // as the body can pause.
         cps.invokeBodyLater(
                 t.getGroup().export(script),
-                cps, // when the body is done, the load step is done
                 Collections.<Action>emptyList()
-        );
+        ).addCallback(cps); // when the body is done, the load step is done
 
         return false;
     }
@@ -57,4 +57,7 @@ public class LoadStepExecution extends StepExecution {
         //
         // the head of the CPS thread that's executing the body should stop and that's all we need to do.
     }
+
+    private static final long serialVersionUID = 1L;
+
 }

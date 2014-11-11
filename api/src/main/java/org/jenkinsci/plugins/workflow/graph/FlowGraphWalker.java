@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.workflow.graph;
 
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
@@ -11,11 +10,10 @@ import java.util.Stack;
 
 /**
  * Visits a graph of flow nodes and iterates nodes in them.
- *
- * TODO: guarantee DFS order
- *
  * @author Kohsuke Kawaguchi
  */
+// TODO guarantee DFS order (is it not already in DFS order?)
+// TODO implement Iterable<FlowNode>
 public class FlowGraphWalker {
     // queue of nodes to visit.
     // it's a stack and not queue to visit nodes in DFS

@@ -8,7 +8,12 @@ Run it like:
 
     docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo
 
-Jenkins runs on port 8081, and Jetty runs on port 8080. The continuous delivery pipeline consists of the following sequence.
+Jenkins runs on port 8081, and Jetty runs on port 8080.
+
+__Note__: If using [boot2docker](https://github.com/boot2docker/boot2docker), you will need to connect using the boot2docker
+VM's IP (instead of `localhost`).  You can get this by running `boot2docker ip` on the command line.
+
+The continuous delivery pipeline consists of the following sequence.
 
 * Check out source code from a Git repository and build it via Maven with unit testing
 * Loads the main logic of the workflow from [flow.groovy](https://github.com/jenkinsci/workflow-plugin-pipeline-demo/blob/master/flow.groovy) in the workspace
@@ -38,3 +43,9 @@ Sample demo scenario
 * Get another build going, but this time restart the Jenkins instance while the workflow is in progress
   via [restart UI](http://localhost:8081/restart). Doing this while the integration test is running,
   as steps like Git checkout will get disrupted by restart.
+
+Jenkins Enterprise variant
+--------------------------
+
+If you would like to see Jenkins Enterprise features (such as checkpoints and the stage pipeline view),
+see the [extended demo page](https://registry.hub.docker.com/u/cloudbees/workflow-demo/).

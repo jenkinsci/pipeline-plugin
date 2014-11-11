@@ -41,6 +41,7 @@ import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.BodyExecution;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -57,6 +58,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nonnull;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
@@ -81,6 +83,7 @@ import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
  * @author Kohsuke Kawaguchi
  */
 @PersistIn(ANYWHERE)
+@edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED") // bodyInvokers, syncMode handled specially
 public class CpsStepContext extends DefaultStepContext { // TODO add XStream class mapper
 
     private static final Logger LOGGER = Logger.getLogger(CpsStepContext.class.getName());
@@ -172,8 +175,12 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      *      such as when the plugin that implements this was removed. So the caller should defend against null.
      */
     public @CheckForNull StepDescriptor getStepDescriptor() {
+        Jenkins j = Jenkins.getInstance();
+        if (j == null) {
+            return null;
+        }
         if (stepDescriptor==null)
-            stepDescriptor = (StepDescriptor) Jenkins.getInstance().getDescriptor(stepDescriptorId);
+            stepDescriptor = (StepDescriptor) j.getDescriptor(stepDescriptorId);
         return stepDescriptor;
     }
 
@@ -189,7 +196,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     @CheckForNull CpsThread getThread(CpsThreadGroup g) {
         CpsThread thread = g.threads.get(threadId);
         if (thread == null) {
-            LOGGER.log(Level.WARNING, "no thread {0} among {1}", new Object[] {threadId, g.threads.keySet()});
+            LOGGER.log(Level.FINE, "no thread " + threadId + " among " + g.threads.keySet(), new IllegalStateException());
         }
         return thread;
     }
@@ -214,21 +221,26 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     }
 
     @Override
-    public void invokeBodyLater(final FutureCallback callback, Object... contextOverrides) {
-        invokeBodyLater(body,callback,Collections.<Action>emptyList(),contextOverrides);
+    public BodyExecution invokeBodyLater(Object... contextOverrides) {
+        return invokeBodyLater(body,Collections.<Action>emptyList(),contextOverrides);
     }
 
     /**
      * @param startNodeActions
      *      actions to be added to {@link StepStartNode} that indicates the beginning of a body invocation.
      */
-    public void invokeBodyLater(BodyReference body, final FutureCallback callback, List<? extends Action> startNodeActions, Object... contextOverrides) {
+    public BodyExecution invokeBodyLater(BodyReference body, List<? extends Action> startNodeActions, Object... contextOverrides) {
         if (body==null)
             throw new IllegalStateException("There's no body to invoke");
 
-        final BodyInvoker b = new BodyInvoker(this,body,callback,startNodeActions,contextOverrides);
+        final BodyInvoker b = new BodyInvoker(this,body,startNodeActions,contextOverrides);
 
-        if (syncMode) {
+        boolean _syncMode;
+        synchronized (this) { // TODO should this whole method be synchronized? mainly getExecution() is a concern
+            _syncMode = syncMode;
+        }
+
+        if (_syncMode) {
             // we process this in ThreadTaskImpl
             bodyInvokers.add(b);
         } else {
@@ -244,13 +256,15 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
 
                     @Override
                     public void onFailure(Throwable t) {
-                        callback.onFailure(t);
+                        b.bodyExecution.onFailure(t);
                     }
                 });
             } catch (IOException e) {
-                callback.onFailure(e);
+                b.bodyExecution.onFailure(e);
             }
         }
+
+        return b.bodyExecution;
     }
 
     @Override
@@ -276,8 +290,12 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     }
 
     @Override protected FlowNode getNode() throws IOException {
-        if (node==null)
+        if (node == null) {
             node = getFlowExecution().getNode(id);
+            if (node == null) {
+                throw new IOException("no node found for " + id);
+            }
+        }
         return node;
     }
 
@@ -356,7 +374,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         }
     }
 
-    private CpsFlowExecution getFlowExecution() throws IOException {
+    private @Nonnull CpsFlowExecution getFlowExecution() throws IOException {
         return (CpsFlowExecution)executionRef.get();
     }
 

@@ -88,7 +88,7 @@ class Snippetizer {
         if (valueC == String.class || valueC == Character.class) {
             String text = String.valueOf(value);
             if (text.contains("\n")) {
-                b.append('/').append(text.replace("/", "\\/")).append('/');
+                b.append("'''").append(text.replace("\\", "\\\\").replace("'", "\\'")).append("'''");
             } else {
                 b.append('\'').append(text.replace("\\", "\\\\").replace("'", "\\'")).append('\'');
             }

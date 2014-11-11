@@ -31,6 +31,7 @@ import groovy.lang.Closure;
 import groovy.lang.GString;
 import groovy.lang.GroovyObject;
 import groovy.lang.GroovyObjectSupport;
+import hudson.model.TaskListener;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
@@ -38,11 +39,13 @@ import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.MissingContextVariableException;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -127,6 +130,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         Step s;
         boolean sync;
         try {
+            d.checkContextAvailability(context);
             JSONObject o = new JSONObject();
             o.putAll(ps.namedArgs);
             s = d.newInstance(o);
@@ -134,6 +138,8 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             thread.setStep(e);
             sync = e.start();
         } catch (Exception e) {
+            if (e instanceof MissingContextVariableException)
+                reportMissingContextVariableException(context, (MissingContextVariableException)e);
             context.onFailure(e);
             s = null;
             sync = true;
@@ -170,7 +176,33 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
     }
 
-    private static class NamedArgsAndClosure {
+    /**
+     * Reports a user-friendly error message for {@link MissingContextVariableException}.
+     */
+    private void reportMissingContextVariableException(CpsStepContext context, MissingContextVariableException e) {
+        TaskListener tl;
+        try {
+            tl = context.get(TaskListener.class);
+            if (tl==null)       return; // if we can't report an error, give up
+        } catch (IOException _) {
+            return;
+        } catch (InterruptedException _) {
+            return;
+        }
+
+        StringBuilder names = new StringBuilder();
+        for (StepDescriptor p : e.getProviders()) {
+            if (names.length()>0)   names.append(',');
+            names.append(p.getFunctionName());
+        }
+
+        PrintStream logger = tl.getLogger();
+        logger.println(e.getMessage());
+        if (names.length()>0)
+            logger.println("Perhaps you forgot to surround the code with a step that provides this, such as: "+names);
+    }
+
+    static class NamedArgsAndClosure {
         final Map<String,Object> namedArgs;
         final Closure body;
 
@@ -211,7 +243,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
      * <p>
      * This handling is designed after how Java defines literal syntax for {@link Annotation}.
      */
-    private NamedArgsAndClosure parseArgs(StepDescriptor d, Object arg) {
+    static NamedArgsAndClosure parseArgs(StepDescriptor d, Object arg) {
         boolean expectsBlock = d.takesImplicitBlockArgument();
 
         if (arg instanceof Map)
@@ -293,7 +325,9 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             for (BodyInvoker b : context.bodyInvokers) {
                 // don't collect the first head, which is what we borrowed from our parent.
                 FlowHead h = heads[idx];
-                b.start(cur, h, idx>0 ?  new HeadCollector(context, h) : null);
+                if (idx>0)
+                    b.bodyExecution.prependCallback(new HeadCollector(context, h));
+                b.start(cur, h);
                 idx++;
             }
 

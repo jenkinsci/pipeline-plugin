@@ -34,6 +34,7 @@ import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
 import hudson.model.TaskListener;
 import hudson.model.User;
+import hudson.model.labels.LabelAtom;
 import hudson.remoting.Launcher;
 import hudson.remoting.Which;
 import hudson.slaves.DumbSlave;
@@ -43,7 +44,11 @@ import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -54,13 +59,18 @@ import jenkins.security.QueueItemAuthenticatorConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.tools.ant.util.JavaEnvUtils;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
@@ -120,6 +130,7 @@ public class WorkflowTest extends SingleJobTestBase {
     /**
      * Workflow captures a stateful object, and we verify that it survives the restart
      */
+    @RandomlyFails("TODO observed !e.complete")
     @Test public void persistEphemeralObject() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -170,10 +181,12 @@ public class WorkflowTest extends SingleJobTestBase {
      * This ensures that the context variable overrides are working as expected, and
      * that they are persisted and resurrected.
      */
+    @RandomlyFails("TODO assertBuildCompletedSuccessfully sometimes fails even though Allocate node : End has been printed")
     @Test public void buildShellScriptOnSlave() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 DumbSlave s = createSlave(story.j);
+                s.setLabelString("remote quick");
                 s.getNodeProperties().add(new EnvironmentVariablesNodeProperty(new EnvironmentVariablesNodeProperty.Entry("ONSLAVE", "true")));
 
                 p = jenkins().createProject(WorkflowJob.class, "demo");
@@ -213,6 +226,17 @@ public class WorkflowTest extends SingleJobTestBase {
 
                 story.j.assertLogContains("before=demo", b);
                 story.j.assertLogContains("ONSLAVE=true", b);
+
+                FlowGraphWalker walker = new FlowGraphWalker(e);
+                List<WorkspaceAction> actions = new ArrayList<WorkspaceAction>();
+                for (FlowNode n = walker.next(); n != null; n = walker.next()) {
+                    WorkspaceAction a = n.getAction(WorkspaceAction.class);
+                    if (a != null) {
+                        actions.add(a);
+                    }
+                }
+                assertEquals(1, actions.size());
+                assertEquals(new HashSet<LabelAtom>(Arrays.asList(LabelAtom.get("remote"), LabelAtom.get("quick"))), actions.get(0).getLabels());
             }
         });
     }
@@ -555,15 +579,18 @@ public class WorkflowTest extends SingleJobTestBase {
                 return getFunctionName(); // TODO would be nice for this to be the default, perhaps?
             }
         }
-        public static final class Execution extends StepExecution {
+        public static final class Execution extends AbstractStepExecutionImpl {
+            @StepContextParameter transient TaskListener listener;
+            @StepContextParameter transient FlowExecution flow;
             @Override public boolean start() throws Exception {
-                getContext().get(TaskListener.class).getLogger().println("running as " + Jenkins.getAuthentication().getName() + " from " + Thread.currentThread().getName());
+                listener.getLogger().println("running as " + Jenkins.getAuthentication().getName() + " from " + Thread.currentThread().getName());
                 return false;
             }
             @Override public void stop() throws Exception {}
             @Override public void onResume() {
+                super.onResume();
                 try {
-                    getContext().get(TaskListener.class).getLogger().println("again running as " + getContext().get(FlowExecution.class).getAuthentication().getName() + " from " + Thread.currentThread().getName());
+                    listener.getLogger().println("again running as " + flow.getAuthentication().getName() + " from " + Thread.currentThread().getName());
                 } catch (Exception x) {
                     getContext().onFailure(x);
                 }
@@ -573,7 +600,7 @@ public class WorkflowTest extends SingleJobTestBase {
             StepExecution.applyAll(Execution.class, new Function<Execution,Void>() {
                 @Override public Void apply(Execution input) {
                     try {
-                        input.getContext().get(TaskListener.class).getLogger().println((terminate ? "finally" : "still") + " running as " + input.getContext().get(FlowExecution.class).getAuthentication().getName() + " from " + Thread.currentThread().getName());
+                        input.listener.getLogger().println((terminate ? "finally" : "still") + " running as " + input.flow.getAuthentication().getName() + " from " + Thread.currentThread().getName());
                         if (terminate) {
                             input.getContext().onSuccess(null);
                         }

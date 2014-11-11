@@ -2,6 +2,28 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
+## 0.1-beta-7
+* Moved `input` and `build` steps to the `workflow-support` plugin (from the `workflow-basic-steps` plugin).
+* Added a label to `build` step nodes based on the display name of the downstream job.
+* Message was missing from _Paused for Input_ page.
+* Changed snippet generator to quote multiline strings using `'''`; quoting with `/` (slashy strings) was not working well.
+* Added `PauseAction` to the API for potential use from visualizations.
+* Added support for `WorkspaceAction` to report labels, for potential use from visualizations.
+* Fixed environment variable handling when running builds on slaves, which had regressed with the introduction of `env` in beta 5.
+* No longer enforcing workspace-relative paths from `dir`, `readFile`, and `writeFile` steps.
+* Added `FlowInterruptedException` to API.
+* Showing the flow build as aborted, rather than failed, if a user rejects an `input` prompt.
+* Flow termination from a `stage` step (due to a superseding build) can now be handled using `catch` and `finally` blocks.
+* Fixed handling of `&&` and `||` operators in Groovy.
+* Git-controlled Groovy library now expects sources to be under a directory `src/` rather than at top level. Also no longer need to pass a `this` reference to a helper class from the main script. See [documentation](cps-global-lib/README.md) for this feature.
+
+## 0.1-beta-6
+* Now based on Jenkins core 1.580.1.
+* Elementary support for tracking workspaces used by a flow. Currently visible only by clicking on the flow node starting a `node` (or `ws`) step.
+* Properly reporting the job owning an executor slot (`node` step); useful for CloudBees Folders Plus controlled slaves, and perhaps other plugins as well.
+* Updated dependencies on Git and Subversion plugins to pick up important fixes.
+* Some utility functions used by steps with unusual configuration factored out into a new API class `DescribableHelper`.
+
 ## 0.1-beta-5
 * _Incompatible_: some steps formerly using `value` as the name for a principal parameter now use a more descriptive name. You can still call them without specifying the field name; the difference is only visible if you were also specifying other optional parameters.
 * `evaluate` function may now be used to evaluate Groovy code CPS-transformed as if it were part of the main script. New `load` step lets you load and run a Groovy script from the workspace. A work in progress.

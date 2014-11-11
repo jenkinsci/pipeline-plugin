@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.steps.input;
+package org.jenkinsci.plugins.workflow.support.steps.input;
 
 import hudson.FilePath;
 import hudson.Util;
@@ -8,12 +8,16 @@ import hudson.model.FileParameterValue;
 import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.User;
 import hudson.util.HttpResponses;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.support.actions.PauseAction;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.HttpResponse;
@@ -26,11 +30,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 
 /**
  * @author Kohsuke Kawaguchi
  */
-public class InputStepExecution extends StepExecution implements ModelObject {
+public class InputStepExecution extends AbstractStepExecutionImpl implements ModelObject {
     /**
      * Pause gets added here.
      */
@@ -38,6 +43,8 @@ public class InputStepExecution extends StepExecution implements ModelObject {
     /*package*/ transient Run run;
 
     @StepContextParameter private transient TaskListener listener;
+
+    @StepContextParameter private transient FlowNode node;
 
     /**
      * Result of the input.
@@ -51,6 +58,10 @@ public class InputStepExecution extends StepExecution implements ModelObject {
     public boolean start() throws Exception {
         // record this input
         getPauseAction().add(this);
+
+        // This node causes the flow to pause at this point so we mark it as a "Pause Node".
+        node.addAction(new PauseAction("Input"));
+
         String baseUrl = '/' + run.getUrl() + getPauseAction().getUrlName() + '/';
         if (input.getParameters().isEmpty()) {
             String thisUrl = baseUrl + Util.rawEncode(getId()) + '/';
@@ -159,7 +170,7 @@ public class InputStepExecution extends StepExecution implements ModelObject {
     public HttpResponse doAbort() throws IOException, ServletException {
         preSubmissionCheck();
 
-        RejectionException e = new RejectionException(User.current());
+        FlowInterruptedException e = new FlowInterruptedException(Result.ABORTED, new Rejection(User.current()));
         outcome = new Outcome(null,e);
         getContext().onFailure(e);
 
@@ -182,8 +193,12 @@ public class InputStepExecution extends StepExecution implements ModelObject {
     }
 
     private void postSettlement() throws IOException {
-        getPauseAction().remove(this);
-        run.save();
+        try {
+            getPauseAction().remove(this);
+            run.save();
+        } finally {
+            PauseAction.endCurrentPause(node);
+        }
     }
 
     /**
@@ -208,6 +223,9 @@ public class InputStepExecution extends StepExecution implements ModelObject {
                     throw new IllegalArgumentException("No such parameter definition: " + name);
 
                 ParameterValue v = d.createValue(request, jo);
+                if (v == null) {
+                    continue;
+                }
                 mapResult.put(name, convert(name, v));
             }
         }

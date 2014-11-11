@@ -77,8 +77,8 @@ public final class ReadFileStep extends AbstractStepImpl {
 
     public static final class Execution extends AbstractSynchronousStepExecution<String> {
 
-        @Inject private ReadFileStep step;
-        @StepContextParameter private FilePath workspace;
+        @Inject private transient ReadFileStep step;
+        @StepContextParameter private transient FilePath workspace;
 
         @Override protected String run() throws Exception {
             InputStream is = workspace.child(step.file).read();
@@ -88,6 +88,8 @@ public final class ReadFileStep extends AbstractStepImpl {
                 is.close();
             }
         }
+
+        private static final long serialVersionUID = 1L;
 
     }
 

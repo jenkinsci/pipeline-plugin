@@ -65,7 +65,6 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
     public SimpleXStreamFlowNodeStorage(FlowExecution exec, File dir) {
         this.exec = exec;
         this.dir = dir;
-        dir.mkdirs();
     }
 
     private PersistenceContext get() {
@@ -230,7 +229,7 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
 
     private static ThreadLocal<PersistenceContext> CONTEXT = new ThreadLocal<PersistenceContext>();
 
-    public static XStream2 XSTREAM = new XStream2();
+    public static final XStream2 XSTREAM = new XStream2();
 
     private static final Field FlowNode$exec;
 

@@ -117,8 +117,12 @@ public class CpsFlowDefinition extends FlowDefinition {
         }
 
         public FormValidation doCheckScript(@QueryParameter String value, @QueryParameter boolean sandbox) {
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                return FormValidation.ok();
+            }
             try {
-                new GroovyShell(Jenkins.getInstance().getPluginManager().uberClassLoader).parse(value);
+                new GroovyShell(j.getPluginManager().uberClassLoader).parse(value);
             } catch (CompilationFailedException x) {
                 return FormValidation.error(x.getLocalizedMessage());
             }
@@ -134,7 +138,11 @@ public class CpsFlowDefinition extends FlowDefinition {
         public HttpResponse doGenerateSnippet(StaplerRequest req, @QueryParameter String json) throws Exception {
             // TODO is there not an easier way to do this?
             JSONObject jsonO = JSONObject.fromObject(json);
-            Class<?> c = Jenkins.getInstance().getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                throw new IllegalStateException("Jenkins is not running");
+            }
+            Class<?> c = j.getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
             Object o;
             try {
                 o = req.bindJSON(c, jsonO);

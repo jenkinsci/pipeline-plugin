@@ -31,22 +31,23 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Computer;
 import hudson.model.TaskListener;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
 import jenkins.util.Timer;
 import org.jenkinsci.plugins.durabletask.Controller;
 import org.jenkinsci.plugins.durabletask.DurableTask;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+
+import javax.annotation.CheckForNull;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Runs an durable task on a slave, such as a shell script.
@@ -67,13 +68,14 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
      * Represents one task that is believed to still be running.
      */
     @Restricted(NoExternalUse.class)
-    public static final class Execution extends StepExecution implements Runnable {
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED") // recurrencePeriod is set in onResume, not deserialization
+    public static final class Execution extends AbstractStepExecutionImpl implements Runnable {
 
         private static final long MIN_RECURRENCE_PERIOD = 250; // ¼s
         private static final long MAX_RECURRENCE_PERIOD = 15000; // 15s
         private static final float RECURRENCE_PERIOD_BACKOFF = 1.2f;
 
-        @Inject private transient DurableTaskStep step;
+        @Inject(optional=true) private transient DurableTaskStep step;
         @StepContextParameter private transient FilePath ws;
         @StepContextParameter private transient EnvVars env;
         @StepContextParameter private transient Launcher launcher;
@@ -84,7 +86,11 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
         private String remote;
 
         @Override public boolean start() throws Exception {
-            for (Computer c : Jenkins.getInstance().getComputers()) {
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                throw new IllegalStateException("Jenkins is not running");
+            }
+            for (Computer c : j.getComputers()) {
                 if (c.getChannel() == ws.getChannel()) {
                     node = c.getName();
                     break;
@@ -95,13 +101,18 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             }
             controller = step.task().launch(env, ws, launcher, listener);
             this.remote = ws.getRemote();
-            onResume();
+            setupTimer();
             return false;
         }
 
         private @CheckForNull FilePath getWorkspace() throws AbortException {
             if (ws == null) {
-                Computer c = Jenkins.getInstance().getComputer(node);
+                Jenkins j = Jenkins.getInstance();
+                if (j == null) {
+                    LOGGER.fine("Jenkins is not running");
+                    return null;
+                }
+                Computer c = j.getComputer(node);
                 if (c == null) {
                     LOGGER.log(Level.FINE, "no such computer {0}", node);
                     return null;
@@ -168,7 +179,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                 }
             }, 3, TimeUnit.SECONDS);
             try {
-                if (controller.writeLog(workspace, getContext().get(TaskListener.class).getLogger())) {
+                if (controller.writeLog(workspace, listener.getLogger())) {
                     getContext().saveState();
                     recurrencePeriod = MIN_RECURRENCE_PERIOD; // got output, maybe we will get more soon
                 } else {
@@ -198,9 +209,16 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
         }
 
         @Override public void onResume() {
+            super.onResume();
+            setupTimer();
+        }
+
+        private void setupTimer() {
             recurrencePeriod = MIN_RECURRENCE_PERIOD;
             Timer.get().schedule(this, recurrencePeriod, TimeUnit.MILLISECONDS);
         }
+
+        private static final long serialVersionUID = 1L;
 
     }
 

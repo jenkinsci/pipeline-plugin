@@ -24,11 +24,11 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
-import hudson.DescriptorExtensionList;
+import hudson.ExtensionList;
 import hudson.model.Descriptor;
-import jenkins.model.Jenkins;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
 import net.sf.json.JSONObject;
 
@@ -42,9 +42,28 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      *
      * This allows the system to statically infer which steps are applicable in which context
      * (say in freestyle or in workflow).
-     * @see StepContext#getContext
+     * @see StepContext#get(Class)
      */
     public abstract Set<Class<?>> getRequiredContext();
+
+    /**
+     * Returns the context {@link Step} adds/sets/modifies when executing a body.
+     *
+     * <p>
+     * This is used to diagnose a "missing context" problem by suggesting what wrapper steps were likely missing.
+     * Steps that {@linkplain #takesImplicitBlockArgument() does not take a body block} must return the empty set
+     * as it has nothing to contribute to the context.
+     *
+     * <p>
+     * This set and {@link #getRequiredContext()} can be compared to determine context variables that are newly
+     * added (as opposed to get merely decorated.)
+     *
+     * @see MissingContextVariableException
+     */
+    public Set<Class<?>> getProvidedContext() {
+        return Collections.emptySet();
+    }
+
 
     /**
      * Return a short string that is a valid identifier for programming languages
@@ -57,7 +76,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
     /**
      * Returns true if this step can accept implicit block as the argument.
      *
-     * @see StepContext#invokeBodyLater(FutureCallback, Object...)
+     * @see StepContext#invokeBodyLater(Object...)
      */
     public boolean takesImplicitBlockArgument() {
         return false;
@@ -80,8 +99,20 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      */
     public abstract JSONObject defineArguments(Step step) throws UnsupportedOperationException;
 
-    public static DescriptorExtensionList<Step,StepDescriptor> all() {
-        return Jenkins.getInstance().getDescriptorList(Step.class);
+
+    /**
+     * Makes sure that the given {@link StepContext} has all the context parameters this descriptor wants to see,
+     * and if not, throw {@link MissingContextVariableException} indicating which variable is missing.
+     */
+    public final void checkContextAvailability(StepContext c) throws MissingContextVariableException, IOException, InterruptedException {
+        for (Class<?> type : getRequiredContext()) {
+            Object v = c.get(type);
+            if (v==null)
+                throw new MissingContextVariableException(type);
+        }
     }
 
+    public static ExtensionList<StepDescriptor> all() {
+        return ExtensionList.lookup(StepDescriptor.class);
+    }
 }

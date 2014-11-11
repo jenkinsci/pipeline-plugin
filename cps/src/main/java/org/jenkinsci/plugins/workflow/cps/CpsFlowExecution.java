@@ -32,6 +32,7 @@ import com.cloudbees.groovy.cps.impl.ConstantBlock;
 import com.cloudbees.groovy.cps.impl.ThrowBlock;
 import com.cloudbees.groovy.cps.sandbox.DefaultInvoker;
 import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -47,6 +48,7 @@ import com.thoughtworks.xstream.mapper.Mapper;
 import groovy.lang.GroovyShell;
 import hudson.model.Action;
 import hudson.model.Result;
+import hudson.util.Iterators;
 import jenkins.model.Jenkins;
 import org.jboss.marshalling.Unmarshaller;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -474,6 +476,7 @@ public class CpsFlowExecution extends FlowExecution {
     void runInCpsVmThread(final FutureCallback<CpsThreadGroup> callback) {
         // first we need to wait for programPromise to fullfil CpsThreadGroup, then we need to run in its runner, phew!
         Futures.addCallback(programPromise, new FutureCallback<CpsThreadGroup>() {
+            final Exception source = new Exception();   // call stack of this object captures who called this. useful during debugging.
             @Override
             public void onSuccess(final CpsThreadGroup g) {
                 g.runner.submit(new Runnable() {
@@ -531,14 +534,16 @@ public class CpsFlowExecution extends FlowExecution {
         runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
             @Override
             public void onSuccess(CpsThreadGroup g) {
-                List<StepExecution> l = new ArrayList<StepExecution>();
+                // to exclude outer StepExecutions, first build a map by FlowHead
+                // younger threads with their StepExecutions will overshadow old threads, leaving inner-most threads alone.
+                Map<FlowHead,StepExecution> m = new HashMap<FlowHead, StepExecution>();
                 for (CpsThread t : g.threads.values()) {
-                    // TODO: we need to exclude outer StepExecutions
                     StepExecution e = t.getStep();
                     if (e!=null)
-                        l.add(e);
+                        m.put(t.head,e);
                 }
-                r.set(l);
+
+                r.set(ImmutableList.copyOf(m.values()));
             }
 
             @Override
@@ -585,7 +590,7 @@ public class CpsFlowExecution extends FlowExecution {
         Futures.addCallback(getCurrentExecutions(), new FutureCallback<List<StepExecution>>() {
             @Override
             public void onSuccess(List<StepExecution> l) {
-                for (StepExecution e : l) {
+                for (StepExecution e : Iterators.reverse(l)) {
                     try {
                         e.stop();
                     } catch (Exception x) {

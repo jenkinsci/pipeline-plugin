@@ -36,20 +36,23 @@ class WorkflowLibRepositoryTest {
     @Test
     public void globalLib() throws Exception {
         story.step {
-            new File(repo.workspace,"Foo.groovy").text = """
-public class Foo implements Serializable {
-  def answer(dsl) {
-    dsl.println "control"
-    dsl.watch new File("${jenkins.rootPath}/go");
-    return 42;
-  }
+            def dir = new File(repo.workspace,"src/foo");
+            dir.mkdirs();
+
+            new File(dir,"Foo.groovy").text = """
+package foo;
+
+def answer() {
+  println "control"
+  watch new File("${jenkins.rootPath}/go");
+  return 42;
 }
 """
 
             WorkflowJob p = jenkins.createProject(WorkflowJob.class, "p");
 
             p.definition = new CpsFlowDefinition("""
-              o=new Foo().answer(this)
+              o=new foo.Foo().answer()
               println "o="+o;
             """);
 

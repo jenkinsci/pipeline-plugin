@@ -8,35 +8,38 @@ import java.io.Serializable;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class RetryStepExecution extends StepExecution {
+public class RetryStepExecution extends AbstractStepExecutionImpl {
     @Inject
-    RetryStep step;
+    private transient RetryStep step;
+    private volatile BodyExecution body;
 
     @Override
     public boolean start() throws Exception {
-        getContext().invokeBodyLater(new Callback());
+        StepContext context = getContext();
+        body = context.invokeBodyLater();
+        body.addCallback(new Callback(context, step.getCount()));
         return false;   // execution is asynchronous
     }
 
     @Override
     public void stop() throws Exception {
-        // TODO
-        // requiring finding the tip and aborting it
-        // Perhaps StepContext should support stopping the execution
-        // started by the invokeBodyLater method
-        throw new UnsupportedOperationException();
+        if (body!=null)
+            body.cancel(true);
     }
 
-    private class Callback implements FutureCallback<Object>, Serializable {
+    private static class Callback implements FutureCallback<Object>, Serializable {
+
+        private final StepContext context;
         private int left;
 
-        Callback() {
-            left = step.getCount();
+        Callback(StepContext context, int count) {
+            this.context = context;
+            left = count;
         }
 
         @Override
         public void onSuccess(Object result) {
-            getContext().onSuccess(result);
+            context.onSuccess(result);
         }
 
         @Override
@@ -53,15 +56,17 @@ public class RetryStepExecution extends StepExecution {
                     /*
                     l.getLogger().println("Retrying");
                     */
-                    getContext().invokeBodyLater(this);
+                    context.invokeBodyLater().addCallback(this);
                 } else {
-                    getContext().onFailure(t);
+                    context.onFailure(t);
                 }
             } catch (Throwable p) {
-                getContext().onFailure(p);
+                context.onFailure(p);
             }
         }
 
         private static final long serialVersionUID = 1L;
     }
+
+    private static final long serialVersionUID = 1L;
 }

@@ -32,10 +32,12 @@ PLUGINS=\
 # May define as -U to pick up newer releases; do this before make push!
 CHECK_UPDATES=
 
+BASELINE=$(shell perl -n -e 'print "$$1\n" and exit if m{<version>(.+)</version>}' ../pom.xml)
+
 # TODO using ADD with a remote URL would be more convenient, but docker-build claims that URLs like http://jenkins-updates.cloudbees.com/download/plugins/mercurial/*latest*/mercurial.hpi give a 404 (in fact they are 302 → 200)
 # anyway it seems to download the entire content disregarding Last-Modified, making it unusable
 releases:
-	[ -f jenkins-war.war ] || mvn $(CHECK_UPDATES) org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=org.jenkins-ci.main:jenkins-war:RELEASE:war -DoutputDirectory=. -Dmdep.stripVersion
+	[ -f jenkins-war.war ] || mvn org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=org.jenkins-ci.main:jenkins-war:$(BASELINE):war -DoutputDirectory=. -Dmdep.stripVersion
 	set -e; for ga in $(PLUGINS); do a=$$(echo $$ga | sed 's/.*\://'); [ -f JENKINS_HOME/plugins/$$a.jpi ] || (mvn $(CHECK_UPDATES) org.apache.maven.plugins:maven-dependency-plugin:2.8:copy -Dartifact=$$ga:RELEASE:hpi -DoutputDirectory=JENKINS_HOME/plugins -Dmdep.stripVersion && mv JENKINS_HOME/plugins/$$a.hpi JENKINS_HOME/plugins/$$a.jpi && touch JENKINS_HOME/plugins/$$a.jpi.pinned) || echo skipping $$a; done
 
 build-snapshot: build

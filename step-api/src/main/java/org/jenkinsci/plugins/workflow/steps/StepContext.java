@@ -60,9 +60,9 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      * <dt>{@link Computer}<dd>a slave we are running on
      * <dt>{@link Executor}<dd>an executor slot on a slave we are running on
      * <dt>{@link TaskListener}<dd>a place to send output (see {@code LogAction} for a flow)
-     * <dt>{@code AtomNode}<dd>a running node in a flow
      * <dt>{@link Run}<dd>a running build
      * <dt>{@code FlowExecution} a running flow
+     * <dt>{@code FlowNode}<dd>a running node in a flow
      * </dl>
      * @param key the kind of thing we want
      * @return that service, if available (which it should be if {@link StepDescriptor#getRequiredContext} includes it), else null
@@ -97,6 +97,7 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      * Sets the overall result of the flow.
      * Like {@link Run#setResult}, can only make the result worse than it already is.
      * Since some flows may have try-catch semantics, if a step fails to complete normally it is better to use {@link #onFailure(Throwable)} instead.
+     * (For example with {@link FlowInterruptedException}.)
      * @param r {@link Result#UNSTABLE}, typically
      */
     public abstract void setResult(Result r);
@@ -114,7 +115,7 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      *      Only allowed values are instances of the predefined types (see {@link #get(Class)} above.)
      *      TODO: more restrictive list here; do NOT pass Launcher
      */
-    public abstract void invokeBodyLater(FutureCallback<Object> callback, Object... contextOverrides);
+    public abstract BodyExecution invokeBodyLater(Object... contextOverrides);
 
     /**
      * {@link StepContext}s get persisted, so they may not have the identity equality, but equals

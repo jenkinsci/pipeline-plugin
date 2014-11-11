@@ -35,6 +35,8 @@ import hudson.slaves.ComputerListener;
 import java.util.Map;
 import java.util.WeakHashMap;
 import jenkins.model.Jenkins;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -79,7 +81,8 @@ public class FilePathPickle extends Pickle {
     }
 
     @Extension public static final class Listener extends ComputerListener {
-        static Map<VirtualChannel,String> channelNames = new WeakHashMap<VirtualChannel,String>();
+        @Restricted(NoExternalUse.class)
+        public static final Map<VirtualChannel,String> channelNames = new WeakHashMap<VirtualChannel,String>();
         @Override public void onOnline(Computer c, TaskListener l) {
             channelNames.put(c.getChannel(), c.getName());
         }

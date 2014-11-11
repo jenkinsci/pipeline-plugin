@@ -56,14 +56,11 @@ public class ExecutorPickle extends Pickle {
         if (exec == null) {
             throw new IllegalArgumentException("cannot save an Executor that is not running anything");
         }
-        this.task = exec.getParent().getOwnerTask();
+        SubTask parent = exec.getParent();
+        this.task = parent instanceof Queue.Task ? (Queue.Task) parent : parent.getOwnerTask();
         if (task instanceof Queue.TransientTask) {
             throw new IllegalArgumentException("cannot save a TransientTask");
         }
-        // TODO: need to think about how to find objects that need pickeled within pickles
-
-        // TODO: only accept PicklableTask or something like that
-        // since this doesn't work for arbitrary Task.
     }
 
     @Override public ListenableFuture<Executor> rehydrate() {
@@ -85,7 +82,11 @@ public class ExecutorPickle extends Pickle {
                 Queue.Executable exec = future.get();
 
                 // TODO extract this from Run to a utility method in Executables: https://trello.com/c/6FVhT94X/39-executables-getexecutor
-                for (Computer c : Jenkins.getInstance().getComputers()) {
+                Jenkins j = Jenkins.getInstance();
+                if (j == null) {
+                    return null;
+                }
+                for (Computer c : j.getComputers()) {
                     for (Executor e : c.getExecutors()) {
                         if (e.getCurrentExecutable() == exec) {
                             return e;

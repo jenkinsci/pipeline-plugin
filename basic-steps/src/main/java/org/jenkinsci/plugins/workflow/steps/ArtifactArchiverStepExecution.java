@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
+import jenkins.MasterToSlaveFileCallable;
 import jenkins.util.BuildListenerAdapter;
 
 /**
@@ -35,7 +36,7 @@ public class ArtifactArchiverStepExecution extends AbstractSynchronousStepExecut
     private transient Launcher launcher;
 
     @Inject
-    ArtifactArchiverStep step;
+    private transient ArtifactArchiverStep step;
 
     @Override
     protected Void run() throws Exception {
@@ -45,7 +46,7 @@ public class ArtifactArchiverStepExecution extends AbstractSynchronousStepExecut
         return null;
     }
 
-    private static final class ListFiles implements FilePath.FileCallable<Map<String,String>> {
+    private static final class ListFiles extends MasterToSlaveFileCallable<Map<String,String>> {
         private static final long serialVersionUID = 1;
         private final String includes, excludes;
         ListFiles(String includes, String excludes) {
@@ -61,4 +62,7 @@ public class ArtifactArchiverStepExecution extends AbstractSynchronousStepExecut
             return r;
         }
     }
+
+    private static final long serialVersionUID = 1L;
+
 }

@@ -41,6 +41,7 @@ import org.jenkinsci.plugins.workflow.pickles.PickleFactory;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Action;
 import hudson.model.Result;
+import hudson.security.ACL;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,6 +53,7 @@ import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.acegisecurity.Authentication;
 
 final class STMExecution extends FlowExecution {
     
@@ -69,6 +71,10 @@ final class STMExecution extends FlowExecution {
     private final List<State> states;
     private final FlowExecutionOwner owner;
     private final FlowNodeStorage nodeStorage;
+
+    @Override public Authentication getAuthentication() {
+        return ACL.SYSTEM; // TODO
+    }
 
     static class Frame {
         String state;

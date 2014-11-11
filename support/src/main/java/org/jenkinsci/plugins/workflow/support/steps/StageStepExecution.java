@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
 import com.google.inject.Inject;
-import hudson.AbortException;
 import hudson.Extension;
 import hudson.XmlFile;
 import hudson.model.InvisibleAction;
@@ -12,7 +11,6 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,24 +18,26 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import static java.util.logging.Level.WARNING;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import jenkins.model.CauseOfInterruption;
-import jenkins.model.InterruptedBuildAction;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.actions.StageAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
-public class StageStepExecution extends StepExecution {
+public class StageStepExecution extends AbstractStepExecutionImpl {
     private static final Logger LOGGER = Logger.getLogger(StageStepExecution.class.getName());
 
     // only used during the start() call, so no need to be persisted
-    @Inject private transient StageStep step;
+    @Inject(optional=true) private transient StageStep step;
     @StepContextParameter private transient Run<?,?> run;
     @StepContextParameter private transient FlowNode node;
     @StepContextParameter private transient TaskListener listener; // picked up by getRequiredContext
@@ -66,8 +66,12 @@ public class StageStepExecution extends StepExecution {
         throw new UnsupportedOperationException();
     }
 
-    private static XmlFile getConfigFile() {
-        return new XmlFile(new File(Jenkins.getInstance().getRootDir(), StageStep.class.getName() + ".xml"));
+    private static XmlFile getConfigFile() throws IOException {
+        Jenkins j = Jenkins.getInstance();
+        if (j == null) {
+            throw new IOException("Jenkins is not running");
+        }
+        return new XmlFile(new File(j.getRootDir(), StageStep.class.getName() + ".xml"));
     }
 
     // TODO can this be replaced with StepExecutionIterator?
@@ -82,13 +86,13 @@ public class StageStepExecution extends StepExecution {
     private static synchronized void load() {
         if (stagesByNameByJob == null) {
             stagesByNameByJob = new TreeMap<String,Map<String,Stage>>();
-            XmlFile configFile = getConfigFile();
-            if (configFile.exists()) {
-                try {
+            try {
+                XmlFile configFile = getConfigFile();
+                if (configFile.exists()) {
                     stagesByNameByJob = (Map<String,Map<String,Stage>>) configFile.read();
-                } catch (IOException x) {
-                    LOGGER.log(Level.WARNING, null, x);
                 }
+            } catch (IOException x) {
+                LOGGER.log(WARNING, null, x);
             }
             LOGGER.log(Level.FINE, "load: {0}", stagesByNameByJob);
         }
@@ -98,7 +102,7 @@ public class StageStepExecution extends StepExecution {
         try {
             getConfigFile().write(stagesByNameByJob);
         } catch (IOException x) {
-            LOGGER.log(Level.WARNING, null, x);
+            LOGGER.log(WARNING, null, x);
         }
         LOGGER.log(Level.FINE, "save: {0}", stagesByNameByJob);
     }
@@ -128,14 +132,14 @@ public class StageStepExecution extends StepExecution {
                 try {
                     cancel(stage.waitingContext, context);
                 } catch (Exception x) {
-                    LOGGER.log(Level.WARNING, "could not cancel an older flow (perhaps since deleted?)", x);
+                    LOGGER.log(WARNING, "could not cancel an older flow (perhaps since deleted?)", x);
                 }
             } else if (stage.waitingBuild > build) {
                 // Cancel this one. And work with the older one below, instead of the one initiating this call.
                 try {
                     cancel(context, stage.waitingContext);
                 } catch (Exception x) {
-                    LOGGER.log(Level.WARNING, "could not cancel the current flow", x);
+                    LOGGER.log(WARNING, "could not cancel the current flow", x);
                 }
                 build = stage.waitingBuild;
                 context = stage.waitingContext;
@@ -213,7 +217,7 @@ public class StageStepExecution extends StepExecution {
                 Integer number = it2.next();
                 if (job.getBuildByNumber(number) == null) {
                     // Deleted at some point but did not properly clean up from exit(…).
-                    LOGGER.log(Level.WARNING, "Cleaning up apparently deleted {0}#{1}", new Object[] {jobName, number});
+                    LOGGER.log(WARNING, "Cleaning up apparently deleted {0}#{1}", new Object[] {jobName, number});
                     it2.remove();
                 }
             }
@@ -231,7 +235,7 @@ public class StageStepExecution extends StepExecution {
         try {
             context.get(TaskListener.class).getLogger().println(message);
         } catch (Exception x) {
-            LOGGER.log(Level.WARNING, null, x);
+            LOGGER.log(WARNING, null, x);
         }
     }
 
@@ -239,12 +243,7 @@ public class StageStepExecution extends StepExecution {
     private static void cancel(StepContext context, StepContext newer) throws IOException, InterruptedException {
         println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
         println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
-        context.get(Run.class).addAction(new InterruptedBuildAction(Collections.singleton(new CanceledCause(newer.get(Run.class)))));
-        /* TODO not yet implemented
-        context.get(FlowExecution.class).abort();
-        */
-        context.setResult(Result.NOT_BUILT);
-        context.onFailure(new AbortException("Aborting flow"));
+        context.onFailure(new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(newer.get(Run.class))));
     }
 
     /**
@@ -290,4 +289,7 @@ public class StageStepExecution extends StepExecution {
             exit(r);
         }
     }
+
+    private static final long serialVersionUID = 1L;
+
 }

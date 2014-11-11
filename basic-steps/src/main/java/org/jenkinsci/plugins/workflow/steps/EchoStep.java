@@ -67,13 +67,16 @@ public class EchoStep extends AbstractStepImpl {
 
     public static class Execution extends AbstractSynchronousStepExecution<Void> {
         
-        @Inject private EchoStep step;
+        @Inject private transient EchoStep step;
         @StepContextParameter private transient TaskListener listener;
 
         @Override protected Void run() throws Exception {
             listener.getLogger().println(step.getMessage());
             return null;
         }
+
+        private static final long serialVersionUID = 1L;
+
     }
 
 }

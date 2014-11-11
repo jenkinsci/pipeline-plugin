@@ -125,7 +125,7 @@ public class SubversionStepTest {
         run(otherWc, "svn", "commit", "--message=+otherfile2");
         notifyCommit(uuid(sampleRepoU), "file2");
         notifyCommit(uuid(otherRepoU), "otherfile2");
-        r.waitUntilNoActivity();
+        WaitUntilNoActivityHack.waitUntilNoActivity(p, 2, r);
         b = p.getLastBuild();
         assertEquals(2, b.number);
         r.assertLogContains("PRESENT: main/file2", b);

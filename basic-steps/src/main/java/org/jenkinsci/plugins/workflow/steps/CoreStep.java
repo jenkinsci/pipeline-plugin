@@ -65,6 +65,8 @@ public final class CoreStep extends AbstractStepImpl {
             return null;
         }
 
+        private static final long serialVersionUID = 1L;
+
     }
 
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
@@ -89,7 +91,11 @@ public final class CoreStep extends AbstractStepImpl {
             return r;
         }
         private <T extends Describable<T>,D extends Descriptor<T>> void populate(List<Descriptor<?>> r, Class<T> c) {
-            for (Descriptor<?> d : Jenkins.getInstance().getDescriptorList(c)) {
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                return;
+            }
+            for (Descriptor<?> d : j.getDescriptorList(c)) {
                 if (SimpleBuildStep.class.isAssignableFrom(d.clazz)) {
                     r.add(d);
                 }

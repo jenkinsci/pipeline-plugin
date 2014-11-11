@@ -4,9 +4,9 @@ Building continuous delivery pipelines and similarly complex tasks in Jenkins us
 You need to mix Parameterized Trigger, Copy Artifact, Promoted Builds, Conditional Build Step, and more just to express what should be a simple script.
 This project attempts to make it possible to directly write that script, what people often call a _workflow_ (sometimes abbreviated _flow_), while integrating with Jenkins features like slaves and publishers.
 
-[JUC Boston slides](http://www.cloudbees.com/sites/default/files/2014-0618-Boston-Jesse_Glick-Workflow.pdf) and [video](https://www.youtube.com/watch?v=gpaV6x9QwDo&index=9&list=UUKlF3GIFy9KVUefVbycx_vw)
+JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJY)
 
-[Early slides](https://docs.google.com/a/cloudbees.com/presentation/d/1ysu71kGpEjvsikKAXdPXTJULadHh9cRbpd0gJaIkVtA)
+JUC Boston (Jun 2014): [slides](http://www.cloudbees.com/sites/default/files/2014-0618-Boston-Jesse_Glick-Workflow.pdf) and [video](https://www.youtube.com/watch?v=gpaV6x9QwDo&index=9&list=UUKlF3GIFy9KVUefVbycx_vw)
 
 # Core features
 
@@ -76,12 +76,18 @@ c:\Program Files\Maven\bin\mvn clean install
 
 # Installation
 
-If you do not want to build from sources, some early releases (as of this writing `0.1-beta-3`) are available on the Jenkins experimental update center.
-You need to be running a recent Jenkins weekly release, currently 1.577 or newer.
-For OSS Jenkins users, follow [these instructions](http://jenkins-ci.org/content/experimental-plugins-update-center) and install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
-Jenkins Enterprise by CloudBees users can click _Enable access_ under _Access to experimental plugin releases_ in the main Jenkins configuration screen, and then install both _Workflow: Aggregator_ and the proprietary add-on _Workflow: Groovy CPS Execution Checkpoint_.
+If you do not want to build from sources, early releases (see the [changelog](CHANGES.md) for details on which) are available on the Jenkins experimental update center.
+You need to be running a sufficiently recent Jenkins release, currently an LTS in the 1.580.x line, or a newer weekly release.
 
-There is a [demo](demo/README.md) using Docker available if you want to try a complete setup quickly.
+For OSS Jenkins users, follow [these instructions](http://jenkins-ci.org/content/experimental-plugins-update-center) and install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
+You will need to restart Jenkins to complete installation.
+
+Jenkins Enterprise by CloudBees users can click _Enable access_ under _Access to experimental plugin releases_ in the main Jenkins configuration screen, and then install _CloudBees Workflow: Aggregator_.
+Again dependencies will be pulled in automatically, including all the OSS plugins.
+
+# Demo
+
+See the [demo overview](demo/README.md) using Docker if you want to try a complete setup quickly.
 
 # Development
 
@@ -106,5 +112,6 @@ While the implementation is divided into a number of plugins, for ease of protot
 * `durable-task-step` uses the `durable-task` plugin to define a shell script step that can survive restarts.
 * `scm-step` adds SCM-related steps. There is [more documentation there](scm-step/README.md).
 * `cps` is the flow engine implementation based on the Groovy language, and supporting long-running flows using a _continuation passing style_ transformation of the script.
+* `cps-global-lib` adds a Git-backed repository for Groovy libraries available to scripts.
 * `stm` is a simple engine implementation using a _state transition machine_, less intended for end users than as a reference for how engines can work. Currently only partly implemented.
-* `aggregator` is a placeholder plugin allowing you to `mvn hpi:run` and see everything working together.
+* `aggregator` is a placeholder plugin allowing you to `mvn hpi:run` and see everything working together, as well as holding integration tests.
