@@ -178,6 +178,8 @@ public class DescribableHelper {
             return Enum.valueOf(type.asSubclass(Enum.class), (String) o);
         } else if (o instanceof String && type == URL.class) {
             return new URL((String) o);
+        } else if (o instanceof String && (type == char.class || type == Character.class) && ((String) o).length() == 1) {
+            return ((String) o).charAt(0);
         } else {
             throw new ClassCastException(context + " expects " + type.getName() + " but received " + o.getClass().getName());
         }
@@ -239,6 +241,8 @@ public class DescribableHelper {
             value = ((Enum) value).name();
         } else if (type.get() == URL.class && value instanceof URL) {
             value = ((URL) value).toString();
+        } else if ((type.get() == Character.class || type.get() == char.class) && value instanceof Character) {
+            value = ((Character) value).toString();
         } else if (value != null && !value.getClass().getPackage().getName().startsWith("java.")) {
             try {
                 // Check to see if this can be treated as a data-bound struct.

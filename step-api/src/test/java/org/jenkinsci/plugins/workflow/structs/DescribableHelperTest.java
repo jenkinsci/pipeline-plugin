@@ -43,7 +43,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 public class DescribableHelperTest {
 
-    // TODO instantiate/uninstantiate of Character
     // TODO instantiate/uninstantiate of List/Object[]
 
     @BeforeClass public static void isUnitTest() {
@@ -233,6 +232,15 @@ public class DescribableHelperTest {
     public static final class UsesURL {
         @DataBoundConstructor public UsesURL() {}
         @DataBoundSetter public URL u;
+    }
+
+    @Test public void chars() throws Exception {
+        roundTrip(UsesCharacter.class, map("c", "!"));
+    }
+
+    public static final class UsesCharacter {
+        @DataBoundConstructor public UsesCharacter() {}
+        @DataBoundSetter public char c;
     }
 
     private static Map<String,Object> map(Object... keysAndValues) {
