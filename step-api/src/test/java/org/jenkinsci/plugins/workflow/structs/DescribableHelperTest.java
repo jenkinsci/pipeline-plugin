@@ -238,8 +238,11 @@ public class DescribableHelperTest {
         @DataBoundSetter public char c;
     }
 
-    @Test public void stringLists() throws Exception {
+    @Test public void stringArray() throws Exception {
         roundTrip(UsesStringArray.class, map("strings", Arrays.asList("one", "two")));
+    }
+
+    @Test public void stringList() throws Exception {
         roundTrip(UsesStringList.class, map("strings", Arrays.asList("one", "two")));
     }
 

@@ -34,6 +34,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,7 +78,7 @@ public class DescribableHelper {
         ClassDescriptor d = new ClassDescriptor(clazz);
         String[] names = d.loadConstructorParamNames();
         Constructor<T> c = findConstructor(clazz, names.length);
-        Object[] args = buildArguments(clazz, arguments, c.getParameterTypes(), names, true);
+        Object[] args = buildArguments(clazz, arguments, c.getGenericParameterTypes(), names, true);
         T o = c.newInstance(args);
         injectSetters(o, arguments);
         return o;
@@ -119,19 +121,19 @@ public class DescribableHelper {
 
     private static final String CLAZZ = "$class";
 
-    private static Object[] buildArguments(Class<?> clazz, Map<String,?> arguments, Class<?>[] types, String[] names, boolean callEvenIfNoArgs) throws Exception {
+    private static Object[] buildArguments(Class<?> clazz, Map<String,?> arguments, Type[] types, String[] names, boolean callEvenIfNoArgs) throws Exception {
         Object[] args = new Object[names.length];
         boolean hasArg = callEvenIfNoArgs;
         for (int i = 0; i < args.length; i++) {
             String name = names[i];
             hasArg |= arguments.containsKey(name);
             Object a = arguments.get(name);
-            Class<?> type = types[i];
+            Type type = types[i];
             if (a != null) {
                 args[i] = coerce(clazz.getName() + "." + name, type, a);
             } else if (type == boolean.class) {
                 args[i] = false;
-            } else if (type.isPrimitive() && callEvenIfNoArgs) {
+            } else if (type instanceof Class && ((Class) type).isPrimitive() && callEvenIfNoArgs) {
                 throw new UnsupportedOperationException("not yet handling @DataBoundConstructor default value of " + type + "; pass an explicit value for " + name);
             } else {
                 // TODO this might be fine (ExecutorStep.label), or not (GenericSCMStep.scm); should inspect parameter annotations for @Nonnull and throw an UOE if found
@@ -141,9 +143,11 @@ public class DescribableHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private static Object coerce(String context, Class<?> type, @Nonnull Object o) throws Exception {
-        o = ReflectionCache.getCachedClass(type).coerceArgument(o);
-        if (Primitives.wrap(type).isInstance(o)) {
+    private static Object coerce(String context, Type type, @Nonnull Object o) throws Exception {
+        if (type instanceof Class) {
+            o = ReflectionCache.getCachedClass((Class) type).coerceArgument(o);
+        }
+        if (type instanceof Class && Primitives.wrap((Class) type).isInstance(o)) {
             return o;
         } else if (o instanceof Map) {
             Map<String,Object> m = new HashMap<String,Object>();
@@ -154,45 +158,47 @@ public class DescribableHelper {
             String clazzS = (String) m.remove(CLAZZ);
             Class<?> clazz;
             if (clazzS == null) {
-                if (Modifier.isAbstract(type.getModifiers())) {
-                    throw new UnsupportedOperationException("must specify $class with an implementation of " + type.getName());
+                if (Modifier.isAbstract(((Class) type).getModifiers())) {
+                    throw new UnsupportedOperationException("must specify $class with an implementation of " + type);
                 }
-                clazz = type;
+                clazz = (Class) type;
             } else if (clazzS.contains(".")) {
                 Jenkins j = Jenkins.getInstance();
                 ClassLoader loader = j != null ? j.getPluginManager().uberClassLoader : DescribableHelper.class.getClassLoader();
                 clazz = loader.loadClass(clazzS);
             } else {
                 clazz = null;
-                for (Class<?> c : findSubtypes(type)) {
+                for (Class<?> c : findSubtypes((Class<?>) type)) {
                     if (c.getSimpleName().equals(clazzS)) {
                         if (clazz != null) {
-                            throw new UnsupportedOperationException(clazzS + " as a " + type.getName() +  " could mean either " + clazz.getName() + " or " + c.getName());
+                            throw new UnsupportedOperationException(clazzS + " as a " + type +  " could mean either " + clazz.getName() + " or " + c.getName());
                         }
                         clazz = c;
                     }
                 }
                 if (clazz == null) {
-                    throw new UnsupportedOperationException("no known implementation of " + type.getName() + " is named " + clazzS);
+                    throw new UnsupportedOperationException("no known implementation of " + type + " is named " + clazzS);
                 }
             }
-            return instantiate(clazz.asSubclass(type), m);
-        } else if (o instanceof String && type.isEnum()) {
-            return Enum.valueOf(type.asSubclass(Enum.class), (String) o);
+            return instantiate(clazz.asSubclass((Class<?>) type), m);
+        } else if (o instanceof String && type instanceof Class && ((Class) type).isEnum()) {
+            return Enum.valueOf(((Class) type).asSubclass(Enum.class), (String) o);
         } else if (o instanceof String && type == URL.class) {
             return new URL((String) o);
         } else if (o instanceof String && (type == char.class || type == Character.class) && ((String) o).length() == 1) {
             return ((String) o).charAt(0);
-        } else if (o instanceof List && type.isArray()) {
-            Class<?> componentType = type.getComponentType();
+        } else if (o instanceof List && type instanceof Class && ((Class) type).isArray()) {
+            Class<?> componentType = ((Class) type).getComponentType();
             List<Object> list = mapList(context, componentType, (List) o);
             return list.toArray((Object[]) Array.newInstance(componentType, list.size()));
+        } else if (o instanceof List && type instanceof ParameterizedType && ((ParameterizedType) type).getRawType() == List.class) {
+            return mapList(context, ((ParameterizedType) type).getActualTypeArguments()[0], (List) o);
         } else {
-            throw new ClassCastException(context + " expects " + type.getName() + " but received " + o.getClass().getName());
+            throw new ClassCastException(context + " expects " + type + " but received " + o.getClass());
         }
     }
 
-    private static List<Object> mapList(String context, Class<?> type, List<?> list) throws Exception {
+    private static List<Object> mapList(String context, Type type, List<?> list) throws Exception {
         List<Object> r = new ArrayList<Object>();
         for (Object elt : list) {
             r.add(coerce(context, type, elt));
@@ -235,7 +241,7 @@ public class DescribableHelper {
             }
             for (Method m : c.getDeclaredMethods()) {
                 if (m.isAnnotationPresent(DataBoundSetter.class)) {
-                    Class<?>[] parameterTypes = m.getParameterTypes();
+                    Type[] parameterTypes = m.getGenericParameterTypes();
                     if (!m.getName().startsWith("set") || parameterTypes.length != 1) {
                         throw new IllegalStateException(m + " cannot be a @DataBoundSetter");
                     }
