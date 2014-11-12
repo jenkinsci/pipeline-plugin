@@ -41,21 +41,19 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 public class DescribableHelperTest {
 
+    // TODO instantiate/uninstantiate of URL, Enum, Character
+    // TODO instantiate/uninstantiate of List/Object[]
+
     @BeforeClass public static void isUnitTest() {
         Main.isUnitTest = true; // suppress HsErrPidList
     }
 
     @Test public void instantiate() throws Exception {
-        Map<String,Object> args = new HashMap<String,Object>();
-        args.put("text", "hello");
-        args.put("flag", true);
-        args.put("ignored", "!");
+        Map<String,Object> args = map("text", "hello", "flag", true, "ignored", "!");
         assertEquals("C:hello/true", DescribableHelper.instantiate(C.class, args).toString());
         args.put("value", "main");
         assertEquals("I:main/hello/true", DescribableHelper.instantiate(I.class, args).toString());
-        args.clear();
-        args.put("text", "goodbye");
-        assertEquals("C:goodbye/false", DescribableHelper.instantiate(C.class, args).toString());
+        assertEquals("C:goodbye/false", DescribableHelper.instantiate(C.class, map("text", "goodbye")).toString());
     }
 
     @Test public void uninstantiate() throws Exception {
@@ -68,7 +66,7 @@ public class DescribableHelperTest {
 
     @Test public void mismatchedTypes() throws Exception {
         try {
-            DescribableHelper.instantiate(I.class, Collections.singletonMap("value", 99));
+            DescribableHelper.instantiate(I.class, map("value", 99));
             fail();
         } catch (ClassCastException x) {
             String message = x.getMessage();
@@ -122,48 +120,26 @@ public class DescribableHelperTest {
     }
 
     @SuppressWarnings("unchecked")
-
     @Test public void findSubtypes() throws Exception {
         assertEquals(new HashSet<Class<?>>(Arrays.asList(Impl1.class, Impl2.class)), DescribableHelper.findSubtypes(Base.class));
         assertEquals(Collections.singleton(Impl1.class), DescribableHelper.findSubtypes(Marker.class));
     }
 
     @Test public void bindMapsFQN() throws Exception {
-        Map<String,Object> impl1 = new HashMap<String,Object>();
-        impl1.put("$class", Impl1.class.getName());
-        impl1.put("text", "hello");
-        assertEquals("UsesBase[Impl1[hello]]", DescribableHelper.instantiate(UsesBase.class, Collections.singletonMap("base", impl1)).toString());
-    }
-
-    @Test public void bindMapsSimpleName() throws Exception {
-        Map<String,Object> impl1 = new HashMap<String,Object>();
-        impl1.put("$class", "Impl1");
-        impl1.put("text", "hello");
-        assertEquals("UsesBase[Impl1[hello]]", DescribableHelper.instantiate(UsesBase.class, Collections.singletonMap("base", impl1)).toString());
+        assertEquals("UsesBase[Impl1[hello]]", DescribableHelper.instantiate(UsesBase.class, map("base", map("$class", Impl1.class.getName(), "text", "hello"))).toString());
     }
 
     @Test public void bindMapsImplicitName() throws Exception {
-        assertEquals("UsesImpl2[Impl2[true]]", DescribableHelper.instantiate(UsesImpl2.class, Collections.singletonMap("impl2", Collections.singletonMap("flag", true))).toString());
+        assertEquals("UsesImpl2[Impl2[true]]", DescribableHelper.instantiate(UsesImpl2.class, map("impl2", map("flag", true))).toString());
     }
 
-    @Test public void nestedDataBoundSetter() throws Exception {
-        Map<String,Object> impl2 = new HashMap<String,Object>();
-        impl2.put("$class", "Impl2");
-        assertEquals("UsesBase[Impl2[false]]", DescribableHelper.instantiate(UsesBase.class, Collections.singletonMap("base", impl2)).toString());
-        impl2.put("flag", true);
-        assertEquals("UsesBase[Impl2[true]]", DescribableHelper.instantiate(UsesBase.class, Collections.singletonMap("base", impl2)).toString());
-    }
+    // TODO also check case that a FQN is needed
 
-    @Test public void nestedUninstantiate() throws Exception {
-        assertEquals("{base={$class=Impl1, text=hello}}", DescribableHelper.uninstantiate(new UsesBase(new Impl1("hello"))).toString());
-        assertEquals("{base={$class=Impl2, flag=false}}", DescribableHelper.uninstantiate(new UsesBase(new Impl2())).toString());
-        Impl2 impl2 = new Impl2();
-        impl2.setFlag(true);
-        assertEquals("{impl2={flag=true}}", DescribableHelper.uninstantiate(new UsesImpl2(impl2)).toString());
-        // TODO also check case that a FQN is needed
+    @Test public void nestedStructs() throws Exception {
+        roundTrip(UsesBase.class, map("base", map("$class", "Impl1", "text", "hello")));
+        roundTrip(UsesBase.class, map("base", map("$class", "Impl2", "flag", true)));
+        roundTrip(UsesImpl2.class, map("impl2", map("flag", false)));
     }
-
-    // TODO instantiate/uninstantiate of URL, Enum, Character
 
     public static class UsesBase {
         public final Base base;
@@ -224,6 +200,23 @@ public class DescribableHelperTest {
                 return "Impl2";
             }
         }
+    }
+
+    private static Map<String,Object> map(Object... keysAndValues) {
+        if (keysAndValues.length % 2 != 0) {
+            throw new IllegalArgumentException();
+        }
+        Map<String,Object> m = new HashMap<String,Object>();
+        for (int i = 0; i < keysAndValues.length; i += 2) {
+            m.put((String) keysAndValues[i], keysAndValues[i + 1]);
+        }
+        return m;
+    }
+
+    private static void roundTrip(Class<?> c, Map<String,Object> m) throws Exception {
+        Object o = DescribableHelper.instantiate(c, m);
+        Map<String,Object> m2 = DescribableHelper.uninstantiate(o);
+        assertEquals(m, m2);
     }
 
 }
