@@ -30,7 +30,6 @@ import hudson.model.BooleanParameterValue;
 import hudson.model.Node;
 import hudson.model.StringParameterValue;
 import hudson.tasks.ArtifactArchiver;
-import java.net.URL;
 import java.util.Arrays;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
@@ -87,7 +86,6 @@ public class SnippetizerTest {
         assertRender("hudson.model.Node.Mode.NORMAL", Node.Mode.NORMAL);
         assertRender("null", null);
         assertRender("['foo', 'bar']", new String[] {"foo", "bar"});
-        assertRender("new java.net.URL('http://nowhere.net/')", new URL("http://nowhere.net/"));
     }
 
     private static void assertRoundTrip(Step step, String expected) throws Exception {

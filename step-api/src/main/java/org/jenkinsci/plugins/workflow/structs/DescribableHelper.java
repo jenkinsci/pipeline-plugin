@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import net.java.sezpoz.Index;
 import net.java.sezpoz.IndexItem;
@@ -125,16 +125,7 @@ public class DescribableHelper {
             Object a = arguments.get(name);
             Class<?> type = types[i];
             if (a != null) {
-                Object coerced = ReflectionCache.getCachedClass(type).coerceArgument(a);
-                if (!Primitives.wrap(type).isInstance(coerced)) {
-                    Object bound = tryToBind(type, coerced);
-                    if (bound != null) {
-                        coerced = bound;
-                    } else {
-                        throw new ClassCastException(clazz.getName() + "." + name + " expects " + type.getName() + " but received " + coerced.getClass().getName());
-                    }
-                }
-                args[i] = coerced;
+                args[i] = coerce(clazz.getName() + "." + name, type, a);
             } else if (type == boolean.class) {
                 args[i] = false;
             } else if (type.isPrimitive() && callEvenIfNoArgs) {
@@ -147,8 +138,11 @@ public class DescribableHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private static @CheckForNull Object tryToBind(Class<?> type, Object o) throws Exception {
-        if (o instanceof Map) {
+    private static Object coerce(String context, Class<?> type, @Nonnull Object o) throws Exception {
+        o = ReflectionCache.getCachedClass(type).coerceArgument(o); // TODO do we still need this?
+        if (Primitives.wrap(type).isInstance(o)) {
+            return o;
+        } else if (o instanceof Map) {
             Map<String,Object> m = new HashMap<String,Object>();
             for (Map.Entry<?,?> entry : ((Map<?,?>) o).entrySet()) {
                 m.put((String) entry.getKey(), entry.getValue());
@@ -182,8 +176,11 @@ public class DescribableHelper {
             return instantiate(clazz.asSubclass(type), m);
         } else if (o instanceof String && type.isEnum()) {
             return Enum.valueOf(type.asSubclass(Enum.class), (String) o);
+        } else if (o instanceof String && type == URL.class) {
+            return new URL((String) o);
+        } else {
+            throw new ClassCastException(context + " expects " + type.getName() + " but received " + o.getClass().getName());
         }
-        return null;
     }
 
     // copied from RequestImpl
@@ -215,7 +212,7 @@ public class DescribableHelper {
                     f.setAccessible(true);
                     if (arguments.containsKey(f.getName())) {
                         Object v = arguments.get(f.getName());
-                        f.set(o, v);
+                        f.set(o, coerce(c.getName() + "." + f.getName(), f.getType(), v));
                     }
                 }
             }
@@ -240,6 +237,8 @@ public class DescribableHelper {
         Object value = inspect(o, clazz, field, type);
         if (type.get().isEnum() && value instanceof Enum) {
             value = ((Enum) value).name();
+        } else if (type.get() == URL.class && value instanceof URL) {
+            value = ((URL) value).toString();
         } else if (value != null && !value.getClass().getPackage().getName().startsWith("java.")) {
             try {
                 // Check to see if this can be treated as a data-bound struct.

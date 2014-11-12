@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -101,10 +100,6 @@ class Snippetizer {
             }
         } else if (valueC == Boolean.class || valueC == Integer.class || valueC == Long.class) {
             b.append(value);
-        } else if (valueC == URL.class) {
-            b.append("new java.net.URL(");
-            render(b, ((URL) value).toString());
-            b.append(')');
         } else if (value instanceof List || value instanceof Object[]) {
             List<?> list;
             if (value instanceof List) {

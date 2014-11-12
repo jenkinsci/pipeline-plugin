@@ -28,11 +28,12 @@ import hudson.Extension;
 import hudson.Main;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.TreeMap;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -41,7 +42,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 public class DescribableHelperTest {
 
-    // TODO instantiate/uninstantiate of URL, Character
+    // TODO instantiate/uninstantiate of Character
     // TODO instantiate/uninstantiate of List/Object[]
 
     @BeforeClass public static void isUnitTest() {
@@ -220,11 +221,20 @@ public class DescribableHelperTest {
         public abstract int v();
     }
 
-   private static Map<String,Object> map(Object... keysAndValues) {
+    @Test public void urls() throws Exception {
+        roundTrip(UsesURL.class, map("u", "http://nowhere.net/"));
+    }
+
+    public static final class UsesURL {
+        @DataBoundConstructor public UsesURL() {}
+        @DataBoundSetter public URL u;
+    }
+
+    private static Map<String,Object> map(Object... keysAndValues) {
         if (keysAndValues.length % 2 != 0) {
             throw new IllegalArgumentException();
         }
-        Map<String,Object> m = new HashMap<String,Object>();
+        Map<String,Object> m = new TreeMap<String,Object>();
         for (int i = 0; i < keysAndValues.length; i += 2) {
             m.put((String) keysAndValues[i], keysAndValues[i + 1]);
         }
