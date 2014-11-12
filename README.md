@@ -69,8 +69,8 @@ echo off
 set JAVA_HOME=c:\Program Files\Java\jdk1.7.0_60
 c:\Program Files\Maven\bin\mvn clean install
 /)
-  step delegate: [$class: 'ArtifactArchiver', artifacts: '**/target/*-SNAPSHOT*', fingerprint: true]
-  step delegate: [$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/*.xml']
+  step([$class: 'ArtifactArchiver', artifacts: '**/target/*-SNAPSHOT*', fingerprint: true])
+  step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/*.xml'])
 }
 ```
 

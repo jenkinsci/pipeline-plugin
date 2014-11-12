@@ -77,7 +77,11 @@ It also takes any other parameters supported by the SCM plugin in its configurat
 Optional parameters can be omitted and will take their default values.
 For example, to run Mercurial (1.51-beta-2 or higher):
 
-    checkout scm: [$class: 'MercurialSCM', source: 'ssh://hg@bitbucket.org/user/repo, clean: true, credentialsId: '1234-5678-abcd'], poll: false
+    checkout scm: [$class: 'MercurialSCM', source: 'ssh://hg@bitbucket.org/user/repo', clean: true, credentialsId: '1234-5678-abcd'], poll: false
+
+Note that if `scm` is the only parameter, you can omit its name as usual, but Groovy syntax then requires parentheses around the value:
+
+    checkout([$class: 'MercurialSCM', source: 'ssh://hg@bitbucket.org/user/repo'])
 
 Here `source` is a mandatory parameter (_Repository URL_ in the UI), and `clean` (_Clean Build_) and `credentialsId` (_Credentials_) are optional parameters.
 This would correspond roughly to a freestyle project configured as follows:
