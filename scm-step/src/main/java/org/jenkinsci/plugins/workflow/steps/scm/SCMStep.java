@@ -34,7 +34,6 @@ import hudson.scm.SCMRevisionState;
 import java.io.File;
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
@@ -44,7 +43,6 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.kohsuke.stapler.DataBoundSetter;
 
 /**
@@ -132,7 +130,7 @@ public abstract class SCMStep extends Step implements Serializable {
         return new StepExecutionImpl(context);
     }
 
-    public static abstract class SCMStepDescriptor extends StepDescriptor {
+    public static abstract class SCMStepDescriptor extends StepDescriptor { // TODO can we switch to AbstractStepDescriptorImpl yet?
 
         @Override public Set<Class<?>> getRequiredContext() {
             Set<Class<?>> s = new HashSet<Class<?>>();
@@ -141,14 +139,6 @@ public abstract class SCMStep extends Step implements Serializable {
             s.add(FilePath.class);
             s.add(TaskListener.class);
             return s;
-        }
-
-        @Override public Step newInstance(Map<String,Object> arguments) throws Exception {
-            return DescribableHelper.instantiate(clazz, arguments);
-        }
-
-        @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
-            return DescribableHelper.uninstantiate(step);
         }
 
     }

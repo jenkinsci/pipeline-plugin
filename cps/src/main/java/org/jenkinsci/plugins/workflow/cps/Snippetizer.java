@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
@@ -47,7 +46,7 @@ class Snippetizer {
         for (StepDescriptor d : StepDescriptor.all()) {
             if (d.clazz.equals(clazz)) {
                 StringBuilder b = new StringBuilder(d.getFunctionName());
-                Map<String,Object> args = new TreeMap<String,Object>(d.defineArguments((Step) o));
+                Map<String,Object> args = new TreeMap<String,Object>(defineArguments(d, (Step) o));
                 args.values().removeAll(Collections.singleton(null)); // do not write null values
                 boolean first = true;
                 for (Map.Entry<String,Object> entry : args.entrySet()) {
@@ -62,7 +61,7 @@ class Snippetizer {
                         b.append(", ");
                     }
                     String key = entry.getKey();
-                    if (args.size() > 1 || !key.equals(AbstractStepDescriptorImpl.KEY_VALUE)) {
+                    if (args.size() > 1 || !key.equals(DSL.KEY_VALUE)) {
                         b.append(key).append(": ");
                     }
                     render(b, entry.getValue());
@@ -77,6 +76,15 @@ class Snippetizer {
             }
         }
         throw new UnsupportedOperationException("Unknown step " + clazz);
+    }
+
+    private static Map<String,Object> defineArguments(StepDescriptor d, Step step) {
+        Map<String,Object> arguments = d.defineArguments(step);
+        String[] names = new ClassDescriptor(step.getClass()).loadConstructorParamNames();
+        if (names.length == 1 && arguments.keySet().equals(Collections.singleton(names[0]))) {
+            arguments = Collections.singletonMap(DSL.KEY_VALUE, arguments.get(names[0]));
+        }
+        return arguments;
     }
     
     static void render(StringBuilder b, Object value) {

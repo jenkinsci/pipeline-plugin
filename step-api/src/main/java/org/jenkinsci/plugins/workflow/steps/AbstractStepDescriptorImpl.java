@@ -1,16 +1,10 @@
 package org.jenkinsci.plugins.workflow.steps;
 
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
-import org.kohsuke.stapler.ClassDescriptor;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-
 import javax.inject.Inject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -19,6 +13,7 @@ import java.util.Set;
 public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
     private volatile transient Set<Class<?>> contextTypes;
 
+    // TODO should this be required to be AbstractStepExecutionImpl?
     private final Class<? extends StepExecution> executionType;
 
     /**
@@ -31,35 +26,6 @@ public abstract class AbstractStepDescriptorImpl extends StepDescriptor {
     public final Class<? extends StepExecution> getExecutionType() {
         return executionType;
     }
-
-    /** An argument key for a single default parameter. */
-    public static final String KEY_VALUE = "value";
-
-    /**
-     * Instantiate a new object via {@link DataBoundConstructor} and {@link DataBoundSetter}.
-     * If the constructor takes one parameter and the arguments have just {@link #KEY_VALUE} then it is bound to that parameter.
-     */
-    @Override
-    public final Step newInstance(Map<String,Object> arguments) throws Exception {
-        if (arguments.keySet().equals(Collections.singleton(KEY_VALUE))) {
-            String[] names = new ClassDescriptor(clazz).loadConstructorParamNames();
-            if (names.length == 1) {
-                arguments = Collections.singletonMap(names[0], arguments.get(KEY_VALUE));
-            }
-        }
-        return DescribableHelper.instantiate(clazz, arguments);
-    }
-
-
-    @Override public Map<String,Object> defineArguments(Step step) {
-        Map<String,Object> arguments = DescribableHelper.uninstantiate(step);
-        String[] names = new ClassDescriptor(step.getClass()).loadConstructorParamNames();
-        if (names.length == 1 && arguments.keySet().equals(Collections.singleton(names[0]))) {
-            arguments = Collections.singletonMap(KEY_VALUE, arguments.get(names[0]));
-        }
-        return arguments;
-    }
-
 
     /**
      * Looks for the fields and setter methods with {@link StepContextParameter}s
