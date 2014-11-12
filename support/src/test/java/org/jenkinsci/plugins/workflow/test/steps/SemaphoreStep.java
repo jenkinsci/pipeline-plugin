@@ -38,6 +38,8 @@ import java.util.UUID;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
+// TODO convert to AbstractStepImpl/AbstractStepDescriptorImpl/AbstractStepExecutionImpl
+
 /**
  * Step that blocks until signaled.
  */
@@ -146,7 +148,7 @@ public final class SemaphoreStep extends Step implements Serializable {
         }
 
         @Override public Step newInstance(Map<String,Object> arguments) {
-            return new SemaphoreStep((String) arguments.get("value"));
+            return new SemaphoreStep((String) arguments.get("id"));
         }
 
         @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
