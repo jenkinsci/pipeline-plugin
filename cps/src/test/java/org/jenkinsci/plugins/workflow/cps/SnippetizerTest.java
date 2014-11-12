@@ -27,7 +27,6 @@ package org.jenkinsci.plugins.workflow.cps;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.GroovyShell;
 import hudson.model.BooleanParameterValue;
-import hudson.model.Node;
 import hudson.model.StringParameterValue;
 import hudson.tasks.ArtifactArchiver;
 import java.util.Arrays;
@@ -83,7 +82,6 @@ public class SnippetizerTest {
         /* TODO figure out how to add support for ParameterValue without those having Descriptor’s yet:
         assertRoundTrip(step, "build job: 'downstream', parameters: [[$class: 'StringParameterValue', name: 'branch', value: 'default'], [$class: 'BooleanParameterValue', name: 'correct', value: true]]");
         */
-        assertRender("hudson.model.Node.Mode.NORMAL", Node.Mode.NORMAL);
         assertRender("null", null);
         assertRender("['foo', 'bar']", new String[] {"foo", "bar"});
     }
