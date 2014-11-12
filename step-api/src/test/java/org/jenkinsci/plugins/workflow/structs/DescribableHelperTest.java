@@ -24,27 +24,37 @@
 
 package org.jenkinsci.plugins.workflow.structs;
 
+import hudson.Extension;
+import hudson.Main;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import org.codehaus.groovy.runtime.GStringImpl;
 import static org.junit.Assert.*;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 public class DescribableHelperTest {
-    
+
+    @BeforeClass public static void isUnitTest() {
+        Main.isUnitTest = true; // suppress HsErrPidList
+    }
+
     @Test public void instantiate() throws Exception {
-        Map<String,Object> args = new HashMap<String,Object>();
-        args.put("text", "hello");
-        args.put("flag", true);
-        args.put("ignored", "!");
+        Map<String,Object> args = map("text", "hello", "flag", true, "ignored", "!");
         assertEquals("C:hello/true", DescribableHelper.instantiate(C.class, args).toString());
         args.put("value", "main");
         assertEquals("I:main/hello/true", DescribableHelper.instantiate(I.class, args).toString());
-        args.clear();
-        args.put("text", "goodbye");
-        assertEquals("C:goodbye/false", DescribableHelper.instantiate(C.class, args).toString());
+        assertEquals("C:goodbye/false", DescribableHelper.instantiate(C.class, map("text", "goodbye")).toString());
     }
 
     @Test public void uninstantiate() throws Exception {
@@ -57,7 +67,7 @@ public class DescribableHelperTest {
 
     @Test public void mismatchedTypes() throws Exception {
         try {
-            DescribableHelper.instantiate(I.class, Collections.singletonMap("value", 99));
+            DescribableHelper.instantiate(I.class, map("value", 99));
             fail();
         } catch (ClassCastException x) {
             String message = x.getMessage();
@@ -108,6 +118,285 @@ public class DescribableHelperTest {
         @Override public String toString() {
             return "I:" + value + "/" + text + "/" + flag;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test public void findSubtypes() throws Exception {
+        assertEquals(new HashSet<Class<?>>(Arrays.asList(Impl1.class, Impl2.class)), DescribableHelper.findSubtypes(Base.class));
+        assertEquals(Collections.singleton(Impl1.class), DescribableHelper.findSubtypes(Marker.class));
+    }
+
+    @Test public void bindMapsFQN() throws Exception {
+        assertEquals("UsesBase[Impl1[hello]]", DescribableHelper.instantiate(UsesBase.class, map("base", map("$class", Impl1.class.getName(), "text", "hello"))).toString());
+    }
+
+    // TODO also check case that a FQN is needed
+
+    @Test public void gstring() throws Exception {
+        assertEquals("UsesBase[Impl1[hello world]]", DescribableHelper.instantiate(UsesBase.class, map("base", map("$class", "Impl1", "text", new GStringImpl(new Object[] {"hello", "world"}, new String[] {"", " "})))).toString());
+    }
+
+    @Test public void nestedStructs() throws Exception {
+        roundTrip(UsesBase.class, map("base", map("$class", "Impl1", "text", "hello")));
+        roundTrip(UsesBase.class, map("base", map("$class", "Impl2", "flag", true)));
+        roundTrip(UsesImpl2.class, map("impl2", map("flag", false)));
+    }
+
+    public static class UsesBase {
+        public final Base base;
+        @DataBoundConstructor public UsesBase(Base base) {
+            this.base = base;
+        }
+        @Override public String toString() {
+            return "UsesBase[" + base + "]";
+        }
+    }
+
+    public static class UsesImpl2 {
+        public final Impl2 impl2;
+        @DataBoundConstructor public UsesImpl2(Impl2 impl2) {
+            this.impl2 = impl2;
+        }
+        @Override public String toString() {
+            return "UsesImpl2[" + impl2 + "]";
+        }
+    }
+
+    public static abstract class Base extends AbstractDescribableImpl<Base> {}
+
+    public interface Marker {}
+
+    public static final class Impl1 extends Base implements Marker {
+        private final String text;
+        @DataBoundConstructor public Impl1(String text) {
+            this.text = text;
+        }
+        public String getText() {
+            return text;
+        }
+        @Override public String toString() {
+            return "Impl1[" + text + "]";
+        }
+        @Extension public static final class DescriptorImpl extends Descriptor<Base> {
+            @Override public String getDisplayName() {
+                return "Impl1";
+            }
+        }
+    }
+
+    public static final class Impl2 extends Base {
+        private boolean flag;
+        @DataBoundConstructor public Impl2() {}
+        public boolean isFlag() {
+            return flag;
+        }
+        @DataBoundSetter public void setFlag(boolean flag) {
+            this.flag = flag;
+        }
+        @Override public String toString() {
+            return "Impl2[" + flag + "]";
+        }
+        @Extension public static final class DescriptorImpl extends Descriptor<Base> {
+            @Override public String getDisplayName() {
+                return "Impl2";
+            }
+        }
+    }
+    
+    @Test public void enums() throws Exception {
+        roundTrip(UsesEnum.class, map("e", "ZERO"));
+    }
+
+    public static final class UsesEnum {
+        private final E e;
+        @DataBoundConstructor public UsesEnum(E e) {
+            this.e = e;
+        }
+        public E getE() {
+            return e;
+        }
+    }
+    public enum E {
+        ZERO() {@Override public int v() {return 0;}};
+        public abstract int v();
+    }
+
+    @Test public void urls() throws Exception {
+        roundTrip(UsesURL.class, map("u", "http://nowhere.net/"));
+    }
+
+    public static final class UsesURL {
+        @DataBoundConstructor public UsesURL() {}
+        @DataBoundSetter public URL u;
+    }
+
+    @Test public void chars() throws Exception {
+        roundTrip(UsesCharacter.class, map("c", "!"));
+    }
+
+    public static final class UsesCharacter {
+        @DataBoundConstructor public UsesCharacter() {}
+        @DataBoundSetter public char c;
+    }
+
+    @Test public void stringArray() throws Exception {
+        roundTrip(UsesStringArray.class, map("strings", Arrays.asList("one", "two")));
+    }
+
+    @Test public void stringList() throws Exception {
+        roundTrip(UsesStringList.class, map("strings", Arrays.asList("one", "two")));
+    }
+
+    public static final class UsesStringArray {
+        private final String[] strings;
+        @DataBoundConstructor public UsesStringArray(String[] strings) {
+            this.strings = strings;
+        }
+        public String[] getStrings() {
+            return strings;
+        }
+    }
+
+    public static final class UsesStringList {
+        private final List<String> strings;
+        @DataBoundConstructor public UsesStringList(List<String> strings) {
+            this.strings = strings;
+        }
+        public List<String> getStrings() {
+            return strings;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test public void structArrayHomo() throws Exception {
+        roundTrip(UsesStructArrayHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructArrayHomo[Impl2[false], Impl2[true]]");
+    }
+
+    public static final class UsesStructArrayHomo {
+        private final Impl2[] impls;
+        @DataBoundConstructor public UsesStructArrayHomo(Impl2[] impls) {
+            this.impls = impls;
+        }
+        public Impl2[] getImpls() {
+            return impls;
+        }
+        @Override public String toString() {
+            return "UsesStructArrayHomo" + Arrays.toString(impls);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test public void structListHomo() throws Exception {
+        roundTrip(UsesStructListHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructListHomo[Impl2[false], Impl2[true]]");
+    }
+
+    public static final class UsesStructListHomo {
+        private final List<Impl2> impls;
+        @DataBoundConstructor public UsesStructListHomo(List<Impl2> impls) {
+            this.impls = impls;
+        }
+        public List<Impl2> getImpls() {
+            return impls;
+        }
+        @Override public String toString() {
+            return "UsesStructListHomo" + impls;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test public void structCollectionHomo() throws Exception {
+        roundTrip(UsesStructCollectionHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructCollectionHomo[Impl2[false], Impl2[true]]");
+    }
+
+    public static final class UsesStructCollectionHomo {
+        private final Collection<Impl2> impls;
+        @DataBoundConstructor public UsesStructCollectionHomo(Collection<Impl2> impls) {
+            this.impls = impls;
+        }
+        public Collection<Impl2> getImpls() {
+            return impls;
+        }
+        @Override public String toString() {
+            return "UsesStructCollectionHomo" + impls;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test public void structArrayHetero() throws Exception {
+        roundTrip(UsesStructArrayHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructArrayHetero[Impl1[hello], Impl2[true]]");
+    }
+
+    public static final class UsesStructArrayHetero {
+        private final Base[] bases;
+        @DataBoundConstructor public UsesStructArrayHetero(Base[] bases) {
+            this.bases = bases;
+        }
+        public Base[] getBases() {
+            return bases;
+        }
+        @Override public String toString() {
+            return "UsesStructArrayHetero" + Arrays.toString(bases);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test public void structListHetero() throws Exception {
+        roundTrip(UsesStructListHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructListHetero[Impl1[hello], Impl2[true]]");
+    }
+
+    public static final class UsesStructListHetero {
+        private final List<Base> bases;
+        @DataBoundConstructor public UsesStructListHetero(List<Base> bases) {
+            this.bases = bases;
+        }
+        public List<Base> getBases() {
+            return bases;
+        }
+        @Override public String toString() {
+            return "UsesStructListHetero" + bases;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test public void structCollectionHetero() throws Exception {
+        roundTrip(UsesStructCollectionHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructCollectionHetero[Impl1[hello], Impl2[true]]");
+    }
+
+    public static final class UsesStructCollectionHetero {
+        private final Collection<Base> bases;
+        @DataBoundConstructor public UsesStructCollectionHetero(Collection<Base> bases) {
+            this.bases = bases;
+        }
+        public Collection<Base> getBases() {
+            return bases;
+        }
+        @Override public String toString() {
+            return "UsesStructCollectionHetero" + bases;
+        }
+    }
+
+    private static Map<String,Object> map(Object... keysAndValues) {
+        if (keysAndValues.length % 2 != 0) {
+            throw new IllegalArgumentException();
+        }
+        Map<String,Object> m = new TreeMap<String,Object>();
+        for (int i = 0; i < keysAndValues.length; i += 2) {
+            m.put((String) keysAndValues[i], keysAndValues[i + 1]);
+        }
+        return m;
+    }
+
+    private static void roundTrip(Class<?> c, Map<String,Object> m) throws Exception {
+        roundTrip(c, m, null);
+    }
+
+    private static void roundTrip(Class<?> c, Map<String,Object> m, String toString) throws Exception {
+        Object o = DescribableHelper.instantiate(c, m);
+        if (toString != null) {
+            assertEquals(toString, o.toString());
+        }
+        Map<String,Object> m2 = DescribableHelper.uninstantiate(o);
+        assertEquals(m, m2);
     }
 
 }

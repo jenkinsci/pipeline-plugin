@@ -85,13 +85,15 @@ public abstract class StepDescriptor extends Descriptor<Step> {
 
     /**
      * Used when a {@link Step} is instantiated programmatically.
-     *
+     * The default implementation just uses {@link DescribableHelper#instantiate}.
      * @param arguments
      *      Named arguments and values, à la Ant task or Maven mojos.
      *      Generally should follow the semantics of {@link DescribableHelper#instantiate}.
      * @return an instance of {@link #clazz}
      */
-    public abstract Step newInstance(Map<String,Object> arguments) throws Exception;
+    public Step newInstance(Map<String,Object> arguments) throws Exception {
+        return DescribableHelper.instantiate(clazz, arguments);
+    }
 
     /**
      * Determine which arguments went into the configuration of a step configured through a form submission.
@@ -99,7 +101,9 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      * @return arguments that could be passed to {@link #newInstance} to create a similar step instance
      * @throws UnsupportedOperationException if this descriptor lacks the ability to do such a calculation
      */
-    public abstract Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException;
+    public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
+        return DescribableHelper.uninstantiate(step);
+    }
 
 
     /**

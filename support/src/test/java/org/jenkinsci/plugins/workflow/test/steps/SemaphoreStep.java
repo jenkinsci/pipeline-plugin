@@ -37,6 +37,9 @@ import java.util.Set;
 import java.util.UUID;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.kohsuke.stapler.DataBoundConstructor;
+
+// TODO convert to AbstractStepImpl/AbstractStepDescriptorImpl/AbstractStepExecutionImpl
 
 /**
  * Step that blocks until signaled.
@@ -55,7 +58,7 @@ public final class SemaphoreStep extends Step implements Serializable {
         this(UUID.randomUUID().toString());
     }
 
-    public SemaphoreStep(String id) {
+    @DataBoundConstructor public SemaphoreStep(String id) {
         Integer old = iota.get(id);
         if (old == null) {
             old = 0;
@@ -146,7 +149,7 @@ public final class SemaphoreStep extends Step implements Serializable {
         }
 
         @Override public Step newInstance(Map<String,Object> arguments) {
-            return new SemaphoreStep((String) arguments.get("value"));
+            return new SemaphoreStep((String) arguments.get("id"));
         }
 
         @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {

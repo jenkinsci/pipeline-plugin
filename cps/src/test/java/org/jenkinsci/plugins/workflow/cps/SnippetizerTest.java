@@ -27,10 +27,8 @@ package org.jenkinsci.plugins.workflow.cps;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.GroovyShell;
 import hudson.model.BooleanParameterValue;
-import hudson.model.Node;
 import hudson.model.StringParameterValue;
 import hudson.tasks.ArtifactArchiver;
-import java.net.URL;
 import java.util.Arrays;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
@@ -60,7 +58,7 @@ public class SnippetizerTest {
     @Test public void coreStep() throws Exception {
         ArtifactArchiver aa = new ArtifactArchiver("x.jar");
         aa.setAllowEmptyArchive(true);
-        assertRoundTrip(new CoreStep(aa), "step $class: 'hudson.tasks.ArtifactArchiver', allowEmptyArchive: true, artifacts: 'x.jar', defaultExcludes: true, excludes: '', fingerprint: false, onlyIfSuccessful: false");
+        assertRoundTrip(new CoreStep(aa), "step([$class: 'ArtifactArchiver', allowEmptyArchive: true, artifacts: 'x.jar', defaultExcludes: true, excludes: '', fingerprint: false, onlyIfSuccessful: false])");
     }
 
     @Test public void blockSteps() throws Exception {
@@ -77,21 +75,15 @@ public class SnippetizerTest {
         assertRoundTrip(new EchoStep("echo hello\necho 1/2 way\necho goodbye"), "echo '''echo hello\necho 1/2 way\necho goodbye'''");
     }
 
-    @Test public void javaObjects() throws Exception {
+    @Test public void buildTriggerStep() throws Exception {
         BuildTriggerStep step = new BuildTriggerStep("downstream");
         assertRoundTrip(step, "build 'downstream'");
         step.setParameters(Arrays.asList(new StringParameterValue("branch", "default"), new BooleanParameterValue("correct", true)));
-        assertRoundTrip(step, "build job: 'downstream', parameters: [new hudson.model.StringParameterValue('branch', 'default'), new hudson.model.BooleanParameterValue('correct', true)]");
-        assertRender("hudson.model.Node.Mode.NORMAL", Node.Mode.NORMAL);
-        assertRender("null", null);
-        assertRender("org.jenkinsci.plugins.workflow.cps.SnippetizerTest.E.ZERO", E.ZERO);
-        assertRender("['foo', 'bar']", new String[] {"foo", "bar"});
-        assertRender("new java.net.URL('http://nowhere.net/')", new URL("http://nowhere.net/"));
-    }
-
-    private enum E {
-        ZERO() {@Override public int v() {return 0;}};
-        public abstract int v();
+        /* TODO figure out how to add support for ParameterValue without those having Descriptor’s yet
+                currently instantiate works but uninstantiate does not offer a FQN
+                (which does not matter in this case since BuildTriggerStep/config.jelly does not offer to bind parameters anyway)
+        assertRoundTrip(step, "build job: 'downstream', parameters: [[$class: 'hudson.model.StringParameterValue', name: 'branch', value: 'default'], [$class: 'hudson.model.BooleanParameterValue', name: 'correct', value: true]]");
+        */
     }
 
     private static void assertRoundTrip(Step step, String expected) throws Exception {

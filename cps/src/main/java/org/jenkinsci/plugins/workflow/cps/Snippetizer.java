@@ -24,18 +24,14 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
-import java.net.URL;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import javax.lang.model.SourceVersion;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.kohsuke.stapler.ClassDescriptor;
-import org.kohsuke.stapler.NoStaplerConstructorException;
 
 /**
  * Takes a {@link Step} as configured through the UI and tries to produce equivalent Groovy code.
@@ -47,13 +43,15 @@ class Snippetizer {
         for (StepDescriptor d : StepDescriptor.all()) {
             if (d.clazz.equals(clazz)) {
                 StringBuilder b = new StringBuilder(d.getFunctionName());
-                Map<String,Object> args = new TreeMap<String,Object>(d.defineArguments((Step) o));
+                Step step = (Step) o;
+                Map<String,Object> args = new TreeMap<String,Object>(d.defineArguments(step));
                 args.values().removeAll(Collections.singleton(null)); // do not write null values
                 boolean first = true;
+                boolean singleMap = args.size() == 1 && args.values().iterator().next() instanceof Map;
                 for (Map.Entry<String,Object> entry : args.entrySet()) {
                     if (first) {
                         first = false;
-                        if (d.takesImplicitBlockArgument()) {
+                        if (d.takesImplicitBlockArgument() || singleMap) {
                             b.append('(');
                         } else {
                             b.append(' ');
@@ -62,7 +60,7 @@ class Snippetizer {
                         b.append(", ");
                     }
                     String key = entry.getKey();
-                    if (args.size() > 1 || !key.equals(AbstractStepDescriptorImpl.KEY_VALUE)) {
+                    if (args.size() > 1 || !isDefaultKey(step, key)) {
                         b.append(key).append(": ");
                     }
                     render(b, entry.getValue());
@@ -72,13 +70,20 @@ class Snippetizer {
                         b.append(')');
                     }
                     b.append(" {\n    // some block\n}");
+                } else if (singleMap) {
+                    b.append(')');
                 }
                 return b.toString();
             }
         }
         throw new UnsupportedOperationException("Unknown step " + clazz);
     }
-    
+
+    private static boolean isDefaultKey(Step step, String key) {
+        String[] names = new ClassDescriptor(step.getClass()).loadConstructorParamNames();
+        return names.length == 1 && key.equals(names[0]);
+    }
+
     static void render(StringBuilder b, Object value) {
         if (value == null) {
             b.append("null");
@@ -94,17 +99,8 @@ class Snippetizer {
             }
         } else if (valueC == Boolean.class || valueC == Integer.class || valueC == Long.class) {
             b.append(value);
-        } else if (valueC == URL.class) {
-            b.append("new java.net.URL(");
-            render(b, ((URL) value).toString());
-            b.append(')');
-        } else if (value instanceof List || value instanceof Object[]) {
-            List<?> list;
-            if (value instanceof List) {
-                list = (List<?>) value;
-            } else {
-                list = Arrays.asList((Object[]) value);
-            }
+        } else if (value instanceof List) {
+            List<?> list = (List<?>) value;
             b.append('[');
             boolean first = true;
             for (Object elt : list) {
@@ -116,31 +112,28 @@ class Snippetizer {
                 render(b, elt);
             }
             b.append(']');
-        } else if (value instanceof Enum) {
-            Enum<?> e = (Enum) value;
-            b.append(e.getDeclaringClass().getCanonicalName()).append('.').append(e.name());
-        } else {
-            try {
-                Map<String,Object> args = DescribableHelper.uninstantiate(value);
-                b.append("new ").append(valueC.getCanonicalName()).append('(');
-                ClassDescriptor d = new ClassDescriptor(valueC);
-                boolean first = true;
-                for (String name : d.loadConstructorParamNames()) {
-                    if (first) {
-                        first = false;
-                    } else {
-                        b.append(", ");
-                    }
-                    render(b, args.remove(name));
+        } else if (value instanceof Map) {
+            Map<?,?> map = (Map) value;
+            b.append('[');
+            boolean first = true;
+            for (Map.Entry<?,?> entry : map.entrySet()) {
+                if (first) {
+                    first = false;
+                } else {
+                    b.append(", ");
                 }
-                if (!args.isEmpty()) {
-                    // TODO handle somehow, maybe Groovy with {…}?
-                    throw new UnsupportedOperationException("@DataBoundSetter not yet supported in value of type " + valueC + ": " + args.keySet());
+                Object key = entry.getKey();
+                if (key instanceof String && SourceVersion.isName((String) key)) {
+                    b.append(key);
+                } else {
+                    render(b, key);
                 }
-                b.append(')');
-            } catch (NoStaplerConstructorException x) {
-                b.append("<object of type ").append(valueC.getCanonicalName()).append('>');
+                b.append(": ");
+                render(b, entry.getValue());
             }
+            b.append(']');
+        } else {
+            b.append("<object of type ").append(valueC.getCanonicalName()).append('>');
         }
     }
 
