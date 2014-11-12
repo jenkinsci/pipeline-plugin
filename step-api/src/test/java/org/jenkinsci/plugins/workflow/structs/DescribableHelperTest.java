@@ -154,6 +154,17 @@ public class DescribableHelperTest {
         assertEquals("UsesBase[Impl2[true]]", DescribableHelper.instantiate(UsesBase.class, Collections.singletonMap("base", impl2)).toString());
     }
 
+    @Test public void nestedUninstantiate() throws Exception {
+        assertEquals("{base={$class=Impl1, text=hello}}", DescribableHelper.uninstantiate(new UsesBase(new Impl1("hello"))).toString());
+        assertEquals("{base={$class=Impl2, flag=false}}", DescribableHelper.uninstantiate(new UsesBase(new Impl2())).toString());
+        Impl2 impl2 = new Impl2();
+        impl2.setFlag(true);
+        assertEquals("{impl2={flag=true}}", DescribableHelper.uninstantiate(new UsesImpl2(impl2)).toString());
+        // TODO also check case that a FQN is needed
+    }
+
+    // TODO instantiate/uninstantiate of URL, Enum, Character
+
     public static class UsesBase {
         public final Base base;
         @DataBoundConstructor public UsesBase(Base base) {
@@ -182,6 +193,9 @@ public class DescribableHelperTest {
         private final String text;
         @DataBoundConstructor public Impl1(String text) {
             this.text = text;
+        }
+        public String getText() {
+            return text;
         }
         @Override public String toString() {
             return "Impl1[" + text + "]";

@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
 import net.java.sezpoz.Index;
@@ -50,6 +51,7 @@ import org.codehaus.groovy.reflection.ReflectionCache;
 import org.kohsuke.stapler.ClassDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.NoStaplerConstructorException;
 
 /**
  * Utility for converting between {@link Describable}s (and some other objects) and map-like representations.
@@ -89,7 +91,13 @@ public class DescribableHelper {
         Class<?> clazz = o.getClass();
         Map<String, Object> r = new TreeMap<String, Object>();
         ClassDescriptor d = new ClassDescriptor(clazz);
-        for (String name : d.loadConstructorParamNames()) {
+        String[] names;
+        try {
+            names = d.loadConstructorParamNames();
+        } catch (NoStaplerConstructorException x) {
+            throw new UnsupportedOperationException(x);
+        }
+        for (String name : names) {
             inspect(r, o, clazz, name);
         }
         for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
@@ -225,21 +233,42 @@ public class DescribableHelper {
     }
 
     private static void inspect(Map<String, Object> r, Object o, Class<?> clazz, String field) {
+        AtomicReference<Class<?>> type = new AtomicReference<Class<?>>();
+        Object value = inspect(o, clazz, field, type);
+        if (value != null && !value.getClass().getPackage().getName().startsWith("java.")) {
+            try {
+                // Check to see if this can be treated as a data-bound struct.
+                Map<String,Object> nested = uninstantiate(value);
+                if (type.get() != value.getClass()) {
+                    nested.put("$class", value.getClass().getSimpleName());
+                }
+                value = nested;
+            } catch (UnsupportedOperationException x) {
+                // then leave it raw
+            }
+        }
+        r.put(field, value);
+    }
+
+    private static Object inspect(Object o, Class<?> clazz, String field, AtomicReference<Class<?>> type) {
         try {
             try {
-                r.put(field, clazz.getField(field).get(o));
-                return;
+                Field f = clazz.getField(field);
+                type.set(f.getType());
+                return f.get(o);
             } catch (NoSuchFieldException x) {
                 // OK, check for getter instead
             }
             try {
-                r.put(field, clazz.getMethod("get" + Character.toUpperCase(field.charAt(0)) + field.substring(1)).invoke(o));
-                return;
+                Method m = clazz.getMethod("get" + Character.toUpperCase(field.charAt(0)) + field.substring(1));
+                type.set(m.getReturnType());
+                return m.invoke(o);
             } catch (NoSuchMethodException x) {
                 // one more check
             }
             try {
-                r.put(field, clazz.getMethod("is" + Character.toUpperCase(field.charAt(0)) + field.substring(1)).invoke(o));
+                type.set(boolean.class);
+                return clazz.getMethod("is" + Character.toUpperCase(field.charAt(0)) + field.substring(1)).invoke(o);
             } catch (NoSuchMethodException x) {
                 throw new UnsupportedOperationException("no public field ‘" + field + "’ (or getter method) found in " + clazz);
             }

@@ -30,11 +30,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import javax.lang.model.SourceVersion;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.kohsuke.stapler.ClassDescriptor;
-import org.kohsuke.stapler.NoStaplerConstructorException;
 
 /**
  * Takes a {@link Step} as configured through the UI and tries to produce equivalent Groovy code.
@@ -50,10 +49,11 @@ class Snippetizer {
                 Map<String,Object> args = new TreeMap<String,Object>(d.defineArguments(step));
                 args.values().removeAll(Collections.singleton(null)); // do not write null values
                 boolean first = true;
+                boolean singleMap = args.size() == 1 && args.values().iterator().next() instanceof Map;
                 for (Map.Entry<String,Object> entry : args.entrySet()) {
                     if (first) {
                         first = false;
-                        if (d.takesImplicitBlockArgument()) {
+                        if (d.takesImplicitBlockArgument() || singleMap) {
                             b.append('(');
                         } else {
                             b.append(' ');
@@ -72,6 +72,8 @@ class Snippetizer {
                         b.append(')');
                     }
                     b.append(" {\n    // some block\n}");
+                } else if (singleMap) {
+                    b.append(')');
                 }
                 return b.toString();
             }
@@ -121,31 +123,31 @@ class Snippetizer {
                 render(b, elt);
             }
             b.append(']');
+        } else if (value instanceof Map) {
+            Map<?,?> map = (Map) value;
+            b.append('[');
+            boolean first = true;
+            for (Map.Entry<?,?> entry : map.entrySet()) {
+                if (first) {
+                    first = false;
+                } else {
+                    b.append(", ");
+                }
+                Object key = entry.getKey();
+                if (key instanceof String && SourceVersion.isName((String) key)) {
+                    b.append(key);
+                } else {
+                    render(b, key);
+                }
+                b.append(": ");
+                render(b, entry.getValue());
+            }
+            b.append(']');
         } else if (value instanceof Enum) {
             Enum<?> e = (Enum) value;
             b.append(e.getDeclaringClass().getCanonicalName()).append('.').append(e.name());
         } else {
-            try {
-                Map<String,Object> args = DescribableHelper.uninstantiate(value);
-                b.append("new ").append(valueC.getCanonicalName()).append('(');
-                ClassDescriptor d = new ClassDescriptor(valueC);
-                boolean first = true;
-                for (String name : d.loadConstructorParamNames()) {
-                    if (first) {
-                        first = false;
-                    } else {
-                        b.append(", ");
-                    }
-                    render(b, args.remove(name));
-                }
-                if (!args.isEmpty()) {
-                    // TODO handle somehow, maybe Groovy with {…}?
-                    throw new UnsupportedOperationException("@DataBoundSetter not yet supported in value of type " + valueC + ": " + args.keySet());
-                }
-                b.append(')');
-            } catch (NoStaplerConstructorException x) {
-                b.append("<object of type ").append(valueC.getCanonicalName()).append('>');
-            }
+            b.append("<object of type ").append(valueC.getCanonicalName()).append('>');
         }
     }
 
