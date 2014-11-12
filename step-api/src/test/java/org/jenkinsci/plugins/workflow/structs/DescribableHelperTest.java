@@ -129,15 +129,11 @@ public class DescribableHelperTest {
         assertEquals("UsesBase[Impl1[hello]]", DescribableHelper.instantiate(UsesBase.class, map("base", map("$class", Impl1.class.getName(), "text", "hello"))).toString());
     }
 
-    @Test public void bindMapsImplicitName() throws Exception {
-        assertEquals("UsesImpl2[Impl2[true]]", DescribableHelper.instantiate(UsesImpl2.class, map("impl2", map("flag", true))).toString());
-    }
+    // TODO also check case that a FQN is needed
 
     @Test public void gstring() throws Exception {
         assertEquals("UsesBase[Impl1[hello world]]", DescribableHelper.instantiate(UsesBase.class, map("base", map("$class", "Impl1", "text", new GStringImpl(new Object[] {"hello", "world"}, new String[] {"", " "})))).toString());
     }
-
-    // TODO also check case that a FQN is needed
 
     @Test public void nestedStructs() throws Exception {
         roundTrip(UsesBase.class, map("base", map("$class", "Impl1", "text", "hello")));
@@ -247,8 +243,6 @@ public class DescribableHelperTest {
         roundTrip(UsesStringList.class, map("strings", Arrays.asList("one", "two")));
     }
 
-    // TODO array and List versions of Base, Impl2
-
     public static final class UsesStringArray {
         private final String[] strings;
         @DataBoundConstructor public UsesStringArray(String[] strings) {
@@ -269,6 +263,78 @@ public class DescribableHelperTest {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    @Test public void structArrayHomo() throws Exception {
+        roundTrip(UsesStructArrayHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructArrayHomo[Impl2[false], Impl2[true]]");
+    }
+
+    public static final class UsesStructArrayHomo {
+        private final Impl2[] impls;
+        @DataBoundConstructor public UsesStructArrayHomo(Impl2[] impls) {
+            this.impls = impls;
+        }
+        public Impl2[] getImpls() {
+            return impls;
+        }
+        @Override public String toString() {
+            return "UsesStructArrayHomo" + Arrays.toString(impls);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test public void structListHomo() throws Exception {
+        roundTrip(UsesStructListHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructListHomo[Impl2[false], Impl2[true]]");
+    }
+
+    public static final class UsesStructListHomo {
+        private final List<Impl2> impls;
+        @DataBoundConstructor public UsesStructListHomo(List<Impl2> impls) {
+            this.impls = impls;
+        }
+        public List<Impl2> getImpls() {
+            return impls;
+        }
+        @Override public String toString() {
+            return "UsesStructListHomo" + impls;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test public void structArrayHetero() throws Exception {
+        roundTrip(UsesStructArrayHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructArrayHetero[Impl1[hello], Impl2[true]]");
+    }
+
+    public static final class UsesStructArrayHetero {
+        private final Base[] bases;
+        @DataBoundConstructor public UsesStructArrayHetero(Base[] bases) {
+            this.bases = bases;
+        }
+        public Base[] getBases() {
+            return bases;
+        }
+        @Override public String toString() {
+            return "UsesStructArrayHetero" + Arrays.toString(bases);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test public void structListHetero() throws Exception {
+        roundTrip(UsesStructListHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructListHetero[Impl1[hello], Impl2[true]]");
+    }
+
+    public static final class UsesStructListHetero {
+        private final List<Base> bases;
+        @DataBoundConstructor public UsesStructListHetero(List<Base> bases) {
+            this.bases = bases;
+        }
+        public List<Base> getBases() {
+            return bases;
+        }
+        @Override public String toString() {
+            return "UsesStructListHetero" + bases;
+        }
+    }
+
     private static Map<String,Object> map(Object... keysAndValues) {
         if (keysAndValues.length % 2 != 0) {
             throw new IllegalArgumentException();
@@ -281,7 +347,14 @@ public class DescribableHelperTest {
     }
 
     private static void roundTrip(Class<?> c, Map<String,Object> m) throws Exception {
+        roundTrip(c, m, null);
+    }
+
+    private static void roundTrip(Class<?> c, Map<String,Object> m, String toString) throws Exception {
         Object o = DescribableHelper.instantiate(c, m);
+        if (toString != null) {
+            assertEquals(toString, o.toString());
+        }
         Map<String,Object> m2 = DescribableHelper.uninstantiate(o);
         assertEquals(m, m2);
     }

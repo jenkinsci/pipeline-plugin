@@ -29,13 +29,13 @@ import com.google.common.primitives.Primitives;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import java.beans.Introspector;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -117,6 +117,8 @@ public class DescribableHelper {
         return r;
     }
 
+    private static final String CLAZZ = "$class";
+
     private static Object[] buildArguments(Class<?> clazz, Map<String,?> arguments, Class<?>[] types, String[] names, boolean callEvenIfNoArgs) throws Exception {
         Object[] args = new Object[names.length];
         boolean hasArg = callEvenIfNoArgs;
@@ -149,7 +151,7 @@ public class DescribableHelper {
                 m.put((String) entry.getKey(), entry.getValue());
             }
 
-            String clazzS = (String) m.remove("$class");
+            String clazzS = (String) m.remove(CLAZZ);
             Class<?> clazz;
             if (clazzS == null) {
                 if (Modifier.isAbstract(type.getModifiers())) {
@@ -182,10 +184,20 @@ public class DescribableHelper {
         } else if (o instanceof String && (type == char.class || type == Character.class) && ((String) o).length() == 1) {
             return ((String) o).charAt(0);
         } else if (o instanceof List && type.isArray()) {
-            return ((List) o).toArray();
+            Class<?> componentType = type.getComponentType();
+            List<Object> list = mapList(context, componentType, (List) o);
+            return list.toArray((Object[]) Array.newInstance(componentType, list.size()));
         } else {
             throw new ClassCastException(context + " expects " + type.getName() + " but received " + o.getClass().getName());
         }
+    }
+
+    private static List<Object> mapList(String context, Class<?> type, List<?> list) throws Exception {
+        List<Object> r = new ArrayList<Object>();
+        for (Object elt : list) {
+            r.add(coerce(context, type, elt));
+        }
+        return r;
     }
 
     // copied from RequestImpl
@@ -240,27 +252,36 @@ public class DescribableHelper {
     private static void inspect(Map<String, Object> r, Object o, Class<?> clazz, String field) {
         AtomicReference<Class<?>> type = new AtomicReference<Class<?>>();
         Object value = inspect(o, clazz, field, type);
-        if (type.get().isEnum() && value instanceof Enum) {
-            value = ((Enum) value).name();
-        } else if (type.get() == URL.class && value instanceof URL) {
-            value = ((URL) value).toString();
-        } else if ((type.get() == Character.class || type.get() == char.class) && value instanceof Character) {
-            value = ((Character) value).toString();
-        } else if (value instanceof Object[]) {
-            value = Arrays.asList((Object[]) value);
-        } else if (value != null && !value.getClass().getName().startsWith("java.")) {
+        r.put(field, uncoerce(value, type.get()));
+    }
+
+    private static Object uncoerce(Object o, Class<?> type) {
+        if (type.isEnum() && o instanceof Enum) {
+            return ((Enum) o).name();
+        } else if (type == URL.class && o instanceof URL) {
+            return ((URL) o).toString();
+        } else if ((type == Character.class || type == char.class) && o instanceof Character) {
+            return ((Character) o).toString();
+        } else if (o instanceof Object[]) {
+            List<Object> list = new ArrayList<Object>();
+            Object[] array = (Object[]) o;
+            for (Object elt : array) {
+                list.add(uncoerce(elt, array.getClass().getComponentType()));
+            }
+            return list;
+        } else if (o != null && !o.getClass().getName().startsWith("java.")) {
             try {
                 // Check to see if this can be treated as a data-bound struct.
-                Map<String,Object> nested = uninstantiate(value);
-                if (type.get() != value.getClass()) {
-                    nested.put("$class", value.getClass().getSimpleName());
+                Map<String, Object> nested = uninstantiate(o);
+                if (type != o.getClass()) {
+                    nested.put(CLAZZ, o.getClass().getSimpleName());
                 }
-                value = nested;
+                return nested;
             } catch (UnsupportedOperationException x) {
                 // then leave it raw
             }
         }
-        r.put(field, value);
+        return o;
     }
 
     private static Object inspect(Object o, Class<?> clazz, String field, AtomicReference<Class<?>> type) {
