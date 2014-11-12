@@ -256,13 +256,13 @@ public class DescribableHelper {
     }
 
     private static void inspect(Map<String, Object> r, Object o, Class<?> clazz, String field) {
-        AtomicReference<Class<?>> type = new AtomicReference<Class<?>>();
+        AtomicReference<Type> type = new AtomicReference<Type>();
         Object value = inspect(o, clazz, field, type);
         r.put(field, uncoerce(value, type.get()));
     }
 
-    private static Object uncoerce(Object o, Class<?> type) {
-        if (type.isEnum() && o instanceof Enum) {
+    private static Object uncoerce(Object o, Type type) {
+        if (type instanceof Class && ((Class) type).isEnum() && o instanceof Enum) {
             return ((Enum) o).name();
         } else if (type == URL.class && o instanceof URL) {
             return ((URL) o).toString();
@@ -275,10 +275,10 @@ public class DescribableHelper {
                 list.add(uncoerce(elt, array.getClass().getComponentType()));
             }
             return list;
-        } else if (o instanceof List) {
+        } else if (o instanceof List && type instanceof ParameterizedType && ((ParameterizedType) type).getRawType() == List.class) {
             List<Object> list = new ArrayList<Object>();
             for (Object elt : (List<?>) o) {
-                list.add(uncoerce(elt, /*TODO*/Object.class));
+                list.add(uncoerce(elt, ((ParameterizedType) type).getActualTypeArguments()[0]));
             }
             return list;
         } else if (o != null && !o.getClass().getName().startsWith("java.")) {
@@ -296,18 +296,18 @@ public class DescribableHelper {
         return o;
     }
 
-    private static Object inspect(Object o, Class<?> clazz, String field, AtomicReference<Class<?>> type) {
+    private static Object inspect(Object o, Class<?> clazz, String field, AtomicReference<Type> type) {
         try {
             try {
                 Field f = clazz.getField(field);
-                type.set(f.getType());
+                type.set(f.getGenericType());
                 return f.get(o);
             } catch (NoSuchFieldException x) {
                 // OK, check for getter instead
             }
             try {
                 Method m = clazz.getMethod("get" + Character.toUpperCase(field.charAt(0)) + field.substring(1));
-                type.set(m.getReturnType());
+                type.set(m.getGenericReturnType());
                 return m.invoke(o);
             } catch (NoSuchMethodException x) {
                 // one more check
