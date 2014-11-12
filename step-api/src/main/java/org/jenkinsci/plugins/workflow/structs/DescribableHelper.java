@@ -131,6 +131,8 @@ public class DescribableHelper {
                 args[i] = false;
             } else if (type.isPrimitive() && callEvenIfNoArgs) {
                 throw new UnsupportedOperationException("not yet handling @DataBoundConstructor default value of " + type + "; pass an explicit value for " + name);
+            } else {
+                // TODO this might be fine (ExecutorStep.label), or not (GenericSCMStep.scm); should inspect parameter annotations for @Nonnull and throw an UOE if found
             }
         }
         return hasArg ? args : null;
