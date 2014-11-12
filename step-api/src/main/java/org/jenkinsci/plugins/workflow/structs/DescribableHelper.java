@@ -139,7 +139,7 @@ public class DescribableHelper {
 
     @SuppressWarnings("unchecked")
     private static Object coerce(String context, Class<?> type, @Nonnull Object o) throws Exception {
-        o = ReflectionCache.getCachedClass(type).coerceArgument(o); // TODO do we still need this?
+        o = ReflectionCache.getCachedClass(type).coerceArgument(o);
         if (Primitives.wrap(type).isInstance(o)) {
             return o;
         } else if (o instanceof Map) {

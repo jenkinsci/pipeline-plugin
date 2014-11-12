@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
+import org.codehaus.groovy.runtime.GStringImpl;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -132,6 +133,10 @@ public class DescribableHelperTest {
 
     @Test public void bindMapsImplicitName() throws Exception {
         assertEquals("UsesImpl2[Impl2[true]]", DescribableHelper.instantiate(UsesImpl2.class, map("impl2", map("flag", true))).toString());
+    }
+
+    @Test public void gstring() throws Exception {
+        assertEquals("UsesBase[Impl1[hello world]]", DescribableHelper.instantiate(UsesBase.class, map("base", map("$class", "Impl1", "text", new GStringImpl(new Object[] {"hello", "world"}, new String[] {"", " "})))).toString());
     }
 
     // TODO also check case that a FQN is needed
