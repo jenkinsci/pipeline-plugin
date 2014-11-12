@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.UUID;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 // TODO convert to AbstractStepImpl/AbstractStepDescriptorImpl/AbstractStepExecutionImpl
 
@@ -57,7 +58,7 @@ public final class SemaphoreStep extends Step implements Serializable {
         this(UUID.randomUUID().toString());
     }
 
-    public SemaphoreStep(String id) {
+    @DataBoundConstructor public SemaphoreStep(String id) {
         Integer old = iota.get(id);
         if (old == null) {
             old = 0;
