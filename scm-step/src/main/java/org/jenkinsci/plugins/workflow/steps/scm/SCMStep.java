@@ -33,22 +33,18 @@ import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
 import java.io.File;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
 import javax.annotation.Nonnull;
-
+import javax.inject.Inject;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * A step which uses some kind of {@link SCM}.
  */
-public abstract class SCMStep extends Step implements Serializable {
+public abstract class SCMStep extends AbstractStepImpl implements Serializable {
 
     private boolean poll = true;
     private boolean changelog = true;
@@ -71,21 +67,18 @@ public abstract class SCMStep extends Step implements Serializable {
 
     protected abstract @Nonnull SCM createSCM();
 
-    class StepExecutionImpl extends AbstractSynchronousStepExecution<Void> {
+    public static final class StepExecutionImpl extends AbstractSynchronousStepExecution<Void> {
+
+        @Inject private transient SCMStep step;
         @StepContextParameter private transient Run run;
         @StepContextParameter private transient FilePath workspace;
         @StepContextParameter private transient TaskListener listener;
         @StepContextParameter private transient Launcher launcher;
 
-        StepExecutionImpl(StepContext context) {
-            super(context);
-            inject();
-        }
-
         @Override
         protected Void run() throws Exception {
             File changelogFile = null;
-            if (changelog) {
+            if (step.changelog) {
                 for (int i = 0; ; i++) {
                     changelogFile = new File(run.getRootDir(), "changelog" + i + ".xml");
                     if (!changelogFile.exists()) {
@@ -93,7 +86,7 @@ public abstract class SCMStep extends Step implements Serializable {
                     }
                 }
             }
-            SCM scm = createSCM();
+            SCM scm = step.createSCM();
             SCMRevisionState baseline = null;
             Run<?,?> prev = run.getPreviousBuild();
             if (prev != null) {
@@ -104,7 +97,7 @@ public abstract class SCMStep extends Step implements Serializable {
             }
             scm.checkout(run, launcher, workspace, listener, changelogFile, baseline);
             SCMRevisionState pollingBaseline = null;
-            if (poll || changelog) {
+            if (step.poll || step.changelog) {
                 pollingBaseline = scm.calcRevisionsFromBuild(run, workspace, launcher, listener);
                 if (pollingBaseline != null) {
                     MultiSCMRevisionState state = run.getAction(MultiSCMRevisionState.class);
@@ -126,19 +119,10 @@ public abstract class SCMStep extends Step implements Serializable {
         private static final long serialVersionUID = 1L;
     }
 
-    @Override public StepExecution start(StepContext context) throws Exception {
-        return new StepExecutionImpl(context);
-    }
+    public static abstract class SCMStepDescriptor extends AbstractStepDescriptorImpl {
 
-    public static abstract class SCMStepDescriptor extends StepDescriptor { // TODO can we switch to AbstractStepDescriptorImpl yet?
-
-        @Override public Set<Class<?>> getRequiredContext() {
-            Set<Class<?>> s = new HashSet<Class<?>>();
-            s.add(Run.class);
-            s.add(Launcher.class);
-            s.add(FilePath.class);
-            s.add(TaskListener.class);
-            return s;
+        protected SCMStepDescriptor() {
+            super(StepExecutionImpl.class);
         }
 
     }
