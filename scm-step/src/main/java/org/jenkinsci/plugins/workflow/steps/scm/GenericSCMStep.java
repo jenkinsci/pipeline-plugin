@@ -45,7 +45,7 @@ public final class GenericSCMStep extends SCMStep {
         this.scm = scm;
     }
 
-    public SCM getSCM() {
+    public SCM getScm() {
         return scm;
     }
 
