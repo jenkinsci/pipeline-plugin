@@ -58,6 +58,7 @@ import java.util.TreeMap;
 import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 import org.kohsuke.stapler.ClassDescriptor;
+import org.kohsuke.stapler.NoStaplerConstructorException;
 
 /**
  * Scaffolding to experiment with the call into {@link Step}.
@@ -107,12 +108,6 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
 
         final NamedArgsAndClosure ps = parseArgs(d,args);
-        if (ps.namedArgs.keySet().equals(Collections.singleton(KEY_VALUE))) {
-            String[] names = new ClassDescriptor(d.clazz).loadConstructorParamNames();
-            if (names.length == 1) {
-                ps.namedArgs = Collections.singletonMap(names[0], ps.namedArgs.get(KEY_VALUE));
-            }
-        }
 
         CpsThread thread = CpsThread.current();
 
@@ -206,7 +201,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
     }
 
     static class NamedArgsAndClosure {
-        Map<String,Object> namedArgs;
+        final Map<String,Object> namedArgs;
         final Closure body;
 
         private NamedArgsAndClosure(Map<?,?> namedArgs, Closure body) {
@@ -230,9 +225,6 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             }
         }
     }
-
-    /** An argument key for a single default parameter. */
-    static final String KEY_VALUE = "value"; // TODO this logic needs to live instead in DSL & Snippetizer
 
     /**
      * Given the Groovy style argument packing used in the sole object parameter of {@link GroovyObject#invokeMethod(String, Object)},
@@ -279,13 +271,24 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             case 0:
                 return new NamedArgsAndClosure(Collections.<String,Object>emptyMap(),c);
             case 1:
-                return new NamedArgsAndClosure(Collections.singletonMap(KEY_VALUE, a.get(0)), c);
+                return new NamedArgsAndClosure(singleParam(d, a.get(0)), c);
             default:
                 throw new IllegalArgumentException("Expected named arguments but got "+a);
             }
         }
 
-        return new NamedArgsAndClosure(Collections.singletonMap(KEY_VALUE, arg), null);
+        return new NamedArgsAndClosure(singleParam(d, arg), null);
+    }
+    private static Map<String,Object> singleParam(StepDescriptor d, Object arg) {
+        try {
+            String[] names = new ClassDescriptor(d.clazz).loadConstructorParamNames();
+            if (names.length == 1) {
+                return Collections.singletonMap(names[0], arg);
+            }
+        } catch (NoStaplerConstructorException x) {
+            // not data-bound
+        }
+        throw new IllegalArgumentException("Expected named arguments but got " + arg);
     }
 
     /**
