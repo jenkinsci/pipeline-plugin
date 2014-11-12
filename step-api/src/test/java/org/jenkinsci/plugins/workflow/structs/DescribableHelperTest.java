@@ -146,6 +146,14 @@ public class DescribableHelperTest {
         assertEquals("UsesImpl2[Impl2[true]]", DescribableHelper.instantiate(UsesImpl2.class, Collections.singletonMap("impl2", Collections.singletonMap("flag", true))).toString());
     }
 
+    @Test public void nestedDataBoundSetter() throws Exception {
+        Map<String,Object> impl2 = new HashMap<String,Object>();
+        impl2.put("$class", "Impl2");
+        assertEquals("UsesBase[Impl2[false]]", DescribableHelper.instantiate(UsesBase.class, Collections.singletonMap("base", impl2)).toString());
+        impl2.put("flag", true);
+        assertEquals("UsesBase[Impl2[true]]", DescribableHelper.instantiate(UsesBase.class, Collections.singletonMap("base", impl2)).toString());
+    }
+
     public static class UsesBase {
         public final Base base;
         @DataBoundConstructor public UsesBase(Base base) {
