@@ -41,7 +41,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 public class DescribableHelperTest {
 
-    // TODO instantiate/uninstantiate of URL, Enum, Character
+    // TODO instantiate/uninstantiate of URL, Character
     // TODO instantiate/uninstantiate of List/Object[]
 
     @BeforeClass public static void isUnitTest() {
@@ -201,8 +201,26 @@ public class DescribableHelperTest {
             }
         }
     }
+    
+    @Test public void enums() throws Exception {
+        roundTrip(UsesEnum.class, map("e", "ZERO"));
+    }
 
-    private static Map<String,Object> map(Object... keysAndValues) {
+    public static final class UsesEnum {
+        private final E e;
+        @DataBoundConstructor public UsesEnum(E e) {
+            this.e = e;
+        }
+        public E getE() {
+            return e;
+        }
+    }
+    public enum E {
+        ZERO() {@Override public int v() {return 0;}};
+        public abstract int v();
+    }
+
+   private static Map<String,Object> map(Object... keysAndValues) {
         if (keysAndValues.length % 2 != 0) {
             throw new IllegalArgumentException();
         }

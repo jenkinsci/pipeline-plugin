@@ -146,6 +146,7 @@ public class DescribableHelper {
         return hasArg ? args : null;
     }
 
+    @SuppressWarnings("unchecked")
     private static @CheckForNull Object tryToBind(Class<?> type, Object o) throws Exception {
         if (o instanceof Map) {
             Map<String,Object> m = new HashMap<String,Object>();
@@ -179,6 +180,8 @@ public class DescribableHelper {
                 }
             }
             return instantiate(clazz.asSubclass(type), m);
+        } else if (o instanceof String && type.isEnum()) {
+            return Enum.valueOf(type.asSubclass(Enum.class), (String) o);
         }
         return null;
     }
@@ -235,7 +238,9 @@ public class DescribableHelper {
     private static void inspect(Map<String, Object> r, Object o, Class<?> clazz, String field) {
         AtomicReference<Class<?>> type = new AtomicReference<Class<?>>();
         Object value = inspect(o, clazz, field, type);
-        if (value != null && !value.getClass().getPackage().getName().startsWith("java.")) {
+        if (type.get().isEnum() && value instanceof Enum) {
+            value = ((Enum) value).name();
+        } else if (value != null && !value.getClass().getPackage().getName().startsWith("java.")) {
             try {
                 // Check to see if this can be treated as a data-bound struct.
                 Map<String,Object> nested = uninstantiate(value);

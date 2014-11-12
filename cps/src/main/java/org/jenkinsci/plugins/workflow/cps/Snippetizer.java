@@ -143,9 +143,6 @@ class Snippetizer {
                 render(b, entry.getValue());
             }
             b.append(']');
-        } else if (value instanceof Enum) {
-            Enum<?> e = (Enum) value;
-            b.append(e.getDeclaringClass().getCanonicalName()).append('.').append(e.name());
         } else {
             b.append("<object of type ").append(valueC.getCanonicalName()).append('>');
         }

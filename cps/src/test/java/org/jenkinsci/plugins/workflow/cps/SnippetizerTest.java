@@ -86,14 +86,8 @@ public class SnippetizerTest {
         */
         assertRender("hudson.model.Node.Mode.NORMAL", Node.Mode.NORMAL);
         assertRender("null", null);
-        assertRender("org.jenkinsci.plugins.workflow.cps.SnippetizerTest.E.ZERO", E.ZERO);
         assertRender("['foo', 'bar']", new String[] {"foo", "bar"});
         assertRender("new java.net.URL('http://nowhere.net/')", new URL("http://nowhere.net/"));
-    }
-
-    private enum E {
-        ZERO() {@Override public int v() {return 0;}};
-        public abstract int v();
     }
 
     private static void assertRoundTrip(Step step, String expected) throws Exception {
