@@ -191,11 +191,16 @@ public class DescribableHelper {
             Class<?> componentType = ((Class) type).getComponentType();
             List<Object> list = mapList(context, componentType, (List) o);
             return list.toArray((Object[]) Array.newInstance(componentType, list.size()));
-        } else if (o instanceof List && type instanceof ParameterizedType && ((ParameterizedType) type).getRawType() == List.class) {
+        } else if (o instanceof List && isList(type)) {
             return mapList(context, ((ParameterizedType) type).getActualTypeArguments()[0], (List) o);
         } else {
             throw new ClassCastException(context + " expects " + type + " but received " + o.getClass());
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean isList(Type type) {
+        return type instanceof ParameterizedType && ((ParameterizedType) type).getRawType() instanceof Class && ((Class) ((ParameterizedType) type).getRawType()).isAssignableFrom(List.class);
     }
 
     private static List<Object> mapList(String context, Type type, List<?> list) throws Exception {
@@ -275,7 +280,7 @@ public class DescribableHelper {
                 list.add(uncoerce(elt, array.getClass().getComponentType()));
             }
             return list;
-        } else if (o instanceof List && type instanceof ParameterizedType && ((ParameterizedType) type).getRawType() == List.class) {
+        } else if (o instanceof List && isList(type)) {
             List<Object> list = new ArrayList<Object>();
             for (Object elt : (List<?>) o) {
                 list.add(uncoerce(elt, ((ParameterizedType) type).getActualTypeArguments()[0]));

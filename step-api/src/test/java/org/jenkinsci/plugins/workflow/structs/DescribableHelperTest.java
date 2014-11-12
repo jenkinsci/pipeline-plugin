@@ -30,6 +30,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -303,6 +304,24 @@ public class DescribableHelperTest {
     }
 
     @SuppressWarnings("unchecked")
+    @Test public void structCollectionHomo() throws Exception {
+        roundTrip(UsesStructCollectionHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructCollectionHomo[Impl2[false], Impl2[true]]");
+    }
+
+    public static final class UsesStructCollectionHomo {
+        private final Collection<Impl2> impls;
+        @DataBoundConstructor public UsesStructCollectionHomo(Collection<Impl2> impls) {
+            this.impls = impls;
+        }
+        public Collection<Impl2> getImpls() {
+            return impls;
+        }
+        @Override public String toString() {
+            return "UsesStructCollectionHomo" + impls;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     @Test public void structArrayHetero() throws Exception {
         roundTrip(UsesStructArrayHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructArrayHetero[Impl1[hello], Impl2[true]]");
     }
@@ -335,6 +354,24 @@ public class DescribableHelperTest {
         }
         @Override public String toString() {
             return "UsesStructListHetero" + bases;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test public void structCollectionHetero() throws Exception {
+        roundTrip(UsesStructCollectionHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructCollectionHetero[Impl1[hello], Impl2[true]]");
+    }
+
+    public static final class UsesStructCollectionHetero {
+        private final Collection<Base> bases;
+        @DataBoundConstructor public UsesStructCollectionHetero(Collection<Base> bases) {
+            this.bases = bases;
+        }
+        public Collection<Base> getBases() {
+            return bases;
+        }
+        @Override public String toString() {
+            return "UsesStructCollectionHetero" + bases;
         }
     }
 
