@@ -275,6 +275,12 @@ public class DescribableHelper {
                 list.add(uncoerce(elt, array.getClass().getComponentType()));
             }
             return list;
+        } else if (o instanceof List) {
+            List<Object> list = new ArrayList<Object>();
+            for (Object elt : (List<?>) o) {
+                list.add(uncoerce(elt, /*TODO*/Object.class));
+            }
+            return list;
         } else if (o != null && !o.getClass().getName().startsWith("java.")) {
             try {
                 // Check to see if this can be treated as a data-bound struct.
