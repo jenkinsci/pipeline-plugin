@@ -75,14 +75,15 @@ public class SnippetizerTest {
         assertRoundTrip(new EchoStep("echo hello\necho 1/2 way\necho goodbye"), "echo '''echo hello\necho 1/2 way\necho goodbye'''");
     }
 
-    @Test public void javaObjects() throws Exception {
+    @Test public void buildTriggerStep() throws Exception {
         BuildTriggerStep step = new BuildTriggerStep("downstream");
         assertRoundTrip(step, "build 'downstream'");
         step.setParameters(Arrays.asList(new StringParameterValue("branch", "default"), new BooleanParameterValue("correct", true)));
-        /* TODO figure out how to add support for ParameterValue without those having Descriptor’s yet:
-        assertRoundTrip(step, "build job: 'downstream', parameters: [[$class: 'StringParameterValue', name: 'branch', value: 'default'], [$class: 'BooleanParameterValue', name: 'correct', value: true]]");
+        /* TODO figure out how to add support for ParameterValue without those having Descriptor’s yet
+                currently instantiate works but uninstantiate does not offer a FQN
+                (which does not matter in this case since BuildTriggerStep/config.jelly does not offer to bind parameters anyway)
+        assertRoundTrip(step, "build job: 'downstream', parameters: [[$class: 'hudson.model.StringParameterValue', name: 'branch', value: 'default'], [$class: 'hudson.model.BooleanParameterValue', name: 'correct', value: true]]");
         */
-        assertRender("null", null);
     }
 
     private static void assertRoundTrip(Step step, String expected) throws Exception {
