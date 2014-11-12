@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -100,13 +99,8 @@ class Snippetizer {
             }
         } else if (valueC == Boolean.class || valueC == Integer.class || valueC == Long.class) {
             b.append(value);
-        } else if (value instanceof List || value instanceof Object[]) {
-            List<?> list;
-            if (value instanceof List) {
-                list = (List<?>) value;
-            } else {
-                list = Arrays.asList((Object[]) value);
-            }
+        } else if (value instanceof List) {
+            List<?> list = (List<?>) value;
             b.append('[');
             boolean first = true;
             for (Object elt : list) {

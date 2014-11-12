@@ -83,7 +83,6 @@ public class SnippetizerTest {
         assertRoundTrip(step, "build job: 'downstream', parameters: [[$class: 'StringParameterValue', name: 'branch', value: 'default'], [$class: 'BooleanParameterValue', name: 'correct', value: true]]");
         */
         assertRender("null", null);
-        assertRender("['foo', 'bar']", new String[] {"foo", "bar"});
     }
 
     private static void assertRoundTrip(Step step, String expected) throws Exception {

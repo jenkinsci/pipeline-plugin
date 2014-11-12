@@ -32,6 +32,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import org.codehaus.groovy.runtime.GStringImpl;
@@ -42,8 +43,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 public class DescribableHelperTest {
-
-    // TODO instantiate/uninstantiate of List/Object[]
 
     @BeforeClass public static void isUnitTest() {
         Main.isUnitTest = true; // suppress HsErrPidList
@@ -241,6 +240,33 @@ public class DescribableHelperTest {
     public static final class UsesCharacter {
         @DataBoundConstructor public UsesCharacter() {}
         @DataBoundSetter public char c;
+    }
+
+    @Test public void stringLists() throws Exception {
+        roundTrip(UsesStringArray.class, map("strings", Arrays.asList("one", "two")));
+        roundTrip(UsesStringList.class, map("strings", Arrays.asList("one", "two")));
+    }
+
+    // TODO array and List versions of Base, Impl2
+
+    public static final class UsesStringArray {
+        private final String[] strings;
+        @DataBoundConstructor public UsesStringArray(String[] strings) {
+            this.strings = strings;
+        }
+        public String[] getStrings() {
+            return strings;
+        }
+    }
+
+    public static final class UsesStringList {
+        private final List<String> strings;
+        @DataBoundConstructor public UsesStringList(List<String> strings) {
+            this.strings = strings;
+        }
+        public List<String> getStrings() {
+            return strings;
+        }
     }
 
     private static Map<String,Object> map(Object... keysAndValues) {

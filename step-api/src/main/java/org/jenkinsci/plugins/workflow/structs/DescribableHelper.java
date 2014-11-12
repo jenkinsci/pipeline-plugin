@@ -35,6 +35,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -180,6 +181,8 @@ public class DescribableHelper {
             return new URL((String) o);
         } else if (o instanceof String && (type == char.class || type == Character.class) && ((String) o).length() == 1) {
             return ((String) o).charAt(0);
+        } else if (o instanceof List && type.isArray()) {
+            return ((List) o).toArray();
         } else {
             throw new ClassCastException(context + " expects " + type.getName() + " but received " + o.getClass().getName());
         }
@@ -243,7 +246,9 @@ public class DescribableHelper {
             value = ((URL) value).toString();
         } else if ((type.get() == Character.class || type.get() == char.class) && value instanceof Character) {
             value = ((Character) value).toString();
-        } else if (value != null && !value.getClass().getPackage().getName().startsWith("java.")) {
+        } else if (value instanceof Object[]) {
+            value = Arrays.asList((Object[]) value);
+        } else if (value != null && !value.getClass().getName().startsWith("java.")) {
             try {
                 // Check to see if this can be treated as a data-bound struct.
                 Map<String,Object> nested = uninstantiate(value);
