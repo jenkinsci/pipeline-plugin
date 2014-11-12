@@ -214,7 +214,7 @@ public class DescribableHelper {
                     f.setAccessible(true);
                     if (arguments.containsKey(f.getName())) {
                         Object v = arguments.get(f.getName());
-                        f.set(o, coerce(c.getName() + "." + f.getName(), f.getType(), v));
+                        f.set(o, v != null ? coerce(c.getName() + "." + f.getName(), f.getType(), v) : null);
                     }
                 }
             }
