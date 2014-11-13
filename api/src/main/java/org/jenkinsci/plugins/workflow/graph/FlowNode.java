@@ -29,7 +29,6 @@ import hudson.model.Action;
 import hudson.model.Actionable;
 import hudson.model.BallColor;
 import hudson.search.SearchItem;
-import java.io.IOError;
 import java.io.IOException;
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -239,7 +238,7 @@ public abstract class FlowNode extends Actionable {
                 try {
                     exec.saveActions(FlowNode.this, actions);
                 } catch (IOException e) {
-                    throw new IOError(e);
+                    LOGGER.log(WARNING, "failed to save actions for FlowNode id=" + id, e);
                 }
             }
         };
