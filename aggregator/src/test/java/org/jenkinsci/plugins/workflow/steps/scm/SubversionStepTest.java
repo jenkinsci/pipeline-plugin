@@ -56,8 +56,14 @@ public class SubversionStepTest {
     @Rule public JenkinsRule r = new JenkinsRule();
     @Rule public TemporaryFolder tmp = new TemporaryFolder();
 
-    private static void run(File cwd, String... cmds) throws Exception {
-        int r = new ProcessBuilder(cmds).inheritIO().directory(cwd).start().waitFor();
+    static void run(File cwd, String... cmds) throws Exception {
+        ProcessBuilder pb = new ProcessBuilder(cmds);
+        try {
+            ProcessBuilder.class.getMethod("inheritIO").invoke(pb);
+        } catch (NoSuchMethodException x) {
+            // prior to Java 7
+        }
+        int r = pb.directory(cwd).start().waitFor();
         Assume.assumeTrue(Arrays.toString(cmds) + " failed with error code " + r, r == 0);
     }
 

@@ -55,7 +55,7 @@ public class MercurialStepTest {
         List<String> args = new ArrayList<String>();
         args.add("hg");
         args.addAll(Arrays.asList(cmds));
-        assertEquals(0, new ProcessBuilder(args).inheritIO().directory(repo).start().waitFor());
+        SubversionStepTest.run(repo, args.toArray(new String[args.size()]));
     }
 
     @Test public void multipleSCMs() throws Exception {

@@ -57,7 +57,7 @@ public class GitStepTest {
         List<String> args = new ArrayList<String>();
         args.add("git");
         args.addAll(Arrays.asList(cmds));
-        assertEquals(0, new ProcessBuilder(args).inheritIO().directory(repo).start().waitFor());
+        SubversionStepTest.run(repo, args.toArray(new String[args.size()]));
     }
 
     @Before public void sampleRepo() throws Exception {
