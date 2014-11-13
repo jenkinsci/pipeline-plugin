@@ -39,6 +39,7 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -56,6 +57,11 @@ public class MercurialStepTest {
         args.add("hg");
         args.addAll(Arrays.asList(cmds));
         SubversionStepTest.run(repo, args.toArray(new String[args.size()]));
+    }
+
+    /** Otherwise {@link JenkinsRule#waitUntilNoActivity()} is ineffective when we have just pinged a commit notification endpoint. */
+    @Before public void synchronousPolling() {
+        r.jenkins.getDescriptorByType(SCMTrigger.DescriptorImpl.class).synchronousPolling = true;
     }
 
     @Test public void multipleSCMs() throws Exception {
@@ -97,8 +103,7 @@ public class MercurialStepTest {
         hg(otherRepo, "commit", "--message=otherfile2");
         System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
         System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(otherRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
-        Thread.sleep(1000); // TODO can we force SCMTrigger$Runner.run to have completed?
-        WaitUntilNoActivityHack.waitUntilNoActivity(p, 2, r);
+        r.waitUntilNoActivity();
         FileUtils.copyFile(p.getSCMTrigger().getLogFile(), System.out);
         b = p.getLastBuild();
         assertEquals(2, b.number);

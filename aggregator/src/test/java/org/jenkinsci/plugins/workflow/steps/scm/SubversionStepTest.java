@@ -46,6 +46,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -86,6 +87,11 @@ public class SubversionStepTest {
         for (SubversionRepositoryStatus.Listener listener : ExtensionList.lookup(SubversionRepositoryStatus.Listener.class)) {
             listener.onNotify(UUID.fromString(uuid), -1, Collections.singleton(path));
         }
+    }
+
+    /** Otherwise {@link JenkinsRule#waitUntilNoActivity()} is ineffective when we have just pinged a commit notification endpoint. */
+    @Before public void synchronousPolling() {
+        r.jenkins.getDescriptorByType(SCMTrigger.DescriptorImpl.class).synchronousPolling = true;
     }
 
     @Test public void multipleSCMs() throws Exception {
@@ -131,7 +137,7 @@ public class SubversionStepTest {
         run(otherWc, "svn", "commit", "--message=+otherfile2");
         notifyCommit(uuid(sampleRepoU), "file2");
         notifyCommit(uuid(otherRepoU), "otherfile2");
-        WaitUntilNoActivityHack.waitUntilNoActivity(p, 2, r);
+        r.waitUntilNoActivity();
         b = p.getLastBuild();
         assertEquals(2, b.number);
         r.assertLogContains("PRESENT: main/file2", b);

@@ -60,6 +60,11 @@ public class GitStepTest {
         SubversionStepTest.run(repo, args.toArray(new String[args.size()]));
     }
 
+    /** Otherwise {@link JenkinsRule#waitUntilNoActivity()} is ineffective when we have just pinged a commit notification endpoint. */
+    @Before public void synchronousPolling() {
+        r.jenkins.getDescriptorByType(SCMTrigger.DescriptorImpl.class).synchronousPolling = true;
+    }
+
     @Before public void sampleRepo() throws Exception {
         sampleRepo = tmp.newFolder();
         git(sampleRepo, "init");
@@ -105,7 +110,7 @@ public class GitStepTest {
         git(sampleRepo, "add", "nextfile");
         git(sampleRepo, "commit", "--message=next");
         System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
-        WaitUntilNoActivityHack.waitUntilNoActivity(p, 2, r);
+        r.waitUntilNoActivity();
         b = p.getLastBuild();
         assertEquals(2, b.number);
         r.assertLogContains("Fetching changes from the remote Git repository", b);
@@ -153,7 +158,7 @@ public class GitStepTest {
         git(otherRepo, "commit", "--message=otherfile2");
         System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
         System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(otherRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
-        WaitUntilNoActivityHack.waitUntilNoActivity(p, 2, r);
+        r.waitUntilNoActivity();
         b = p.getLastBuild();
         assertEquals(2, b.number);
         r.assertLogContains("PRESENT: main/file2", b);
