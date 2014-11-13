@@ -339,6 +339,7 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
+    @RandomlyFails("first sleep interrupted")
     @Test public void buildShellScriptAcrossDisconnect() throws Exception {
         story.addStep(new Statement() {
             @SuppressWarnings("SleepWhileInLoop")
