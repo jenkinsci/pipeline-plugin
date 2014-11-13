@@ -89,6 +89,20 @@ Again dependencies will be pulled in automatically, including all the OSS plugin
 
 See the [demo overview](demo/README.md) using Docker if you want to try a complete setup quickly.
 
+If you want to try running recent development changes, rather than released binaries, you have two options. You can run directly from the source tree; from the root of the repository:
+
+    mvn -DskipTests clean install && mvn -f aggregator hpi:run
+
+Then visit http://localhost:8080/jenkins/ to play with the plugins.
+
+(If your IDE supports compile-on-save mode this is especially convenient since each `hpi:run` will pick up compiled changes from member plugins without needing to run to `package` phase.)
+
+You can also run the Docker demo with snapshot binaries:
+
+    make -C demo run-snapshot
+
+The snapshot Docker demo is mainly useful for verifying the effect of ongoing changes on future demo binary releases. You get the `cd` sample job set up, but your environment is thrown away if you kill the Docker container (for example with Ctrl-C). When using `hpi:run` the same `aggregator/work/` home directory is reused so long as you do not explicitly delete it.
+
 # Development
 
 * [Changelog](CHANGES.md)
