@@ -53,6 +53,7 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class WorkflowRunTest {
@@ -186,5 +187,12 @@ public class WorkflowRunTest {
     private void assertColor(WorkflowRun b, BallColor color) throws IOException {
         assertSame(b.getLog(), color, b.getIconColor());
         assertSame(b.getLog(), color, p.getIconColor());
+    }
+
+    @Test @Issue("JENKINS-25630")
+    public void contextInjectionOfSubParameters() throws Exception {
+        // see SubtypeInjectingStep
+        p.setDefinition(new CpsFlowDefinition("node('master') { injectSubtypesAsContext() }"));
+        r.assertBuildStatusSuccess(p.scheduleBuild2(0));
     }
 }
