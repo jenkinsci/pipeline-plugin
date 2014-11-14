@@ -79,8 +79,7 @@ public abstract class StepExecution implements Serializable {
      *
      * <p>
      * In the workflow context, this method is meant to be used by {@code FlowExecution}, and not
-     * to be called willy-nilly from UI or other human requests to pause. Use {@link BodyExecution#cancel(boolean)}
-     * and {@code FlowExec}
+     * to be called willy-nilly from UI or other human requests to pause. Use {@link BodyExecution#cancel(Throwable)}.
      *
      * @param cause
      *      Contextual information that lets the step know what resulted in stopping an executing step,
