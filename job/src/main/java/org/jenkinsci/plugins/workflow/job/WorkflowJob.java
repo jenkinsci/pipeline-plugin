@@ -500,7 +500,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         WorkflowRun.alias();
     }
 
-    @Extension public static final class DescriptorImpl extends TopLevelItemDescriptor {
+    @Extension(ordinal=1) public static final class DescriptorImpl extends TopLevelItemDescriptor {
 
         @Override public String getDisplayName() {
             return "Workflow";
