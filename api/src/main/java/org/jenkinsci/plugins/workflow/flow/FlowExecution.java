@@ -133,10 +133,6 @@ public abstract class FlowExecution implements FlowActionStorage {
      */
     public abstract void interrupt(Result r, CauseOfInterruption... causes) throws IOException, InterruptedException;
 
-    public void interrupt(Result r) throws IOException, InterruptedException {
-        this.interrupt(r,new CauseOfInterruption[0]);
-    }
-
     public abstract void addListener(GraphListener listener);
 
     /**
