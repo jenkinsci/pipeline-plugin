@@ -36,7 +36,7 @@ import org.mockito.Mockito;
 public class PauseActionTest {
 
     @Test
-    public void test() throws InterruptedException {
+    public void test() throws Exception {
         FlowExecution flowExecution = Mockito.mock(FlowExecution.class);
         FlowNode flowNode = new FlowNode(flowExecution, "1") {
             @Override

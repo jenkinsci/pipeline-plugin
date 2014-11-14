@@ -27,6 +27,7 @@ import hudson.model.Action;
 import hudson.model.InvisibleAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -105,11 +106,12 @@ public class PauseAction extends InvisibleAction {
         return null;
     }
 
-    public static void endCurrentPause(FlowNode node) {
+    public static void endCurrentPause(FlowNode node) throws IOException {
         PauseAction currentPause = getCurrentPause(node);
 
         if (currentPause != null) {
             currentPause.setEndTime(System.currentTimeMillis());
+            node.save();
         }
 
         LOGGER.log(Level.FINE, "‘endCurrentPause’ was called for a FlowNode (‘{0}’) that does not have an active pause. ‘endCurrentPause’ may have already been called.", node.getDisplayName());
