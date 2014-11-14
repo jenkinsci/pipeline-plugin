@@ -85,7 +85,7 @@ public abstract class DefaultStepContext extends StepContext {
                 listener = new StreamTaskListener(new FileOutputStream(la.getLogFile(), true));
             }
             return key.cast(listener);
-        } else if (key == Node.class) {
+        } else if (Node.class.isAssignableFrom(key)) {
             Computer c = get(Computer.class);
             Node n = null;
             if (c != null) {
@@ -96,23 +96,28 @@ public abstract class DefaultStepContext extends StepContext {
                 throw new IllegalStateException("There is no current node. Perhaps you forgot to call node?");
             }
             */
-            return key.cast(n);
-        } else if (key == Run.class) {
-            return key.cast(getExecution().getOwner().getExecutable());
-        } else if (key == Job.class) {
-            return key.cast(get(Run.class).getParent());
+            return castOrNull(key, n);
+        } else if (Run.class.isAssignableFrom(key)) {
+            return castOrNull(key, getExecution().getOwner().getExecutable());
+        } else if (Job.class.isAssignableFrom(key)) {
+            return castOrNull(key, get(Run.class).getParent());
         } else if (key == Launcher.class) {
             Node n = get(Node.class);
             if (n == null) {
                 return null;
             }
             return key.cast(n.createLauncher(get(TaskListener.class)));
-        } else if (key == FlowExecution.class) {
-            return key.cast(getExecution());
+        } else if (FlowExecution.class.isAssignableFrom(key)) {
+            return castOrNull(key,getExecution());
         } else {
             // unrecognized key
             return null;
         }
+    }
+
+    private <T> T castOrNull(Class<T> key, Object o) {
+        if (key.isInstance(o))  return key.cast(o);
+        else                    return null;
     }
 
     /**
