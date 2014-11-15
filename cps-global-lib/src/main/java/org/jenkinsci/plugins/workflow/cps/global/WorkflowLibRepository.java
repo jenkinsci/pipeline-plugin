@@ -3,9 +3,11 @@ package org.jenkinsci.plugins.workflow.cps.global;
 import hudson.Extension;
 import hudson.model.RootAction;
 import jenkins.model.Jenkins;
+import org.eclipse.jgit.lib.Repository;
 import org.jenkinsci.plugins.gitserver.FileBackedHttpGitRepository;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Exposes the workflow libs as a git repository over HTTP.
@@ -45,5 +47,17 @@ public class WorkflowLibRepository extends FileBackedHttpGitRepository implement
 
     public String getUrlName() {
         return "workflowLibs.git";
+    }
+
+    /**
+     * Starts a new repository without initial import, since this directory
+     * was never unmanaged. This will create a nice empty repo that people
+     * can push into, as opposed to one they have to pull from.
+     *
+     * This prevents a user mistake like JENKINS-25632.
+     */
+    @Override
+    protected void createInitialRepository(Repository r) throws IOException {
+        r.create();
     }
 }
