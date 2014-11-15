@@ -1,8 +1,5 @@
 package org.jenkinsci.plugins.workflow.cps;
 
-import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-
 import java.lang.annotation.Target;
 
 import static java.lang.annotation.ElementType.*;
@@ -20,7 +17,7 @@ import static java.lang.annotation.ElementType.*;
  * </ul>
  *
  * @author Kohsuke Kawaguchi
- * @see CpsVmThread
+ * @see CpsVmExecutorService
  * @see CpsThreadGroup#assertVmThread()
  */
 @Target({METHOD, CONSTRUCTOR})

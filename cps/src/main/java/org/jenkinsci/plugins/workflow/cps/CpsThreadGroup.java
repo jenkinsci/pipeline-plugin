@@ -47,10 +47,8 @@ import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
@@ -116,14 +114,7 @@ public final class CpsThreadGroup implements Serializable {
     }
 
     private void setupTransients() {
-        runner = Executors.newSingleThreadExecutor(
-                new ThreadFactory() {
-                    @Override
-                    public CpsVmThread newThread(Runnable r) {
-                        return new CpsVmThread(CpsThreadGroup.this, r);
-                    }
-                }
-        );
+        runner = new CpsVmExecutorService(this);
     }
 
     @CpsVmThreadOnly
@@ -135,13 +126,12 @@ public final class CpsThreadGroup implements Serializable {
     }
 
     /**
-     * Ensures that the current thread is the correct {@link CpsVmThread}
+     * Ensures that the current thread is running from {@link CpsVmExecutorService}
      *
      * @see CpsVmThreadOnly
      */
     private void assertVmThread() {
-        assert Thread.currentThread() instanceof CpsVmThread;
-        assert ((CpsVmThread)Thread.currentThread()).threadGroup==this;
+        assert current()==this;
     }
 
     public CpsThread getThread(int id) {
@@ -387,11 +377,6 @@ public final class CpsThreadGroup implements Serializable {
      */
     @CpsVmThreadOnly
     /*package*/ static CpsThreadGroup current() {
-        return CpsVmThread.current().threadGroup;
+        return CpsVmExecutorService.CURRENT.get();
     }
-
-    private static final Runnable NOOP = new Runnable() {
-        public void run() {
-        }
-    };
 }

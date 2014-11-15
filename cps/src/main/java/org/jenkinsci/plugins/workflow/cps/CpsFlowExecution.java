@@ -481,11 +481,11 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     /**
-     * Execute a task in {@link CpsVmThread} to safely access {@link CpsThreadGroup} internal states.
+     * Execute a task in {@link CpsVmExecutorService} to safely access {@link CpsThreadGroup} internal states.
      *
      * <p>
      * If the {@link CpsThreadGroup} deserializatoin fails, {@link FutureCallback#onFailure(Throwable)} will
-     * be invoked (on a random thread that's not {@link CpsVmThread}, since {@link CpsVmThread} cannot exist.)
+     * be invoked (on a random thread, since {@link CpsVmThread} doesn't exist without a valid program.)
      */
     void runInCpsVmThread(final FutureCallback<CpsThreadGroup> callback) {
         // first we need to wait for programPromise to fullfil CpsThreadGroup, then we need to run in its runner, phew!
