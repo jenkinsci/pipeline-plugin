@@ -11,6 +11,7 @@ import jenkins.model.Jenkins;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
+import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.GroovySandbox;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -39,7 +40,8 @@ class CpsGroovyShell extends GroovyShell {
 
     private static ClassLoader makeClassLoader() {
         Jenkins j = Jenkins.getInstance();
-        return j!=null ? j.getPluginManager().uberClassLoader : CpsGroovyShell.class.getClassLoader();
+        ClassLoader cl = j != null ? j.getPluginManager().uberClassLoader : CpsGroovyShell.class.getClassLoader();
+        return GroovySandbox.createSecureClassLoader(cl);
     }
 
     private static CompilerConfiguration makeConfig(CpsFlowExecution execution) {
