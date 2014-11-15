@@ -1,10 +1,14 @@
 package org.jenkinsci.plugins.workflow.cps.global;
 
+import com.google.inject.Inject;
+import hudson.util.FormValidation;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Ref;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -21,6 +25,14 @@ public class WorkflowLibRepositoryLocalTest extends Assert {
 
     @Rule
     public TemporaryFolder tmp = new TemporaryFolder();
+
+    @Inject
+    CpsFlowDefinition.DescriptorImpl cfdd;
+
+    @Before
+    public void setUp() {
+        j.jenkins.getInjector().injectMembers(this);
+    }
 
     @Test
     @Issue("JENKINS-25632")
@@ -39,11 +51,15 @@ public class WorkflowLibRepositoryLocalTest extends Assert {
         File f = new File(dir, "src/org/acme/Foo.groovy");
         f.getParentFile().mkdirs();
 
-        FileUtils.writeStringToFile(f,"def hello() { echo('answer is 42') }");
+        FileUtils.writeStringToFile(f,"package org.acme; def hello() { echo('answer is 42') }");
 
         // commit & push
         git.add().addFilepattern(".").call();
         git.commit().setMessage("Initial commit").call();
         git.push().call();
+
+        // test if this script is accessible from form validation
+        assertSame(cfdd.doCheckScript("import org.acme.Foo", true), FormValidation.ok());
+        assertNotSame(cfdd.doCheckScript("import org.acme.NoSuchThing", true), FormValidation.ok());        // control test
     }
 }

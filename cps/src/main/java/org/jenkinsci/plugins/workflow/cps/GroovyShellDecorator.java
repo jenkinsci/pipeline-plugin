@@ -6,6 +6,8 @@ import hudson.ExtensionPoint;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 
+import javax.annotation.Nullable;
+
 /**
  * Hook to customize the behaviour of {@link GroovyShell}
  * used to run workflow scripts.
@@ -16,13 +18,19 @@ public abstract class GroovyShellDecorator implements ExtensionPoint {
 
     /**
      * Called with {@link ImportCustomizer} to auto-import more packages, etc.
+     *
+     * @param context
+     *      null if {@lik GroovyShell} is created just to test the parsing of the script.
      */
-    public void customizeImports(CpsFlowExecution context, ImportCustomizer ic) {}
+    public void customizeImports(@Nullable CpsFlowExecution context, ImportCustomizer ic) {}
 
     /**
      * Called with {@link CompilerConfiguration} to provide opportunity to tweak the runtime environment further.
+     *
+     * @param context
+     *      null if {@lik GroovyShell} is created just to test the parsing of the script.
      */
-    public void configureCompiler(CpsFlowExecution context, CompilerConfiguration cc) {}
+    public void configureCompiler(@Nullable CpsFlowExecution context, CompilerConfiguration cc) {}
 
     /**
      * Called with a configured {@link GroovyShell} to further tweak its behaviours.

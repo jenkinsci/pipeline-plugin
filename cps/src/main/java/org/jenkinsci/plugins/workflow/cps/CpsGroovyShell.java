@@ -12,6 +12,7 @@ import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 /**
@@ -20,7 +21,12 @@ import java.io.IOException;
  * @author Kohsuke Kawaguchi
  */
 class CpsGroovyShell extends GroovyShell {
-    private final CpsFlowExecution execution;
+    /**
+     * {@link CpsFlowExecution} for which this shell is created.
+     *
+     * Null is a valid value for just parsing the script to test-compile it without running it.
+     */
+    private final @Nullable CpsFlowExecution execution;
 
     CpsGroovyShell(CpsFlowExecution execution) {
         super(makeClassLoader(),new Binding(),makeConfig(execution));
@@ -47,7 +53,8 @@ class CpsGroovyShell extends GroovyShell {
 
         CompilerConfiguration cc = new CompilerConfiguration();
         cc.addCompilationCustomizers(ic);
-        cc.addCompilationCustomizers(execution.isSandbox() ? new SandboxCpsTransformer() : new CpsTransformer());
+        cc.addCompilationCustomizers(
+                (execution!=null && execution.isSandbox()) ? new SandboxCpsTransformer() : new CpsTransformer());
         cc.setScriptBaseClass(CpsScript.class.getName());
 
         for (GroovyShellDecorator d : GroovyShellDecorator.all()) {
@@ -77,7 +84,8 @@ class CpsGroovyShell extends GroovyShell {
     @Override
     public Script parse(GroovyCodeSource codeSource) throws CompilationFailedException {
         Script s = super.parse(codeSource);
-        execution.loadedScripts.put(s.getClass().getName(), codeSource.getScriptText());
+        if (execution!=null)
+            execution.loadedScripts.put(s.getClass().getName(), codeSource.getScriptText());
         prepareScript(s);
         return s;
     }
@@ -96,6 +104,9 @@ class CpsGroovyShell extends GroovyShell {
      */
     @Override
     protected synchronized String generateScriptName() {
-        return "Script" + (execution.loadedScripts.size()+1) + ".groovy";
+        if (execution!=null)
+            return "Script" + (execution.loadedScripts.size()+1) + ".groovy";
+        else
+            return super.generateScriptName();
     }
 }

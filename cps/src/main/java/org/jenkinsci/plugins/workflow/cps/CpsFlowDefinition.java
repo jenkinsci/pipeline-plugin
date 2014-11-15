@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
-import groovy.lang.GroovyShell;
 import hudson.Extension;
 import hudson.Functions;
 import hudson.model.Action;
@@ -122,7 +121,7 @@ public class CpsFlowDefinition extends FlowDefinition {
                 return FormValidation.ok();
             }
             try {
-                new GroovyShell(j.getPluginManager().uberClassLoader).parse(value);
+                new CpsGroovyShell(null).getClassLoader().parseClass(value);
             } catch (CompilationFailedException x) {
                 return FormValidation.error(x.getLocalizedMessage());
             }
