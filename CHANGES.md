@@ -2,6 +2,23 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
+## 0.1-beta-8
+
+### User changes
+* `scm` step renamed `checkout`.
+* New syntax for structured objects, enabling more concise scripts without needing to import Jenkins-specific classes. _Incompatible syntax change_ for callers of `checkout` and `step` steps. Snippet generator and documentation updated to match.
+* Added `timeout` step.
+* Better cancellation behavior when the stop button is pressed, for example killing all branches of `parallel`.
+* Fleshed out Groovy operators supported.
+* Friendlier error in case a step is invoked without its required context, such as `sh` outside `node`.
+* The flow graph table is now on its own page, accessible via the _Running Steps_ link from a build.
+* A visual graph of flow nodes is available from a hidden link `graphViz`. Similarly, `flowGraph` links to a simple list of all nodes, including merge nodes that would not be visible in the regular table.
+* More useful information about the graph in the REST API for a flow build.
+
+### API changes
+* `invokeBodyLater` now returns a new `BodyExecution`, mainly to support cancellation of the body.
+* Fields in a `StepExecution` marked `@Inject` or `@StepContextParameter` will now be reinjected when resuming from disk.
+
 ## 0.1-beta-7
 * Moved `input` and `build` steps to the `workflow-support` plugin (from the `workflow-basic-steps` plugin).
 * Added a label to `build` step nodes based on the display name of the downstream job.
