@@ -11,7 +11,6 @@ import hudson.model.TopLevelItem;
 import hudson.slaves.WorkspaceList;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.BodyExecution;
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 
 import java.io.Serializable;
@@ -48,8 +47,10 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
         FilePath workspace = lease.path;
         flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
         listener.getLogger().println("Running in " + workspace);
-        body = getContext().invokeBodyLater(workspace);
-        body.addCallback(new Callback(getContext(), lease));
+        body = getContext().newBodyInvoker()
+                .withContext(workspace)
+                .withCallback(new Callback(getContext(), lease))
+                .start();
         return false;
     }
 

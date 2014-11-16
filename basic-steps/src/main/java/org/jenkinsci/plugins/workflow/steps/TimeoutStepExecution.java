@@ -20,7 +20,7 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
     @Override
     public boolean start() throws Exception {
         StepContext context = getContext();
-        body = context.invokeBodyLater();
+        body = context.newBodyInvoker().start();
         setupTimer();
         body.addCallback(new Callback());
         return false;   // execution is asynchronous

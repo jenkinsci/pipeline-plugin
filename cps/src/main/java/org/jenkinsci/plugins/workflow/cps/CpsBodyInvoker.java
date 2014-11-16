@@ -32,7 +32,6 @@ import com.cloudbees.groovy.cps.impl.FunctionCallEnv;
 import com.cloudbees.groovy.cps.impl.SourceLocation;
 import com.cloudbees.groovy.cps.impl.TryBlockEnv;
 import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Action;
 import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction;
@@ -42,8 +41,13 @@ import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.BodyExecution;
+import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
+import org.jenkinsci.plugins.workflow.steps.WorkflowBodyInvoker;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,23 +61,96 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  * @author Kohsuke Kawaguchi
  */
 @PersistIn(NONE)
-final class BodyInvoker {
-    private final List<Object> contextOverrides;
+public final class CpsBodyInvoker extends WorkflowBodyInvoker {
+    private final List<Object> contextOverrides = new ArrayList<Object>();
 
     private final BodyReference body;
 
     private final CpsStepContext owner;
 
-    private final List<? extends Action> startNodeActions;
+    private final List<Action> startNodeActions = new ArrayList<Action>();
 
     final CpsBodyExecution bodyExecution = new CpsBodyExecution();
 
-    BodyInvoker(CpsStepContext owner, BodyReference body, List<? extends Action> startNodeActions, Object... contextOverrides) {
-        this.body = body;
-        this.owner = owner;
-        this.startNodeActions = startNodeActions;
+    private String displayName;
 
-        this.contextOverrides = ImmutableList.copyOf(contextOverrides);
+    private boolean createBodyStartNode = true;
+
+    private boolean started;
+
+    CpsBodyInvoker(CpsStepContext owner, BodyReference body) {
+        this.owner = owner;
+        this.body = body;
+    }
+
+    @Override
+    public CpsBodyInvoker withContext(Object override) {
+        contextOverrides.add(override);
+        return this;
+    }
+
+    @Override
+    public CpsBodyInvoker withStartAction(Action a) {
+        startNodeActions.add(a);
+        return this;
+    }
+
+    @Override
+    public CpsBodyInvoker withCallback(FutureCallback<Object> callback) {
+        bodyExecution.addCallback(callback);
+        return this;
+    }
+
+    @Override
+    public CpsBodyInvoker withDisplayName(@Nullable String name) {
+        this.displayName = name;
+        createBodyStartNode = (name==null);
+        return this;
+    }
+
+    /**
+     * Schedules the execution.
+     *
+     * The actual launching of the body will be done later in {@link #launch} methods.
+     */
+    @Override
+    public BodyExecution start() {
+        if (owner.isSyncMode()) {
+            // we process this in ThreadTaskImpl
+            if (!owner.bodyInvokers.add(this))
+                throw new IllegalStateException("Already started");
+        } else {
+            try {
+                owner.getExecution().runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+                    @Override
+                    public void onSuccess(CpsThreadGroup g) {
+                        CpsThread thread = owner.getThread(g);
+                        if (thread != null) {
+                            launch(thread);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        bodyExecution.onFailure(t);
+                    }
+                });
+            } catch (IOException e) {
+                bodyExecution.onFailure(e);
+            }
+        }
+
+        return bodyExecution;
+    }
+
+    /**
+     * Evaluates the body but grow the {@link FlowNode}s on the same head as the current thread.
+     *
+     * The net effect is as if the body evaluation happens in the same thread as in the caller thread.
+     */
+    @CpsVmThreadOnly
+    /*package*/ void launch(CpsThread currentThread) {
+        launch(currentThread, currentThread.head);
     }
 
     /**
@@ -88,7 +165,7 @@ final class BodyInvoker {
      *      The thread whose context the new thread will inherit.
      */
     @CpsVmThreadOnly
-    /*package*/ void start(CpsThread currentThread, FlowHead head) {
+    /*package*/ void launch(CpsThread currentThread, FlowHead head) {
 
         StepStartNode sn = addBodyStartFlowNode(head);
 
@@ -129,16 +206,6 @@ final class BodyInvoker {
     }
 
     /**
-     * Evaluates the body but grow the {@link FlowNode}s on the same head as the current thread.
-     *
-     * The net effect is as if the body evaluation happens in the same thread as in the caller thread.
-     */
-    @CpsVmThreadOnly
-    /*package*/ void start(CpsThread currentThread) {
-        start(currentThread, currentThread.head);
-    }
-
-    /**
      * Creates {@link Continuable} that executes the given invocation and pass its result to {@link FutureCallback}.
      *
      * The {@link Continuable} itself will just yield null. {@link CpsThreadGroup} considers the whole
@@ -174,7 +241,7 @@ final class BodyInvoker {
         /**
          * Inserts the flow node that indicates the beginning of the body invocation.
          *
-         * @see BodyInvoker#addBodyStartFlowNode(FlowHead)
+         * @see CpsBodyInvoker#addBodyStartFlowNode(FlowHead)
          */
         StepEndNode addBodyEndFlowNode() {
             try {
@@ -226,5 +293,5 @@ final class BodyInvoker {
         private static final long serialVersionUID = 1L;
     }
 
-    private static final Logger LOGGER = Logger.getLogger(BodyInvoker.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CpsBodyInvoker.class.getName());
 }

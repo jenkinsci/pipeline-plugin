@@ -29,7 +29,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import groovy.lang.Closure;
-import hudson.model.Action;
 import hudson.model.Descriptor;
 import hudson.model.Result;
 import jenkins.model.Jenkins;
@@ -42,9 +41,11 @@ import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecution;
+import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.WorkflowBodyInvoker;
 import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 
 import javax.annotation.CheckForNull;
@@ -52,8 +53,10 @@ import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -136,7 +139,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      * Only used in the synchronous mode while {@link CpsFlowExecution} is in the RUNNABLE state,
      * so this need not be persisted.
      */
-    transient List<BodyInvoker> bodyInvokers = Collections.synchronizedList(new ArrayList<BodyInvoker>());
+    transient Set<CpsBodyInvoker> bodyInvokers = Collections.synchronizedSet(new HashSet<CpsBodyInvoker>());
 
     /**
      * While {@link CpsStepContext} has not received teh response, maintains the body closure.
@@ -226,50 +229,17 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     }
 
     @Override
-    public BodyExecution invokeBodyLater(Object... contextOverrides) {
-        return invokeBodyLater(body,Collections.<Action>emptyList(),contextOverrides);
+    public WorkflowBodyInvoker newBodyInvoker() {
+        return newBodyInvoker(body);
     }
 
-    /**
-     * @param startNodeActions
-     *      actions to be added to {@link StepStartNode} that indicates the beginning of a body invocation.
-     */
-    public BodyExecution invokeBodyLater(BodyReference body, List<? extends Action> startNodeActions, Object... contextOverrides) {
+    public WorkflowBodyInvoker newBodyInvoker(BodyReference body) {
         if (body==null)
             throw new IllegalStateException("There's no body to invoke");
 
-        final BodyInvoker b = new BodyInvoker(this,body,startNodeActions,contextOverrides);
+        final CpsBodyInvoker b = new CpsBodyInvoker(this,body);
 
-        boolean _syncMode;
-        synchronized (this) { // TODO should this whole method be synchronized? mainly getExecution() is a concern
-            _syncMode = syncMode;
-        }
-
-        if (_syncMode) {
-            // we process this in ThreadTaskImpl
-            bodyInvokers.add(b);
-        } else {
-            try {
-                getExecution().runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
-                    @Override
-                    public void onSuccess(CpsThreadGroup g) {
-                        CpsThread thread = getThread(g);
-                        if (thread != null) {
-                            b.start(thread);
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        b.bodyExecution.onFailure(t);
-                    }
-                });
-            } catch (IOException e) {
-                b.bodyExecution.onFailure(e);
-            }
-        }
-
-        return b.bodyExecution;
+        return b;
     }
 
     @Override
@@ -385,6 +355,10 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
 
     synchronized boolean isCompleted() {
         return outcome!=null;
+    }
+
+    synchronized boolean isSyncMode() {
+        return syncMode;
     }
 
     /**

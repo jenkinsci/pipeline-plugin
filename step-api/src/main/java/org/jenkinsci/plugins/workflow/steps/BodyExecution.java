@@ -38,7 +38,7 @@ import java.util.concurrent.Future;
  * so that you can cancel the execution, install a listener, etc.
  *
  * @author Kohsuke Kawaguchi
- * @see StepContext#invokeBodyLater(Object...)
+ * @see BodyInvoker#start()
  */
 public abstract class BodyExecution implements Future<Object>, Serializable {
     // I wanted to make this extend from ListenableFuture, but its addListener method takes

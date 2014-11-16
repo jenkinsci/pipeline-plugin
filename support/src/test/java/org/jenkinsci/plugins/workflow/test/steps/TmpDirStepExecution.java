@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import hudson.FilePath;
 import hudson.Util;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 
 import java.io.File;
@@ -17,7 +16,10 @@ public class TmpDirStepExecution extends AbstractStepExecutionImpl {
     @Override
     public boolean start() throws Exception {
         File dir = Util.createTempDir();
-        getContext().invokeBodyLater(new FilePath(dir)).addCallback(new Callback(getContext(), dir));
+        getContext().newBodyInvoker()
+                .withContext(new FilePath(dir))
+                .withCallback(new Callback(getContext(), dir))
+                .start();
         return false;
     }
 

@@ -23,12 +23,12 @@ import java.util.logging.Logger;
 /**
  * {@link BodyExecution} impl for CPS.
  *
- * This object is serializable while {@link BodyInvoker} isn't.
+ * This object is serializable while {@link CpsBodyInvoker} isn't.
  *
  * When the body finishes execution, this object should be notified as {@link FutureCallback}.
  *
  * @author Kohsuke Kawaguchi
- * @see BodyInvoker#bodyExecution
+ * @see CpsBodyInvoker#bodyExecution
  */
 class CpsBodyExecution extends BodyExecution implements FutureCallback {
     /**

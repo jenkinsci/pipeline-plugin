@@ -44,9 +44,9 @@ public final class BlockSemaphoreStep extends Step {
         INIT,
         /** {@link #start} has been called, but the block has not started. */
         STARTED,
-        /** {@link StepContext#invokeBodyLater} has been called, so the block has started. */
+        /** {@link StepContext#newBodyInvoker} has been called, so the block has started. */
         BLOCK_STARTED,
-        /** {@link FutureCallback} from {@link StepContext#invokeBodyLater} has been notified, so the block has ended. */
+        /** {@link FutureCallback} from {@link StepContext#newBodyInvoker} has been notified, so the block has ended. */
         BLOCK_ENDED,
         /** {@link FutureCallback} from {@link Step} has been notified, so the whole step has ended. */
         DONE,
@@ -87,7 +87,7 @@ public final class BlockSemaphoreStep extends Step {
 
     public void startBlock(Object... contextOverrides) {
         moveFrom(State.STARTED);
-        context.invokeBodyLater(contextOverrides).addCallback(new Callback());
+        context.newBodyInvoker().withContext(contextOverrides).withCallback(new Callback()).start();
     }
     
     private class Callback implements FutureCallback {
