@@ -14,6 +14,10 @@ Only noting significant user-visible or major API changes, not internal code cle
 * The flow graph table is now on its own page, accessible via the _Running Steps_ link from a build.
 * A visual graph of flow nodes is available from a hidden link `graphViz`. Similarly, `flowGraph` links to a simple list of all nodes, including merge nodes that would not be visible in the regular table.
 * More useful information about the graph in the REST API for a flow build.
+* Fixes to Groovy Git library.
+* Fixed form validation for Groovy script.
+* Fixed thread leak.
+* Script security fix when the Email Ext plugin is also installed.
 
 ### API changes
 * `invokeBodyLater` now returns a new `BodyExecution`, mainly to support cancellation of the body.
