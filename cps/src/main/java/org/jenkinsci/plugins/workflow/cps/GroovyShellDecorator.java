@@ -20,7 +20,7 @@ public abstract class GroovyShellDecorator implements ExtensionPoint {
      * Called with {@link ImportCustomizer} to auto-import more packages, etc.
      *
      * @param context
-     *      null if {@lik GroovyShell} is created just to test the parsing of the script.
+     *      null if {@link GroovyShell} is created just to test the parsing of the script.
      */
     public void customizeImports(@Nullable CpsFlowExecution context, ImportCustomizer ic) {}
 
@@ -28,7 +28,7 @@ public abstract class GroovyShellDecorator implements ExtensionPoint {
      * Called with {@link CompilerConfiguration} to provide opportunity to tweak the runtime environment further.
      *
      * @param context
-     *      null if {@lik GroovyShell} is created just to test the parsing of the script.
+     *      null if {@link GroovyShell} is created just to test the parsing of the script.
      */
     public void configureCompiler(@Nullable CpsFlowExecution context, CompilerConfiguration cc) {}
 
