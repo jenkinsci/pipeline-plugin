@@ -208,16 +208,21 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      */
     @CheckForNull CpsThread getThreadSynchronously() throws InterruptedException, IOException {
         try {
-            CpsThreadGroup g = getFlowExecution().programPromise.get();
+            CpsThreadGroup g = getProgramPromise().get();
             return getThread(g);
         } catch (ExecutionException e) {
             throw new IOException(e);
         }
     }
+    
+    private @Nonnull ListenableFuture<CpsThreadGroup> getProgramPromise() throws IOException {
+        ListenableFuture<CpsThreadGroup> pp = getFlowExecution().programPromise;
+        assert pp != null;
+        return pp;
+    }
 
     @Override public boolean isReady() throws IOException, InterruptedException {
-        ListenableFuture<CpsThreadGroup> p = getFlowExecution().programPromise;
-        return p.isDone();
+        return getProgramPromise().isDone();
     }
 
     @Override
