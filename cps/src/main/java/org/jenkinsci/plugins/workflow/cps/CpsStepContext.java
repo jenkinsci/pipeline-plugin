@@ -135,9 +135,10 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      *
      * <p>
      * Only used in the synchronous mode while {@link CpsFlowExecution} is in the RUNNABLE state,
-     * so this need not be persisted.
+     * so this need not be persisted. To preserve the order of invocation in the flow graph,
+     * this needs to be a list and not set.
      */
-    transient Set<CpsBodyInvoker> bodyInvokers = Collections.synchronizedSet(new HashSet<CpsBodyInvoker>());
+    transient List<CpsBodyInvoker> bodyInvokers = Collections.synchronizedList(new ArrayList<CpsBodyInvoker>());
 
     /**
      * While {@link CpsStepContext} has not received teh response, maintains the body closure.
