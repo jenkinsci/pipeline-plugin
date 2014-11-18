@@ -112,8 +112,8 @@ First, make sure the baseline Jenkins version in your POM is set to at least 1.5
 This introduces some new API methods, and deprecates some old ones.
 
 If you are nervous about making your plugin depend on a recent Jenkins version,
-release it with a `-beta-1` version suffix so it is only shown on the [experimental update center](http://jenkins-ci.org/content/experimental-plugins-update-center) for now;
-you can always create a branch from your previous release (setting the version to `x.y.1-SNAPSHOT`) that works with older versions of Jenkins and `git cherry-pick -x` trunk changes into it as needed.
+remember that you can always create a branch from your previous release (setting the version to `x.y.1-SNAPSHOT`) that works with older versions of Jenkins and `git cherry-pick -x` trunk changes into it as needed;
+or merge from one branch to another if that is easier.
 (`mvn -B release:prepare release:perform` works fine on a branch and knows to increment just the last version component.)
 
 Check your plugin for compilation warnings relating to `hudson.scm.*` classes to see outstanding changes you need to make.
