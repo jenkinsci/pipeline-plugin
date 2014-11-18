@@ -155,6 +155,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         // TODO how to set startTime? reflection? https://trello.com/c/Gbg8I3pl/41-run-starttime
         // Some code here copied from execute(RunExecution), but subsequently modified quite a bit.
         try {
+            onStartBuilding();
             OutputStream logger = new FileOutputStream(getLogFile());
             listener = new StreamBuildListener(logger, Charset.defaultCharset());
             listener.started(getCauses());
@@ -347,13 +348,14 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         listener.finished(getResult());
         listener.closeQuietly();
         logsToCopy = null;
+        duration = Math.max(0, System.currentTimeMillis() - getStartTimeInMillis());
         try {
             save();
             getParent().logRotate();
         } catch (Exception x) {
             LOGGER.log(Level.WARNING, null, x);
         }
-        RunListener.fireFinalized(this);
+        onEndBuilding();
         assert completed != null;
         synchronized (completed) {
             completed.set(true);

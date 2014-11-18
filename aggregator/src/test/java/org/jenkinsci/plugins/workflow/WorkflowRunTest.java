@@ -77,6 +77,7 @@ public class WorkflowRunTest {
         assertFalse(b1.isBuilding());
         // TODO protected (but !building -> !inProgress): assertFalse(b1.isInProgress());
         assertFalse(b1.isLogUpdated());
+        assertTrue(b1.getDuration() > 0);
         WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertEquals(b1, b2.getPreviousBuild());
         assertEquals(null, b1.getPreviousBuild());
