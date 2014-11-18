@@ -41,6 +41,7 @@
                     </j:if>
                 </div>
             </div>
+            <!-- TODO this calls t:buildProgressBar, which after a restart shows the wrong start time (and expected duration) for the build, since Executor.startTime is meaningless for an AfterRestartTask -->
             <t:buildCaption>
                 ${%Build} ${it.displayName}
                 (<i:formatDate value="${it.timestamp.time}" type="both" dateStyle="medium" timeStyle="medium"/>)
