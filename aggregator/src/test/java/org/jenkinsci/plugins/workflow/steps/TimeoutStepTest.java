@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Result;
+import hudson.model.queue.QueueTaskFuture;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
@@ -30,7 +31,7 @@ public class TimeoutStepTest extends Assert {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition(
                 "node { timeout(time:5, unit:'SECONDS') { sh 'sleep 10'; echo 'NotHere' } }"));
-        WorkflowRun b = r.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
+        WorkflowRun b = assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0));
         r.assertLogNotContains("NotHere", b);
     }
 
@@ -48,7 +49,7 @@ public class TimeoutStepTest extends Assert {
                     "}",
                     "echo 'NotHere'",
                 "}")));
-        WorkflowRun b = r.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
+        WorkflowRun b = assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0));
 
         // make sure things that are supposed to run do, and things that are NOT supposed to run do not.
         r.assertLogNotContains("NotHere", b);
@@ -65,6 +66,17 @@ public class TimeoutStepTest extends Assert {
                     assertTrue(a.getAction(ErrorAction.class)!=null);
                 }
             }
+        }
+    }
+
+    // TODO perhaps this should be in JenkinsRule
+    private static WorkflowRun assertBuildStatus(Result result, QueueTaskFuture<WorkflowRun> f) throws Exception {
+        WorkflowRun b = f.waitForStart();
+        try {
+            return f.get();
+        } catch (InterruptedException x) {
+            System.err.println(JenkinsRule.getLog(b));
+            throw x;
         }
     }
 
