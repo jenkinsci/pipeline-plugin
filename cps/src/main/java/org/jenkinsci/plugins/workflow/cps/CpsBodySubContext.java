@@ -23,6 +23,9 @@ final class CpsBodySubContext extends DefaultStepContext {
      */
     private final CpsStepContext base;
 
+    /**
+     * Node that this sub-context points to.
+     */
     private final FlowNode node;
 
     CpsBodySubContext(CpsStepContext base, FlowNode node) {

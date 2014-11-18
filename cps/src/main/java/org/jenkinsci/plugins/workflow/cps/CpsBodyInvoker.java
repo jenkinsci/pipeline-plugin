@@ -26,6 +26,9 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Action;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
@@ -63,9 +66,10 @@ public final class CpsBodyInvoker extends BodyInvoker {
 
     private String displayName;
 
-    private boolean createBodyStartNode = true;
-
-    private boolean started;
+    /**
+     * If false, do not create inner {@link StepStartNode}/{@link StepEndNode}.
+     */
+    private boolean createBodyBlockNode = true;
 
     /**
      * Set to non-null once {@linkplain #start() started}.
@@ -101,7 +105,7 @@ public final class CpsBodyInvoker extends BodyInvoker {
     @Override
     public CpsBodyInvoker withDisplayName(@Nullable String name) {
         this.displayName = name;
-        createBodyStartNode = (name==null);
+        createBodyBlockNode = (name==null);
         return this;
     }
 
@@ -113,7 +117,15 @@ public final class CpsBodyInvoker extends BodyInvoker {
     @Override
     public CpsBodyExecution start() {
         if (execution!=null)    throw new IllegalStateException("Already started");
-        execution = new CpsBodyExecution(owner, callbacks);
+        execution = new CpsBodyExecution(owner, callbacks, createBodyBlockNode);
+
+        if (displayName!=null)
+            startNodeActions.add(new LabelAction(displayName));
+
+        if (!createBodyBlockNode) {
+            if (!startNodeActions.isEmpty())
+                throw new IllegalStateException("Can't specify Actions if there will be no StepStartNode");
+        }
 
         if (owner.isSyncMode()) {
             // we call 'launch' later from DSL.ThreadTaskImpl
