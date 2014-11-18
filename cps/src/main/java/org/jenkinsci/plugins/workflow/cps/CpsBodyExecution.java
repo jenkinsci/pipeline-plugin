@@ -1,9 +1,14 @@
 package org.jenkinsci.plugins.workflow.cps;
 
+import com.cloudbees.groovy.cps.Continuation;
+import com.cloudbees.groovy.cps.Next;
 import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Result;
 import jenkins.model.CauseOfInterruption;
+import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction;
+import org.jenkinsci.plugins.workflow.actions.ErrorAction;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecution;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
@@ -11,6 +16,7 @@ import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import javax.annotation.concurrent.GuardedBy;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,14 +32,12 @@ import java.util.logging.Logger;
  *
  * This object is serializable while {@link CpsBodyInvoker} isn't.
  *
- * When the body finishes execution, this object should be notified as {@link FutureCallback}.
- *
  * @author Kohsuke Kawaguchi
  * @see CpsBodyInvoker#bodyExecution
  */
-class CpsBodyExecution extends BodyExecution implements FutureCallback {
+class CpsBodyExecution extends BodyExecution {
     /**
-     * Thread that's executing
+     * Thread that's executing the body.
      */
     @GuardedBy("this")
     private CpsThread thread;
@@ -46,8 +50,23 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
 
     private List<BodyExecutionCallback> callbacks = new ArrayList<BodyExecutionCallback>();
 
+    /**
+     * Context for the step who invoked its body.
+     */
+    private final CpsStepContext context;
+
+    private String startNodeId;
+
+    final Continuation onSuccess = new SuccessAdapter();
+
+    final Continuation onFailure = new FailureAdapter();
+
     @GuardedBy("this")
     private Outcome outcome;
+
+    public CpsBodyExecution(CpsStepContext context) {
+        this.context = context;
+    }
 
     @Override
     public synchronized Collection<StepExecution> getCurrentExecutions() {
@@ -137,12 +156,11 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
 
         assert this.thread==null;
         this.thread = t;
-
     }
 
     public void prependCallback(BodyExecutionCallback callback) {
         assert !isDone();   // can be only called before it launches
-        callbacks.add(0,callback);
+        callbacks.add(0, callback);
     }
 
     public void addCallback(BodyExecutionCallback callback) {
@@ -154,7 +172,7 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
         return outcome!=null;
     }
 
-    public void onStart(StepStartNode sn) {
+    /*package*/ void fireOnStart(StepStartNode sn) {
         CpsBodySubContext sc = new CpsBodySubContext(context,sn);
         for (BodyExecutionCallback c : callbacks) {
             c.setContext(sc);
@@ -162,24 +180,68 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
         }
     }
 
-    @Override
-    public void onSuccess(Object result) {
-        this.outcome = new Outcome(result,null);
-        CpsBodySubContext sc = new CpsBodySubContext(context,sn);
-        for (BodyExecutionCallback c : callbacks) {
-            c.setContext(sc);
-            c.onSuccess(result);
+    private class FailureAdapter implements Continuation {
+        @Override
+        public Next receive(Object o) {
+            StepEndNode en = addBodyEndFlowNode();
+
+            Throwable t = (Throwable)o;
+            en.addAction(new ErrorAction(t));
+
+            outcome = new Outcome(null,t);
+            CpsBodySubContext sc = new CpsBodySubContext(context,en);
+            for (BodyExecutionCallback c : callbacks) {
+                c.setContext(sc);
+                c.onFailure(t);
+            }
+
+            return Next.terminate(null);
+        }
+
+        private static final long serialVersionUID = 1L;
+    }
+
+    private class SuccessAdapter implements Continuation {
+        @Override
+        public Next receive(Object o) {
+            StepEndNode en = addBodyEndFlowNode();
+
+            outcome = new Outcome(o,null);
+            CpsBodySubContext sc = new CpsBodySubContext(context,en);
+            for (BodyExecutionCallback c : callbacks) {
+                c.setContext(sc);
+                c.onSuccess(o);
+            }
+
+            return Next.terminate(null);
+        }
+
+        private static final long serialVersionUID = 1L;
+    }
+
+    /**
+     * Inserts the flow node that indicates the beginning of the body invocation.
+     *
+     * @see CpsBodyInvoker#addBodyStartFlowNode(FlowHead)
+     */
+    private StepEndNode addBodyEndFlowNode() {
+        try {
+            FlowHead head = CpsThread.current().head;
+
+            StepEndNode end = new StepEndNode(head.getExecution(),
+                    getBodyStartNode(), head.get());
+            end.addAction(new BodyInvocationAction());
+            head.setNewHead(end);
+
+            return end;
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Failed to grow the flow graph", e);
+            throw new Error(e);
         }
     }
 
-    @Override
-    public void onFailure(Throwable t) {
-        this.outcome = new Outcome(null,t);
-        CpsBodySubContext sc = new CpsBodySubContext(context,sn);
-        for (BodyExecutionCallback c : callbacks) {
-            c.setContext(sc);
-            c.onFailure(t);
-        }
+    public StepStartNode getBodyStartNode() throws IOException {
+        return (StepStartNode) thread.getExecution().getNode(startNodeId);
     }
 
 
