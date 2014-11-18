@@ -426,6 +426,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     }
 
+    @Override public Executor getExecutor() {
+        return getOneOffExecutor();
+    }
+
     @Exported
     @Override public Executor getOneOffExecutor() {
         Jenkins j = Jenkins.getInstance();
