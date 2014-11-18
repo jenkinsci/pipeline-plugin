@@ -331,7 +331,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
                 // don't collect the first head, which is what we borrowed from our parent.
                 FlowHead h = heads[idx];
                 if (idx>0)
-                    b.bodyExecution.prependCallback(new HeadCollector(context, h));
+                    b.prependCallback(new HeadCollector(context, h));
                 b.launch(cur, h);
                 idx++;
             }

@@ -24,20 +24,10 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
-import com.cloudbees.groovy.cps.Continuable;
-import com.cloudbees.groovy.cps.impl.CpsCallableInvocation;
-import com.cloudbees.groovy.cps.impl.FunctionCallEnv;
-import com.cloudbees.groovy.cps.impl.SourceLocation;
-import com.cloudbees.groovy.cps.impl.TryBlockEnv;
-import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Action;
-import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction;
-import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
-import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.steps.BodyExecution;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.WorkflowBodyInvoker;
 
@@ -49,22 +39,27 @@ import java.util.List;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
- * Encapsulates how to evaluate the body closure of {@link CpsStepContext},
- * and schedules async evaluation of them.
+ * Builder pattern for accumulating configuration for executing the body.
  *
+ * <p>
+ * After various {@code withXyz} methods are invoked, {@link #start()} gets called
+ * to schedule the execution. The actual state update happens from the {@link #launch(CpsThread,FlowHead)}
+ * method, which is {@link CpsVmThreadOnly}.
+ *
+ * @see CpsBodyExecution
  * @author Kohsuke Kawaguchi
  */
 @PersistIn(NONE)
 public final class CpsBodyInvoker extends WorkflowBodyInvoker {
-    private final List<Object> contextOverrides = new ArrayList<Object>();
+    /*package*/ final List<Object> contextOverrides = new ArrayList<Object>();
 
-    private final BodyReference body;
+    /*package*/ final BodyReference body;
 
     private final CpsStepContext owner;
 
-    private final List<Action> startNodeActions = new ArrayList<Action>();
+    private List<BodyExecutionCallback> callbacks = new ArrayList<BodyExecutionCallback>();
 
-    final CpsBodyExecution bodyExecution;
+    /*package*/ final List<Action> startNodeActions = new ArrayList<Action>();
 
     private String displayName;
 
@@ -72,10 +67,14 @@ public final class CpsBodyInvoker extends WorkflowBodyInvoker {
 
     private boolean started;
 
+    /**
+     * Set to non-null once {@linkplain #start() started}.
+     */
+    private CpsBodyExecution execution;
+
     CpsBodyInvoker(CpsStepContext owner, BodyReference body) {
         this.owner = owner;
         this.body = body;
-        this.bodyExecution = new CpsBodyExecution(owner);
     }
 
     @Override
@@ -90,9 +89,13 @@ public final class CpsBodyInvoker extends WorkflowBodyInvoker {
         return this;
     }
 
+    public void prependCallback(BodyExecutionCallback callback) {
+        callbacks.add(0, callback);
+    }
+
     @Override
     public CpsBodyInvoker withCallback(BodyExecutionCallback callback) {
-        bodyExecution.addCallback(callback);
+        callbacks.add(callback);
         return this;
     }
 
@@ -104,16 +107,18 @@ public final class CpsBodyInvoker extends WorkflowBodyInvoker {
     }
 
     /**
-     * Schedules the execution.
+     * Schedules the execution of the body.
      *
      * The actual launching of the body will be done later in {@link #launch} methods.
      */
     @Override
-    public BodyExecution start() {
+    public CpsBodyExecution start() {
+        if (execution!=null)    throw new IllegalStateException("Already started");
+        execution = new CpsBodyExecution(owner, callbacks);
+
         if (owner.isSyncMode()) {
-            // we process this in ThreadTaskImpl
-            if (!owner.bodyInvokers.add(this))
-                throw new IllegalStateException("Already started");
+            // we call 'launch' later from DSL.ThreadTaskImpl
+            owner.bodyInvokers.add(this);
         } else {
             try {
                 owner.getExecution().runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
@@ -127,15 +132,15 @@ public final class CpsBodyInvoker extends WorkflowBodyInvoker {
 
                     @Override
                     public void onFailure(Throwable t) {
-                        bodyExecution.onFailure.receive(t);
+                        execution.onFailure.receive(t);
                     }
                 });
             } catch (IOException e) {
-                bodyExecution.onFailure.receive(e);
+                execution.onFailure.receive(e);
             }
         }
 
-        return bodyExecution;
+        return execution;
     }
 
     /**
@@ -148,81 +153,8 @@ public final class CpsBodyInvoker extends WorkflowBodyInvoker {
         launch(currentThread, currentThread.head);
     }
 
-    /**
-     * Evaluates the body.
-     *
-     * If the body is a synchronous closure, this method evaluates the closure synchronously.
-     * Otherwise, the body is asynchronous and the method schedules another thread to evaluate the body.
-     *
-     * In either case, the result of the evaluation is passed to {@link #bodyExecution}.
-     *
-     * @param currentThread
-     *      The thread whose context the new thread will inherit.
-     */
     @CpsVmThreadOnly
     /*package*/ void launch(CpsThread currentThread, FlowHead head) {
-
-        StepStartNode sn = addBodyStartFlowNode(head);
-        bodyExecution.fireOnStart(sn);
-
-        try {
-            // TODO: handle arguments to closure
-            Object x = body.getBody(currentThread).call();
-
-            bodyExecution.onSuccess.receive(x);   // body has completed synchronously
-        } catch (CpsCallableInvocation e) {
-            // execute this closure asynchronously
-            // TODO: does it make sense that the new thread shares the same head?
-            // this problem is captured as https://trello.com/c/v6Pbwqxj/70-allowing-steps-to-build-flownodes
-            CpsThread t = currentThread.group.addThread(createContinuable(currentThread, e, sn), head,
-                    ContextVariableSet.from(currentThread.getContextVariables(), contextOverrides));
-
-            bodyExecution.startExecution(t);
-        } catch (Throwable t) {
-            // body has completed synchronously and abnormally
-            bodyExecution.onFailure.receive(t);
-        }
-    }
-
-    /**
-     * Inserts the flow node that indicates the beginning of the body invocation.
-     *
-     * @see CpsBodyExecution#addBodyEndFlowNode()
-     */
-    private StepStartNode addBodyStartFlowNode(FlowHead head) {
-        StepStartNode start = new StepStartNode(head.getExecution(),
-                owner.getStepDescriptor(), head.get());
-        start.addAction(new BodyInvocationAction());
-        for (Action a : startNodeActions) {
-            if (a!=null)
-                start.addAction(a);
-        }
-        head.setNewHead(start);
-        return start;
-    }
-
-    /**
-     * Creates {@link Continuable} that executes the given invocation and pass its result to {@link FutureCallback}.
-     *
-     * The {@link Continuable} itself will just yield null. {@link CpsThreadGroup} considers the whole
-     * execution a failure if any of the threads fail, so this behaviour ensures that a problem in the closure
-     * body won't terminate the workflow.
-     */
-    private Continuable createContinuable(CpsThread currentThread, CpsCallableInvocation inv, BlockStartNode sn) {
-        // we need FunctionCallEnv that acts as the back drop of try/catch block.
-        // TODO: we need to capture the surrounding calling context to capture variables, and switch to ClosureCallEnv
-
-        FunctionCallEnv caller = new FunctionCallEnv(null, bodyExecution.onSuccess, null, null);
-        if (currentThread.getExecution().isSandbox())
-            caller.setInvoker(new SandboxInvoker());
-
-        // catch an exception thrown from body and treat that as a failure
-        TryBlockEnv env = new TryBlockEnv(caller, null);
-        env.addHandler(Throwable.class, bodyExecution.onFailure);
-
-        return new Continuable(
-            // this source location is a place holder for the step implementation.
-            // perhaps at some point in the future we'll let the Step implementation control this.
-            inv.invoke(env, SourceLocation.UNKNOWN, bodyExecution.onSuccess));
+        execution.launch(this, currentThread, head);
     }
 }

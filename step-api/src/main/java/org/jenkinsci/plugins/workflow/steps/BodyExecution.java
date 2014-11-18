@@ -23,7 +23,6 @@
  */
 package org.jenkinsci.plugins.workflow.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import jenkins.model.CauseOfInterruption;
 
 import java.io.Serializable;
