@@ -415,15 +415,17 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                                 try {
                                     runningTasks.wait();
                                 } catch (InterruptedException x) {
-                                    // this task was interrupted (Executor.doStop)
                                     if (Jenkins.getInstance() != null) {
+                                        LOGGER.log(Level.FINE, "interrupted {0} as by Executor.doStop", cookie);
                                         // TODO we would like an API to StepExecution.stop the tip of our body
                                         try {
                                             exec.recordCauseOfInterruption(r, listener);
                                         } catch (RuntimeException x2) {
                                             LOGGER.log(Level.WARNING, null, x2);
                                         }
-                                    } // else Jenkins is just shutting down; ignore
+                                    } else {
+                                        LOGGER.log(Level.FINE, "normal Jenkins shutdown in {0}", cookie);
+                                    }
                                 }
                             }
                         }
