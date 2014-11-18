@@ -89,6 +89,7 @@ public class PushdStep extends AbstractStepImpl {
             listener.getLogger().println("Running in " + dir);
             body = getContext().newBodyInvoker()
                     .withContext(dir)
+                    .withDisplayName(null)
                     .withCallback(getContext())
                     .start();
             return false;

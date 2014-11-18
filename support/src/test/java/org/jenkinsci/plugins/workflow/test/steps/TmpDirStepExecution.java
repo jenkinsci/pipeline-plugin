@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.workflow.test.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import hudson.FilePath;
 import hudson.Util;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
@@ -8,7 +7,6 @@ import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 
 import java.io.File;
-import java.io.Serializable;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -20,6 +18,7 @@ public class TmpDirStepExecution extends AbstractStepExecutionImpl {
         getContext().newBodyInvoker()
                 .withContext(new FilePath(dir))
                 .withCallback(new Callback(getContext(), dir))
+                .withDisplayName(null)
                 .start();
         return false;
     }

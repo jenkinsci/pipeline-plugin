@@ -20,6 +20,7 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
         StepContext context = getContext();
         body = context.newBodyInvoker()
                 .withCallback(new Callback())
+                .withDisplayName(null)  // hide the body block
                 .start();
         setupTimer();
         return false;   // execution is asynchronous

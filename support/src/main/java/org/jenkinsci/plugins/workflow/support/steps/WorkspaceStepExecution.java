@@ -48,6 +48,7 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
         body = getContext().newBodyInvoker()
                 .withContext(workspace)
                 .withCallback(new Callback(getContext(), lease))
+                .withDisplayName(null)
                 .start();
         return false;
     }
