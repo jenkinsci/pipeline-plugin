@@ -45,7 +45,7 @@ public class CoreStepTest {
 
     @Test public void artifactArchiver() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("node {sh 'touch x.txt'; step([$class: 'ArtifactArchiver', artifacts: 'x.txt', fingerprint: true])}"));
+        p.setDefinition(new CpsFlowDefinition("node {sh 'touch x.txt'; step([$class: 'ArtifactArchiver', artifacts: 'x.txt', fingerprint: true])}", true));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         List<WorkflowRun.Artifact> artifacts = b.getArtifacts();
         assertEquals(1, artifacts.size());

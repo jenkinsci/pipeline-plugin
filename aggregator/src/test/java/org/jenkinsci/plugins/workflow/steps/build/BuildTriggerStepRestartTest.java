@@ -5,7 +5,6 @@ import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.tasks.Shell;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -17,7 +16,6 @@ import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * @author Vivek Pandey
@@ -37,7 +35,7 @@ public class BuildTriggerStepRestartTest extends Assert {
                               p1.getBuildersList().add(new Shell("echo 'Hello World'"));
 
                               WorkflowJob foo = story.j.jenkins.createProject(WorkflowJob.class, "foo");
-                              foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("build('test1');"), "\n")));
+                              foo.setDefinition(new CpsFlowDefinition("build 'test1'", true));
 
 
                               QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);

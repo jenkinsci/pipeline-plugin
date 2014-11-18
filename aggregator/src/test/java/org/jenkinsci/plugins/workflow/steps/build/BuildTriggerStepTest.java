@@ -37,7 +37,7 @@ public class BuildTriggerStepTest extends Assert {
 
 
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
-        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList("build('test1');"), "\n")));
+        foo.setDefinition(new CpsFlowDefinition("build 'test1'"));
 
         QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
         j.assertBuildStatusSuccess(q);
@@ -76,7 +76,7 @@ public class BuildTriggerStepTest extends Assert {
                 "          build('test1');\n" +
                 "        }, test2: {\n" +
                 "          build('test2');\n" +
-                "        })"), "\n")));
+                "        })"), "\n"), true));
 
         QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
         j.assertBuildStatusSuccess(q);
