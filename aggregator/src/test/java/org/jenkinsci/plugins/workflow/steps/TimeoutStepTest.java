@@ -29,7 +29,7 @@ public class TimeoutStepTest extends Assert {
     public void basic() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition(
-                "import java.util.concurrent.*; node { timeout(time:5, unit:TimeUnit.SECONDS) { sh 'sleep 10'; echo 'NotHere' } }"));
+                "node { timeout(time:5, unit:'SECONDS') { sh 'sleep 10'; echo 'NotHere' } }"));
         WorkflowRun b = r.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
         r.assertLogNotContains("NotHere", b);
     }
@@ -38,8 +38,8 @@ public class TimeoutStepTest extends Assert {
     public void killingParallel() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition(join(
-                "import java.util.concurrent.*; node { ",
-                    "timeout(time:5, unit:TimeUnit.SECONDS) { ",
+                "node { ",
+                    "timeout(time:5, unit:'SECONDS') { ",
                         "parallel(",
                             " a: { echo 'ShouldBeHere1'; sh 'sleep 10'; echo 'NotHere' }, ",
                             " b: { echo 'ShouldBeHere2'; sh 'sleep 10'; echo 'NotHere' }, ",
