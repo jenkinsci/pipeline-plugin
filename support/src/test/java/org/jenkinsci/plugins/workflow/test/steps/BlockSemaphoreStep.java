@@ -24,11 +24,11 @@
 
 package org.jenkinsci.plugins.workflow.test.steps;
 
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
+import com.google.common.util.concurrent.FutureCallback;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import com.google.common.util.concurrent.FutureCallback;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.util.Map;
@@ -50,7 +50,7 @@ public final class BlockSemaphoreStep extends Step {
         BLOCK_ENDED,
         /** {@link FutureCallback} from {@link Step} has been notified, so the whole step has ended. */
         DONE,
-        /** Aborted through {@link StepExecution#stop(FlowInterruptedException)}. */
+        /** Aborted through {@link StepExecution#stop(Throwable)}. */
         STOPPED
     }
 
@@ -90,7 +90,7 @@ public final class BlockSemaphoreStep extends Step {
         context.newBodyInvoker().withContext(contextOverrides).withCallback(new Callback()).start();
     }
     
-    private class Callback implements FutureCallback {
+    private class Callback extends BodyExecutionCallback {
         @Override public void onSuccess(Object returnValue) {
             blockReturnValue = returnValue;
             blockDone();

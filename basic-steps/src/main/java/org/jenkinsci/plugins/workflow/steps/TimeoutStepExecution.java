@@ -1,10 +1,8 @@
 package org.jenkinsci.plugins.workflow.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import jenkins.util.Timer;
 
 import javax.inject.Inject;
-import java.io.Serializable;
 import java.util.concurrent.ScheduledFuture;
 
 /**
@@ -20,9 +18,10 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
     @Override
     public boolean start() throws Exception {
         StepContext context = getContext();
-        body = context.newBodyInvoker().start();
+        body = context.newBodyInvoker()
+                .withCallback(new Callback())
+                .start();
         setupTimer();
-        body.addCallback(new Callback());
         return false;   // execution is asynchronous
     }
 
@@ -50,7 +49,7 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
             body.cancel(cause);
     }
 
-    private class Callback implements FutureCallback<Object>, Serializable {
+    private class Callback extends BodyExecutionCallback {
         @Override
         public void onSuccess(Object result) {
             cancelKiller();

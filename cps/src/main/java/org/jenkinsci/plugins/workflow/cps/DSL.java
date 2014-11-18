@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
-import com.google.common.util.concurrent.FutureCallback;
 import groovy.lang.Closure;
 import groovy.lang.GString;
 import groovy.lang.GroovyObject;
@@ -39,6 +38,7 @@ import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.MissingContextVariableException;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -343,7 +343,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
          * When a new {@link CpsThread} that runs the body completes, record
          * its new head.
          */
-        private static class HeadCollector implements FutureCallback, Serializable {
+        private static class HeadCollector extends BodyExecutionCallback {
             private final CpsStepContext context;
             private final FlowHead head;
 

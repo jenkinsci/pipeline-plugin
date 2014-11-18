@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import hudson.FilePath;
 import hudson.Util;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 
 import java.io.File;
@@ -30,7 +31,7 @@ public class TmpDirStepExecution extends AbstractStepExecutionImpl {
     /**
      * Wipe off the allocated temporary directory in the end.
      */
-    private static final class Callback implements FutureCallback<Object>, Serializable {
+    private static final class Callback extends BodyExecutionCallback {
         private final StepContext context;
         private final File dir;
 

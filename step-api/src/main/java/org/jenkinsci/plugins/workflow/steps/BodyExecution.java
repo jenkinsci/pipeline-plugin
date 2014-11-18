@@ -77,12 +77,5 @@ public abstract class BodyExecution implements Future<Object>, Serializable {
         return cancel(new ExceptionCause(t));
     }
 
-    /**
-     * Adds a callback that gets invoked when the body finishes execution.
-     *
-     * If the execution is already completed, the callback will be invoked immediately.
-     */
-    public abstract void addCallback(FutureCallback<Object> callback);
-
     private static final long serialVersionUID = 1L;
 }

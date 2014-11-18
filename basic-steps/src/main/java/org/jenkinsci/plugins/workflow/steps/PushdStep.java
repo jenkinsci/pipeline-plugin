@@ -87,8 +87,10 @@ public class PushdStep extends AbstractStepImpl {
         @Override public boolean start() throws Exception {
             FilePath dir = cwd.child(step.getPath());
             listener.getLogger().println("Running in " + dir);
-            body = getContext().newBodyInvoker().withContext(dir).start();
-            body.addCallback(getContext());
+            body = getContext().newBodyInvoker()
+                    .withContext(dir)
+                    .withCallback(getContext())
+                    .start();
             return false;
         }
 

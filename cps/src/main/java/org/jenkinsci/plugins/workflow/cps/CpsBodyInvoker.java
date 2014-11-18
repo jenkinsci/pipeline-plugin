@@ -42,7 +42,7 @@ import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecution;
-import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.WorkflowBodyInvoker;
 
 import javax.annotation.Nullable;
@@ -96,7 +96,7 @@ public final class CpsBodyInvoker extends WorkflowBodyInvoker {
     }
 
     @Override
-    public CpsBodyInvoker withCallback(FutureCallback<Object> callback) {
+    public CpsBodyInvoker withCallback(BodyExecutionCallback callback) {
         bodyExecution.addCallback(callback);
         return this;
     }
@@ -168,6 +168,8 @@ public final class CpsBodyInvoker extends WorkflowBodyInvoker {
     /*package*/ void launch(CpsThread currentThread, FlowHead head) {
 
         StepStartNode sn = addBodyStartFlowNode(head);
+
+        bodyExecution.onStart(sn);
 
         try {
             // TODO: handle arguments to closure

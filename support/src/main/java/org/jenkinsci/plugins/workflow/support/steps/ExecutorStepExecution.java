@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.inject.Inject;
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -43,6 +42,7 @@ import org.jenkinsci.plugins.durabletask.executors.ContinuedTask;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
@@ -323,7 +323,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
          * Called when the body closure is complete.
          */
         @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // lease is pickled
-        private static final class Callback implements FutureCallback<Object>, Serializable {
+        private static final class Callback extends BodyExecutionCallback {
 
             private final String cookie;
             private WorkspaceList.Lease lease;

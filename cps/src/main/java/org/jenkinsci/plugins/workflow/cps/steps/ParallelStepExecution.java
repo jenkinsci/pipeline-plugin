@@ -44,8 +44,8 @@ class ParallelStepExecution extends StepExecution {
         for (Entry<String,Closure> e : parallelStep.closures.entrySet()) {
             BodyExecution body = cps.newBodyInvoker(t.getGroup().export(e.getValue()))
                     .withStartAction(new ParallelLabelAction(e.getKey()))
+                    .withCallback(r.callbackFor(e.getKey()))
                     .start();
-            body.addCallback(r.callbackFor(e.getKey()));
             bodies.add(body);
         }
 

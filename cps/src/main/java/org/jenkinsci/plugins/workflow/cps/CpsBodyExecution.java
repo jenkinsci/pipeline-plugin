@@ -4,12 +4,13 @@ import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Result;
 import jenkins.model.CauseOfInterruption;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecution;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import javax.annotation.concurrent.GuardedBy;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,8 +44,7 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
     @GuardedBy("this")
     private FlowInterruptedException stopped;
 
-    @GuardedBy("this")
-    private List<FutureCallback<Object>> callbacks = new ArrayList<FutureCallback<Object>>();
+    private List<BodyExecutionCallback> callbacks = new ArrayList<BodyExecutionCallback>();
 
     @GuardedBy("this")
     private Outcome outcome;
@@ -140,71 +140,44 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
 
     }
 
-    public void prependCallback(FutureCallback<Object> callback) {
-        if (!(callback instanceof Serializable))
-            throw new IllegalStateException("Callback must be persistable, but got "+callback.getClass());
-
-        Outcome o;
-        synchronized (this) {
-            if (callbacks != null) {
-                callbacks.add(0,callback);
-                return;
-            }
-            o = outcome;
-        }
-
-        // if the computation has completed,
-        fire(callback, o);
+    public void prependCallback(BodyExecutionCallback callback) {
+        assert !isDone();   // can be only called before it launches
+        callbacks.add(0,callback);
     }
 
-    public void addCallback(FutureCallback<Object> callback) {
-        if (!(callback instanceof Serializable))
-            throw new IllegalStateException("Callback must be persistable, but got "+callback.getClass());
-
-        Outcome o;
-        synchronized (this) {
-            if (callbacks != null) {
-                callbacks.add(callback);
-                return;
-            }
-            o = outcome;
-        }
-
-        // if the computation has completed,
-        fire(callback, o);
+    public void addCallback(BodyExecutionCallback callback) {
+        assert !isDone();   // can be only called before it launches
+        callbacks.add(callback);
     }
 
-    private void fire(FutureCallback<Object> callback, Outcome o) {
-        if (o.isSuccess())    callback.onSuccess(o.getNormal());
-        else                  callback.onFailure(o.getAbnormal());
-    }
-
-    public synchronized boolean isDone() {
+    public boolean isDone() {
         return outcome!=null;
     }
 
-    /**
-     * Atomically commits the outcome and then grabs all the callbacks.
-     */
-    private synchronized List<FutureCallback<Object>> grabCallbacks(Outcome o) {
-        if (this.outcome!=null)     return Collections.emptyList(); // already completed
-
-        this.outcome = o;
-        List<FutureCallback<Object>> r = callbacks;
-        callbacks = null;
-        return r;
+    public void onStart(StepStartNode sn) {
+        CpsBodySubContext sc = new CpsBodySubContext(context,sn);
+        for (BodyExecutionCallback c : callbacks) {
+            c.setContext(sc);
+            c.onStart();
+        }
     }
 
     @Override
     public void onSuccess(Object result) {
-        for (FutureCallback<Object> c : grabCallbacks(new Outcome(result,null))) {
+        this.outcome = new Outcome(result,null);
+        CpsBodySubContext sc = new CpsBodySubContext(context,sn);
+        for (BodyExecutionCallback c : callbacks) {
+            c.setContext(sc);
             c.onSuccess(result);
         }
     }
 
     @Override
     public void onFailure(Throwable t) {
-        for (FutureCallback<Object> c : grabCallbacks(new Outcome(null,t))) {
+        this.outcome = new Outcome(null,t);
+        CpsBodySubContext sc = new CpsBodySubContext(context,sn);
+        for (BodyExecutionCallback c : callbacks) {
+            c.setContext(sc);
             c.onFailure(t);
         }
     }

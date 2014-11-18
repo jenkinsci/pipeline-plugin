@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Job;
@@ -9,12 +8,11 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.slaves.WorkspaceList;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.BodyExecution;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
-
-import java.io.Serializable;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 
@@ -61,7 +59,7 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
     }
 
     @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // lease is pickled
-    private static final class Callback implements FutureCallback<Object>, Serializable {
+    private static final class Callback extends BodyExecutionCallback {
 
         private final StepContext context;
         private final WorkspaceList.Lease lease;

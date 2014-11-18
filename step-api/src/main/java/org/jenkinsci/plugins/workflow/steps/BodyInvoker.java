@@ -71,12 +71,17 @@ public abstract class BodyInvoker {
     public abstract BodyInvoker withDisplayName(@Nullable String name);
 
     /**
-     * The same calling {@link BodyExecution#addCallback(FutureCallback)} after {@link #start()}
+     * The same calling {@link BodyExecution#addCallback(BodyExecutionCallback)} after {@link #start()}
      * but also defined here for better discoverability.
      *
      * @return this object
+     * @see BodyExecutionCallback
      */
-    public abstract BodyInvoker withCallback(FutureCallback<Object> callback);
+    public abstract BodyInvoker withCallback(BodyExecutionCallback callback);
+
+    public final BodyInvoker withCallback(FutureCallback<Object> callback) {
+        return withCallback(BodyExecutionCallback.wrap(callback));
+    }
 
     /**
      * Schedules an asynchronous invocation of the body that's given as an argument
