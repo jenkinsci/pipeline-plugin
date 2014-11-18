@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.workflow.steps;
 import com.google.common.util.concurrent.FutureCallback;
 
 import java.io.Serializable;
-import java.util.concurrent.Future;
 
 /**
  * {@link FutureCallback} enhanced to track {@link BodyExecution}.

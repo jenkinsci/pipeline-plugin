@@ -43,10 +43,11 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.steps.WorkflowBodyInvoker;
 import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
+import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
@@ -59,10 +60,8 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nonnull;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
-import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 /**
  * {@link StepContext} implementation for CPS.
@@ -228,17 +227,14 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     }
 
     @Override
-    public WorkflowBodyInvoker newBodyInvoker() {
+    public CpsBodyInvoker newBodyInvoker() {
         return newBodyInvoker(body);
     }
 
-    public WorkflowBodyInvoker newBodyInvoker(BodyReference body) {
+    public CpsBodyInvoker newBodyInvoker(BodyReference body) {
         if (body==null)
             throw new IllegalStateException("There's no body to invoke");
-
-        final CpsBodyInvoker b = new CpsBodyInvoker(this,body);
-
-        return b;
+        return new CpsBodyInvoker(this,body);
     }
 
     @Override

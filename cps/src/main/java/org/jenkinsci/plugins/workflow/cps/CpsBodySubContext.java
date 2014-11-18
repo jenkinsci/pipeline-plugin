@@ -5,7 +5,6 @@ import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.WorkflowBodyInvoker;
 import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 
 import javax.annotation.Nonnull;
@@ -77,7 +76,7 @@ final class CpsBodySubContext extends DefaultStepContext {
     }
 
     @Override
-    public WorkflowBodyInvoker newBodyInvoker() {
+    public CpsBodyInvoker newBodyInvoker() {
         return base.newBodyInvoker();
     }
 

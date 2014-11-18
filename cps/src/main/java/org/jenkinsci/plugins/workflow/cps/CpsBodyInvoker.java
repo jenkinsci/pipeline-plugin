@@ -29,7 +29,7 @@ import hudson.model.Action;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
-import org.jenkinsci.plugins.workflow.steps.WorkflowBodyInvoker;
+import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -50,7 +50,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  * @author Kohsuke Kawaguchi
  */
 @PersistIn(NONE)
-public final class CpsBodyInvoker extends WorkflowBodyInvoker {
+public final class CpsBodyInvoker extends BodyInvoker {
     /*package*/ final List<Object> contextOverrides = new ArrayList<Object>();
 
     /*package*/ final BodyReference body;
@@ -83,7 +83,6 @@ public final class CpsBodyInvoker extends WorkflowBodyInvoker {
         return this;
     }
 
-    @Override
     public CpsBodyInvoker withStartAction(Action a) {
         startNodeActions.add(a);
         return this;
