@@ -52,7 +52,6 @@ public class DSLTest {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("def x = 'the message'; echo \"What is ${x}?\""));
         r.assertLogContains("What is the message?", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
-        // TODO test structured values using @DataBoundConstructor/@DataBoundSetter via AbstractStepDescriptorImpl.instantiate (probably need a dedicated test step for that)
     }
 
 }
