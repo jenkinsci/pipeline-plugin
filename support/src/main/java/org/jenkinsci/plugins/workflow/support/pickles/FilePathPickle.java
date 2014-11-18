@@ -30,8 +30,10 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.TaskListener;
+import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.slaves.ComputerListener;
+import java.io.IOException;
 import java.util.Map;
 import java.util.WeakHashMap;
 import jenkins.model.Jenkins;
@@ -81,10 +83,16 @@ public class FilePathPickle extends Pickle {
     }
 
     @Extension public static final class Listener extends ComputerListener {
+        // TODO better to use a synchronized accessor
         @Restricted(NoExternalUse.class)
         public static final Map<VirtualChannel,String> channelNames = new WeakHashMap<VirtualChannel,String>();
-        @Override public void onOnline(Computer c, TaskListener l) {
-            channelNames.put(c.getChannel(), c.getName());
+        @Override public void onOnline(Computer c, TaskListener l) { // TODO currently preOnline is not called for MasterComputer
+            if (c instanceof Jenkins.MasterComputer) {
+                channelNames.put(c.getChannel(), c.getName());
+            }
+        }
+        @Override public void preOnline(Computer c, Channel channel, FilePath root, TaskListener listener) throws IOException, InterruptedException {
+            channelNames.put(channel, c.getName());
         }
     }
 
