@@ -261,7 +261,7 @@ class CpsBodyExecution extends BodyExecution {
         callbacks.add(callback);
     }
 
-    public boolean isDone() {
+    public synchronized boolean isDone() {
         return outcome!=null;
     }
 
@@ -370,7 +370,11 @@ class CpsBodyExecution extends BodyExecution {
     public StepStartNode getBodyStartNode() throws IOException {
         if (startNodeId==null)
             throw new IllegalStateException("StepStartNode is not yet created");
-        return (StepStartNode) thread.getExecution().getNode(startNodeId);
+        CpsThread t;
+        synchronized (this) {// to make findbugs happy
+            t = thread;
+        }
+        return (StepStartNode) t.getExecution().getNode(startNodeId);
     }
 
 

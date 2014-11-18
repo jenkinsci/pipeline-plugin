@@ -26,7 +26,7 @@ final class CpsBodySubContext extends DefaultStepContext {
     /**
      * Node that this sub-context points to.
      */
-    private final FlowNode node;
+    private transient FlowNode node;
 
     CpsBodySubContext(CpsStepContext base, FlowNode node) {
         this.base = base;
@@ -101,4 +101,6 @@ final class CpsBodySubContext extends DefaultStepContext {
 
 // Delegation to 'base' until here
 //======================================
+
+    private static final long serialVersionUID = 1L;
 }

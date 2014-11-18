@@ -29,7 +29,11 @@ import java.io.Serializable;
  * @see BodyInvoker#withCallback(BodyExecutionCallback)
  */
 public abstract class BodyExecutionCallback implements FutureCallback<Object>, Serializable {
-    private StepContext context;
+    /**
+     * The context is only scoped to a specific callback method, and so they
+     * shouldn't be persisted.
+     */
+    private transient StepContext context;
 
     /**
      * This method will be called before {@link #onStart()}, {@link #onSuccess(Object)},
