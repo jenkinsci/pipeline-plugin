@@ -322,6 +322,7 @@ public class CpsFlowExecution extends FlowExecution {
 
         final CpsThreadGroup g = new CpsThreadGroup(this);
         final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
+        programPromise = f;
         g.runner.submit(new Runnable() {
             @Override
             public void run() {
@@ -338,9 +339,6 @@ public class CpsFlowExecution extends FlowExecution {
                 return Envs.empty( isSandbox() ? new SandboxInvoker() : new DefaultInvoker());
             }
         });
-
-        programPromise = f;
-
     }
 
     private CpsScript parseScript() throws IOException {
