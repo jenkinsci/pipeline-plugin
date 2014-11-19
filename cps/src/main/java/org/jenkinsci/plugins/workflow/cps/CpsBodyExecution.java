@@ -1,38 +1,61 @@
 package org.jenkinsci.plugins.workflow.cps;
 
+import com.cloudbees.groovy.cps.Continuable;
+import com.cloudbees.groovy.cps.Continuation;
+import com.cloudbees.groovy.cps.Next;
 import com.cloudbees.groovy.cps.Outcome;
+import com.cloudbees.groovy.cps.impl.CpsCallableInvocation;
+import com.cloudbees.groovy.cps.impl.FunctionCallEnv;
+import com.cloudbees.groovy.cps.impl.SourceLocation;
+import com.cloudbees.groovy.cps.impl.TryBlockEnv;
+import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
 import com.google.common.util.concurrent.FutureCallback;
+import hudson.model.Action;
 import hudson.model.Result;
 import jenkins.model.CauseOfInterruption;
+import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction;
+import org.jenkinsci.plugins.workflow.actions.ErrorAction;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecution;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.concurrent.GuardedBy;
-import java.io.Serializable;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static java.util.logging.Level.*;
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
  * {@link BodyExecution} impl for CPS.
  *
- * This object is serializable while {@link BodyInvoker} isn't.
+ * Instantiated when {@linkplain CpsBodyInvoker#start() the execution is scheduled},
+ * and {@link CpsThreadGroup} gets updated with the new thread in the {@link #launch(CpsBodyInvoker, CpsThread, FlowHead)}
+ * method, and this is the point in which the actual execution gest under way.
  *
- * When the body finishes execution, this object should be notified as {@link FutureCallback}.
+ * <p>
+ * This object is serializable while {@link CpsBodyInvoker} isn't.
  *
  * @author Kohsuke Kawaguchi
- * @see BodyInvoker#bodyExecution
+ * @see CpsBodyInvoker#start()
  */
-class CpsBodyExecution extends BodyExecution implements FutureCallback {
+@PersistIn(PROGRAM)
+class CpsBodyExecution extends BodyExecution {
     /**
-     * Thread that's executing
+     * Thread that's executing the body.
      */
     @GuardedBy("this")
     private CpsThread thread;
@@ -43,11 +66,95 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
     @GuardedBy("this")
     private FlowInterruptedException stopped;
 
-    @GuardedBy("this")
-    private List<FutureCallback<Object>> callbacks = new ArrayList<FutureCallback<Object>>();
+    private final List<BodyExecutionCallback> callbacks;
+
+    /**
+     * Context for the step who invoked its body.
+     */
+    private final CpsStepContext context;
+
+    private String startNodeId;
+
+    final Continuation onSuccess = new SuccessAdapter();
+
+    final Continuation onFailure = new FailureAdapter();
 
     @GuardedBy("this")
     private Outcome outcome;
+
+    /**
+     * @see CpsBodyInvoker#createBodyBlockNode
+     */
+    private final boolean createBodyBlockNode;
+
+    public CpsBodyExecution(CpsStepContext context, List<BodyExecutionCallback> callbacks, boolean createBodyBlockNode) {
+        this.context = context;
+        this.callbacks = callbacks;
+        this.createBodyBlockNode = createBodyBlockNode;
+    }
+
+    /**
+     * Starts evaluating the body.
+     *
+     * If the body is a synchronous closure, this method evaluates the closure synchronously.
+     * Otherwise, the body is asynchronous and the method schedules another thread to evaluate the body.
+     *
+     * @param currentThread
+     *      The thread whose context the new thread will inherit.
+     */
+    @CpsVmThreadOnly
+    /*package*/ void launch(CpsBodyInvoker params, CpsThread currentThread, FlowHead head) {
+
+        StepStartNode sn = addBodyStartFlowNode(head);
+        for (Action a : params.startNodeActions) {
+            if (a!=null)
+                sn.addAction(a);
+        }
+        fireOnStart(sn);
+
+        try {
+            // TODO: handle arguments to closure
+            Object x = params.body.getBody(currentThread).call();
+
+            onSuccess.receive(x);   // body has completed synchronously
+        } catch (CpsCallableInvocation e) {
+            // execute this closure asynchronously
+            // TODO: does it make sense that the new thread shares the same head?
+            // this problem is captured as https://trello.com/c/v6Pbwqxj/70-allowing-steps-to-build-flownodes
+            CpsThread t = currentThread.group.addThread(createContinuable(currentThread, e), head,
+                    ContextVariableSet.from(currentThread.getContextVariables(), params.contextOverrides));
+
+            startExecution(t);
+        } catch (Throwable t) {
+            // body has completed synchronously and abnormally
+            onFailure.receive(t);
+        }
+    }
+
+    /**
+     * Creates {@link Continuable} that executes the given invocation and pass its result to {@link FutureCallback}.
+     *
+     * The {@link Continuable} itself will just yield null. {@link CpsThreadGroup} considers the whole
+     * execution a failure if any of the threads fail, so this behaviour ensures that a problem in the closure
+     * body won't terminate the workflow.
+     */
+    private Continuable createContinuable(CpsThread currentThread, CpsCallableInvocation inv) {
+        // we need FunctionCallEnv that acts as the back drop of try/catch block.
+        // TODO: we need to capture the surrounding calling context to capture variables, and switch to ClosureCallEnv
+
+        FunctionCallEnv caller = new FunctionCallEnv(null, onSuccess, null, null);
+        if (currentThread.getExecution().isSandbox())
+            caller.setInvoker(new SandboxInvoker());
+
+        // catch an exception thrown from body and treat that as a failure
+        TryBlockEnv env = new TryBlockEnv(caller, null);
+        env.addHandler(Throwable.class, onFailure);
+
+        return new Continuable(
+            // this source location is a place holder for the step implementation.
+            // perhaps at some point in the future we'll let the Step implementation control this.
+            inv.invoke(env, SourceLocation.UNKNOWN, onSuccess));
+    }
 
     @Override
     public synchronized Collection<StepExecution> getCurrentExecutions() {
@@ -82,7 +189,7 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
                     try {
                         s.stop(stopped);
                     } catch (Exception e) {
-                        LOGGER.log(Level.WARNING, "Failed to stop " + s, e);
+                        LOGGER.log(WARNING, "Failed to stop " + s, e);
                     }
                 }
 
@@ -127,6 +234,16 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
         else    throw new ExecutionException(outcome.getAbnormal());
     }
 
+    private void setOutcome(Outcome o) {
+        synchronized (this) {
+            if (outcome!=null)
+                throw new IllegalStateException("Outcome is already set");
+            this.outcome = o;
+            notifyAll();    // wake up everyone waiting for the outcome.
+        }
+        context.saveState();
+    }
+
     /**
      * Start running the new thread unless the stop is requested, in which case the thread gets aborted right away.
      */
@@ -137,76 +254,124 @@ class CpsBodyExecution extends BodyExecution implements FutureCallback {
 
         assert this.thread==null;
         this.thread = t;
-
     }
 
-    public void prependCallback(FutureCallback<Object> callback) {
-        if (!(callback instanceof Serializable))
-            throw new IllegalStateException("Callback must be persistable, but got "+callback.getClass());
-
-        Outcome o;
-        synchronized (this) {
-            if (callbacks != null) {
-                callbacks.add(0,callback);
-                return;
-            }
-            o = outcome;
-        }
-
-        // if the computation has completed,
-        fire(callback, o);
-    }
-
-    public void addCallback(FutureCallback<Object> callback) {
-        if (!(callback instanceof Serializable))
-            throw new IllegalStateException("Callback must be persistable, but got "+callback.getClass());
-
-        Outcome o;
-        synchronized (this) {
-            if (callbacks != null) {
-                callbacks.add(callback);
-                return;
-            }
-            o = outcome;
-        }
-
-        // if the computation has completed,
-        fire(callback, o);
-    }
-
-    private void fire(FutureCallback<Object> callback, Outcome o) {
-        if (o.isSuccess())    callback.onSuccess(o.getNormal());
-        else                  callback.onFailure(o.getAbnormal());
+    public void addCallback(BodyExecutionCallback callback) {
+        assert !isDone();   // can be only called before it launches
+        callbacks.add(callback);
     }
 
     public synchronized boolean isDone() {
         return outcome!=null;
     }
 
+    /*package*/ void fireOnStart(StepStartNode sn) {
+        StepContext sc = subContext(sn);
+        for (BodyExecutionCallback c : callbacks) {
+            c.onStart(sc);
+        }
+    }
+
+    private class FailureAdapter implements Continuation {
+        @Override
+        public Next receive(Object o) {
+            StepEndNode en = addBodyEndFlowNode();
+
+            Throwable t = (Throwable)o;
+            en.addAction(new ErrorAction(t));
+
+            setOutcome(new Outcome(null,t));
+            StepContext sc = subContext(en);
+            for (BodyExecutionCallback c : callbacks) {
+                c.onFailure(sc, t);
+            }
+
+            return Next.terminate(null);
+        }
+
+        private static final long serialVersionUID = 1L;
+    }
+
+    private class SuccessAdapter implements Continuation {
+        @Override
+        public Next receive(Object o) {
+            StepEndNode en = addBodyEndFlowNode();
+
+            setOutcome(new Outcome(o,null));
+            StepContext sc = subContext(en);
+            for (BodyExecutionCallback c : callbacks) {
+                c.onSuccess(sc, o);
+            }
+
+            return Next.terminate(null);
+        }
+
+        private static final long serialVersionUID = 1L;
+    }
+
     /**
-     * Atomically commits the outcome and then grabs all the callbacks.
+     * Creates a sub-context to call {@link BodyExecutionCallback}.
+     * If {@link #createBodyBlockNode} is false, then we don't have distinctive
+     * {@link FlowNode}, so we just hand out the master context.
      */
-    private synchronized List<FutureCallback<Object>> grabCallbacks(Outcome o) {
-        if (this.outcome!=null)     return Collections.emptyList(); // already completed
-
-        this.outcome = o;
-        List<FutureCallback<Object>> r = callbacks;
-        callbacks = null;
-        return r;
+    private StepContext subContext(FlowNode n) {
+        if (n==null)
+            return context;
+        else
+            return new CpsBodySubContext(context,n);
     }
 
-    @Override
-    public void onSuccess(Object result) {
-        for (FutureCallback<Object> c : grabCallbacks(new Outcome(result,null))) {
-            c.onSuccess(result);
+    /**
+     * Inserts the flow node that indicates the beginning of the body invocation.
+     *
+     * @see #addBodyEndFlowNode()
+     */
+    private @CheckForNull StepStartNode addBodyStartFlowNode(FlowHead head) {
+        if (createBodyBlockNode) {
+            StepStartNode start = new StepStartNode(head.getExecution(),
+                    context.getStepDescriptor(), head.get());
+            this.startNodeId = start.getId();
+            start.addAction(new BodyInvocationAction());
+            head.setNewHead(start);
+            return start;
+        } else {
+            return null;
         }
     }
 
-    @Override
-    public void onFailure(Throwable t) {
-        for (FutureCallback<Object> c : grabCallbacks(new Outcome(null,t))) {
-            c.onFailure(t);
+    /**
+     * Inserts the flow node that indicates the beginning of the body invocation.
+     *
+     * @see #addBodyStartFlowNode(FlowHead)
+     */
+    private @CheckForNull StepEndNode addBodyEndFlowNode() {
+        if (createBodyBlockNode) {
+            try {
+                FlowHead head = CpsThread.current().head;
+
+                StepEndNode end = new StepEndNode(head.getExecution(),
+                        getBodyStartNode(), head.get());
+                end.addAction(new BodyInvocationAction());
+                head.setNewHead(end);
+
+                return end;
+            } catch (IOException e) {
+                LOGGER.log(WARNING, "Failed to grow the flow graph", e);
+                throw new Error(e);
+            }
+        } else {
+            return null;
         }
+    }
+
+    public StepStartNode getBodyStartNode() throws IOException {
+        if (startNodeId==null)
+            throw new IllegalStateException("StepStartNode is not yet created");
+        CpsThread t;
+        synchronized (this) {// to make findbugs happy
+            t = thread;
+        }
+        return (StepStartNode) t.getExecution().getNode(startNodeId);
     }
 
 

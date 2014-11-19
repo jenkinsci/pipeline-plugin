@@ -24,11 +24,11 @@
 
 package org.jenkinsci.plugins.workflow.test.steps;
 
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
+import com.google.common.util.concurrent.FutureCallback;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import com.google.common.util.concurrent.FutureCallback;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.util.Map;
@@ -44,13 +44,13 @@ public final class BlockSemaphoreStep extends Step {
         INIT,
         /** {@link #start} has been called, but the block has not started. */
         STARTED,
-        /** {@link StepContext#invokeBodyLater} has been called, so the block has started. */
+        /** {@link StepContext#newBodyInvoker} has been called, so the block has started. */
         BLOCK_STARTED,
-        /** {@link FutureCallback} from {@link StepContext#invokeBodyLater} has been notified, so the block has ended. */
+        /** {@link FutureCallback} from {@link StepContext#newBodyInvoker} has been notified, so the block has ended. */
         BLOCK_ENDED,
         /** {@link FutureCallback} from {@link Step} has been notified, so the whole step has ended. */
         DONE,
-        /** Aborted through {@link StepExecution#stop(FlowInterruptedException)}. */
+        /** Aborted through {@link StepExecution#stop(Throwable)}. */
         STOPPED
     }
 
@@ -87,15 +87,15 @@ public final class BlockSemaphoreStep extends Step {
 
     public void startBlock(Object... contextOverrides) {
         moveFrom(State.STARTED);
-        context.invokeBodyLater(contextOverrides).addCallback(new Callback());
+        context.newBodyInvoker().withContext(contextOverrides).withCallback(new Callback()).start();
     }
     
-    private class Callback implements FutureCallback {
-        @Override public void onSuccess(Object returnValue) {
+    private class Callback extends BodyExecutionCallback {
+        @Override public void onSuccess(StepContext context, Object returnValue) {
             blockReturnValue = returnValue;
             blockDone();
         }
-        @Override public void onFailure(Throwable t) {
+        @Override public void onFailure(StepContext context, Throwable t) {
             blockFailure = t;
             blockDone();
         }

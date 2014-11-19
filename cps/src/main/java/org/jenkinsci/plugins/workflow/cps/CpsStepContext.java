@@ -29,7 +29,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import groovy.lang.Closure;
-import hudson.model.Action;
 import hudson.model.Descriptor;
 import hudson.model.Result;
 import jenkins.model.Jenkins;
@@ -41,27 +40,28 @@ import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.steps.BodyExecution;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
+import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nonnull;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
-import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 /**
  * {@link StepContext} implementation for CPS.
@@ -81,6 +81,7 @@ import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
  * when we need pointers to individual objects inside, we use IDs (such as {@link #id}}.
  *
  * @author Kohsuke Kawaguchi
+ * @see Step#start(StepContext)
  */
 @PersistIn(ANYWHERE)
 @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED") // bodyInvokers, syncMode handled specially
@@ -134,9 +135,10 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      *
      * <p>
      * Only used in the synchronous mode while {@link CpsFlowExecution} is in the RUNNABLE state,
-     * so this need not be persisted.
+     * so this need not be persisted. To preserve the order of invocation in the flow graph,
+     * this needs to be a list and not set.
      */
-    transient List<BodyInvoker> bodyInvokers = Collections.synchronizedList(new ArrayList<BodyInvoker>());
+    transient List<CpsBodyInvoker> bodyInvokers = Collections.synchronizedList(new ArrayList<CpsBodyInvoker>());
 
     /**
      * While {@link CpsStepContext} has not received teh response, maintains the body closure.
@@ -226,50 +228,14 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     }
 
     @Override
-    public BodyExecution invokeBodyLater(Object... contextOverrides) {
-        return invokeBodyLater(body,Collections.<Action>emptyList(),contextOverrides);
+    public CpsBodyInvoker newBodyInvoker() {
+        return newBodyInvoker(body);
     }
 
-    /**
-     * @param startNodeActions
-     *      actions to be added to {@link StepStartNode} that indicates the beginning of a body invocation.
-     */
-    public BodyExecution invokeBodyLater(BodyReference body, List<? extends Action> startNodeActions, Object... contextOverrides) {
+    public CpsBodyInvoker newBodyInvoker(BodyReference body) {
         if (body==null)
             throw new IllegalStateException("There's no body to invoke");
-
-        final BodyInvoker b = new BodyInvoker(this,body,startNodeActions,contextOverrides);
-
-        boolean _syncMode;
-        synchronized (this) { // TODO should this whole method be synchronized? mainly getExecution() is a concern
-            _syncMode = syncMode;
-        }
-
-        if (_syncMode) {
-            // we process this in ThreadTaskImpl
-            bodyInvokers.add(b);
-        } else {
-            try {
-                getExecution().runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
-                    @Override
-                    public void onSuccess(CpsThreadGroup g) {
-                        CpsThread thread = getThread(g);
-                        if (thread != null) {
-                            b.start(thread);
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        b.bodyExecution.onFailure(t);
-                    }
-                });
-            } catch (IOException e) {
-                b.bodyExecution.onFailure(e);
-            }
-        }
-
-        return b.bodyExecution;
+        return new CpsBodyInvoker(this,body);
     }
 
     @Override
@@ -385,6 +351,10 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
 
     synchronized boolean isCompleted() {
         return outcome!=null;
+    }
+
+    synchronized boolean isSyncMode() {
+        return syncMode;
     }
 
     /**

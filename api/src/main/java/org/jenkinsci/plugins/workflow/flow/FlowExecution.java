@@ -123,7 +123,7 @@ public abstract class FlowExecution implements FlowActionStorage {
      * with the specified status.
      *
      * <p>
-     * If it's evaluating bodies (see {@link StepContext#invokeBodyLater(Object...)},
+     * If it's evaluating bodies (see {@link StepContext#newBodyInvoker()},
      * then it's callback needs to be invoked.
      * <p>
      * Do not use this from a step. Throw {@link FlowInterruptedException} or some other exception instead.

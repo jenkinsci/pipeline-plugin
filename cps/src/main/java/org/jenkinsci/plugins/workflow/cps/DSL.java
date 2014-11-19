@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
-import com.google.common.util.concurrent.FutureCallback;
 import groovy.lang.Closure;
 import groovy.lang.GString;
 import groovy.lang.GroovyObject;
@@ -39,8 +38,10 @@ import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.MissingContextVariableException;
 import org.jenkinsci.plugins.workflow.steps.Step;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
@@ -327,12 +328,12 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             }
 
             int idx=0;
-            for (BodyInvoker b : context.bodyInvokers) {
+            for (CpsBodyInvoker b : context.bodyInvokers) {
                 // don't collect the first head, which is what we borrowed from our parent.
                 FlowHead h = heads[idx];
                 if (idx>0)
-                    b.bodyExecution.prependCallback(new HeadCollector(context, h));
-                b.start(cur, h);
+                    b.prependCallback(new HeadCollector(context, h));
+                b.launch(cur, h);
                 idx++;
             }
 
@@ -343,7 +344,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
          * When a new {@link CpsThread} that runs the body completes, record
          * its new head.
          */
-        private static class HeadCollector implements FutureCallback, Serializable {
+        private static class HeadCollector extends BodyExecutionCallback {
             private final CpsStepContext context;
             private final FlowHead head;
 
@@ -358,12 +359,12 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             }
 
             @Override
-            public void onSuccess(Object result) {
+            public void onSuccess(StepContext context, Object result) {
                 onEnd();
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(StepContext context, Throwable t) {
                 onEnd();
             }
         }

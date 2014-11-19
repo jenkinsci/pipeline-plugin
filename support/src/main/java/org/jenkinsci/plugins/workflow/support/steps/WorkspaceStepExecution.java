@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Job;
@@ -9,13 +8,11 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.slaves.WorkspaceList;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.BodyExecution;
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
-
-import java.io.Serializable;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 
@@ -48,8 +45,11 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
         FilePath workspace = lease.path;
         flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
         listener.getLogger().println("Running in " + workspace);
-        body = getContext().invokeBodyLater(workspace);
-        body.addCallback(new Callback(getContext(), lease));
+        body = getContext().newBodyInvoker()
+                .withContext(workspace)
+                .withCallback(new Callback(getContext(), lease))
+                .withDisplayName(null)
+                .start();
         return false;
     }
 
@@ -60,7 +60,7 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
     }
 
     @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // lease is pickled
-    private static final class Callback implements FutureCallback<Object>, Serializable {
+    private static final class Callback extends BodyExecutionCallback {
 
         private final StepContext context;
         private final WorkspaceList.Lease lease;
@@ -70,14 +70,14 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
             this.lease = lease;
         }
 
-        @Override public void onSuccess(Object result) {
+        @Override public void onSuccess(StepContext context, Object result) {
             lease.release();
-            context.onSuccess(result);
+            this.context.onSuccess(result);
         }
 
-        @Override public void onFailure(Throwable t) {
+        @Override public void onFailure(StepContext context, Throwable t) {
             lease.release();
-            context.onFailure(t);
+            this.context.onFailure(t);
         }
 
     }

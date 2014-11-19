@@ -10,7 +10,6 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -43,11 +42,10 @@ class ParallelStepExecution extends StepExecution {
         ResultHandler r = new ResultHandler(cps);
 
         for (Entry<String,Closure> e : parallelStep.closures.entrySet()) {
-            BodyExecution body = cps.invokeBodyLater(
-                    t.getGroup().export(e.getValue()),
-                    Collections.singletonList(new ParallelLabelAction(e.getKey()))
-            );
-            body.addCallback(r.callbackFor(e.getKey()));
+            BodyExecution body = cps.newBodyInvoker(t.getGroup().export(e.getValue()))
+                    .withStartAction(new ParallelLabelAction(e.getKey()))
+                    .withCallback(r.callbackFor(e.getKey()))
+                    .start();
             bodies.add(body);
         }
 

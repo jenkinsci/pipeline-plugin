@@ -23,7 +23,6 @@
  */
 package org.jenkinsci.plugins.workflow.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import jenkins.model.CauseOfInterruption;
 
 import java.io.Serializable;
@@ -38,7 +37,7 @@ import java.util.concurrent.Future;
  * so that you can cancel the execution, install a listener, etc.
  *
  * @author Kohsuke Kawaguchi
- * @see StepContext#invokeBodyLater(Object...)
+ * @see BodyInvoker#start()
  */
 public abstract class BodyExecution implements Future<Object>, Serializable {
     // I wanted to make this extend from ListenableFuture, but its addListener method takes
@@ -76,13 +75,6 @@ public abstract class BodyExecution implements Future<Object>, Serializable {
     public boolean cancel(Throwable t) {
         return cancel(new ExceptionCause(t));
     }
-
-    /**
-     * Adds a callback that gets invoked when the body finishes execution.
-     *
-     * If the execution is already completed, the callback will be invoked immediately.
-     */
-    public abstract void addCallback(FutureCallback<Object> callback);
 
     private static final long serialVersionUID = 1L;
 }

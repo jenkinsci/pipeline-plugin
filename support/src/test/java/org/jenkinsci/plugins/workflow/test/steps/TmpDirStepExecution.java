@@ -1,14 +1,12 @@
 package org.jenkinsci.plugins.workflow.test.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import hudson.FilePath;
 import hudson.Util;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 
 import java.io.File;
-import java.io.Serializable;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -17,7 +15,11 @@ public class TmpDirStepExecution extends AbstractStepExecutionImpl {
     @Override
     public boolean start() throws Exception {
         File dir = Util.createTempDir();
-        getContext().invokeBodyLater(new FilePath(dir)).addCallback(new Callback(getContext(), dir));
+        getContext().newBodyInvoker()
+                .withContext(new FilePath(dir))
+                .withCallback(new Callback(getContext(), dir))
+                .withDisplayName(null)
+                .start();
         return false;
     }
 
@@ -28,7 +30,7 @@ public class TmpDirStepExecution extends AbstractStepExecutionImpl {
     /**
      * Wipe off the allocated temporary directory in the end.
      */
-    private static final class Callback implements FutureCallback<Object>, Serializable {
+    private static final class Callback extends BodyExecutionCallback {
         private final StepContext context;
         private final File dir;
 
@@ -37,13 +39,13 @@ public class TmpDirStepExecution extends AbstractStepExecutionImpl {
             this.dir = dir;
         }
 
-        @Override public void onSuccess(Object result) {
-            context.onSuccess(result);
+        @Override public void onSuccess(StepContext context, Object result) {
+            this.context.onSuccess(result);
             delete();
         }
 
-        @Override public void onFailure(Throwable t) {
-            context.onFailure(t);
+        @Override public void onFailure(StepContext context, Throwable t) {
+            this.context.onFailure(t);
             delete();
         }
 

@@ -121,7 +121,7 @@ public abstract class DefaultStepContext extends StepContext {
     }
 
     /**
-     * The actual logic of {@link #get}, such as retrieving overrides passed to {@link #invokeBodyLater}.
+     * The actual logic of {@link #get}, such as retrieving overrides passed to {@link #newBodyInvoker}.
      */
     protected abstract @CheckForNull <T> T doGet(Class<T> key) throws IOException, InterruptedException;
 

@@ -103,19 +103,18 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
     public abstract void setResult(Result r);
 
     /**
-     * Schedules an asynchronous invocation of the body block that's given as an argument
-     * to this step invocation (in a host language dependent manner), then when the block
-     * is completed normally or abnormally, invoke the given callback.
+     * Prepares for an asynchronous invocation of the body block that's given as an argument
+     * to this step invocation (in a host language dependent manner.)
+     *
+     * <p>
+     * When the block is completed normally or abnormally, you can have
+     * {@linkplain BodyInvoker#withCallback(FutureCallback) have the callback invoked}.
+     * The invocation will not get scheduled until {@linkplain BodyInvoker#start() you start it}.
      *
      * <p>
      * {@link StepDescriptor#takesImplicitBlockArgument} must be true.
-     *
-     * @param contextOverrides
-     *      Overrides to the context values that are in effect while evaluating the body.
-     *      Only allowed values are instances of the predefined types (see {@link #get(Class)} above.)
-     *      TODO: more restrictive list here; do NOT pass Launcher
      */
-    public abstract BodyExecution invokeBodyLater(Object... contextOverrides);
+    public abstract BodyInvoker newBodyInvoker();
 
     /**
      * {@link StepContext}s get persisted, so they may not have the identity equality, but equals

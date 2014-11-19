@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.inject.Inject;
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -43,6 +42,7 @@ import org.jenkinsci.plugins.durabletask.executors.ContinuedTask;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
@@ -323,7 +323,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
          * Called when the body closure is complete.
          */
         @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // lease is pickled
-        private static final class Callback implements FutureCallback<Object>, Serializable {
+        private static final class Callback extends BodyExecutionCallback {
 
             private final String cookie;
             private WorkspaceList.Lease lease;
@@ -333,7 +333,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 this.lease = lease;
             }
 
-            @Override public void onSuccess(Object returnValue) {
+            @Override public void onSuccess(StepContext _, Object returnValue) {
                 LOGGER.log(Level.FINE, "onSuccess {0}", cookie);
                 lease.release();
                 lease = null;
@@ -343,7 +343,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 }
             }
 
-            @Override public void onFailure(Throwable t) {
+            @Override public void onFailure(StepContext _, Throwable t) {
                 LOGGER.log(Level.FINE, "onFailure {0}", cookie);
                 lease.release();
                 lease = null;
@@ -401,7 +401,11 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         FlowNode flowNode = context.get(FlowNode.class);
                         flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
                         listener.getLogger().println("Running on " + computer.getDisplayName() + " in " + workspace); // TODO hyperlink
-                        context.invokeBodyLater(exec, computer, env, workspace).addCallback(new Callback(cookie, lease));
+                        context.newBodyInvoker()
+                                .withContexts(exec, computer, env, workspace)
+                                .withDisplayName(null)
+                                .withCallback(new Callback(cookie, lease))
+                                .start();
                         LOGGER.log(Level.FINE, "started {0}", cookie);
                     } else {
                         // just rescheduled after a restart; wait for task to complete

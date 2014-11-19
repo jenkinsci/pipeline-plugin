@@ -4,16 +4,12 @@ import com.google.inject.Inject;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import hudson.FilePath;
-import hudson.model.Action;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.cps.CpsThread;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-
-import java.util.Collections;
 
 /**
  * Loads another Groovy script file and executes it.
@@ -43,10 +39,9 @@ public class LoadStepExecution extends AbstractStepExecutionImpl {
 
         // execute body as another thread that shares the same head as this thread
         // as the body can pause.
-        cps.invokeBodyLater(
-                t.getGroup().export(script),
-                Collections.<Action>emptyList()
-        ).addCallback(cps); // when the body is done, the load step is done
+        cps.newBodyInvoker(t.getGroup().export(script))
+                .withCallback(cps)
+                .start(); // when the body is done, the load step is done
 
         return false;
     }

@@ -1,13 +1,13 @@
 package org.jenkinsci.plugins.workflow.cps.steps;
 
 import com.cloudbees.groovy.cps.Outcome;
-import com.google.common.util.concurrent.FutureCallback;
 import groovy.lang.Closure;
 import hudson.Extension;
 import hudson.model.TaskListener;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.cps.CpsVmThreadOnly;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -83,7 +83,7 @@ public class ParallelStep extends Step {
             return new Callback(this, name);
         }
 
-        private static class Callback implements FutureCallback, Serializable {
+        private static class Callback extends BodyExecutionCallback {
 
             private final ResultHandler handler;
             private final String name;
@@ -94,13 +94,13 @@ public class ParallelStep extends Step {
             }
 
             @Override
-            public void onSuccess(Object result) {
+            public void onSuccess(StepContext context, Object result) {
                 handler.outcomes.put(name, new Outcome(result, null));
                 checkAllDone();
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(StepContext context, Throwable t) {
                 handler.outcomes.put(name, new Outcome(null, t));
                 checkAllDone();
             }
