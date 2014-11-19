@@ -81,6 +81,7 @@ public class WorkflowRunTest {
         WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertEquals(b1, b2.getPreviousBuild());
         assertEquals(null, b1.getPreviousBuild());
+        assertTrue(b1.getLog().contains("hello\n"));
     }
 
     @Test public void parameters() throws Exception {
