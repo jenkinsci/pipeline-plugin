@@ -88,7 +88,7 @@ public final class CpsThread implements Serializable {
      * The head of the flow node graph that this thread is growing.
      *
      * <p>
-     * We create {@link CpsThread}s liberally in {@link CpsStepContext#invokeBodyLater(FutureCallback, Object...)},
+     * We create {@link CpsThread}s liberally in {@link CpsBodyExecution#launch(CpsBodyInvoker, CpsThread, FlowHead)},
      * and so multiple {@link CpsThread}s often share the same flow head.
      */
     final FlowHead head;

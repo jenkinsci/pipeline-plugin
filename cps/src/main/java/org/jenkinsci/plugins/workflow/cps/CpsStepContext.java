@@ -325,7 +325,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                     CpsThread thread = getThread(g);
                     if (thread != null) {
                         CpsThread nit = thread.getNextInner();
-                        if (nit!=thread) {
+                        if (nit!=null) {
                             // can't mark this done until the inner thread is done.
                             // defer the processing until the inner thread is done
                             nit.addCompletionHandler(new FutureCallback<Object>() {
