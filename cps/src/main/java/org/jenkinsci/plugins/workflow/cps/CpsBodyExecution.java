@@ -114,7 +114,11 @@ class CpsBodyExecution extends BodyExecution {
             if (a!=null)
                 sn.addAction(a);
         }
-        fireOnStart(sn);
+
+        StepContext sc = subContext(sn);
+        for (BodyExecutionCallback c : callbacks) {
+            c.onStart(sc);
+        }
 
         try {
             // TODO: handle arguments to closure
@@ -128,7 +132,13 @@ class CpsBodyExecution extends BodyExecution {
             CpsThread t = currentThread.group.addThread(createContinuable(currentThread, e), head,
                     ContextVariableSet.from(currentThread.getContextVariables(), params.contextOverrides));
 
-            startExecution(t);
+            // let the new CpsThread run. Either get the new thread going normally with (null,null), or abort from the beginning
+            // due to earlier cancellation
+            synchronized (this) {
+                t.resume(new Outcome(null, stopped));
+                assert this.thread==null;
+                this.thread = t;
+            }
         } catch (Throwable t) {
             // body has completed synchronously and abnormally
             onFailure.receive(t);
@@ -255,32 +265,8 @@ class CpsBodyExecution extends BodyExecution {
         context.saveState();
     }
 
-    /**
-     * Start running the new thread unless the stop is requested, in which case the thread gets aborted right away.
-     */
-    @CpsVmThreadOnly
-    /*package*/ synchronized void startExecution(CpsThread t) {
-        // either get the new thread going normally, or abort from the beginning
-        t.resume(new Outcome(null, stopped));
-
-        assert this.thread==null;
-        this.thread = t;
-    }
-
-    public void addCallback(BodyExecutionCallback callback) {
-        assert !isDone();   // can be only called before it launches
-        callbacks.add(callback);
-    }
-
     public synchronized boolean isDone() {
         return outcome!=null;
-    }
-
-    /*package*/ void fireOnStart(StepStartNode sn) {
-        StepContext sc = subContext(sn);
-        for (BodyExecutionCallback c : callbacks) {
-            c.onStart(sc);
-        }
     }
 
     private class FailureAdapter implements Continuation {
