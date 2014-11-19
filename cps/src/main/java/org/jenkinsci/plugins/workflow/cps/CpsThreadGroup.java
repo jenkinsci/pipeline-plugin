@@ -275,6 +275,7 @@ public final class CpsThreadGroup implements Serializable {
 
                     if (!t.isAlive()) {
                         LOGGER.fine("completed " + t);
+                        t.fireCompletionHandlers(o); // do this after ErrorAction is set above
 
                         threads.remove(t.id);
                         if (threads.isEmpty()) {

@@ -31,10 +31,13 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
@@ -98,6 +101,11 @@ public final class CpsThread implements Serializable {
      * this field is set to that execution.
      */
     private StepExecution step;
+
+    /**
+     * Gets called when the thread is done.
+     */
+    private final List<FutureCallback<Object>> completionHandlers = new ArrayList<FutureCallback<Object>>();
 
     CpsThread(CpsThreadGroup group, int id, Continuable program, FlowHead head, ContextVariableSet contextVariables) {
         this.group = group;
@@ -209,6 +217,32 @@ public final class CpsThread implements Serializable {
         return program.isResumable();
     }
 
+    @CpsVmThreadOnly
+    void addCompletionHandler(FutureCallback<Object> h) {
+        completionHandlers.add(h);
+    }
+
+    @CpsVmThreadOnly
+    void fireCompletionHandlers(Outcome o) {
+        for (FutureCallback<Object> h : completionHandlers) {
+            if (o.isSuccess())  h.onSuccess(o.getNormal());
+            else                h.onFailure(o.getAbnormal());
+        }
+    }
+
+    /**
+     * Finds the next younger {@link CpsThread} that shares the same {@link FlowHead}.
+     *
+     * Can be {@code this.}
+     */
+    @CheckForNull CpsThread getNextInner() {
+        for (CpsThread t : group.threads.values()) {
+            if (t.id <= this.id) continue;
+            if (t.head==this.head)  return t;
+        }
+        return null;
+    }
+
     /**
      * Schedules the execution of this thread from the last {@linkplain Continuable#suspend(Object)} point.
      *
@@ -242,5 +276,4 @@ public final class CpsThread implements Serializable {
         // getExecution().getOwner() would be useful but seems problematic.
         return "Thread #" + id + String.format(" @%h", this);
     }
-
 }

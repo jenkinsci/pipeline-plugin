@@ -40,9 +40,11 @@ import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
@@ -319,6 +321,33 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                     body = null;
                     CpsThread thread = getThread(g);
                     if (thread != null) {
+                        CpsThread nit = thread.getNextInner();
+                        if (nit!=thread) {
+                            // can't mark this done until the inner thread is done.
+                            // defer the processing until the inner thread is done
+                            nit.addCompletionHandler(new FutureCallback<Object>() {
+                                public void onSuccess(Object _)    { scheduleNextRun(); }
+                                public void onFailure(Throwable _) { scheduleNextRun(); }
+                            });
+                            if (getOutcome().isFailure()) {
+                                // if the step with a currently running body reported a failure,
+                                // make some effort to try to interrupt the running body
+                                StepExecution s = nit.getStep();
+                                if (s != null) {
+                                    // TODO: ideally this needs to work like interrupt, in that
+                                    // if s==null the next StepExecution gets interrupted when it happen
+                                    FlowInterruptedException cause = new FlowInterruptedException(Result.FAILURE);
+                                    cause.initCause(getOutcome().getAbnormal());
+                                    try {
+                                        s.stop(cause);
+                                    } catch (Exception e) {
+                                        LOGGER.log(Level.WARNING, "Failed to stop the body execution in response to the failure of the parent");
+                                    }
+                                }
+                            }
+                            return;
+                        }
+
                         if (n instanceof StepStartNode) {
                             FlowNode tip = thread.head.get();
                             parents.set(0, tip);
