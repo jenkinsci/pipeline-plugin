@@ -57,7 +57,7 @@ class CpsBodyExecution extends BodyExecution {
     /**
      * Thread that's executing the body.
      */
-    @GuardedBy("this")
+    @GuardedBy("this") // 'thread' and 'stopped' needs to be compared & set atomically
     private CpsThread thread;
 
     /**
@@ -124,7 +124,12 @@ class CpsBodyExecution extends BodyExecution {
             // TODO: handle arguments to closure
             Object x = params.body.getBody(currentThread).call();
 
-            onSuccess.receive(x);   // body has completed synchronously
+            // body has completed synchronously. mark this done after the fact
+            // pointless synchronization to make findbugs happy. This is already done, so there's no cancelling this anyway.
+            synchronized (this) {
+                this.thread = currentThread;
+            }
+            onSuccess.receive(x);
         } catch (CpsCallableInvocation e) {
             // execute this closure asynchronously
             // TODO: does it make sense that the new thread shares the same head?
