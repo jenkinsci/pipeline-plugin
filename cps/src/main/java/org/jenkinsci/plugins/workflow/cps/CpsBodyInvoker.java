@@ -33,6 +33,7 @@ import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -138,7 +139,7 @@ public final class CpsBodyInvoker extends BodyInvoker {
             // if this step is already done, no further body invocations can happen doing so will end up
             // causing two CpsThreads competing on the same FlowHead.
             // if this restriction ever needs to be lifted, the newly launched body will have to run in a separate thread.
-            throw new IllegalStateException("The " + owner.getStepDescriptor().getFunctionName() + " step has already completed.");
+            throw new IllegalStateException("The " + owner.getDisplayName() + " step has already completed.");
         }
 
         owner.incrementStartedBodies();
