@@ -472,6 +472,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
 
     private static final long serialVersionUID = 1L;
 
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_INNER_CLASS")
     private class ScheduleNextRun implements FutureCallback<Object>, Serializable {
         public void onSuccess(Object _)    { scheduleNextRun(); }
         public void onFailure(Throwable _) { scheduleNextRun(); }
