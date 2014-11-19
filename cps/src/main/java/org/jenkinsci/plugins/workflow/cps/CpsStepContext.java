@@ -48,6 +48,7 @@ import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
@@ -87,7 +88,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
 
     private static final Logger LOGGER = Logger.getLogger(CpsStepContext.class.getName());
 
-    // guarded by 'this'
+    @GuardedBy("this")
     private transient Outcome outcome;
 
     // see class javadoc.
