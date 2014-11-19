@@ -2,6 +2,14 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
+## 1.0-beta-1
+
+### User changes
+* Fixes to start time, duration, and similar aspects of flow runs.
+
+### API changes
+* `BodyInvoker` and `BodyExecutionCallback` replace `StepContext.invokeBodyLater` and `BodyExecution.addCallback` for better control of execution behavior.
+
 ## 0.1-beta-8
 
 ### User changes
