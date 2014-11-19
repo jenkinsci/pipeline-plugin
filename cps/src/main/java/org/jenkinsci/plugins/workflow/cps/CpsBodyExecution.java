@@ -269,6 +269,7 @@ class CpsBodyExecution extends BodyExecution {
             this.outcome = o;
             notifyAll();    // wake up everyone waiting for the outcome.
         }
+        context.incrementEndedBodies();
         context.saveState();
     }
 

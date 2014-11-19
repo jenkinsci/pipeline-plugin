@@ -79,6 +79,33 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  * graph. Wherever we need {@link CpsFlowExecution} we do that by following {@link FlowExecutionOwner}, and
  * when we need pointers to individual objects inside, we use IDs (such as {@link #id}}.
  *
+ *
+ * <h2>State Transitions</h2>
+ * <p>
+ * A step execution goes through the following state transition.
+ *
+ * <pre>
+ *
+ * INITIAL STATE ----> StepExecution.start() ---> done synchronously?
+ *                                                   |
+ *                                                   +--(Yes)--> DONE STATE
+ *                                                   |
+ *                                                   +--(No)--+
+ *                                                            |
+ * +----------------------------------------------------------+
+ * |
+ * |
+ * |                        ||                                ||
+ * |                        ||----> body executions ----+---->||
+ * |                        ||             ^            |     ||
+ * +--> ASYNC EXEC STATE  --||             |            |     ||----> DONE STATE
+ *                          ||             +------------+     ||
+ *                          ||                                ||
+ *                          ||                                ||
+ *                          ||----> outcome set ------------->||
+ *                          ||                                ||
+ * </pre>
+ *
  * @author Kohsuke Kawaguchi
  * @see Step#start(StepContext)
  */
@@ -89,7 +116,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     private static final Logger LOGGER = Logger.getLogger(CpsStepContext.class.getName());
 
     @GuardedBy("this")
-    private transient Outcome outcome;
+    private Outcome outcome;
 
     // see class javadoc.
     // transient because if it's serialized and deserialized, it should come back in the async mode.
@@ -128,6 +155,11 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      * the parents of the {@link BlockEndNode} when we create one. Only used when this context has the body.
      */
     final Map<Integer,String> bodyInvHeads = new TreeMap<Integer,String>();
+
+    @GuardedBy("this")
+    private int startedBodies;
+    @GuardedBy("this")
+    private int endedBodies;
 
     /**
      * If the invocation of the body is requested, this object remembers how to start it.
@@ -276,7 +308,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     public synchronized void onFailure(Throwable t) {
         if (t==null)
             throw new IllegalArgumentException();
-        if (isCompleted())
+        if (isOutcomeSet())
             throw new IllegalStateException("Already completed", t);
         this.outcome = new Outcome(null,t);
 
@@ -284,7 +316,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     }
 
     public synchronized void onSuccess(Object returnValue) {
-        if (isCompleted())
+        if (isOutcomeSet())
             throw new IllegalStateException("Already completed");
         this.outcome = new Outcome(returnValue,null);
 
@@ -298,6 +330,13 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         if (syncMode) {
             // if we get the result set before the start method returned, then DSL.invokeMethod() will
             // plan the next action.
+            return;
+        }
+
+        if (!isCompleted()) {
+            // two move on to the next step we need both the outcome be set and all the bodies done.
+            // this method gest called every time situation changes on both fronts, so if we aren't ready yet
+            // this method will be called back again.
             return;
         }
 
@@ -356,8 +395,18 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         return (CpsFlowExecution)executionRef.get();
     }
 
-    synchronized boolean isCompleted() {
+    /**
+     * This {@link StepContext} has received {@link FutureCallback} calls to set the result.
+     */
+    synchronized boolean isOutcomeSet() {
         return outcome!=null;
+    }
+
+    /**
+     * {@linkplain #isOutcomeSet() the outcome is set} as well as all the body invocations have completed.
+     */
+    synchronized boolean isCompleted() {
+        return isOutcomeSet() && startedBodies==endedBodies;
     }
 
     synchronized boolean isSyncMode() {
@@ -397,7 +446,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     synchronized boolean switchToAsyncMode() {
         if (!syncMode)  throw new AssertionError();
         syncMode = false;
-        return !isCompleted();
+        return !isOutcomeSet();
     }
 
     @Override public ListenableFuture<Void> saveState() {
@@ -421,6 +470,24 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         } catch (IOException x) {
             return Futures.immediateFailedFuture(x);
         }
+    }
+
+    /**
+     * Called whenever new {@linkplain CpsBodyInvoker#start() a new body gets started}.
+     */
+    /*package*/ synchronized void incrementStartedBodies() {
+        startedBodies++;
+    }
+
+    /**
+     * Called whenever the body execution completes
+     * {@linkplain CpsBodyExecution#onSuccess successfully} or
+     * {@linkplain CpsBodyExecution#onFailure otherwise}.
+     */
+    /*package*/ synchronized void incrementEndedBodies() {
+        endedBodies++;
+        // do we have both the result set and the bodies all done?
+        scheduleNextRun();
     }
 
     @Override
