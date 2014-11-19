@@ -57,7 +57,7 @@ class CpsBodyExecution extends BodyExecution {
     /**
      * Thread that's executing the body.
      */
-    @GuardedBy("this")
+    @GuardedBy("this") // 'thread' and 'stopped' needs to be compared & set atomically
     private CpsThread thread;
 
     /**
@@ -75,9 +75,13 @@ class CpsBodyExecution extends BodyExecution {
 
     private String startNodeId;
 
-    final Continuation onSuccess = new SuccessAdapter();
+    private final Continuation onSuccess = new SuccessAdapter();
 
-    final Continuation onFailure = new FailureAdapter();
+    /**
+     * Unlike {@link #onSuccess} that can only happen after {@link #launch(CpsBodyInvoker, CpsThread, FlowHead)},
+     * a failure can happen right after {@link CpsBodyInvoker#start()} before we get a chance to be launched.
+     */
+    /*package*/ final Continuation onFailure = new FailureAdapter();
 
     @GuardedBy("this")
     private Outcome outcome;
@@ -104,19 +108,30 @@ class CpsBodyExecution extends BodyExecution {
      */
     @CpsVmThreadOnly
     /*package*/ void launch(CpsBodyInvoker params, CpsThread currentThread, FlowHead head) {
+        if (isLaunched())
+            throw new IllegalStateException("Already launched");
 
         StepStartNode sn = addBodyStartFlowNode(head);
         for (Action a : params.startNodeActions) {
             if (a!=null)
                 sn.addAction(a);
         }
-        fireOnStart(sn);
+
+        StepContext sc = subContext(sn);
+        for (BodyExecutionCallback c : callbacks) {
+            c.onStart(sc);
+        }
 
         try {
             // TODO: handle arguments to closure
             Object x = params.body.getBody(currentThread).call();
 
-            onSuccess.receive(x);   // body has completed synchronously
+            // body has completed synchronously. mark this done after the fact
+            // pointless synchronization to make findbugs happy. This is already done, so there's no cancelling this anyway.
+            synchronized (this) {
+                this.thread = currentThread;
+            }
+            onSuccess.receive(x);
         } catch (CpsCallableInvocation e) {
             // execute this closure asynchronously
             // TODO: does it make sense that the new thread shares the same head?
@@ -124,7 +139,13 @@ class CpsBodyExecution extends BodyExecution {
             CpsThread t = currentThread.group.addThread(createContinuable(currentThread, e), head,
                     ContextVariableSet.from(currentThread.getContextVariables(), params.contextOverrides));
 
-            startExecution(t);
+            // let the new CpsThread run. Either get the new thread going normally with (null,null), or abort from the beginning
+            // due to earlier cancellation
+            synchronized (this) {
+                t.resume(new Outcome(null, stopped));
+                assert this.thread==null;
+                this.thread = t;
+            }
         } catch (Throwable t) {
             // body has completed synchronously and abnormally
             onFailure.receive(t);
@@ -210,6 +231,13 @@ class CpsBodyExecution extends BodyExecution {
         return stopped!=null && isDone();
     }
 
+    /**
+     * Is the execution under way? True after {@link #launch(CpsBodyInvoker, CpsThread, FlowHead)}
+     */
+    public synchronized boolean isLaunched() {
+        return thread!=null;
+    }
+
     @Override
     public synchronized Object get() throws InterruptedException, ExecutionException {
         while (outcome==null) {
@@ -244,37 +272,18 @@ class CpsBodyExecution extends BodyExecution {
         context.saveState();
     }
 
-    /**
-     * Start running the new thread unless the stop is requested, in which case the thread gets aborted right away.
-     */
-    @CpsVmThreadOnly
-    /*package*/ synchronized void startExecution(CpsThread t) {
-        // either get the new thread going normally, or abort from the beginning
-        t.resume(new Outcome(null, stopped));
-
-        assert this.thread==null;
-        this.thread = t;
-    }
-
-    public void addCallback(BodyExecutionCallback callback) {
-        assert !isDone();   // can be only called before it launches
-        callbacks.add(callback);
-    }
-
     public synchronized boolean isDone() {
         return outcome!=null;
-    }
-
-    /*package*/ void fireOnStart(StepStartNode sn) {
-        StepContext sc = subContext(sn);
-        for (BodyExecutionCallback c : callbacks) {
-            c.onStart(sc);
-        }
     }
 
     private class FailureAdapter implements Continuation {
         @Override
         public Next receive(Object o) {
+            if (!isLaunched()) {
+                // failed before we even started. fake the start node that start() would have created.
+                addBodyStartFlowNode(CpsThread.current().head);
+            }
+
             StepEndNode en = addBodyEndFlowNode();
 
             Throwable t = (Throwable)o;

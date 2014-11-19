@@ -48,14 +48,13 @@ import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -89,7 +88,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
 
     private static final Logger LOGGER = Logger.getLogger(CpsStepContext.class.getName());
 
-    // guarded by 'this'
+    @GuardedBy("this")
     private transient Outcome outcome;
 
     // see class javadoc.
@@ -195,6 +194,10 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         return (CpsFlowExecution)executionRef.get();
     }
 
+    /**
+     * Returns the thread that is executing this step.
+     * Needs to take {@link CpsThreadGroup} as a parameter to prove that the caller is in CpsVmThread.
+     */
     @CheckForNull CpsThread getThread(CpsThreadGroup g) {
         CpsThread thread = g.threads.get(threadId);
         if (thread == null) {
@@ -292,47 +295,51 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      * When this step context has completed execution (successful or otherwise), plan the next action.
      */
     private void scheduleNextRun() {
-        if (!syncMode) {
-            try {
-                final FlowNode n = getNode();
-                final CpsFlowExecution flow = getFlowExecution();
+        if (syncMode) {
+            // if we get the result set before the start method returned, then DSL.invokeMethod() will
+            // plan the next action.
+            return;
+        }
 
-                final List<FlowNode> parents = new ArrayList<FlowNode>();
-                parents.add(null);      // make room for the primary head
-                for (String head : bodyInvHeads.values()) {
-                    parents.add(flow.getNode(head));
+        try {
+            final FlowNode n = getNode();
+            final CpsFlowExecution flow = getFlowExecution();
+
+            final List<FlowNode> parents = new ArrayList<FlowNode>();
+            parents.add(null);      // make room for the primary head
+            for (String head : bodyInvHeads.values()) {
+                parents.add(flow.getNode(head));
+            }
+
+            flow.runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+                @CpsVmThreadOnly
+                @Override
+                public void onSuccess(CpsThreadGroup g) {
+                    g.unexport(body);
+                    body = null;
+                    CpsThread thread = getThread(g);
+                    if (thread != null) {
+                        if (n instanceof StepStartNode) {
+                            FlowNode tip = thread.head.get();
+                            parents.set(0, tip);
+
+                            thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
+                        }
+                        thread.head.markIfFail(getOutcome());
+                        thread.setStep(null);
+                        thread.resume(getOutcome());
+                    }
                 }
 
-                flow.runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
-                    @CpsVmThreadOnly
-                    @Override
-                    public void onSuccess(CpsThreadGroup g) {
-                        g.unexport(body);
-                        body = null;
-                        CpsThread thread = getThread(g);
-                        if (thread != null) {
-                            if (n instanceof StepStartNode) {
-                                FlowNode tip = thread.head.get();
-                                parents.set(0, tip);
-
-                                thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
-                            }
-                            thread.head.markIfFail(getOutcome());
-                            thread.setStep(null);
-                            thread.resume(getOutcome());
-                        }
-                    }
-
-                    /**
-                     * Program state failed to load.
-                     */
-                    @Override
-                    public void onFailure(Throwable t) {
-                    }
-                });
-            } catch (IOException x) {
-                LOGGER.log(Level.FINE, null, x);
-            }
+                /**
+                 * Program state failed to load.
+                 */
+                @Override
+                public void onFailure(Throwable t) {
+                }
+            });
+        } catch (IOException x) {
+            LOGGER.log(Level.FINE, null, x);
         }
     }
 

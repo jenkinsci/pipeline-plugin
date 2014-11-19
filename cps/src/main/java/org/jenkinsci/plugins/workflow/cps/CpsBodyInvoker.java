@@ -134,10 +134,21 @@ public final class CpsBodyInvoker extends BodyInvoker {
                 throw new IllegalStateException("Can't specify Actions if there will be no StepStartNode");
         }
 
+        if (owner.isCompleted()) {
+            // if this step is already done, no further body invocations can happen doing so will end up
+            // causing two CpsThreads competing on the same FlowHead.
+            // if this restriction ever needs to be lifted, the newly launched body will have to run in a separate thread.
+            throw new IllegalStateException("The " + owner.getStepDescriptor().getFunctionName() + " step has already completed.");
+        }
+
         if (owner.isSyncMode()) {
-            // we call 'launch' later from DSL.ThreadTaskImpl
+            // we call 'launch' later from DSL.ThreadTaskImpl.
+            // in this mode, the first thread inherits the same thread, but
+            // all the other body executions are run as new threads, for the parallel.
             owner.bodyInvokers.add(this);
         } else {
+            // when this method is called asynchronously, the body is scheduled to run in the same thread
+            // that started run.
             try {
                 owner.getExecution().runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
                     @Override
