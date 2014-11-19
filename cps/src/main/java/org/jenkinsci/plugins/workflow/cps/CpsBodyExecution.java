@@ -108,6 +108,8 @@ class CpsBodyExecution extends BodyExecution {
      */
     @CpsVmThreadOnly
     /*package*/ void launch(CpsBodyInvoker params, CpsThread currentThread, FlowHead head) {
+        if (isLaunched())
+            throw new IllegalStateException("Already launched");
 
         StepStartNode sn = addBodyStartFlowNode(head);
         for (Action a : params.startNodeActions) {
