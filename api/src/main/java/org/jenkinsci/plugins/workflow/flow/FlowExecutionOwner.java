@@ -65,22 +65,6 @@ public abstract class FlowExecutionOwner implements Serializable {
     public abstract Executable getExecutable() throws IOException;
 
     /**
-     * Returns the stream where the output from the flow execution would go.
-     *
-     * <p>
-     * Scripting languages often have ability to write to standard output. Returning a value
-     * here would allow those output to the location that the owner controls.
-     *
-     * <p>
-     * If the host has no suitable place to send such output to, just return {@code System.out}
-     *
-     * TODO: on 2nd thought this is broken, in that logs are supposed to be divided per FlowNode.
-     * So the question for me is that if the script decides to print some output at random point in
-     * execution, where should I send it to?
-     */
-    public abstract PrintStream getConsole();
-
-    /**
      * Returns the URL of the model object that owns {@link FlowExecution},
      * relative to the context root of Jenkins.
      *
