@@ -37,6 +37,7 @@ import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -84,6 +85,12 @@ public final class CpsBodyInvoker extends BodyInvoker {
     @Override
     public CpsBodyInvoker withContext(Object override) {
         contextOverrides.add(override);
+        return this;
+    }
+
+    @Override
+    public BodyInvoker withContexts(Collection<?> overrides) {
+        contextOverrides.addAll(overrides);
         return this;
     }
 
