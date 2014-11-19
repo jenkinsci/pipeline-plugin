@@ -402,6 +402,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     public synchronized List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets() {
         if (changeSets == null) {
             changeSets = new ArrayList<ChangeLogSet<? extends ChangeLogSet.Entry>>();
+            if (checkouts == null) {
+                LOGGER.log(Level.WARNING, "no checkouts in {0}", this);
+                return changeSets;
+            }
             for (SCMCheckout co : checkouts) {
                 if (co.changelogFile != null && co.changelogFile.isFile()) {
                     try {
