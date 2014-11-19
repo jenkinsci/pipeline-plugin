@@ -193,6 +193,8 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      */
     private transient volatile StepDescriptor stepDescriptor;
 
+    // TODO: persistence of this class
+
     @CpsVmThreadOnly
     CpsStepContext(StepDescriptor step, CpsThread thread, FlowExecutionOwner executionRef, FlowNode node, Closure body) {
         this.threadId = thread.id;
