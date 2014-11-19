@@ -15,6 +15,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.RandomlyFails;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -26,6 +27,7 @@ public class TimeoutStepTest extends Assert {
     /**
      * The simplest possible timeout step ever.
      */
+    @RandomlyFails("TODO sometimes the whole build just hangs (for longer than the 10s)")
     @Test
     public void basic() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
@@ -35,6 +37,7 @@ public class TimeoutStepTest extends Assert {
         r.assertLogNotContains("NotHere", b);
     }
 
+    @RandomlyFails("as above")
     @Test
     public void killingParallel() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
