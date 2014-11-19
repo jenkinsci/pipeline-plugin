@@ -413,6 +413,9 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         LOGGER.log(FINE, "resuming {0}", cookie);
                     }
                     try {
+//                        if (1==1)
+//                            throw new NullPointerException();
+
                         // wait until the invokeBodyLater call above completes and notifies our Callback object
                         synchronized (runningTasks) {
                             while (runningTasks.containsKey(cookie)) {
