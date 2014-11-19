@@ -104,11 +104,6 @@ class AbstractCpsFlowTest {
         }
 
         @Override
-        PrintStream getConsole() {
-            return System.out;
-        }
-
-        @Override
         String getUrl() {
             return "TODO";
         }

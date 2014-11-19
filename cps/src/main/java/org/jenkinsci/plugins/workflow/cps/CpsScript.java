@@ -32,6 +32,7 @@ import hudson.model.ParametersAction;
 import hudson.model.Queue;
 import hudson.model.Run;
 import org.codehaus.groovy.control.CompilationFailedException;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 
@@ -99,9 +100,7 @@ public abstract class CpsScript extends SerializableScript {
 
     @Override
     public Object getProperty(String property) {
-        if (property.equals("out")) {
-            return execution.getOwner().getConsole();
-        } else if (property.equals("env")) {
+        if (property.equals("env")) {
             return env();
         }
         return super.getProperty(property);
@@ -159,6 +158,31 @@ public abstract class CpsScript extends SerializableScript {
         return this;
     }
 
+    @Override
+    public void println() {
+        invokeMethod("echo", "");
+    }
+
+    @Override
+    public void print(Object value) {
+        // TODO: handling 'print' correctly requires collapsing multiple adjacent print calls into one Step.
+        println(value);
+    }
+
+    @Override
+    public void println(Object value) {
+        invokeMethod("echo", String.valueOf(value));
+    }
+
+    @Override
+    public void printf(String format, Object value) {
+        print(DefaultGroovyMethods.sprintf(this/*not actually used*/, format, value));
+    }
+
+    @Override
+    public void printf(String format, Object[] values) {
+        print(DefaultGroovyMethods.sprintf(this/*not actually used*/, format, values));
+    }
 
     private static final long serialVersionUID = 1L;
 }

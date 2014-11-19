@@ -28,6 +28,9 @@ import hudson.Extension;
 import hudson.model.TaskListener;
 import javax.inject.Inject;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+
+import java.io.PrintStream;
 
 /**
  * A simple echo back statement.

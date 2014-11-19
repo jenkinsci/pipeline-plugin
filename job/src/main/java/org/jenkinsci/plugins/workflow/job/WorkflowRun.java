@@ -554,14 +554,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         @Override public Queue.Executable getExecutable() throws IOException {
             return run();
         }
-        @Override
-        public PrintStream getConsole() {
-            try {
-                return run().listener.getLogger();
-            } catch (IOException e) {
-                return System.out;  // fallback
-            }
-        }
         @Override public String getUrl() throws IOException {
             return run().getUrl();
         }
