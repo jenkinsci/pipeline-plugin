@@ -35,7 +35,8 @@ public abstract class BodyExecutionCallback implements Serializable {
      * <p>
      * {@link StepContext} given to this method lets you access objects that correspond
      * to the beginning of the body, as opposed to the objects that correspond to the invocation
-     * of the step that invoked the body.
+     * of the step that invoked the body. Otherwise the context is identical in behaviour
+     * to that given to {@link Step#start(StepContext)}.
      *
      * <p>
      * So for example this is a good place to record any logging that's attributed to
@@ -48,8 +49,10 @@ public abstract class BodyExecutionCallback implements Serializable {
      * Notifies that the body execution has completed successfully.
      *
      * <p>
-     * At this point {@link StepContext} gives you access to the objects that correspond
-     * to the end of the body invocation.
+     * {@link StepContext} given to this method lets you access objects that correspond
+     * to the end of the body, as opposed to the objects that correspond to the invocation
+     * of the step that invoked the body. Otherwise the context is identical in behaviour
+     * to that given to {@link Step#start(StepContext)}.
      *
      * <p>
      * So for example this is a good place to record any logging that's attributed to
