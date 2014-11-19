@@ -52,10 +52,8 @@ import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -195,6 +193,10 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         return (CpsFlowExecution)executionRef.get();
     }
 
+    /**
+     * Returns the thread that is executing this step.
+     * Needs to take {@link CpsThreadGroup} as a parameter to prove that the caller is in CpsVmThread.
+     */
     @CheckForNull CpsThread getThread(CpsThreadGroup g) {
         CpsThread thread = g.threads.get(threadId);
         if (thread == null) {
