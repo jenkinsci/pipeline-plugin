@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
@@ -49,6 +48,8 @@ import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+
+import static java.util.logging.Level.*;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -84,7 +85,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                     try {
                         logger = listener.getLogger();
                     } catch (Exception x) { // IOException, InterruptedException
-                        LOGGER.log(Level.WARNING, null, x);
+                        LOGGER.log(WARNING, null, x);
                         return;
                     }
                     logger.println("Still waiting to schedule task");
@@ -151,7 +152,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         }
 
         private Object readResolve() {
-            LOGGER.log(Level.FINE, "deserialized {0}", cookie);
+            LOGGER.log(FINE, "deserialized {0}", cookie);
             if (cookie != null) {
                 synchronized (runningTasks) {
                     runningTasks.put(cookie, context);
@@ -238,7 +239,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                     return null;
                 }
             } catch (Exception x) {
-                LOGGER.log(Level.FINE, null, x);
+                LOGGER.log(FINE, null, x);
                 return null;
             }
         }
@@ -263,7 +264,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 }
                 return context.get(Run.class);
             } catch (Exception x) {
-                LOGGER.log(Level.FINE, "broken " + cookie, x);
+                LOGGER.log(FINE, "broken " + cookie, x);
                 finish(cookie); // probably broken, so just shut it down
                 return null;
             }
@@ -312,7 +313,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             synchronized (runningTasks) {
                 StepContext context = runningTasks.remove(cookie);
                 if (context == null) {
-                    LOGGER.log(Level.FINE, "no running task corresponds to {0}", cookie);
+                    LOGGER.log(FINE, "no running task corresponds to {0}", cookie);
                 }
                 runningTasks.notifyAll();
                 return context;
@@ -334,7 +335,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             }
 
             @Override public void onSuccess(StepContext _, Object returnValue) {
-                LOGGER.log(Level.FINE, "onSuccess {0}", cookie);
+                LOGGER.log(FINE, "onSuccess {0}", cookie);
                 lease.release();
                 lease = null;
                 StepContext context = finish(cookie);
@@ -344,7 +345,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             }
 
             @Override public void onFailure(StepContext _, Throwable t) {
-                LOGGER.log(Level.FINE, "onFailure {0}", cookie);
+                LOGGER.log(FINE, "onFailure {0}", cookie);
                 lease.release();
                 lease = null;
                 StepContext context = finish(cookie);
@@ -406,29 +407,29 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                                 .withDisplayName(null)
                                 .withCallback(new Callback(cookie, lease))
                                 .start();
-                        LOGGER.log(Level.FINE, "started {0}", cookie);
+                        LOGGER.log(FINE, "started {0}", cookie);
                     } else {
                         // just rescheduled after a restart; wait for task to complete
-                        LOGGER.log(Level.FINE, "resuming {0}", cookie);
+                        LOGGER.log(FINE, "resuming {0}", cookie);
                     }
                     try {
                         // wait until the invokeBodyLater call above completes and notifies our Callback object
                         synchronized (runningTasks) {
                             while (runningTasks.containsKey(cookie)) {
-                                LOGGER.log(Level.FINE, "waiting on {0}", cookie);
+                                LOGGER.log(FINE, "waiting on {0}", cookie);
                                 try {
                                     runningTasks.wait();
                                 } catch (InterruptedException x) {
                                     if (Jenkins.getInstance() != null) {
-                                        LOGGER.log(Level.FINE, "interrupted {0} as by Executor.doStop", cookie);
+                                        LOGGER.log(FINE, "interrupted {0} as by Executor.doStop", cookie);
                                         // TODO we would like an API to StepExecution.stop the tip of our body
                                         try {
                                             exec.recordCauseOfInterruption(r, listener);
                                         } catch (RuntimeException x2) {
-                                            LOGGER.log(Level.WARNING, null, x2);
+                                            LOGGER.log(WARNING, null, x2);
                                         }
                                     } else {
-                                        LOGGER.log(Level.FINE, "normal Jenkins shutdown in {0}", cookie);
+                                        LOGGER.log(FINE, "normal Jenkins shutdown in {0}", cookie);
                                     }
                                 }
                             }
