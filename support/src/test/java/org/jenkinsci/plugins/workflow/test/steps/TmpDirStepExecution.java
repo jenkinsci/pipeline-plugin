@@ -39,13 +39,13 @@ public class TmpDirStepExecution extends AbstractStepExecutionImpl {
             this.dir = dir;
         }
 
-        @Override public void onSuccess(Object result) {
-            context.onSuccess(result);
+        @Override public void onSuccess(StepContext context, Object result) {
+            this.context.onSuccess(result);
             delete();
         }
 
-        @Override public void onFailure(Throwable t) {
-            context.onFailure(t);
+        @Override public void onFailure(StepContext context, Throwable t) {
+            this.context.onFailure(t);
             delete();
         }
 

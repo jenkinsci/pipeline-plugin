@@ -70,14 +70,14 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
             this.lease = lease;
         }
 
-        @Override public void onSuccess(Object result) {
+        @Override public void onSuccess(StepContext context, Object result) {
             lease.release();
-            context.onSuccess(result);
+            this.context.onSuccess(result);
         }
 
-        @Override public void onFailure(Throwable t) {
+        @Override public void onFailure(StepContext context, Throwable t) {
             lease.release();
-            context.onFailure(t);
+            this.context.onFailure(t);
         }
 
     }

@@ -41,6 +41,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.MissingContextVariableException;
 import org.jenkinsci.plugins.workflow.steps.Step;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
@@ -358,12 +359,12 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             }
 
             @Override
-            public void onSuccess(Object result) {
+            public void onSuccess(StepContext context, Object result) {
                 onEnd();
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(StepContext context, Throwable t) {
                 onEnd();
             }
         }

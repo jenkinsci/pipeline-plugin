@@ -91,11 +91,11 @@ public final class BlockSemaphoreStep extends Step {
     }
     
     private class Callback extends BodyExecutionCallback {
-        @Override public void onSuccess(Object returnValue) {
+        @Override public void onSuccess(StepContext context, Object returnValue) {
             blockReturnValue = returnValue;
             blockDone();
         }
-        @Override public void onFailure(Throwable t) {
+        @Override public void onFailure(StepContext context, Throwable t) {
             blockFailure = t;
             blockDone();
         }

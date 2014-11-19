@@ -8,56 +8,32 @@ import java.io.Serializable;
  * {@link FutureCallback} enhanced to track {@link BodyExecution}.
  *
  * <p>
- * Whereas plain {@link FutureCallback} gets notified only of the outcome of a body execution,
- * this interface gets the following addition:
+ * Body execution reports the callback in the following order:
  *
- * <ul>
- * <li>
- * {@link #onStart()} that gets invoked at the beginning of the body execution.
- * This callback has to return synchronously. It is intended for performing log output,
- * update {@code FlowNode}, or some such decorative actions. For any asynchronous
- * computation that needs to happen prior to the body execution, the best place to
- * do that is before calling {@link StepContext#newBodyInvoker()}.
+ * <pre>
  *
- * <li>
- * {@link #setContext(StepContext)} that gets invoked by the caller of the step API
- * (such as workflow) prior to {@link #onStart()}, {@link #onSuccess(Object)}, and {@link #onFailure(Throwable)}
- * so that these callbacks can access contextual objects at the beginning/end of the body invocation.
- * </ul>
+ *             +---> onSuccess
+ *             |
+ * onStart  ---+
+ *             |
+ *             +---> onFailure
+ * </pre>
  *
  * @author Kohsuke Kawaguchi
  * @see BodyInvoker#withCallback(BodyExecutionCallback)
  */
-public abstract class BodyExecutionCallback implements FutureCallback<Object>, Serializable {
-    /**
-     * The context is only scoped to a specific callback method, and so they
-     * shouldn't be persisted.
-     */
-    private transient StepContext context;
-
-    /**
-     * This method will be called before {@link #onStart()}, {@link #onSuccess(Object)},
-     * and {@link #onFailure(Throwable)} is invoked.
-     *
-     * <p>
-     * The {@link StepContext} object given to the {@link #setContext(StepContext)} method
-     * will behave almost identically to {@link StepContext} given to {@link Step#start(StepContext)},
-     * except its {@link StepContext#get(Class)} methods may return different contextual
-     * objects.
-     */
-    public void setContext(StepContext context) {
-        this.context = context;
-    }
-
-    protected StepContext getContext() {
-        return context;
-    }
-
+public abstract class BodyExecutionCallback implements Serializable {
     /**
      * Notifies that the body execution has started.
      *
      * <p>
-     * At this point {@link StepContext} gives you access to the objects that correspond
+     * This callback has to return synchronously. It is intended for performing log output,
+     * update {@code FlowNode}, or some such decorative actions. For any asynchronous
+     * computation that needs to happen prior to the body execution, the best place to
+     * do that is before calling {@link StepContext#newBodyInvoker()}.
+     *
+     * <p>
+     * {@link StepContext} given to this method lets you access objects that correspond
      * to the beginning of the body, as opposed to the objects that correspond to the invocation
      * of the step that invoked the body.
      *
@@ -66,7 +42,7 @@ public abstract class BodyExecutionCallback implements FutureCallback<Object>, S
      * the body execution, such as reporting that this is Nth retry of the body, or
      * that this is the parallel branch named 'xyz'.
      */
-    public void onStart() {}
+    public void onStart(StepContext context) {}
 
     /**
      * Notifies that the body execution has completed successfully.
@@ -79,22 +55,16 @@ public abstract class BodyExecutionCallback implements FutureCallback<Object>, S
      * So for example this is a good place to record any logging that's attributed to
      * the end of the body execution.
      */
-    @Override
-    public abstract void onSuccess(Object result);
+    public abstract void onSuccess(StepContext context, Object result);
 
     /**
-     * Notifies that the body execution has completed successfully.
+     * Notifies that the body execution has aborted abnormally.
      *
      * <p>
-     * At this point {@link StepContext} gives you access to the objects that correspond
-     * to the end of the body invocation.
-     *
-     * <p>
-     * So for example this is a good place to record any logging that's attributed to
-     * the end of the body execution.
+     * See {@link #onSuccess(StepContext, Object)} for the discussion of how
+     * the given {@link StepContext} behaves.
      */
-    @Override
-    public abstract void onFailure(Throwable t);
+    public abstract void onFailure(StepContext context, Throwable t);
 
     /**
      * Wraps an ordinary {@link FutureCallback} into {@link BodyExecutionCallback}.
@@ -113,12 +83,12 @@ public abstract class BodyExecutionCallback implements FutureCallback<Object>, S
         }
 
         @Override
-        public void onSuccess(Object result) {
+        public void onSuccess(StepContext context, Object result) {
             v.onSuccess(result);
         }
 
         @Override
-        public void onFailure(Throwable t) {
+        public void onFailure(StepContext context, Throwable t) {
             v.onFailure(t);
         }
 

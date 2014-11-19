@@ -52,13 +52,13 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
 
     private class Callback extends BodyExecutionCallback {
         @Override
-        public void onSuccess(Object result) {
+        public void onSuccess(StepContext context, Object result) {
             cancelKiller();
             getContext().onSuccess(result);
         }
 
         @Override
-        public void onFailure(Throwable t) {
+        public void onFailure(StepContext context, Throwable t) {
             cancelKiller();
             getContext().onFailure(t);
         }

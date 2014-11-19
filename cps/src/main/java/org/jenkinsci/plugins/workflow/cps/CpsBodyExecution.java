@@ -268,8 +268,7 @@ class CpsBodyExecution extends BodyExecution {
     /*package*/ void fireOnStart(StepStartNode sn) {
         StepContext sc = subContext(sn);
         for (BodyExecutionCallback c : callbacks) {
-            c.setContext(sc);
-            c.onStart();
+            c.onStart(sc);
         }
     }
 
@@ -284,8 +283,7 @@ class CpsBodyExecution extends BodyExecution {
             setOutcome(new Outcome(null,t));
             StepContext sc = subContext(en);
             for (BodyExecutionCallback c : callbacks) {
-                c.setContext(sc);
-                c.onFailure(t);
+                c.onFailure(sc, t);
             }
 
             return Next.terminate(null);
@@ -302,8 +300,7 @@ class CpsBodyExecution extends BodyExecution {
             setOutcome(new Outcome(o,null));
             StepContext sc = subContext(en);
             for (BodyExecutionCallback c : callbacks) {
-                c.setContext(sc);
-                c.onSuccess(o);
+                c.onSuccess(sc, o);
             }
 
             return Next.terminate(null);

@@ -94,13 +94,13 @@ public class ParallelStep extends Step {
             }
 
             @Override
-            public void onSuccess(Object result) {
+            public void onSuccess(StepContext context, Object result) {
                 handler.outcomes.put(name, new Outcome(result, null));
                 checkAllDone();
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(StepContext context, Throwable t) {
                 handler.outcomes.put(name, new Outcome(null, t));
                 checkAllDone();
             }

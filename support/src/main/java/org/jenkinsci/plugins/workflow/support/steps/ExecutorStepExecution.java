@@ -333,7 +333,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 this.lease = lease;
             }
 
-            @Override public void onSuccess(Object returnValue) {
+            @Override public void onSuccess(StepContext _, Object returnValue) {
                 LOGGER.log(Level.FINE, "onSuccess {0}", cookie);
                 lease.release();
                 lease = null;
@@ -343,7 +343,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 }
             }
 
-            @Override public void onFailure(Throwable t) {
+            @Override public void onFailure(StepContext _, Throwable t) {
                 LOGGER.log(Level.FINE, "onFailure {0}", cookie);
                 lease.release();
                 lease = null;
