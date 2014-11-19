@@ -40,9 +40,11 @@ import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
@@ -60,6 +62,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static java.util.logging.Level.WARNING;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
@@ -313,6 +316,43 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         this.outcome = new Outcome(null,t);
 
         scheduleNextRun();
+
+        if (!isCompleted()) {
+            // if the body is still running, make some effort to try to speed up the termination of the body.
+            tryToCancelBody();
+        }
+    }
+
+    /**
+     * Try to stop interrupt the body execution on the best effort basis.
+     */
+    private void tryToCancelBody() {
+        try {
+            getFlowExecution().runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
+                @CpsVmThreadOnly
+                @Override
+                public void onSuccess(CpsThreadGroup g) {
+                    CpsThread thread = getThread(g);
+                    try {
+                        StepExecution s = thread.getStep();
+                        if (s!=null)
+                            // TODO: better cause
+                            s.stop(new FlowInterruptedException(Result.FAILURE));
+                    } catch (Exception e) {
+                        LOGGER.log(WARNING, "Failed to stop the body execution in response to the failure of the parent");
+                    }
+                }
+
+                /**
+                 * Program state failed to load.
+                 */
+                @Override
+                public void onFailure(Throwable t) {
+                }
+            });
+        } catch (IOException e) {
+            LOGGER.log(WARNING, "Failed to stop the body execution in response to the failure of the parent", e);
+        }
     }
 
     public synchronized void onSuccess(Object returnValue) {
