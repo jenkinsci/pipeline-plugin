@@ -33,7 +33,7 @@ public class InputStepTest extends Assert {
         foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList(
                 "echo('before');",
                 "def x = input message:'Do you want chocolate?', id:'Icecream', ok: 'Purchase icecream', parameters: [[$class: 'BooleanParameterDefinition', name: 'chocolate', defaultValue: false, description: 'Favorite icecream flavor']];",
-                "echo(\"after: ${x}\");"),"\n")));
+                "echo(\"after: ${x}\");"),"\n"),true));
 
 
         // get the build going, and wait until workflow pauses

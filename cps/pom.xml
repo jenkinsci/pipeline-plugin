@@ -70,7 +70,7 @@
         <dependency>
             <groupId>com.cloudbees</groupId>
             <artifactId>groovy-cps</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
         </dependency>
     </dependencies>
     <!-- TODO currently job depends on tests from here; this dependency should probably be broken -->

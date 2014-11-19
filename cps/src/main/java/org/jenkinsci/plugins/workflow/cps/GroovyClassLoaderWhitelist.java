@@ -8,6 +8,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
+ * Allow any calls into the scripted compiled in the sandbox.
+ *
+ * IOW, allow the user to call his own methods.
+ *
  * @author Kohsuke Kawaguchi
  */
 class GroovyClassLoaderWhitelist extends Whitelist {
