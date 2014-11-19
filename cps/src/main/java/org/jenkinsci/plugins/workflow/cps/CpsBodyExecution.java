@@ -75,9 +75,13 @@ class CpsBodyExecution extends BodyExecution {
 
     private String startNodeId;
 
-    final Continuation onSuccess = new SuccessAdapter();
+    private final Continuation onSuccess = new SuccessAdapter();
 
-    final Continuation onFailure = new FailureAdapter();
+    /**
+     * Unlike {@link #onSuccess} that can only happen after {@link #launch(CpsBodyInvoker, CpsThread, FlowHead)},
+     * a failure can happen right after {@link CpsBodyInvoker#start()} before we get a chance to be launched.
+     */
+    /*package*/ final Continuation onFailure = new FailureAdapter();
 
     @GuardedBy("this")
     private Outcome outcome;
@@ -210,6 +214,13 @@ class CpsBodyExecution extends BodyExecution {
         return stopped!=null && isDone();
     }
 
+    /**
+     * Is the execution under way? True after {@link #launch(CpsBodyInvoker, CpsThread, FlowHead)}
+     */
+    public synchronized boolean isLaunched() {
+        return thread!=null;
+    }
+
     @Override
     public synchronized Object get() throws InterruptedException, ExecutionException {
         while (outcome==null) {
@@ -275,6 +286,11 @@ class CpsBodyExecution extends BodyExecution {
     private class FailureAdapter implements Continuation {
         @Override
         public Next receive(Object o) {
+            if (!isLaunched()) {
+                // failed before we even started. fake the start node that start() would have created.
+                addBodyStartFlowNode(CpsThread.current().head);
+            }
+
             StepEndNode en = addBodyEndFlowNode();
 
             Throwable t = (Throwable)o;
