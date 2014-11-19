@@ -52,6 +52,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -328,11 +329,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                         if (nit!=null) {
                             // can't mark this done until the inner thread is done.
                             // defer the processing until the inner thread is done
-                            nit.addCompletionHandler(new FutureCallback<Object>() {
-                                public void onSuccess(Object _)    { scheduleNextRun(); }
-
-                                public void onFailure(Throwable _) { scheduleNextRun(); }
-                            });
+                            nit.addCompletionHandler(new ScheduleNextRun());
                             if (getOutcome().isFailure()) {
                                 // if the step with a currently running body reported a failure,
                                 // make some effort to try to interrupt the running body
@@ -474,4 +471,11 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     }
 
     private static final long serialVersionUID = 1L;
+
+    private class ScheduleNextRun implements FutureCallback<Object>, Serializable {
+        public void onSuccess(Object _)    { scheduleNextRun(); }
+        public void onFailure(Throwable _) { scheduleNextRun(); }
+
+        private static final long serialVersionUID = 1L;
+    }
 }

@@ -219,6 +219,8 @@ public final class CpsThread implements Serializable {
 
     @CpsVmThreadOnly
     void addCompletionHandler(FutureCallback<Object> h) {
+        if (!(h instanceof Serializable))
+            throw new IllegalArgumentException(h.getClass()+" is not serializable");
         completionHandlers.add(h);
     }
 
