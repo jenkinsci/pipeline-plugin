@@ -107,7 +107,7 @@ The snapshot Docker demo is mainly useful for verifying the effect of ongoing ch
 
 * [Changelog](CHANGES.md)
 * [Source repository](https://github.com/jenkinsci/workflow-plugin)
-* [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+component+%3D+workflow-plugin+ORDER+BY+priority+DESC&mode=hide)
+* [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide)
 * [Trello board](https://trello.com/b/u2fJQnDX/workflow) tracking active and proposed tasks.
 * [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/) with validated merge support.
   [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
