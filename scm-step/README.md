@@ -108,7 +108,7 @@ You can use `mercurial-plugin` as a relatively straightforward code example.
 
 ## Basic update
 
-First, make sure the baseline Jenkins version in your POM is set to at least 1.568.
+First, make sure the baseline Jenkins version in your POM is set to at least 1.568 (or 1.580.1, the next LTS).
 This introduces some new API methods, and deprecates some old ones.
 
 If you are nervous about making your plugin depend on a recent Jenkins version,

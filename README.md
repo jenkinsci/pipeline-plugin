@@ -120,7 +120,7 @@ The snapshot Docker demo is mainly useful for verifying the effect of ongoing ch
 While the implementation is divided into a number of plugins, for ease of prototyping they are all kept in one repository using snapshot dependencies.
 
 * `step-api` defines a generic build step interface (not specific to flows) that many plugins could in the future depend on.
-* `basic-steps` add some generic step implementations.
+* `basic-steps` add some generic step implementations. There is [more documentation there](basic-steps/CORE-STEPS.md).
 * `api` defines the essential aspects of flows and their executions. In particular, the engine running a flow is extensible and so could in the future support visual orchestration languages.
 * `support` adds general implementations of some internals needed by flows, such as storing state.
 * `job` provides the actual job type and top-level UI for defining and running flows.

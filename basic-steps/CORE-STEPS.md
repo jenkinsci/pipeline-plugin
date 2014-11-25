@@ -19,19 +19,7 @@ node {
 
 Here we are running the standard _Archive the artifacts_ post-build action (`hudson.tasks.ArtifactArchiver`),
 and configuring the _Files to archive_ property (`artifacts`) to archive our file `something` produced in an earlier step.
-The easiest way to see what class and field names to use is to examine the `config.xml` of a freestyle project doing the same thing:
-
-```
-  <publishers>
-    <hudson.tasks.ArtifactArchiver>
-      <artifacts>something</artifacts>
-      <latestOnly>false</latestOnly>
-      <allowEmptyArchive>false</allowEmptyArchive>
-    </hudson.tasks.ArtifactArchiver>
-  </publishers>
-```
-
-You can generally omit miscellaneous fields (like `latestOnly` here) and they will be left at their default values.
+The easiest way to see what class and field names to use is to use the _Snippet Generator_ feature in the workflow configuration page.
 
 # Currently supported steps
 
@@ -86,6 +74,6 @@ though this would not automatically adjust the message according to the status o
 
 # Adding support from plugins
 
-As a plugin author, to add support for use of your build step from a workflow, depend on Jenkins 1.577+ ([tips](../scm-step/README.md#basic-update)).
+As a plugin author, to add support for use of your build step from a workflow, depend on Jenkins 1.577+, typically 1.580.1 ([tips](../scm-step/README.md#basic-update)).
 Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
 Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](../scm-step/README.md#constructor-vs-setters)).
