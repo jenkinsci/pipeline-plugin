@@ -4,10 +4,6 @@ Building continuous delivery pipelines and similarly complex tasks in Jenkins us
 You need to mix Parameterized Trigger, Copy Artifact, Promoted Builds, Conditional Build Step, and more just to express what should be a simple script.
 This project attempts to make it possible to directly write that script, what people often call a _workflow_ (sometimes abbreviated _flow_), while integrating with Jenkins features like slaves and publishers.
 
-JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJY)
-
-JUC Boston (Jun 2014): [slides](http://www.cloudbees.com/sites/default/files/2014-0618-Boston-Jesse_Glick-Workflow.pdf) and [video](https://www.youtube.com/watch?v=gpaV6x9QwDo&index=9&list=UUKlF3GIFy9KVUefVbycx_vw)
-
 # Core features
 
 Specific status of implementation below.
@@ -38,41 +34,11 @@ See [here](scm-step/README.md) for details on using version control from a workf
 
 ## Pipeline stages
 
-By default, flow builds can run concurrently.
-The `stage` command lets you mark certain sections of a build as being constrained by limited concurrency (or, later, unconstrained).
-Newer builds are always given priority when entering such a throttled stage; older builds will simply exit early if they are preëmpted.
+Workflows can be divided into sequential stages, not only for labeling but to throttle concurrency.
 
-A concurrency of one is useful to let you lock a singleton resource, such as deployment to a single target server.
-Only one build will deploy at a given time: the newest which passed all previous stages.
+# Getting started
 
-A finite concurrency ≥1 can also be used to prevent slow build stages such as integration tests from overloading the system.
-Every SCM push can still trigger a separate build of a quicker earlier stage as compilation and unit tests.
-Yet each build runs linearly and can even retain a single workspace, avoiding the need to identify and copy artifacts between builds.
-(Even if you dispose of a workspace from an earlier stage, you can retain information about it using simple local variables.)
-
-## Example script
-
-```
-node('linux') { // grab a slave and allocate a workspace
-  git url: '…' // clone/checkout
-  sh 'mvn verify' // run your build
-}
-```
-
-A more complete example still in a single workspace:
-
-```
-node('windows_jnlp') {
-  svn url: 'https://…/trunk/…'
-  bat(/
-echo off
-set JAVA_HOME=c:\Program Files\Java\jdk1.7.0_60
-c:\Program Files\Maven\bin\mvn clean install
-/)
-  step([$class: 'ArtifactArchiver', artifacts: '**/target/*-SNAPSHOT*', fingerprint: true])
-  step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/*.xml'])
-}
-```
+Read the [tutorial](TUTORIAL.md) to get started writing workflows.
 
 # Installation
 
@@ -103,6 +69,12 @@ You can also run the Docker demo with snapshot binaries:
     make -C demo run-snapshot
 
 The snapshot Docker demo is mainly useful for verifying the effect of ongoing changes on future demo binary releases. You get the `cd` sample job set up, but your environment is thrown away if you kill the Docker container (for example with Ctrl-C). When using `hpi:run` the same `aggregator/work/` home directory is reused so long as you do not explicitly delete it.
+
+# Presentations
+
+JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJY)
+
+JUC Boston (Jun 2014): [slides](http://www.cloudbees.com/sites/default/files/2014-0618-Boston-Jesse_Glick-Workflow.pdf) and [video](https://www.youtube.com/watch?v=gpaV6x9QwDo&index=9&list=UUKlF3GIFy9KVUefVbycx_vw)
 
 # Development
 
