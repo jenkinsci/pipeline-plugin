@@ -28,7 +28,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>0.1-beta-6</version>
+        <version>1.0</version>
     </parent>
     <artifactId>workflow-stm</artifactId>
     <packaging>hpi</packaging>

@@ -76,13 +76,14 @@ c:\Program Files\Maven\bin\mvn clean install
 
 # Installation
 
-If you do not want to build from sources, early releases (see the [changelog](CHANGES.md) for details on which) are available on the Jenkins experimental update center.
+If you do not want to build from sources, releases (see the [changelog](CHANGES.md) for details on which) are available on the Jenkins update center.
 You need to be running a sufficiently recent Jenkins release, currently an LTS in the 1.580.x line, or a newer weekly release.
 
-For OSS Jenkins users, follow [these instructions](http://jenkins-ci.org/content/experimental-plugins-update-center) and install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
+For OSS Jenkins users, install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
 You will need to restart Jenkins to complete installation.
 
-Jenkins Enterprise by CloudBees users can click _Enable access_ under _Access to experimental plugin releases_ in the main Jenkins configuration screen, and then install _CloudBees Workflow: Aggregator_.
+Jenkins Enterprise by CloudBees users get Workflow automatically as of the 14.11 release.
+Otherwise install _CloudBees Workflow: Aggregator_ from the update center.
 Again dependencies will be pulled in automatically, including all the OSS plugins.
 
 # Demo

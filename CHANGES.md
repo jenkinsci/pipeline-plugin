@@ -2,6 +2,10 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
+## 1.0
+
+No changes from 1.0-beta-1.
+
 ## 1.0-beta-1
 
 ### User changes
