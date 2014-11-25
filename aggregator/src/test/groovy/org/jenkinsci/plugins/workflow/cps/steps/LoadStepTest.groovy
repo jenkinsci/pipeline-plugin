@@ -27,7 +27,7 @@ node {
   println "control" // make sure that 'println' in groovy script works
   load 'test.groovy'
 }
-""");
+""", true);
         def b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
 
         println b.log

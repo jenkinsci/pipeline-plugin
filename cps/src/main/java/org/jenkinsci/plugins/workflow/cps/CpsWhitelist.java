@@ -19,15 +19,22 @@ class CpsWhitelist extends AbstractWhitelist {
 
     @Override
     public boolean permitsMethod(Method method, Object receiver, Object[] args) {
-        // CpsScript dispatches to the DSL class
-        if (receiver instanceof CpsScript && method.getName().equals("invokeMethod"))
-            return true;
-
-        // evaluate() family of methods are reimplemented in CpsScript for safe manner
-        // but we can't allow arbitrary Script.evaluate() calls as that will escape sandbox
-        if (receiver instanceof CpsScript && method.getName().equals("evaluate"))
-            return true;
-
+        if (receiver instanceof CpsScript) {
+            String name = method.getName();
+            if (name.equals("invokeMethod")) {
+                // CpsScript dispatches to the DSL class
+                return true;
+            }
+            if (name.equals("evaluate")) {
+                // evaluate() family of methods are reimplemented in CpsScript for safe manner
+                // but we can't allow arbitrary Script.evaluate() calls as that will escape sandbox
+                return true;
+            }
+            if (name.equals("println") || name.equals("print") || name.equals("printf")) {
+                // These are just aliases for EchoStep.
+                return true;
+            }
+        }
         return false;
     }
 
