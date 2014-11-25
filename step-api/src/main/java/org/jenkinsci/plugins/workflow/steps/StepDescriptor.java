@@ -111,6 +111,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      * and if not, throw {@link MissingContextVariableException} indicating which variable is missing.
      */
     public final void checkContextAvailability(StepContext c) throws MissingContextVariableException, IOException, InterruptedException {
+        // TODO the order here is nondeterministic; should we pick the lexicographic first? Or extend MissingContextVariableException to take a Set<Class<?>> types?
         for (Class<?> type : getRequiredContext()) {
             Object v = c.get(type);
             if (v==null)

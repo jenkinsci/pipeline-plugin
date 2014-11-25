@@ -34,6 +34,7 @@ import hudson.model.AutoCompletionCandidates;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Label;
+import hudson.model.Node;
 import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -42,7 +43,6 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.QueryParameter;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -101,9 +101,12 @@ public final class ExecutorStep extends AbstractStepImpl {
         }
         // proper doCheckValue also requires API requested above
 
+        @SuppressWarnings("unchecked")
         @Override
         public Set<Class<?>> getProvidedContext() {
-            return ImmutableSet.of(Executor.class, Computer.class, FilePath.class, EnvVars.class);
+            return ImmutableSet.of(Executor.class, Computer.class, FilePath.class, EnvVars.class,
+                // TODO ExecutorStepExecution.PlaceholderExecutable.run does not pass these, but DefaultStepContext infers them from Computer:
+                Node.class, Launcher.class);
         }
     }
 
