@@ -101,7 +101,7 @@ public class GitStepTest {
         p.setDefinition(new CpsFlowDefinition(
             "node('remote') {\n" +
             "    ws {\n" +
-            "        git(url: '" + sampleRepo + "')\n" +
+            "        git '" + sampleRepo + "'\n" +
             "    }\n" +
             "}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));

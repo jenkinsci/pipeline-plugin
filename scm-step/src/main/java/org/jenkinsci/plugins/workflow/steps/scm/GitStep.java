@@ -25,7 +25,6 @@
 package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.Extension;
-import hudson.Util;
 import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.SubmoduleConfig;
@@ -35,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * Runs Git using {@link GitSCM}.
@@ -42,11 +42,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 public final class GitStep extends SCMStep {
 
     private final String url;
-    private final String branch;
+    private String branch = "master";
 
-    @DataBoundConstructor public GitStep(String url, String branch) {
+    @DataBoundConstructor public GitStep(String url) {
         this.url = url;
-        this.branch = Util.fixEmpty(branch) == null ? "master" : branch;
     }
 
     public String getUrl() {
@@ -55,6 +54,10 @@ public final class GitStep extends SCMStep {
     
     public String getBranch() {
         return branch;
+    }
+
+    @DataBoundSetter public void setBranch(String branch) {
+        this.branch = branch;
     }
 
     @Override protected SCM createSCM() {
