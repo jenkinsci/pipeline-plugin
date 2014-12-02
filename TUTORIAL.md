@@ -4,6 +4,7 @@ This document is intended for new users of the Workflow feature to learn how to 
 
 You need to be running Jenkins 1.580.1 or later.
 If you have not already done so, make sure Workflow is installed: go to the Plugin Manager and install _Workflow: Aggregator_ and restart Jenkins.
+Also make sure the _Git_ and _JUnit_ plugins are installed and up to date.
 
 If you are running Jenkins Enterprise 14.11 or later, you already have Workflow (plus some extra associated features).
 
@@ -36,6 +37,19 @@ Running: End of Workflow
 Finished: SUCCESS
 ```
 
+## Flow scripts explained
+
+A workflow is a Groovy script which tells Jenkins what to do when your flow is run.
+If you are not familiar with Groovy, it is a scripting-friendly language related to Java ([documentation](http://groovy-lang.org/documentation.html)).
+You do not need to know much general Groovy to use Workflow; relevant bits of syntax will be introduced as needed.
+
+For this example, it suffices to know that `echo` is a _step_: a function defined in a Jenkins plugin and made available to all workflows.
+Groovy functions can use a C/Java-like syntax:
+
+    echo("hello from Workflow");
+
+but you can also drop the semicolon (`;`), drop the parentheses (`(` and `)`), and use single quotes (`'`) instead of double (`"`) if you do not need to perform variable substitutions.
+
 # A simple flow
 
 So now let us do something useful, but no more complex than what you could do with a freestyle project.
@@ -54,7 +68,7 @@ Finally _Save_.
 Now click on your flow and _Configure_ it to edit its script.
 
 ```
-node() {
+node {
   git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
   def mvnHome = tool 'M3'
   sh "${mvnHome}/bin/mvn -B verify"
@@ -72,7 +86,69 @@ Finished: FAILURE
 
 ## Syntax explained
 
-TODO
+`node` is a step which schedules a task to run by adding it to the Jenkins build queue.
+As soon as an executor slot is available on some _node_ (the Jenkins master, or a slave), the task is run on that node.
+`node` also allocates a _workspace_ (file directory) on that node for the duration of the task (more on this later).
+
+Groovy functions can accept _closures_ (blocks of code), and some steps expect a block.
+In this case the code between the braces (`{` and `}`) is the body of the `node` step.
+Many steps (like `git` and `sh` in this example) can only run in the context of a node, so trying to run just
+
+    sh 'echo oops'
+
+as a flow script will not work: Jenkins does not know what system to run commands on.
+
+Unlike user-defined functions, workflow steps always take named parameters. So
+
+    git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
+
+is passing one parameter, named `url` (the Git source code repository to check out).
+This parameter happens to be mandatory; it also takes some other optional parameters such as `branch`.
+You can pass as many as you need:
+
+    git url: 'https://github.com/jglick/simple-maven-project-with-tests.git', branch: 'master'
+
+As before, Groovy lets you omit parentheses around function arguments.
+The named-parameter syntax is also a shorthand for creating a _map_, which in Groovy uses the syntax `[key1: value1, key2: value2]`, so you could also write:
+
+    git([url: 'https://github.com/jglick/simple-maven-project-with-tests.git', branch: 'master'])
+
+For convenience, when calling steps taking only one parameter (or only one mandatory parameter) you can omit the parameter name; so
+
+    sh 'echo hello'
+
+is really shorthand for
+
+    sh([script: 'echo hello'])
+
+The `tool` step makes sure a tool with the given name (in this case, a specific version of the Maven build tool) is installed on the current node.
+But merely running this step does not do much good; the script needs to know _where_ it was installed, so the tool can be run later.
+For this, we need a variable.
+
+The `def` keywork in Groovy is the quickest way to define a new variable (with no specific type). So
+
+    def mvnHome = tool 'M3'
+
+makes sure `M3` is installed somewhere accessible to Jenkins, and assigns the return value of the step (an installation path) to the `mvnHome` variable.
+We could also use a more Java-like syntax with a static type:
+
+    String mvnHome = tool("M3");
+
+Finally, we want to run our Maven build. When Groovy encounters `$` inside a double-quoted string
+
+    "${mvnHome}/bin/mvn -B verify"
+
+it replaces the `${mvnHome}` part with the value of that expression (here, just the variable value).
+The more verbose Java-like syntax would be
+
+    mvnHome + "/bin/mvn -B verify"
+
+In the console output you will see the final command being run, for example
+
+```
+[flow] Running shell script
++ /path/to/jenkins/tools/hudson.tasks.Maven_MavenInstallation/M3/bin/mvn -B verify
+```
 
 ## Windows variations
 
@@ -80,7 +156,7 @@ The preceding instructions assume Jenkins is running on Linux.
 If you are on Windows, try:
 
 ```
-node() {
+node {
   git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
   def mvnHome = tool 'M3'
   bat "${mvnHome}\\bin\\mvn -B verify"
@@ -95,7 +171,7 @@ Rather than failing the build if there are some test failures, we would like Jen
 We would also like to capture the JAR that we built.
 
 ```
-node() {
+node {
   git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
   def mvnHome = tool 'M3'
   sh "${mvnHome}/bin/mvn -B -Dmaven.test.failure.ignore verify"
@@ -113,13 +189,27 @@ TODO
 
 # Using slaves
 
-TODO
+TODO passing a label to `node`
+TODO distinction between flyweight master task, and heavyweight node tasks
+
+## Workspaces
+
+TODO workspace locks vs. concurrent builds
+TODO `readFile` and `writeFile`
+TODO `ws`, `dir`
 
 # Exploring available steps
 
 Click _Snippet Generator_ beneath your script textarea.
 
 TODO
+
+# Adding more complex logic
+
+TODO loops, functions, try-catch, etc.
+TODO serializable local variables
+TODO `parallel`
+TODO multiple slaves
 
 # Stages
 
