@@ -329,8 +329,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     }
 
     private void finish(Result r) {
-        LOGGER.log(Level.INFO, "{0} completed: {1}", new Object[] {this, r});
         setResult(r);
+        LOGGER.log(Level.INFO, "{0} completed: {1}", new Object[] {this, getResult()});
         // TODO set duration
         RunListener.fireCompleted(WorkflowRun.this, listener);
         Throwable t = execution.getCauseOfFailure();
