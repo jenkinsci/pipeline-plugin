@@ -114,6 +114,14 @@ public class CoreStepTest {
         b = r.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
         assertEquals(JenkinsRule.getLog(b), 1, inbox.size());
         assertEquals(Messages.MailSender_FailureMail_Subject() + " " + b.getFullDisplayName(), inbox.get(0).getSubject());
+        p.setDefinition(new CpsFlowDefinition(
+                  "node {\n"
+                + "    catchError {sh 'true'}\n"
+                + "    step([$class: 'Mailer', recipients: '" + recipient + "'])\n"
+                + "}"));
+        inbox.clear();
+        b = r.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
+        assertEquals(JenkinsRule.getLog(b), 0, inbox.size());
     }
 
 }

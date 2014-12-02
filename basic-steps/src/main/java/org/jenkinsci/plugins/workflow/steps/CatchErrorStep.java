@@ -63,7 +63,7 @@ public final class CatchErrorStep extends AbstractStepImpl {
 
     public static final class Execution extends AbstractStepExecutionImpl {
 
-        /** TODO unused since it is transient, just as a marker that we will need it later: https://trello.com/c/cyXGkuVv/91-stepcontextparameter-should-be-reinjected-after-restart */
+        /** Placeholder for getRequiredContext. */
         @StepContextParameter private transient Run<?,?> run;
         @StepContextParameter private transient TaskListener listener;
 
@@ -89,12 +89,6 @@ public final class CatchErrorStep extends AbstractStepImpl {
             }
 
             @Override public void onSuccess(Object result) {
-                try {
-                    context.get(Run.class).setResult(Result.SUCCESS);
-                } catch (Exception x) {
-                    context.onFailure(x);
-                    return;
-                }
                 context.onSuccess(null); // we do not pass up a result, since onFailure cannot
             }
 
