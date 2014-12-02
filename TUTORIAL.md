@@ -50,6 +50,15 @@ Groovy functions can use a C/Java-like syntax:
 
 but you can also drop the semicolon (`;`), drop the parentheses (`(` and `)`), and use single quotes (`'`) instead of double (`"`) if you do not need to perform variable substitutions.
 
+Comments in Groovy, like in Java, can use single-line or multiline styles:
+
+```
+/*
+ * Copyright 2014 Yoyodyne, Inc.
+ */
+// FIXME write this flow
+```
+
 # A simple flow
 
 So now let us do something useful, but no more complex than what you could do with a freestyle project.
@@ -185,7 +194,33 @@ You should also see _Last Successful Artifacts_ on the flow index page.
 
 ## Syntax explained
 
-TODO
+`-Dmaven.test.failure.ignore` is a Maven option to allow the `mvn` command to exit normally (status 0), so that the flow continues, even when some test failures are recorded on disk.
+
+Next we run the `step` step twice.
+This step just allows you to use certain build (or post-build) steps already defined in Jenkins for use in traditional projects.
+It takes one parameter (called `delegate` but omitted here), whose value is a standard Jenkins build step.
+We could create the delegate using Java constructor/method calls, using Groovy or Java syntax:
+
+    def aa = new hudson.tasks.ArtifactArchiver('**/target/*.jar')
+    aa.fingerprint = true // i.e., aa.setFingerprint(true)
+    step aa
+
+but this is cumbersome and does not work well with Groovy sandbox security, so any object-valued argument to a step may instead be given as a map.
+Here
+
+    [$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true]
+
+specifies the values of the `artifacts` and `fingerprint` properties (controlling what files to save, and whether to also record fingerprints for them).
+`$class` is used to pick the kind of object to create.
+It may be a fully-qualified class name (`hudson.tasks.ArtifactArchiver`), but the simple name may be used when unambiguous.
+
+In some cases part of a step configuration will force an object at a certain point to be of a fixed class, so `$class` can be omitted entirely.
+For example, rather than using the simple `git` step, you can use the more general `checkout` step and specify any complex configuration supported by the Git plugin:
+
+    checkout scm: [$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfigs: [[url: 'https://github.com/jglick/simple-maven-project-with-tests']]]
+
+Here `[[name: '*/master']]` is an array with one map element, `[name: '*/master']`, which is an object of type `hudson.plugins.git.BranchSpec`, but we can omit `$class: 'BranchSpec'` since `branches` can only hold this kind of object.
+Similarly, the elements of `userRemoteConfigs` are declared to be of type `UserRemoteConfig`, so this need not be mentioned.
 
 # Using slaves
 
