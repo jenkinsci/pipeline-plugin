@@ -50,8 +50,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
      */
     private Outcome outcome;
 
-    @Inject
-    InputStep input;
+    @Inject transient InputStep input;
 
     @Override
     public boolean start() throws Exception {
