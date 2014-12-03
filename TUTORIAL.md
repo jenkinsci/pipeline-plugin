@@ -428,6 +428,7 @@ This occurs because the `matcher` local variable is of a type (`Matcher`) not co
 Since workflows must survive Jenkins restarts, the state of the running program is periodically saved to disk so it can be resumed later.
 (Saves occur after every step, or in the middle of some steps like `sh`.)
 The “state” includes the whole control flow, including local variables, positions in loops, and so on.
+Therefore any variable values used in your program should be numbers, strings, or other serializable types, not “live” objects such as network connections.
 
 If you must use a nonserializable value temporarily, discard it before doing anything else.
 When we kept the matcher only as a local variable inside a function, it was automatically discarded as soon as the function returned.
