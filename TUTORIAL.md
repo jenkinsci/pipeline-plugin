@@ -252,27 +252,33 @@ Similarly, the elements of `userRemoteConfigs` are declared to be of type `UserR
 
 # Using slaves
 
-TODO passing a label to `node`
-TODO distinction between flyweight master task, and heavyweight node tasks
+*TODO* passing a label to `node`
+
+*TODO* distinction between flyweight master task, and heavyweight node tasks
 
 ## Workspaces
 
-TODO workspace locks vs. concurrent builds
-TODO `readFile` and `writeFile`
-TODO `ws`, `dir`
+*TODO* workspace locks vs. concurrent builds
+
+*TODO* `readFile` and `writeFile`
+
+*TODO* `ws`, `dir`
 
 # Exploring available steps
 
 Click _Snippet Generator_ beneath your script textarea.
 
-TODO
+*TODO* details
 
 # Adding more complex logic
 
-TODO loops, functions, try-catch, etc.
-TODO serializable local variables
-TODO `parallel`
-TODO multiple slaves
+*TODO* loops, functions, try-catch, etc.
+
+*TODO* serializable local variables
+
+*TODO* `parallel`
+
+*TODO* multiple slaves
 
 # Stages
 
