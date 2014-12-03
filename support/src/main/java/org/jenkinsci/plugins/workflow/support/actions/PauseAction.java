@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 /**
  * Pause {@link FlowNode} Action.
@@ -96,7 +98,7 @@ public class PauseAction extends InvisibleAction {
         }
     }
 
-    public static PauseAction getCurrentPause(FlowNode node) {
+    public static @CheckForNull PauseAction getCurrentPause(@Nonnull FlowNode node) {
         List<PauseAction> pauseActions = getPauseActions(node);
 
         if (!pauseActions.isEmpty()) {
@@ -106,7 +108,7 @@ public class PauseAction extends InvisibleAction {
         return null;
     }
 
-    public static void endCurrentPause(FlowNode node) throws IOException {
+    public static void endCurrentPause(@Nonnull FlowNode node) throws IOException {
         PauseAction currentPause = getCurrentPause(node);
 
         if (currentPause != null) {
@@ -122,7 +124,7 @@ public class PauseAction extends InvisibleAction {
      * @param node The node to test.
      * @return True if the node is pause node, otherwise false.
      */
-    public static boolean isPaused(FlowNode node) {
+    public static boolean isPaused(@Nonnull FlowNode node) {
         PauseAction currentPause = getCurrentPause(node);
 
         if (currentPause != null) {
@@ -137,7 +139,7 @@ public class PauseAction extends InvisibleAction {
      * @param node The node to be searched.
      * @return The {@link PauseAction} instances for the supplied node. Returns an empty list if there are none.
      */
-    public static List<PauseAction> getPauseActions(FlowNode node) {
+    public static @Nonnull List<PauseAction> getPauseActions(@Nonnull FlowNode node) {
         List<PauseAction> pauseActions = new ArrayList<PauseAction>();
         List<Action> actions = node.getActions();
 
@@ -155,7 +157,7 @@ public class PauseAction extends InvisibleAction {
      * @param node The node to calculate on.
      * @return The pause duration in milliseconds.
      */
-    public static long getPauseDuration(FlowNode node) {
+    public static long getPauseDuration(@Nonnull FlowNode node) {
         List<PauseAction> pauseActions = getPauseActions(node);
         long pauseDuration = 0L;
 
