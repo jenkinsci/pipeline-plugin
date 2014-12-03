@@ -49,7 +49,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -199,9 +198,6 @@ public class STMExecutionTest {
         }
         @Override public Queue.Executable getExecutable() throws IOException {
             throw new IOException();
-        }
-        @Override public PrintStream getConsole() {
-            return System.out;
         }
         @Override public String getUrl() {
             return "TODO";

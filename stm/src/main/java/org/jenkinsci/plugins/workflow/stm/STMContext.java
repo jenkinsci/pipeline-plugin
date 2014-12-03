@@ -26,13 +26,22 @@ package org.jenkinsci.plugins.workflow.stm;
 
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import hudson.model.Result;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.model.CauseOfInterruption;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.BodyExecution;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
+import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
@@ -89,23 +98,83 @@ final class STMContext extends DefaultStepContext {
         throw new UnsupportedOperationException("TODO");
     }
 
-    @Override public void invokeBodyLater(FutureCallback<Object> callback, Object... contextOverrides) {
-        STMExecution exec;
-        try {
-            exec = getExecution();
-        } catch (IOException x) {
-            LOG.log(Level.WARNING, "could not resume block step", x);
-            return;
+    @Override public BodyInvoker newBodyInvoker() {
+        return new BodyInvoker() {
+            BodyExecutionCallback callback;
+            @Override public BodyInvoker withContext(Object override) {
+                return this; // TODO
+            }
+            @Override public BodyInvoker withDisplayName(String name) {
+                return this; // TODO
+            }
+            @Override public BodyInvoker withCallback(BodyExecutionCallback callback) {
+                this.callback = callback; // TODO must we support several?
+                return this;
+            }
+            @Override public BodyExecution start() {
+                STMExecution exec;
+                try {
+                    exec = getExecution();
+                } catch (IOException x) {
+                    LOG.log(Level.WARNING, "could not resume block step", x);
+                    return new BrokenExecution(x);
+                }
+                State state = exec.getStateMap().get(step);
+                if (!(state instanceof BlockState)) {
+                    LOG.log(Level.WARNING, "was not a BlockState: {0}", state);
+                    return new BrokenExecution(new ClassCastException());
+                }
+                BlockState block = (BlockState) state;
+                String start = block.getStart();
+                exec.beginBlock(thread, callback);
+                exec.next(thread, start);
+                return new BodyExecution() {
+                    @Override public Collection<StepExecution> getCurrentExecutions() {
+                        return Collections.emptySet(); // TODO
+                    }
+                    @Override public boolean cancel(CauseOfInterruption... causes) {
+                        return false; // TODO
+                    }
+                    @Override public boolean isCancelled() {
+                        return false; // TODO
+                    }
+                    @Override public boolean isDone() {
+                        return true; // TODO
+                    }
+                    @Override public Object get() throws InterruptedException, ExecutionException {
+                        throw new UnsupportedOperationException(); // TODO
+                    }
+                    @Override public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                        throw new UnsupportedOperationException(); // TODO
+                    }
+                };
+            }
+        };
+    }
+    private static class BrokenExecution extends BodyExecution {
+        private final Throwable t;
+        BrokenExecution(Throwable t) {
+            this.t = t;
         }
-        State state = exec.getStateMap().get(step);
-        if (!(state instanceof BlockState)) {
-            LOG.log(Level.WARNING, "was not a BlockState: {0}", state);
-            return;
+        @Override public Collection<StepExecution> getCurrentExecutions() {
+            return Collections.emptySet();
         }
-        BlockState block = (BlockState) state;
-        String start = block.getStart();
-        exec.beginBlock(thread, callback);
-        exec.next(thread, start);
+        @Override public boolean cancel(CauseOfInterruption... causes) {
+            return false;
+        }
+        @Override public boolean isCancelled() {
+            return false;
+        }
+        @Override public boolean isDone() {
+            return true;
+        }
+        @Override public Object get() throws InterruptedException, ExecutionException {
+            throw new ExecutionException(t);
+        }
+        @Override public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            return get();
+        }
+
     }
 
     @Override public void onFailure(Throwable t) {

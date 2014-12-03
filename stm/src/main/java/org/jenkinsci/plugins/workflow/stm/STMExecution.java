@@ -38,7 +38,6 @@ import org.jenkinsci.plugins.workflow.support.storage.FlowNodeStorage;
 import org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage;
 import org.jenkinsci.plugins.workflow.pickles.Pickle;
 import org.jenkinsci.plugins.workflow.pickles.PickleFactory;
-import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.Action;
 import hudson.model.Result;
 import hudson.security.ACL;
@@ -53,7 +52,9 @@ import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.model.CauseOfInterruption;
 import org.acegisecurity.Authentication;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 
 final class STMExecution extends FlowExecution {
     
@@ -76,10 +77,14 @@ final class STMExecution extends FlowExecution {
         return ACL.SYSTEM; // TODO
     }
 
+    @Override public void interrupt(Result r, CauseOfInterruption... causes) throws IOException, InterruptedException {
+        // TODO
+    }
+
     static class Frame {
         String state;
         String id; // needed for blocks
-        FutureCallback callback;
+        BodyExecutionCallback callback;
         @Override public String toString() {
             return "Frame[" + state + "," + id + "," + callback + "]";
         }
@@ -170,10 +175,11 @@ final class STMExecution extends FlowExecution {
                 LOGGER.log(Level.FINE, "finishing subroutine from {0} on {1}", new Object[] {caller, thread});
                 State s = getStateMap().get(caller.state);
                 assert s instanceof BlockState : "found " + s + " rather than a BlockState on the stack for " + caller.state;
-                FutureCallback callback = caller.callback;
+                BodyExecutionCallback callback = caller.callback;
                 assert callback != null : "no callback defined for " + caller.state;
                 caller.callback = null;
-                callback.onSuccess(null); // TODO should there be a way of passing a return value from the block?
+                STMContext context = null; // TODO
+                callback.onSuccess(context, null); // TODO should there be a way of passing a return value from the block?
                 heads.put(thread, caller.id);
                 try {
                     addingHead(new BlockEndNode<BlockStartNode>(this, newID(), /*TODO*/null, /* TODO is this right? or should it be from caller.id? */prior) {
@@ -207,7 +213,7 @@ final class STMExecution extends FlowExecution {
         }
     }
 
-    void beginBlock(String thread, FutureCallback callback) {
+    void beginBlock(String thread, BodyExecutionCallback callback) {
         Stack<Frame> stack = pcs.get(thread);
         if (stack == null) {
             LOGGER.log(Level.WARNING, "illegal attempt to continue finished thread {0}", thread);
@@ -309,7 +315,7 @@ final class STMExecution extends FlowExecution {
         listeners.add(listener);
     }
     
-    @Override public void finish(Result r) throws IOException, InterruptedException {
+    private void finish(Result r) throws IOException, InterruptedException {
         LOGGER.log(Level.FINE, "finishing with {0}", r);
         List<FlowNode> finals = new ArrayList<FlowNode>();
         for (Map.Entry<String,String> entry : heads.entrySet()) {
