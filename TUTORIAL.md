@@ -196,6 +196,10 @@ node {
 
 For the rest of this tutorial, only the Linux form will be given.
 
+## Inspecting step executions
+
+*TODO* link to _Running Steps_ and explain
+
 # Recording test results and artifacts
 
 Rather than failing the build if there are some test failures, we would like Jenkins to record them, but then proceed.
@@ -252,29 +256,197 @@ Similarly, the elements of `userRemoteConfigs` are declared to be of type `UserR
 
 # Using slaves
 
-*TODO* passing a label to `node`
+So far our workflow has run only on the Jenkins master, assuming you had no slaves configured.
+You can even force it to run on the master by telling the `node` step this:
 
-*TODO* distinction between flyweight master task, and heavyweight node tasks
+```groovy
+node('master') {
+    // as before
+}
+```
+
+(Here we are passing a value for the optional `label` parameter of the step, as well as a body block.)
+
+To create a simple slave, select _Manage Jenkins » Manage Nodes » New Node_ and create a _Dumb Slave_.
+Leave _# of executors_ as 1.
+Pick some _Remote root directory_ such as `/tmp/slave`.
+Type `remote` in the _Labels_ field and set the _Launch method_ to _Launch slave agents via Java Web Start_.
+_Save_, then click on the new slave and _Launch_.
+
+Now go back to your flow definition and request this slave’s label:
+
+```groovy
+node('remote') {
+    // as before
+}
+```
+
+(The parameter may be a slave name, or a single label, or any label expression such as `unix && 64bit`.)
+
+When you _Build Now_ you should see
+
+```
+Running on <yourslavename> in /<slaveroot>/workspace/<flowname>
+```
+
+and the `M3` Maven installation being unpacked to this slave root.
+
+## Pausing; flyweight vs. heavyweight executors
+
+Let us pause the script so we can take a better look at what is happening.
+
+```groovy
+node('remote') {
+  input 'Ready to go?'
+  // rest as before
+}
+```
+
+The `input` step pauses flow execution.
+Its default `message` parameter gives a prompt which will be shown to a human.
+(You can optionally request information back, hence the name of the step.)
+
+When you run a new build, you should see
+
+```
+Running: Input
+Ready to go?
+Proceed or Abort
+```
+
+If you click _Proceed_ the build will proceed as before.
+But first go to the Jenkins main page and look at the _Build Executor Status_ widget.
+You will see an unnumbered entry under _master_ called something like _flowname #10_; executors #1 and #2 on the master will be idle.
+You will also see an entry under your slave, in a numbered row (probably #1) called _Building part of flowname #10_.
+
+Why are there two executors consumed by one flow build?
+Every flow build itself runs on the master, using a _flyweight executor_: an uncounted slot that is assumed to not take any significant computational power.
+This executor represents the actual Groovy script, which almost all of the time is idle, waiting for a step to complete.
+Flyweight executors are always available.
+
+When you run a `node` step, a regular heavyweight executor is allocated on a node (usually a slave) matching the label expression, as soon as one is available.
+This executor represents the real work being done on the node.
+If you start a second build of the flow while the first is still paused with the one available executor, you will see both flow builds running on master.
+But only the first will have grabbed the one available executor on the slave; the other _part of flowname #11_ will be shown in _Build Queue (1)_.
+(After a moment the console log for the second build will note that it is still waiting for an available executor.)
+
+To finish up, click the ▾ beside either executor entry for any running flow and select _Paused for Input_, then click _Proceed_.
+(You can also click the link in the console output.)
 
 ## Workspaces
 
-*TODO* workspace locks vs. concurrent builds
+Besides waiting to allocate an executor on a node, the `node` step also automatically allocates a _workspace_: a directory specific to this job where you can check out sources, run commands, and do other work.
+Workspaces are _locked_ for the duration of the step: only one build at a time can use a given workspace.
+So if multiple builds need a workspace on the same node, additional workspaces will be allocated.
 
-*TODO* `readFile` and `writeFile`
+_Configure_ your slave, and set _# of executors_ to 2 (and _Save_).
+Now start your build twice in a row.
+The log for the second build will show
 
-*TODO* `ws`, `dir`
+```
+Running on <yourslavename> in /<slaveroot>/workspace/<flowname>@2
+```
 
-# Exploring available steps
+The `@2` shows that the build used a separate workspace from the first one, with which it ran concurrently.
+You should also have seen
 
-Click _Snippet Generator_ beneath your script textarea.
+```
+Cloning the remote Git repository
+```
 
-*TODO* details
+since this new workspace required a new copy of the project sources.
+
+You can also use the `ws` step to explicitly ask for another workspace on the current slave, _without_ grabbing a new executor slot.
+Inside its body all commands run in the second workspace.
+The `dir` step can be used to run a block with a different working directory (typically a subdirectory of the workspace) without allocating a new workspace.
 
 # Adding more complex logic
 
-*TODO* loops, functions, try-catch, etc.
+Your Groovy script can include functions, conditional tests, loops, `try`/`catch`/`finally` blocks, and so on.
+Save this flow definition:
 
-*TODO* serializable local variables
+```groovy
+node('remote') {
+  git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
+  def v = version()
+  if (v) {
+    echo "Building version ${v}"
+  }
+  def mvnHome = tool 'M3'
+  sh "${mvnHome}/bin/mvn -B -Dmaven.test.failure.ignore verify"
+  step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
+  step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+}
+def version() {
+  def matcher = readFile('pom.xml') =~ '<version>(.+)</version>'
+  matcher ? matcher[0][1] : null
+}
+```
+
+Here we are using the `def` keyword to define a function (you can also give a Java type in place of `def`, to make it look more like a Java method).
+`=~` is Groovy syntax to match text against a regular expression; `[0]` looks up the first match, and `[1]` the first `(…)` group within that match.
+
+The `readFile` step loads a text file from the workspace and returns its content.
+(Do _not_ try to use `java.io.File` methods, because these will refer to files on the master where Jenkins is running, not in the current workspace.)
+There is also a `writeFile` step to save content to a text file in the workspace.
+
+When you run the flow you should see
+
+```
+Building version 1.0-SNAPSHOT
+```
+
+(Unless your _Script Security_ plugin is version 1.11 or higher, you may see a `RejectedAccessException` error at this point.
+If so, a Jenkins administrator will need to go to _Manage Jenkins » In-process Script Approval_ and _Approve_ `staticMethod org.codehaus.groovy.runtime.ScriptBytecodeAdapter findRegex java.lang.Object java.lang.Object`.
+Then try running your script again and it should work.)
+
+## Serialization of local variables
+
+If you tried inlining the `version` function as follows
+
+```groovy
+node('remote') {
+  git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
+  def matcher = readFile('pom.xml') =~ '<version>(.+)</version>'
+  if (matcher) {
+    echo "Building version ${matcher[0][1]}"
+  }
+  def mvnHome = tool 'M3'
+  sh "${mvnHome}/bin/mvn -B -Dmaven.test.failure.ignore verify"
+  step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
+  step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+}
+```
+
+you would have noticed a problem:
+
+```
+java.io.NotSerializableException: java.util.regex.Matcher
+```
+
+This occurs because the `matcher` local variable is of a type (`Matcher`) not considered serializable by Java.
+Since workflows must survive Jenkins restarts, the state of the running program is periodically saved to disk so it can be resumed later.
+(Saves occur after every step, or in the middle of some steps like `sh`.)
+The “state” includes the whole control flow, including local variables, positions in loops, and so on.
+
+If you must use a nonserializable value temporarily, discard it before doing anything else.
+When we kept the matcher only as a local variable inside a function, it was automatically discarded as soon as the function returned.
+You can also explicitly discard a reference when you are done with it:
+
+```groovy
+node('remote') {
+  git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
+  def matcher = readFile('pom.xml') =~ '<version>(.+)</version>'
+  if (matcher) {
+    echo "Building version ${matcher[0][1]}"
+  }
+  matcher = null
+  def mvnHome = tool 'M3'
+  sh "${mvnHome}/bin/mvn -B -Dmaven.test.failure.ignore verify"
+  step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
+  step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+}
+```
 
 *TODO* `parallel`
 
@@ -293,3 +465,15 @@ A finite concurrency ≥1 can also be used to prevent slow build stages such as 
 Every SCM push can still trigger a separate build of a quicker earlier stage as compilation and unit tests.
 Yet each build runs linearly and can even retain a single workspace, avoiding the need to identify and copy artifacts between builds.
 (Even if you dispose of a workspace from an earlier stage, you can retain information about it using simple local variables.)
+
+*TODO* give an example
+
+# Loading script text from version control
+
+*TODO* discuss `load` at least
+
+# Exploring available steps
+
+Click _Snippet Generator_ beneath your script textarea.
+
+*TODO* details
