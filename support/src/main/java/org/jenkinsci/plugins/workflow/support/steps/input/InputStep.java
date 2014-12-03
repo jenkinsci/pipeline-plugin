@@ -20,7 +20,7 @@ import java.util.List;
  *
  * @author Kohsuke Kawaguchi
  */
-public class InputStep extends AbstractStepImpl implements Serializable, Cloneable {
+public class InputStep extends AbstractStepImpl implements Serializable {
     private final String message;
 
     /**
@@ -49,10 +49,6 @@ public class InputStep extends AbstractStepImpl implements Serializable, Cloneab
         if (message==null)
             message = "Workflow has paused and needs your input before proceeding";
         this.message = message;
-    }
-
-    @Override public InputStep clone() throws CloneNotSupportedException {
-        return (InputStep) super.clone();
     }
 
     @DataBoundSetter

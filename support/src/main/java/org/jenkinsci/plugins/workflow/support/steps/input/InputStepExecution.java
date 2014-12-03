@@ -50,13 +50,10 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
      */
     private Outcome outcome;
 
-    @Inject(optional=true) transient InputStep _input;
-    InputStep input;
+    @Inject(optional=true) InputStep input;
 
     @Override
     public boolean start() throws Exception {
-        input = _input.clone(); // serialize a copy
-
         // record this input
         getPauseAction().add(this);
 

@@ -4,7 +4,10 @@ import com.google.inject.Inject;
 
 /**
  * Partial implementation of {@link StepExecution} that injects {@link StepContextParameter} upon resume.
- *
+ * Declare any {@code transient} fields with {@link StepContextParameter} that you might need.
+ * <p>The originating {@link Step} may also be {@link Inject}ed, but you must mark it {@link Inject#optional} since it will <em>not</em> be restored here.
+ * If it is only used for the benefit of {@link #start}, mark it {@code transient}.
+ * If you need any information from the step definition after a restart, make sure the {@link Step} is {@link Serializable} and do not mark it {@code transient}.
  * @author Kohsuke Kawaguchi
  */
 public abstract class AbstractStepExecutionImpl extends StepExecution {
@@ -19,9 +22,6 @@ public abstract class AbstractStepExecutionImpl extends StepExecution {
 
     /**
      * Reinject {@link StepContextParameter}s.
-     * The originating {@link Step} may be injected for the benefit of {@link #start}, but must be {@code transient},
-     * and you must mark it {@link Inject#optional} since it will <em>not</em> be restored here.
-     * If you need any information from the step definition after a restart, {@link Step#clone} it or otherwise retain fields.
      */
     @Override
     public void onResume() {
