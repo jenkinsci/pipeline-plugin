@@ -2,6 +2,13 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
+## 1.1 (upcoming)
+
+### User changes
+* `println` now automatically whitelisted.
+* Incorrect build result (status) sometimes shown in log.
+* `url:` can now be omitted from the `git` step when it is the only parameter.
+
 ## 1.0
 
 No changes from 1.0-beta-1.
