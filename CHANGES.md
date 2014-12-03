@@ -5,6 +5,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 ## 1.1 (upcoming)
 
 ### User changes
+* `input` step did not survive Jenkins restarts.
 * `println` now automatically whitelisted.
 * Incorrect build result (status) sometimes shown in log.
 * `url:` can now be omitted from the `git` step when it is the only parameter.

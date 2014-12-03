@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.support.steps.input;
 
+import com.google.inject.Inject;
 import hudson.FilePath;
 import hudson.Util;
 import hudson.console.HyperlinkNote;
@@ -23,7 +24,6 @@ import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
-import javax.inject.Inject;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.HashMap;
@@ -50,10 +50,13 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
      */
     private Outcome outcome;
 
-    @Inject transient InputStep input;
+    @Inject(optional=true) transient InputStep _input;
+    InputStep input;
 
     @Override
     public boolean start() throws Exception {
+        input = _input.clone(); // serialize a copy
+
         // record this input
         getPauseAction().add(this);
 

@@ -1,51 +1,26 @@
 package org.jenkinsci.plugins.workflow.support.steps.input;
 
 import hudson.Extension;
-import hudson.FilePath;
 import hudson.Util;
-import hudson.model.Failure;
-import hudson.model.FileParameterValue;
-import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
-import hudson.model.ParameterValue;
-import hudson.model.Run;
-import hudson.model.User;
-import hudson.util.HttpResponses;
 import jenkins.model.Jenkins;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.GrantedAuthority;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.Step;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.StaplerRequest;
-
-import javax.servlet.ServletException;
-import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
  * {@link Step} that pauses for human input.
  *
  * @author Kohsuke Kawaguchi
  */
-public class InputStep extends AbstractStepImpl implements Serializable {
+public class InputStep extends AbstractStepImpl implements Serializable, Cloneable {
     private final String message;
 
     /**
@@ -74,6 +49,10 @@ public class InputStep extends AbstractStepImpl implements Serializable {
         if (message==null)
             message = "Workflow has paused and needs your input before proceeding";
         this.message = message;
+    }
+
+    @Override public InputStep clone() throws CloneNotSupportedException {
+        return (InputStep) super.clone();
     }
 
     @DataBoundSetter
