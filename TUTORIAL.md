@@ -196,10 +196,6 @@ node {
 
 For the rest of this tutorial, only the Linux form will be given.
 
-## Inspecting step executions
-
-*TODO* link to _Running Steps_ and explain
-
 # Recording test results and artifacts
 
 Rather than failing the build if there are some test failures, we would like Jenkins to record them, but then proceed.
@@ -449,9 +445,84 @@ node('remote') {
 }
 ```
 
-*TODO* `parallel`
+## Multiple threads
 
-*TODO* multiple slaves
+Workflows can use a `parallel` step to perform multiple actions at once.
+This special step takes a map as its argument; keys are “branch names” (labels for your own benefit), and values are blocks to run.
+
+To see how this can be useful, let us install a new plugin, _Parallel Test Executor_ (version 1.6 or later).
+This plugin includes a workflow step that lets you split apart slow test runs.
+Also make sure the JUnit plugin is at least version 1.3.
+
+Now create a new workflow with the following script:
+
+```groovy
+node('remote') {
+  git url: 'https://github.com/jenkinsci/parallel-test-executor-plugin-sample.git'
+  archive 'pom.xml, src/'
+}
+def splits = splitTests([$class: 'CountDrivenParallelism', size: 2])
+def branches = [:]
+for (int i = 0; i < splits.size(); i++) {
+  def exclusions = splits.get(i);
+  branches["split${i}"] = {
+    node('remote') {
+      sh 'rm -rf *'
+      unarchive mapping: ['pom.xml' : '.', 'src/' : '.']
+      writeFile file: 'exclusions.txt', text: exclusions.join("\n")
+      sh "${tool 'M3'}/bin/mvn -B -Dmaven.test.failure.ignore test"
+      step([$class: 'JUnitResultArchiver', testResults: 'target/surefire-reports/*.xml'])
+    }
+  }
+}
+parallel branches
+```
+
+(Note: to enable the Groovy sandbox on this script, be sure to update the Script Security plugin to version 1.11 or later.)
+
+When you run this flow for the first time, it will check out a project and run all of its tests in sequence.
+The second time and subsequent times you run it, the `splitTests` task will partition your tests into two sets of roughly equal runtime.
+The rest of the flow then runs these in parallel, so if you look at _trend_ (in the _Build History_ widget) you will see the second and subsequent builds taking roughly half the time of the first.
+(If you only have the one slave configured with its two executors this would not really save any time, but you may have multiple slaves on different hardware matching the same label expression.)
+
+This script is more complex than the previous ones so it bears some examination.
+We start by grabbing a slave, checking out sources, and making a copy of them using the `archive` step;
+
+```groovy
+archive 'pom.xml, src/'
+```
+
+is shorthand for the more general
+
+```groovy
+step([$class: 'ArtifactArchiver', artifacts: 'pom.xml, src/'])
+```
+
+Later we will `unarchive` these same files back into _other_ workspaces.
+We could have just run `git` anew in each slave’s workspace, but this would result in duplicated changelog entries, as well as contacting the Git server twice.
+(A flow build is permitted to run as many SCM checkouts as it needs to, which is useful for projects working with multiple repositories, but not what we want here.)
+More seriously, if someone pushed a new Git commit at just the wrong time, you might be testing different sources in some branches, which is prevented when we do the checkout just once and distribute sources to slaves ourselves.
+
+`splitTests` returns a list of lists of strings.
+From each (list) entry we construct one branch to run; the label (map key) is akin to a thread name, and will appear in the build log.
+The Maven project is set up to expect a file `exclusions.txt` at its root, and it will run all tests _not_ mentioned there, which we set up via the `writeFile` step.
+When we run the `parallel` step, each branch is started at the same time, and the overall step completes when all the branches finish: “fork & join”.
+
+There are several new ideas at work here.
+First of all, you can see that a single flow build allocates several executors, potentially on different slaves, at the same time.
+(You can see these starting and finishing in the Jenkins executor widget on the main screen.)
+Each call to `node` gets its own workspace.
+This kind of flexibility is impossible in a freestyle project, each build of which is tied to exactly one workspace.
+(The Parallel Test Executor plugin works around that for its freestyle build step by triggering multiple builds of the project, making the history hard to follow.)
+Note also that we run `tool` inside each branch, rather than at top level, since Maven might be installed in a different place on each slave.
+
+You may also have noticed that we are running `JUnitResultArchiver` several times, something that is not possible in a freestyle project.
+The test results recorded in the build are cumulative.
+
+When you view the log for a build with multiple branches, the output from each will be intermixed.
+It can be useful to click on the _Running Steps_ link on the build’s sidebar.
+This will display a tree-table view of all the steps run so far in the build, grouped by logical block, for example `parallel` branch.
+You can click on individual steps and get more details, such as the log output for that step in isolation, the workspace associated with a `node` step, and so on.
 
 # Stages
 
