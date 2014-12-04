@@ -567,14 +567,52 @@ Every SCM push can still trigger a separate build of a quicker earlier stage as 
 Yet each build runs linearly and can even retain a single workspace, avoiding the need to identify and copy artifacts between builds.
 (Even if you dispose of a workspace from an earlier stage, you can retain information about it using simple local variables.)
 
-*TODO* give an example
+Consult the [Docker demo](demo/README.md) for an example of a flow using multiple `stage`s.
 
 # Loading script text from version control
 
-*TODO* discuss `load` at least
+Complex flows would be cumbersome to write and maintain in the textarea provided in the Jenkins job configuration.
+Therefore it makes sense to load the program from another source, one that you can maintain using version control and standalone Groovy editors.
+
+The standard Groovy `evaluate` function can be used, but most likely you will want to load a flow definition from a workspace.
+For this purpose you can use the `load` step, which takes a filename in the workspace and runs it as Groovy source text.
+The loaded file can either contain statements at top level, which are run immediately; or it can define functions and return `this`, in which case the result of the `load` step can be used to invoke those functions like methods.
+Again the [Docker demo](demo/README.md) shows this technique in practice:
+
+```groovy
+def flow
+node('slave') {
+    git url: '…'
+    flow = load 'flow.groovy'
+    flow.devQAStaging()
+}
+flow.production()
+```
+
+where [flow.groovy](https://github.com/jenkinsci/workflow-plugin-pipeline-demo/blob/master/flow.groovy) defines `devQAStaging` and `production` functions (among others) before ending with
+
+```groovy
+return this;
+```
+
+The subtle part here is that we actually have to do a bit of work with the `node` and `git` steps just to check out a workspace so that we can `load` something.
+In this case `devQAStaging` runs on the same node as the main source code checkout, while `production` runs outside of that block (and in fact allocates a different node).
+
+Injection of function and class names into a flow before it runs is handled by plugins, and one is bundled with workflow that allows you to get rid of the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
+A [separate document](cps-global-lib/README.md) has details on this system.
 
 # Exploring available steps
 
-Click _Snippet Generator_ beneath your script textarea.
+There are a number of workflow steps not discussed in this document, and plugins can add more.
+Even steps discussed here can take various special options that can be added from release to release.
+To make it possible to browse all available steps and their syntax, a help tool is built into the flow definition screen.
 
-*TODO* details
+Click _Snippet Generator_ beneath your script textarea.
+You should see a list of installed steps.
+Some will have a help icon (![help](https://raw.githubusercontent.com/jenkinsci/jenkins/master/war/src/main/webapp/images/16x16/help.png)) at the top which you can click to see general information.
+There will also be UI controls to help you configure the step, in some cases with auto completion and other features found in Jenkins configuration screens.
+(Again look for help icons on these.)
+
+When you are done, click _Generate Groovy_ to see a Groovy snippet that would run the step exactly as you have configured it.
+This lets you see the function name used for the step, and the names of any parameters it takes (if not a default parameter), and their syntax.
+You can copy and paste the generated code right into your flow, or use it as a starting point (perhaps trimming some unnecessary optional parameters).
