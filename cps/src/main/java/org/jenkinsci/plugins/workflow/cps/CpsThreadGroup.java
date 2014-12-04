@@ -169,7 +169,9 @@ public final class CpsThreadGroup implements Serializable {
      * Schedules the execution of all the runnable threads.
      */
     public Future<?> scheduleRun() {
-        final Future<Future<?>> f = runner.submit(new Callable<Future<?>>() {
+        final Future<Future<?>> f;
+        try {
+        f = runner.submit(new Callable<Future<?>>() {
             public Future<?> call() throws Exception {
                 run();
                 // we ensure any tasks submitted during run() will complete before we declare us complete
@@ -190,6 +192,9 @@ public final class CpsThreadGroup implements Serializable {
                 }
             }
         });
+        } catch (RejectedExecutionException x) {
+            return Futures.immediateFuture(null);
+        }
 
         // unfortunately that means we have to wait for Future of Future,
         // so we need a rather unusual implementation of Future to hide that behind the scene.
