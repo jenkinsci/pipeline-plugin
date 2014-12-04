@@ -625,7 +625,7 @@ public class WorkflowTest extends SingleJobTestBase {
                         + "  semaphore 'env'\n"
                         + "  env.BUILD_TAG=\"${env.BUILD_TAG}2\"\n"
                         + "  sh 'echo tag3=$BUILD_TAG stuff=$STUFF'\n"
-                        + "}"));
+                        + "}", true));
                 startBuilding();
                 SemaphoreStep.waitForStart("env/1", b);
                 assertTrue(b.isBuilding());

@@ -181,6 +181,27 @@ In the console output you will see the final command being run, for example
 + /path/to/jenkins/tools/hudson.tasks.Maven_MavenInstallation/M3/bin/mvn -B verify
 ```
 
+## Managing the environment
+
+Another way to use tools by default is to add them to your executable path, by using the special variable `env` defined for all workflows:
+
+```groovy
+node {
+  git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
+  def mvnHome = tool 'M3'
+  env.PATH = "${mvnHome}/bin:${env.PATH}"
+  sh 'mvn -B verify'
+}
+```
+
+(Note: you cannot run the above script in the Groovy sandbox until Workflow 1.1 or later.)
+
+Properties of this variable will be environment variables on the current node.
+You can also override certain environment variables, and the overrides will be seen by subsequent `sh` steps (or anything else that pays attention to environment variables).
+This is convenient because now we can run `mvn` without a fully-qualified path.
+
+We will not use this style again, for reasons that will be explained later in more complex examples.
+
 ## Windows variations
 
 The preceding instructions assume Jenkins is running on Linux.
@@ -514,7 +535,15 @@ First of all, you can see that a single flow build allocates several executors, 
 Each call to `node` gets its own workspace.
 This kind of flexibility is impossible in a freestyle project, each build of which is tied to exactly one workspace.
 (The Parallel Test Executor plugin works around that for its freestyle build step by triggering multiple builds of the project, making the history hard to follow.)
+
 Note also that we run `tool` inside each branch, rather than at top level, since Maven might be installed in a different place on each slave.
+We would _not_ want to use `env` in this case
+
+```groovy
+env.PATH = "${mvnHome}/bin:${env.PATH}"
+```
+
+since environment variable overrides are currently limited to being global to a workflow run, not local to the current thread (and thus slave).
 
 You may also have noticed that we are running `JUnitResultArchiver` several times, something that is not possible in a freestyle project.
 The test results recorded in the build are cumulative.

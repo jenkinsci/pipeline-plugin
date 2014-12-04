@@ -8,6 +8,8 @@ import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.ProxyWhitelist;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * {@link Whitelist} implementation for CPS flow execution.
@@ -32,6 +34,16 @@ class CpsWhitelist extends AbstractWhitelist {
             }
             if (name.equals("println") || name.equals("print") || name.equals("printf")) {
                 // These are just aliases for EchoStep.
+                return true;
+            }
+            if (name.equals("getProperty") && Arrays.asList(args).equals(Collections.singletonList("env"))) {
+                return true;
+            }
+        }
+        // TODO JENKINS-24982: it would be nice if AnnotatedWhitelist accepted @Whitelisted on an override
+        if (receiver instanceof EnvActionImpl) {
+            String name = method.getName();
+            if (name.equals("getProperty") || name.equals("setProperty")) {
                 return true;
             }
         }

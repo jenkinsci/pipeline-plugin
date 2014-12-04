@@ -6,6 +6,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ### User changes
 * `input` step did not survive Jenkins restarts.
+* `env` did not work in sandbox mode.
 * `println` now automatically whitelisted.
 * Incorrect build result (status) sometimes shown in log.
 * `url:` can now be omitted from the `git` step when it is the only parameter.
