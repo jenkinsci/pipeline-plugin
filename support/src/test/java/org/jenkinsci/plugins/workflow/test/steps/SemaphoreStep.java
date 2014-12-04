@@ -24,83 +24,60 @@
 
 package org.jenkinsci.plugins.workflow.test.steps;
 
+import com.google.common.base.Function;
+import com.google.inject.Inject;
 import hudson.Extension;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.HashMap;
 
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
-import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-// TODO convert to AbstractStepImpl/AbstractStepDescriptorImpl/AbstractStepExecutionImpl
-
 /**
  * Step that blocks until signaled.
+ * Starts running and waits for {@link #success(Object)} or {@link #failure(Throwable)} to be called, if they have not been already.
  */
-public final class SemaphoreStep extends Step implements Serializable {
+public final class SemaphoreStep extends AbstractStepImpl implements Serializable {
 
     private static final Map<String,Integer> iota = new HashMap<String,Integer>();
-    /** map from {@link #k} to serial form of {@link StepContext} */
+    /** map from {@link #k} to serial form of {@link StepContext}; TODO use {@link StepExecution#applyAll(Class, Function)} instead */
     private static final Map<String,String> contexts = new HashMap<String,String>();
     private static final Map<String,Object> returnValues = new HashMap<String,Object>();
     private static final Map<String,Throwable> errors = new HashMap<String,Throwable>();
 
-    public final String k;
-
-    public SemaphoreStep() {
-        this(UUID.randomUUID().toString());
-    }
+    private final String id;
+    private final int number;
 
     @DataBoundConstructor public SemaphoreStep(String id) {
-        Integer old = iota.get(id);
-        if (old == null) {
-            old = 0;
+        this.id = id;
+        synchronized (iota) {
+            Integer old = iota.get(id);
+            if (old == null) {
+                old = 0;
+            }
+            number = old + 1;
+            iota.put(id, number);
         }
-        int number = old + 1;
-        iota.put(id, number);
-        k = id + "/" + number;
     }
 
-    /** Starts running and waits for {@link #success} or {@link #failure} to be called, if they have not been already. */
-    @Override public StepExecution start(StepContext context) throws Exception {
-        return new StepExecution(context) {
-            @Override
-            public boolean start() throws Exception {
-                if (returnValues.containsKey(k)) {
-                    System.err.println("Immediately running " + k);
-                    getContext().onSuccess(returnValues.get(k));
-                    return true;
-                } else if (errors.containsKey(k)) {
-                    System.err.println("Immediately failing " + k);
-                    getContext().onFailure(errors.get(k));
-                    return true;
-                } else {
-                    System.err.println("Blocking " + k);
-                    contexts.put(k, Jenkins.XSTREAM.toXML(getContext()));
-                    return false;
-                }
-            }
+    public String getId() {
+        return id;
+    }
 
-            @Override
-            public void stop(Throwable cause) {
-                contexts.remove(k);
-                getContext().onFailure(cause);
-            }
-        };
+    private String k() {
+        return id + "/" + number;
     }
 
     /** Marks the step as having successfully completed; or, if not yet started, makes it do so synchronously when started. */
     public void success(Object returnValue) {
-        success(k, returnValue);
+        success(k(), returnValue);
     }
 
     public static void success(String k, Object returnValue) {
@@ -115,7 +92,7 @@ public final class SemaphoreStep extends Step implements Serializable {
 
     /** Marks the step as having failed; or, if not yet started, makes it do so synchronously when started. */
     public void failure(Throwable error) {
-        failure(k, error);
+        failure(k(), error);
     }
 
     public static void failure(String k, Throwable error) {
@@ -129,33 +106,51 @@ public final class SemaphoreStep extends Step implements Serializable {
     }
     
     public StepContext getContext() {
-        return getContext(k);
+        return getContext(k());
     }
 
     private static StepContext getContext(String k) {
         return (StepContext) Jenkins.XSTREAM.fromXML(contexts.get(k));
     }
 
-    @Override public StepDescriptor getDescriptor() {
-        return new DescriptorImpl();
+    public static class Execution extends AbstractStepExecutionImpl {
+
+        @Inject(optional=true) private SemaphoreStep step;
+
+        @Override public boolean start() throws Exception {
+            String k = step.k();
+            if (returnValues.containsKey(k)) {
+                System.err.println("Immediately running " + k);
+                getContext().onSuccess(returnValues.get(k));
+                return true;
+            } else if (errors.containsKey(k)) {
+                System.err.println("Immediately failing " + k);
+                getContext().onFailure(errors.get(k));
+                return true;
+            } else {
+                System.err.println("Blocking " + k);
+                contexts.put(k, Jenkins.XSTREAM.toXML(getContext()));
+                return false;
+            }
+        }
+
+        @Override public void stop(Throwable cause) {
+            contexts.remove(step.k());
+            getContext().onFailure(cause);
+        }
+
+        private static final long serialVersionUID = 1L;
+
     }
 
-    @Extension public static final class DescriptorImpl extends StepDescriptor {
+    @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
 
-        @Override public Set<Class<?>> getRequiredContext() {
-            return Collections.emptySet();
+        public DescriptorImpl() {
+            super(Execution.class);
         }
 
         @Override public String getFunctionName() {
             return "semaphore";
-        }
-
-        @Override public Step newInstance(Map<String,Object> arguments) {
-            return new SemaphoreStep((String) arguments.get("id"));
-        }
-
-        @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
-            throw new UnsupportedOperationException();
         }
 
         @Override public String getDisplayName() {
