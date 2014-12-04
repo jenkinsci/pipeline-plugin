@@ -74,6 +74,7 @@ import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.AfterClass;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -616,25 +617,29 @@ public class WorkflowTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("node {sh 'echo tag=$BUILD_TAG'; env.BUILD_TAG='custom'; sh 'echo tag2=$BUILD_TAG'; env.STUFF='more'; watch new File('" + jenkins().getRootDir() + "/touch'); env.BUILD_TAG=\"${env.BUILD_TAG}2\"; sh 'echo tag3=$BUILD_TAG stuff=$STUFF'}"));
+                p.setDefinition(new CpsFlowDefinition("node {\n"
+                        + "  sh 'echo tag=$BUILD_TAG'\n"
+                        + "  env.BUILD_TAG='custom'\n"
+                        + "  sh 'echo tag2=$BUILD_TAG'\n"
+                        + "  env.STUFF='more'\n"
+                        + "  semaphore 'env'\n"
+                        + "  env.BUILD_TAG=\"${env.BUILD_TAG}2\"\n"
+                        + "  sh 'echo tag3=$BUILD_TAG stuff=$STUFF'\n"
+                        + "}"));
                 startBuilding();
-                while (watchDescriptor.getActiveWatches().isEmpty()) {
-                    assertTrue(JenkinsRule.getLog(b), b.isBuilding());
-                    waitForWorkflowToSuspend();
-                }
+                SemaphoreStep.waitForStart("env/1", b);
                 assertTrue(b.isBuilding());
-                story.j.assertLogContains("tag=jenkins-demo-1", b);
-                story.j.assertLogContains("tag2=custom", b);
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
-                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "here");
-                watchDescriptor.watchUpdate();
+                SemaphoreStep.success("env/1", null);
                 waitForWorkflowToComplete();
                 assertBuildCompletedSuccessfully();
+                story.j.assertLogContains("tag=jenkins-demo-1", b);
+                story.j.assertLogContains("tag2=custom", b);
                 story.j.assertLogContains("tag3=custom2 stuff=more", b);
                 EnvironmentAction a = b.getAction(EnvironmentAction.class);
                 assertNotNull(a);

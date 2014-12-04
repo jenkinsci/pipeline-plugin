@@ -27,17 +27,24 @@ package org.jenkinsci.plugins.workflow.test.steps;
 import com.google.common.base.Function;
 import com.google.inject.Inject;
 import hudson.Extension;
+import hudson.model.Run;
+import java.io.IOException;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -51,6 +58,7 @@ public final class SemaphoreStep extends AbstractStepImpl implements Serializabl
     private static final Map<String,String> contexts = new HashMap<String,String>();
     private static final Map<String,Object> returnValues = new HashMap<String,Object>();
     private static final Map<String,Throwable> errors = new HashMap<String,Throwable>();
+    private static final Set<String> started = new HashSet<String>();
 
     private final String id;
     private final int number;
@@ -113,25 +121,40 @@ public final class SemaphoreStep extends AbstractStepImpl implements Serializabl
         return (StepContext) Jenkins.XSTREAM.fromXML(contexts.get(k));
     }
 
+    public static void waitForStart(@Nonnull String k, @CheckForNull Run b) throws IOException, InterruptedException {
+        synchronized (started) {
+            while (!started.contains(k)) {
+                if (b != null && !b.isBuilding()) {
+                    throw new AssertionError(JenkinsRule.getLog(b));
+                }
+                started.wait(1000);
+            }
+        }
+    }
+
     public static class Execution extends AbstractStepExecutionImpl {
 
         @Inject(optional=true) private SemaphoreStep step;
 
         @Override public boolean start() throws Exception {
             String k = step.k();
+            boolean sync = true;
             if (returnValues.containsKey(k)) {
                 System.err.println("Immediately running " + k);
                 getContext().onSuccess(returnValues.get(k));
-                return true;
             } else if (errors.containsKey(k)) {
                 System.err.println("Immediately failing " + k);
                 getContext().onFailure(errors.get(k));
-                return true;
             } else {
                 System.err.println("Blocking " + k);
                 contexts.put(k, Jenkins.XSTREAM.toXML(getContext()));
-                return false;
+                sync = false;
             }
+            synchronized (started) {
+                started.add(k);
+                started.notifyAll();
+            }
+            return sync;
         }
 
         @Override public void stop(Throwable cause) {
