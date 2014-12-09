@@ -95,6 +95,23 @@ ERROR: script returned exit code 1
 Finished: FAILURE
 ```
 
+### Windows variations
+
+The instructions in this tutorial assume Jenkins is running on Linux or another Unix-like operating system.
+If your Jenkins server (or, later, slave) are running on Windows, try using `bat` in place of `sh`, and use backslashes as the file separator where needed.
+(Backslashes do generally need to be escaped inside strings.)
+For example, rather than
+
+```groovy
+sh "${mvnHome}/bin/mvn -B verify"
+```
+
+you could use
+
+```groovy
+bat "${mvnHome}\\bin\\mvn -B verify"
+```
+
 ## Syntax explained
 
 `node` is a step which schedules a task to run by adding it to the Jenkins build queue.
@@ -202,21 +219,6 @@ This is convenient because now we can run `mvn` without a fully-qualified path.
 
 We will not use this style again, for reasons that will be explained later in more complex examples.
 
-## Windows variations
-
-The preceding instructions assume Jenkins is running on Linux.
-If you are on Windows, try:
-
-```groovy
-node {
-  git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
-  def mvnHome = tool 'M3'
-  bat "${mvnHome}\\bin\\mvn -B verify"
-}
-```
-
-For the rest of this tutorial, only the Linux form will be given.
-
 # Recording test results and artifacts
 
 Rather than failing the build if there are some test failures, we would like Jenkins to record them, but then proceed.
@@ -298,7 +300,13 @@ node('remote') {
 }
 ```
 
-(The parameter may be a slave name, or a single label, or any label expression such as `unix && 64bit`.)
+The parameter may be a slave name, or a single label, or even a label expression such as:
+
+```groovy
+node('unix && 64bit') {
+    // as before
+}
+```
 
 When you _Build Now_ you should see
 
@@ -499,7 +507,11 @@ for (int i = 0; i < splits.size(); i++) {
 parallel branches
 ```
 
-(Note: to enable the Groovy sandbox on this script, be sure to update the Script Security plugin to version 1.11 or later.)
+(Note: to enable the Groovy sandbox on this script, be sure to update the Script Security plugin to version 1.11 or later.
+Even so, you may see a `RejectedAccessException` error at this point.
+If so, a Jenkins administrator will need to go to _Manage Jenkins » In-process Script Approval_ and _Approve_ `staticMethod org.codehaus.groovy.runtime.ScriptBytecodeAdapter compareLessThan java.lang.Object java.lang.Object`.
+Then try running your script again and it should work.
+A later version of the plugin may remove the need for this workaround.)
 
 When you run this flow for the first time, it will check out a project and run all of its tests in sequence.
 The second time and subsequent times you run it, the `splitTests` task will partition your tests into two sets of roughly equal runtime.
