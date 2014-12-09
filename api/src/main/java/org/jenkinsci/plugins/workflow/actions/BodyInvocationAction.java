@@ -1,14 +1,13 @@
 package org.jenkinsci.plugins.workflow.actions;
 
-import com.google.common.util.concurrent.FutureCallback;
 import hudson.model.InvisibleAction;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
 
 /**
  * Attached to {@link BlockStartNode} to indicate that this block
- * represents {@linkplain StepContext#invokeBodyLater(FutureCallback, Object...) an invocation of body block}.
+ * represents {@linkplain BodyInvoker an invocation of body block}.
  *
  * @author Kohsuke Kawaguchi
  */

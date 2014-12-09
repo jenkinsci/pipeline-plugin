@@ -3,14 +3,14 @@ package org.jenkinsci.plugins.workflow.cps.steps;
 /**
  * Indicates a failure in one of the sub-workflows of {@code parallel} task.
  *
- * <pre>
+ * <pre>{@code
  * parallel (
  *    a : { ... },
  *    b : {
  *        throw new IllegalArgumentException();
  *    }
  * )  // <-- the invocation of parallel will fail with ParallelStepException that wraps IllegalArgumentException
- * </pre>
+ * }</pre>
  *
  * @author Kohsuke Kawaguchi
  */

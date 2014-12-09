@@ -111,7 +111,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  * <p>
  * {@link CpsFlowExecution} goes through the following states:
  *
- * <pre>
+ * <pre>{@code
  *                                    +----------------------+
  *                                    |                      |
  *                                    v                      |
@@ -119,7 +119,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  *                                             ^
  *                                             |
  *                                           INITIAL
- * </pre>
+ * }</pre>
  *
  * <dl>
  * <dt>INITIAL</dt>
@@ -512,9 +512,6 @@ public class CpsFlowExecution extends FlowExecution {
 
     /**
      * Waits for the workflow to move into the SUSPENDED state.
-     *
-     * @throws Exception
-     *      if the workflow has failed
      */
     public void waitForSuspension() throws InterruptedException, ExecutionException {
         if (programPromise==null)

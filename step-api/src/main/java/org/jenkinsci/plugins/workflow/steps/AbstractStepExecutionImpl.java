@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.inject.Inject;
+import java.io.Serializable;
 
 /**
  * Partial implementation of {@link StepExecution} that injects {@link StepContextParameter} upon resume.

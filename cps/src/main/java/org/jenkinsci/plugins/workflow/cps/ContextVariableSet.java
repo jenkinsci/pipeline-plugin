@@ -24,9 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
-import org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext;
 
 import javax.annotation.concurrent.Immutable;
 import java.io.Serializable;
@@ -36,10 +34,7 @@ import java.util.List;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.NONE;
 
 /**
- *
- *
  * @author Kohsuke Kawaguchi
- * @see CpsStepContext#invokeBodyLater(FutureCallback, Object...)
  */
 @Immutable
 @PersistIn(NONE)

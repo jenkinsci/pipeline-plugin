@@ -58,7 +58,7 @@ public abstract class DefaultStepContext extends StepContext {
 
     /**
      * Uses {@link #doGet} but automatically translates certain kinds of objects into others.
-     * @inheritDoc
+     * <p>{@inheritDoc}
      */
     @Override public final <T> T get(Class<T> key) throws IOException, InterruptedException {
         T value = doGet(key);

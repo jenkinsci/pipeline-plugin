@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.flow;
 
+import hudson.ExtensionPoint;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Action;
 import java.io.IOException;
@@ -32,12 +33,10 @@ import java.util.List;
 /**
  * Actual executable script.
  *
- * <strike>Extension point for CPS and other engines.</strike>
- *
  * @author Kohsuke Kawaguchi
  * @author Jesse Glick
  */
-public abstract class FlowDefinition extends AbstractDescribableImpl<FlowDefinition> {
+public abstract class FlowDefinition extends AbstractDescribableImpl<FlowDefinition> implements ExtensionPoint {
     /**
      * Starts a brand new execution of this definition from the beginning.
      *

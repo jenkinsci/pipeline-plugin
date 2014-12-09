@@ -147,7 +147,7 @@ public abstract class FlowExecution implements FlowActionStorage {
      * If this execution {@linkplain #isComplete() has completed} with an error,
      * report that.
      *
-     * This is a convenience method to look up the error result from {@ink FlowEndNode}.
+     * This is a convenience method to look up the error result from {@link FlowEndNode}.
      */
     public final @CheckForNull Throwable getCauseOfFailure() {
         List<FlowNode> heads = getCurrentHeads();

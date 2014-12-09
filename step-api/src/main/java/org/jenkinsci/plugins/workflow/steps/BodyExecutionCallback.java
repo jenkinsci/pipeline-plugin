@@ -8,16 +8,7 @@ import java.io.Serializable;
  * {@link FutureCallback} enhanced to track {@link BodyExecution}.
  *
  * <p>
- * Body execution reports the callback in the following order:
- *
- * <pre>
- *
- *             +---> onSuccess
- *             |
- * onStart  ---+
- *             |
- *             +---> onFailure
- * </pre>
+ * Body execution reports the callback in the order {@link #onStart}, then either {@link #onSuccess} or {@link #onFailure}.
  *
  * @author Kohsuke Kawaguchi
  * @see BodyInvoker#withCallback(BodyExecutionCallback)

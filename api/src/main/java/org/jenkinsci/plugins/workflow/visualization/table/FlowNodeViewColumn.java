@@ -13,7 +13,7 @@ import org.kohsuke.stapler.export.Exported;
  * This object must have the <tt>column.groovy</tt>. This view
  * is called for each cell of this column. The {@link FlowNode} object
  * is passed in the "node" variable. The view should render
- * a &lt;td> tag.
+ * a {@code <td>} tag.
  *
  * <p>
  * This object may have an additional <tt>columnHeader.groovy</tt>. The default column header

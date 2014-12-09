@@ -37,7 +37,6 @@ import javax.annotation.Nonnull;
 
 /**
  * Pause {@link FlowNode} Action.
- * <p/>
  * Simply marks the node as being a node that causes the build to pause e.g. an Input node.
  *
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
@@ -85,7 +84,6 @@ public class PauseAction extends InvisibleAction {
 
     /**
      * Get the pause duration for this flow node.
-     * <p/>
      * If the node is paused, the duration will be calculated against the current time.
      *
      * @return The pause duration in milliseconds.

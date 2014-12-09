@@ -121,7 +121,7 @@
                 <!-- fix attempted at https://github.com/jenkinsci/jenkins/commit/101507f49873de0239ccb7839649ea71187712b2 but apparently failed. -->
                 <groupId>org.codehaus.gmaven</groupId>
                 <artifactId>gmaven-plugin</artifactId>
-                <version>1.5-jenkins-2</version>
+                <version>1.5-jenkins-3</version>
                 <configuration>
                     <providerSelection>1.8</providerSelection>
                 </configuration>
@@ -176,6 +176,17 @@
                             <execution>
                                 <goals>
                                     <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>javadoc</goal>
                                 </goals>
                             </execution>
                         </executions>
