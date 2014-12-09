@@ -27,8 +27,8 @@ RUN /usr/local/apache-maven-3.2.2/bin/mvn install && /usr/local/apache-maven-3.2
 
 RUN git config --global user.email "demo@jenkins-ci.org" && git config --global user.name "Workflow Demo"
 
-ADD JENKINS_HOME /var/lib/jenkins/
 ADD jenkins-war.war /var/lib/jenkins/jenkins.war
+ADD JENKINS_HOME /var/lib/jenkins/
 
 ADD run.sh /var/lib/jenkins/run.sh
 ADD sshd_config /etc/ssh/sshd_config
