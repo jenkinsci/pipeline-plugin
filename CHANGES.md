@@ -2,7 +2,7 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
-## 1.1 (upcoming)
+## 1.1 (Dec 09 2014)
 
 ### User changes
 * `input` step did not survive Jenkins restarts.
