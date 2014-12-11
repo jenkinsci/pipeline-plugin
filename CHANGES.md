@@ -2,6 +2,11 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
+## 1.2 (upcoming)
+
+### User changes
+* JENKINS-26030: file locks could prevent build deletion.
+
 ## 1.1 (Dec 09 2014)
 
 ### User changes

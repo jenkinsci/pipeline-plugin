@@ -36,11 +36,14 @@ import hudson.util.StreamTaskListener;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import jenkins.model.CoreEnvironmentContributor;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.GraphListener;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
@@ -83,6 +86,17 @@ public abstract class DefaultStepContext extends StepContext {
                 }
 
                 listener = new StreamTaskListener(new FileOutputStream(la.getLogFile(), true));
+                getExecution().addListener(new GraphListener() {
+                    @Override public void onNewHead(FlowNode node) {
+                        try {
+                            if (!getNode().isRunning()) {
+                                listener.getLogger().close();
+                            }
+                        } catch (IOException x) {
+                            Logger.getLogger(DefaultStepContext.class.getName()).log(Level.FINE, null, x);
+                        }
+                    }
+                });
             }
             return key.cast(listener);
         } else if (Node.class.isAssignableFrom(key)) {
