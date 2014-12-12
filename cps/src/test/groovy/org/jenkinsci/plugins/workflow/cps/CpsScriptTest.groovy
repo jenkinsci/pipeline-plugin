@@ -68,7 +68,11 @@ evaluate('1+com.cloudbees.groovy.cps.Continuable.suspend(2+3)')
 
         // this should have paused at suspend, so we are going to resume it by having it return a value we control
         assert !exec.isComplete() : dumpError()
-        assert exec.programPromise.get().getThread(0).resume(new Outcome(7,null)).get()==8
+        def pp = exec.programPromise
+        assert pp != null
+        def future = pp.get().getThread(0).resume(new Outcome(7,null))
+        assert future != null
+        assert future.get()==8
         exec.waitForSuspension()
 
         assert exec.isComplete() : dumpError();
