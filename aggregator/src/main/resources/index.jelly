@@ -22,6 +22,7 @@
   ~ THE SOFTWARE.
   -->
 
+<?jelly escape-by-default='true'?>
 <div>
     Collects all workflow-related plugins as dependencies to make them easier to install and demonstrate.
 </div>

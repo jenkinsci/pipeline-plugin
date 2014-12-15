@@ -22,6 +22,7 @@
   ~ THE SOFTWARE.
   -->
 
+<?jelly escape-by-default='true'?>
 <div>
   Common utility implementations to build workflow plugin
 </div>
