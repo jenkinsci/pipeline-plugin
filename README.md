@@ -72,6 +72,8 @@ The snapshot Docker demo is mainly useful for verifying the effect of ongoing ch
 
 # Presentations
 
+Webinar _Orchestrating the Continuous Delivery Process in Jenkins with Workflow_ (Dec 2014): [video](http://youtu.be/ZqfiW8eVcuQ)
+
 JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJY)
 
 JUC Boston (Jun 2014): [slides](http://www.cloudbees.com/sites/default/files/2014-0618-Boston-Jesse_Glick-Workflow.pdf) and [video](https://www.youtube.com/watch?v=gpaV6x9QwDo&index=9&list=UUKlF3GIFy9KVUefVbycx_vw)
