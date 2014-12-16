@@ -419,7 +419,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return changeSets;
     }
 
-    /** TODO {@link AbstractBuild#doStop} could be pulled up into {@link Run} making this unnecessary. */
     @RequirePOST
     public synchronized HttpResponse doStop() {
         Executor e = getOneOffExecutor();
