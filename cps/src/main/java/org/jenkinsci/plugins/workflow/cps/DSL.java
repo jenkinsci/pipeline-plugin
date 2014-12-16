@@ -331,9 +331,8 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             for (CpsBodyInvoker b : context.bodyInvokers) {
                 // don't collect the first head, which is what we borrowed from our parent.
                 FlowHead h = heads[idx];
-                if (idx>0)
-                    b.prependCallback(new HeadCollector(context, h));
                 b.launch(cur, h);
+                context.bodyHeads.add(h.getId());
                 idx++;
             }
 
@@ -343,6 +342,9 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         /**
          * When a new {@link CpsThread} that runs the body completes, record
          * its new head.
+         *
+         * @deprecated
+         *      Unused as of 1.2. Left here for serialization compatibility.
          */
         private static class HeadCollector extends BodyExecutionCallback {
             private final CpsStepContext context;
@@ -354,8 +356,6 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             }
 
             private void onEnd() {
-                head.getExecution().removeHead(head);
-                context.bodyInvHeads.put(head.getId(),head.get().getId());
             }
 
             @Override

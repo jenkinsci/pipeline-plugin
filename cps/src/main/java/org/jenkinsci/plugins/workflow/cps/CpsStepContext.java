@@ -57,8 +57,6 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -127,10 +125,10 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         and have its callback insert the ID of the new head at the end of the thread
      */
     /**
-     * {@link FlowNode#getId()}s keyed by {@link FlowHead#getId()} that should become
+     * {@link FlowHead#getId()} that should become
      * the parents of the {@link BlockEndNode} when we create one. Only used when this context has the body.
      */
-    final Map<Integer,String> bodyInvHeads = new TreeMap<Integer,String>();
+    final List<Integer> bodyHeads = new ArrayList<Integer>();
 
     /**
      * If the invocation of the body is requested, this object remembers how to start it.
@@ -312,9 +310,8 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
             final CpsFlowExecution flow = getFlowExecution();
 
             final List<FlowNode> parents = new ArrayList<FlowNode>();
-            parents.add(null);      // make room for the primary head
-            for (String head : bodyInvHeads.values()) {
-                parents.add(flow.getNode(head));
+            for (int head : bodyHeads) {
+                parents.add(flow.getFlowHead(head).get());
             }
 
             flow.runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
@@ -350,9 +347,13 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                         }
 
                         if (n instanceof StepStartNode) {
-                            FlowNode tip = thread.head.get();
-                            parents.set(0, tip);
+                            // if there's no body to invoke, we want the current thread to be the sole head
+                            if (parents.isEmpty())
+                                parents.add(thread.head.get());
 
+                            // clear all the subsumed heads that are joining. thread that owns parents.get(0) lives on
+                            for (int i=1; i<parents.size(); i++)
+                                g.getExecution().subsumeHead(parents.get(i));
                             thread.head.setNewHead(new StepEndNode(flow, (StepStartNode) n, parents));
                         }
                         thread.head.markIfFail(getOutcome());

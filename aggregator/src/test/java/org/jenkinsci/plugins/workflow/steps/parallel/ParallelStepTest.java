@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.steps.parallel;
 
+import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.SimulatedFailureForRetry;
 import hudson.FilePath;
 import java.util.ArrayList;
@@ -17,12 +18,15 @@ import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.durable_task.ShellStep;
+import org.jenkinsci.plugins.workflow.support.actions.PauseAction;
+import org.jenkinsci.plugins.workflow.support.steps.input.InputAction;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
 import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.Issue;
 
 /**
  * Tests for {@link ParallelStep}.
@@ -318,5 +322,52 @@ public class ParallelStepTest extends SingleJobTestBase {
 
     private WatchYourStep.DescriptorImpl watchDescriptor() {
         return jenkins().getInjector().getInstance(WatchYourStep.DescriptorImpl.class);
+    }
+
+    /**
+     * Parallel branches become invisible once completed until the whole parallel step is completed.
+     */
+    @Test @Issue("JENKINS-26074")
+    public void invisibleParallelBranch() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(join(
+                    "    parallel(\n" +
+                    "      'abc' : {\n" +
+                    "        noSuchFunctionExists(); \n"+
+                    "      }\n" +
+                    "      ,\n" +
+                    "      'waitForever' : {\n" +
+                    "        input message: 'This is just to prove a point' \n" +
+                    "      }\n" +
+                    "      ,\n" +
+                    "      'someSimpleError' : {\n" +
+                    "        noSuchFunctionExists(); \n"+
+                    "      }\n" +
+                    "    )\n"
+                )));
+
+                startBuilding();
+
+                // wait for workflow to progress far enough to the point that it has finished  failing two branches
+                // and pause on one
+                for (int i=0; i<10; i++)
+                    waitForWorkflowToSuspend();
+
+                InputAction a = b.getAction(InputAction.class);
+                assertNotNull("Expected to pause on input",a);
+
+                assertEquals("Expecting 3 heads for 3 branches", 3,e.getCurrentHeads().size());
+
+                a.getExecutions().get(0).proceed(null);
+                waitForWorkflowToSuspend();
+
+                story.j.assertBuildStatus(Result.FAILURE, b);
+
+                // make sure the table builds OK
+                buildTable();
+            }
+        });
     }
 }

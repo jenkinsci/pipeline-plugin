@@ -138,6 +138,10 @@ final class FlowHead implements Serializable {
         this.head = v;
     }
 
+    void remove() {
+        getExecution().removeHead(this);
+    }
+
     private void writeObject(ObjectOutputStream oos) throws IOException {
         oos.writeInt(id);
     }

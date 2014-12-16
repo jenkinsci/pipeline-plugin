@@ -99,10 +99,6 @@ public final class CpsBodyInvoker extends BodyInvoker {
         return this;
     }
 
-    public void prependCallback(BodyExecutionCallback callback) {
-        callbacks.add(0, callback);
-    }
-
     @Override
     public CpsBodyInvoker withCallback(BodyExecutionCallback callback) {
         callbacks.add(callback);

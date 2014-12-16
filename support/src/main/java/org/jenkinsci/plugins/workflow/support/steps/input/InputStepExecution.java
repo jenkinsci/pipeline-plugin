@@ -142,7 +142,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
         return proceed(v);
     }
 
-    private HttpResponse proceed(Object v) throws IOException {
+    public HttpResponse proceed(Object v) throws IOException {
         outcome = new Outcome(v, null);
         getContext().onSuccess(v);
 

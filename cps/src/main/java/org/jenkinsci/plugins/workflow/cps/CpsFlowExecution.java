@@ -573,13 +573,33 @@ public class CpsFlowExecution extends FlowExecution {
         return false;
     }
 
-    // called by FlowHead to add a new head
+    /**
+     * Called by FlowHead to add a new head.
+     *
+     * The new head gets removed via {@link #subsumeHead(FlowNode)} when it's used as a parent
+     * of a FlowNode and thereby joining an another thread.
+     */
+    //
     synchronized void addHead(FlowHead h) {
         heads.put(h.getId(), h);
     }
 
     synchronized void removeHead(FlowHead h) {
         heads.remove(h.getId());
+    }
+
+    /**
+     * Removes a {@link FlowHead} that points to the given node from the 'current heads' list.
+     *
+     * This is used when a thread waits and collects the outcome of another thread.
+     */
+    void subsumeHead(FlowNode n) {
+        for (FlowHead h : heads.values()) {
+            if (h.get()==n) {
+                h.remove();
+                return;
+            }
+        }
     }
 
 
