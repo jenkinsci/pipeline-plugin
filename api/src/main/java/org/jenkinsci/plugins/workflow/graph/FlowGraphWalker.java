@@ -45,7 +45,7 @@ public class FlowGraphWalker {
     public FlowNode next() {
         while (!q.isEmpty()) {
             FlowNode n = q.pop();
-            if (visited.contains(n))
+            if (!visited.add(n))
                 continue;
 
             addHeads(n.getParents());
