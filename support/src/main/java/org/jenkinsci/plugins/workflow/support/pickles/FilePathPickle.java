@@ -48,7 +48,7 @@ public class FilePathPickle extends Pickle {
     private final String path;
 
     private FilePathPickle(FilePath v) {
-        // TODO switch to FilePath.toComputer once it uses something like Listener here and so is actually reliable
+        // TODO JENKINS-26096 switch to FilePath.toComputer once it uses something like Listener here and so is actually reliable
         slave = Listener.channelNames.get(v.getChannel());
         if (slave == null) {
             throw new IllegalStateException("no known slave for " + v);
