@@ -37,6 +37,24 @@ The repository is exposed in two endpoints:
 Having the shared library script in Git allows you to track changes, perform
 tested deployments, and reuse the same scripts across a large number of instances.
 
+Note that the repository is initially empty of any commits, so it is possible to push an existing repository here.
+Normally you would instead `clone` it to get started, in which case Git will note
+
+    warning: remote HEAD refers to nonexistent ref, unable to checkout.
+
+To set things up after cloning, start with:
+
+    git checkout -b master
+
+Now you may add and commit files normally.
+For your first push to Jenkins you will need to set up a tracking branch:
+
+    git push --set-upstream origin master
+
+Thereafter it should suffice to run:
+
+    git push
+
 ### Writing shared code
 At the base level, any valid Groovy code is OK. So you can define data structures,
 utility functions, and etc., like this:
