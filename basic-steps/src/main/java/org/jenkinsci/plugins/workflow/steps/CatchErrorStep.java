@@ -24,13 +24,11 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
-import com.google.common.util.concurrent.FutureCallback;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import java.io.Serializable;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -70,7 +68,7 @@ public final class CatchErrorStep extends AbstractStepImpl {
         @Override public boolean start() throws Exception {
             StepContext context = getContext();
             context.newBodyInvoker()
-                    .withCallback(new Callback(context))
+                    .withCallback(new Callback())
                     .withDisplayName(null)
                     .start();
             return false;
@@ -80,21 +78,14 @@ public final class CatchErrorStep extends AbstractStepImpl {
             // nothing to do
         }
 
-        private static final class Callback implements FutureCallback<Object>, Serializable {
+        private static final class Callback extends BodyExecutionCallback {
 
-            private final StepContext context;
-
-            Callback(StepContext context) {
-                this.context = context;
-            }
-
-            @Override public void onSuccess(Object result) {
+            @Override public void onSuccess(StepContext context, Object result) {
                 context.onSuccess(null); // we do not pass up a result, since onFailure cannot
             }
 
-            @Override public void onFailure(Throwable t) {
+            @Override public void onFailure(StepContext context, Throwable t) {
                 try {
-                    // TODO as in RetryStep, we cannot actually print the error message here
                     TaskListener listener = context.get(TaskListener.class);
                     if (t instanceof AbortException) {
                         listener.error(t.getMessage());

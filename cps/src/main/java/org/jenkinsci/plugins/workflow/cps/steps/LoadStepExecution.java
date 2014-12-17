@@ -9,6 +9,7 @@ import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.cps.CpsThread;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 
 /**
@@ -40,7 +41,7 @@ public class LoadStepExecution extends AbstractStepExecutionImpl {
         // execute body as another thread that shares the same head as this thread
         // as the body can pause.
         cps.newBodyInvoker(t.getGroup().export(script))
-                .withCallback(cps)
+                .withCallback(BodyExecutionCallback.wrap(cps))
                 .start(); // when the body is done, the load step is done
 
         return false;

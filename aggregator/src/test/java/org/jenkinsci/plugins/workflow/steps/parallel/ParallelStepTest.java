@@ -1,7 +1,7 @@
 package org.jenkinsci.plugins.workflow.steps.parallel;
 
+import hudson.AbortException;
 import hudson.model.Result;
-import org.jenkinsci.plugins.workflow.SimulatedFailureForRetry;
 import hudson.FilePath;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +18,6 @@ import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.durable_task.ShellStep;
-import org.jenkinsci.plugins.workflow.support.actions.PauseAction;
 import org.jenkinsci.plugins.workflow.support.steps.input.InputAction;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
@@ -71,13 +70,13 @@ public class ParallelStepTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                    "import "+SimulatedFailureForRetry.class.getName(),
+                    "import "+AbortException.class.getName(),
                     "import "+ParallelStepException.class.getName(),
 
                     "node {",
                     "  try {",
                     "    parallel(",
-                    "      b: { throw new SimulatedFailureForRetry(); },",
+                    "      b: { throw new AbortException(); },",
 
                         // make sure this branch takes longer than a
                     "      a: { sh('sleep 3'); sh('touch b.done'); }",
@@ -85,7 +84,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "    assert false;",
                     "  } catch (ParallelStepException e) {",
                     "    assert e.name=='b'",
-                    "    assert e.cause instanceof SimulatedFailureForRetry",
+                    "    assert e.cause instanceof AbortException",
                     "  }",
                     "}"
                 )));
@@ -218,7 +217,6 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                    "import "+SimulatedFailureForRetry.class.getName(),
                     "import "+ParallelStepException.class.getName(),
 
                     "node {",

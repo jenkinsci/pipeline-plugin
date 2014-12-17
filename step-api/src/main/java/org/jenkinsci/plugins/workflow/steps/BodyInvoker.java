@@ -78,9 +78,7 @@ public abstract class BodyInvoker {
     public abstract BodyInvoker withCallback(BodyExecutionCallback callback);
 
     /**
-     * Registers a callback that tracks the progress of the body execution.
-     *
-     * @return this object
+     * @deprecated Use {@link #withCallback(BodyExecutionCallback)} and call {@link BodyExecutionCallback#wrap} if this is what you really wanted.
      */
     public final BodyInvoker withCallback(FutureCallback<Object> callback) {
         return withCallback(BodyExecutionCallback.wrap(callback));

@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow;
 
+import hudson.AbortException;
 import hudson.model.Result;
 import hudson.model.Slave;
 import hudson.model.queue.QueueTaskFuture;
@@ -110,11 +111,11 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     @Test
     public void testRetry() throws Exception {
         p.setDefinition(new CpsFlowDefinition(
-            "import " + SimulatedFailureForRetry.class.getName() + ";\n" +
+            "import " + AbortException.class.getName() + ";\n" +
             "int i = 0;\n" +
             "retry(3) {\n" +
             "    println 'Trying!'\n" +
-            "    if (i++ < 2) throw new SimulatedFailureForRetry();\n" +
+            "    if (i++ < 2) throw new AbortException('oops');\n" +
             "    println 'Done!'\n" +
             "}\n" +
             "println 'Over!'"
@@ -124,12 +125,17 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
         WorkflowRun b = jenkins.assertBuildStatusSuccess(f);
 
         String log = JenkinsRule.getLog(b);
+        jenkins.assertLogNotContains("\tat ", b);
         System.err.println(log);
 
         int idx = 0;
         for (String msg : new String[] {
             "Trying!",
+            "oops",
+            "Retrying",
             "Trying!",
+            "oops",
+            "Retrying",
             "Trying!",
             "Done!",
             "Over!",

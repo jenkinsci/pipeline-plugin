@@ -90,7 +90,8 @@ public class PushdStep extends AbstractStepImpl {
             body = getContext().newBodyInvoker()
                     .withContext(dir)
                     .withDisplayName(null)
-                    .withCallback(getContext())
+                    // Could use a dedicated BodyExecutionCallback here if we wished to print a message at the end ("Returning to ${cwd}"):
+                    .withCallback(BodyExecutionCallback.wrap(getContext()))
                     .start();
             return false;
         }

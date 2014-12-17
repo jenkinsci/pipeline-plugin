@@ -62,6 +62,9 @@ public abstract class BodyExecutionCallback implements Serializable {
 
     /**
      * Wraps an ordinary {@link FutureCallback} into {@link BodyExecutionCallback}.
+     * You lose some power this way ({@link #onStart} and per-body {@link StepContext})
+     * but may be convenient if you already have a {@link FutureCallback} from some other source.
+     * For example, you can wrap your own {@link StepContext} if your step is a tail call to its body.
      */
     public static BodyExecutionCallback wrap(FutureCallback<Object> v) {
         return v instanceof BodyExecutionCallback ? (BodyExecutionCallback)v : new Wrapper(v);
