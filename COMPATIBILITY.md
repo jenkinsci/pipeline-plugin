@@ -53,6 +53,13 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 ## Miscellaneous
 
 - [ ] `rebuild`: [JENKINS-26024](https://issues.jenkins-ci.org/browse/JENKINS-26024) (PR filed)
-- [X] `parallel-test-executor`: supported with `splitTests` step since 1.6
 - [ ] `parameterized-trigger` (to support a workflow as downstream): [JENKINS-26050](https://issues.jenkins-ci.org/browse/JENKINS-26050)
 - [ ] `credentials-binding`: [JENKINS-26051](https://issues.jenkins-ci.org/browse/JENKINS-26051)
+
+## Custom steps
+
+For cases when a first-class Workflow step (rather than an adaptation of functionality applicable to freestyle projects) makes sense.
+
+- [X] `parallel-test-executor`: supported with `splitTests` step since 1.6
+- [ ] `gerrit-trigger`: [JENKINS-26102](https://issues.jenkins-ci.org/browse/JENKINS-26102), [JENKINS-26103](https://issues.jenkins-ci.org/browse/JENKINS-26103)
+- [ ] `mailer`: [JENKINS-26104](https://issues.jenkins-ci.org/browse/JENKINS-26104)
