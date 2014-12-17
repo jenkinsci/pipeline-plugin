@@ -28,6 +28,7 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import javax.annotation.CheckForNull;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -286,6 +287,10 @@ class CpsBodyExecution extends BodyExecution {
             StepEndNode en = addBodyEndFlowNode();
 
             Throwable t = (Throwable)o;
+            // To match CpsStepContext.replay:
+            if (t instanceof UndeclaredThrowableException) {
+                t = t.getCause();
+            }
             en.addAction(new ErrorAction(t));
 
             setOutcome(new Outcome(null,t));

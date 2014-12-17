@@ -28,7 +28,6 @@ import hudson.remoting.ProxyException;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import hudson.model.Action;
-import java.lang.reflect.UndeclaredThrowableException;
 
 /**
  * Attached to {@link AtomNode} that caused an error.
@@ -40,11 +39,7 @@ import java.lang.reflect.UndeclaredThrowableException;
 public class ErrorAction implements Action {
     private final Throwable error;
 
-    /** For convenience, unwraps {@link UndeclaredThrowableException} automatically. */
     public ErrorAction(Throwable error) {
-        if (error instanceof UndeclaredThrowableException) {
-            error = error.getCause();
-        }
         if (isUnserializableException(error)) {
             error = new ProxyException(error);
         }

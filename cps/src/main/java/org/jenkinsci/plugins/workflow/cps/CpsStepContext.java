@@ -403,6 +403,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         try {
             return getOutcome().replay();
         } catch (Throwable failure) {
+            // Cf. CpsBodyExecution.FailureAdapter:
             if (failure instanceof RuntimeException)
                 throw (RuntimeException) failure;
             if (failure instanceof Error)
