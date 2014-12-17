@@ -22,26 +22,32 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.cps
+package org.jenkinsci.plugins.workflow.cps;
 
-import com.cloudbees.groovy.cps.ObjectInputStreamWithLoader
-import org.jenkinsci.plugins.workflow.flow.FlowExecution
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner
-import hudson.XmlFile
-import hudson.model.Run
-import org.junit.Before
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import org.jvnet.hudson.test.JenkinsRule
+import com.cloudbees.groovy.cps.ObjectInputStreamWithLoader;
+import hudson.XmlFile;
+import hudson.model.Queue;
+import hudson.model.Run;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  *
  *
  * @author Kohsuke Kawaguchi
  */
-class AbstractCpsFlowTest {
+public abstract class AbstractCpsFlowTest {
     @Rule
-    public TemporaryFolder tmp = new TemporaryFolder()
+    public TemporaryFolder tmp = new TemporaryFolder();
 
     @Rule
     public JenkinsRule jenkins = new JenkinsRule();
@@ -49,72 +55,65 @@ class AbstractCpsFlowTest {
     /**
      * Currently executing flow.
      */
-    CpsFlowExecution exec;
+    protected CpsFlowExecution exec;
 
     /**
      * Directory to put {@link #exec} in.
      */
-    File rootDir;
+    protected File rootDir;
 
-    @Before
-    void setUp() {
+    @Before public void setUp() throws Exception {
         jenkins.jenkins.getInjector().injectMembers(this);
         rootDir = tmp.newFolder();
         TEST = this;
     }
 
-    public <T> T roundtripSerialization(T cx) {
-        def baos = new ByteArrayOutputStream()
+    public <T> T roundtripSerialization(T cx) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         new ObjectOutputStream(baos).writeObject(cx);
 
-        def ois = new ObjectInputStreamWithLoader(
+        ObjectInputStream ois = new ObjectInputStreamWithLoader(
                 new ByteArrayInputStream(baos.toByteArray()),
-                jenkins.jenkins.pluginManager.uberClassLoader)
+                jenkins.jenkins.pluginManager.uberClassLoader);
 
-        return ois.readObject()
+        return (T) ois.readObject();
     }
 
-    public <T> T roundtripXStream(T cx) {
-        def x = new XmlFile(Run.XSTREAM, tmp.newFile());
+    public <T> T roundtripXStream(T cx) throws Exception {
+        XmlFile x = new XmlFile(Run.XSTREAM, tmp.newFile());
         x.write(cx);
         return (T)x.read();
     }
 
-    public CpsFlowExecution createExecution(CpsFlowDefinition fdef) {
+    public CpsFlowExecution createExecution(CpsFlowDefinition fdef) throws Exception {
         exec = fdef.create(new FlowExecutionOwnerImpl());
         return exec;
     }
 
 
     public static class FlowExecutionOwnerImpl extends FlowExecutionOwner {
-        @Override
-        FlowExecution get() {
+        @Override public FlowExecution get() {
             return TEST.exec;
         }
 
-        @Override
-        File getRootDir() {
+        @Override public File getRootDir() {
             return TEST.rootDir;
         }
 
-        @Override
-        hudson.model.Queue.Executable getExecutable() {
-            return null
+        @Override public Queue.Executable getExecutable() {
+            return null;
         }
 
-        @Override
-        String getUrl() {
+        @Override public String getUrl() {
             return "TODO";
         }
 
-        @Override
-        boolean equals(Object o) {
+        @Override public boolean equals(Object o) {
             return this==o;
         }
 
-        @Override
-        int hashCode() {
+        @Override public int hashCode() {
             return 0;
         }
     }
