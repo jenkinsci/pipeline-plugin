@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.actions;
 
+import hudson.remoting.ProxyException;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
 import hudson.model.Action;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -43,8 +45,19 @@ public class ErrorAction implements Action {
         if (error instanceof UndeclaredThrowableException) {
             error = error.getCause();
         }
+        if (isUnserializableException(error)) {
+            error = new ProxyException(error);
+        }
         assert error!=null;
         this.error = error;
+    }
+
+    /**
+     * Some exceptions don't serialize properly. If so, we need to replace that with
+     * an equivalent that captures the same details but serializes nicely.
+     */
+    private boolean isUnserializableException(Throwable error) {
+        return error instanceof MultipleCompilationErrorsException;
     }
 
     public Throwable getError() {
