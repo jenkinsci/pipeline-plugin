@@ -114,7 +114,6 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         FlowNode an;
 
         // TODO: generalize the notion of Step taking over the FlowNode creation.
-        // see https://trello.com/c/v6Pbwqxj/13-allowing-steps-to-build-flownodes
         boolean hack = d instanceof ParallelStep.DescriptorImpl;
 
         if (ps.body == null && !hack) {

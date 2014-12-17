@@ -155,7 +155,7 @@ public class BuildTriggerStepTest extends Assert {
         Cause.UpstreamCause cause = ds1.getCause(Cause.UpstreamCause.class);
         assertNotNull(cause);
         assertEquals(us1, cause.getUpstreamRun());
-        // TODO https://trello.com/c/d4gxlcQJ/78-parameterdefinition-create-object would be useful to let us bind a simple Groovy map
+        // TODO JENKINS-26093 let us bind a simple Groovy map
         us.setDefinition(new CpsFlowDefinition("build job: 'ds', parameters: [new hudson.model.StringParameterValue('branch', 'release')]"));
         j.assertBuildStatusSuccess(us.scheduleBuild2(0));
         // TODO IIRC there is an open PR regarding automatic filling in of default parameter values; should that be used, or is BuildTriggerStepExecution responsible, or ParameterizedJobMixIn.scheduleBuild2?

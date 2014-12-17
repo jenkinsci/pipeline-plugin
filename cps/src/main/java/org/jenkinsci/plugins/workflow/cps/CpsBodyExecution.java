@@ -135,7 +135,6 @@ class CpsBodyExecution extends BodyExecution {
         } catch (CpsCallableInvocation e) {
             // execute this closure asynchronously
             // TODO: does it make sense that the new thread shares the same head?
-            // this problem is captured as https://trello.com/c/v6Pbwqxj/70-allowing-steps-to-build-flownodes
             CpsThread t = currentThread.group.addThread(createContinuable(currentThread, e), head,
                     ContextVariableSet.from(currentThread.getContextVariables(), params.contextOverrides));
 

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:t="/lib/hudson" xmlns:l="/lib/layout">
-    <!-- TODO default in executors.jelly calls various unspecified methods on the Queue.Executable: https://trello.com/c/4oavgBJG/42-executors-jelly-interface-underspecified -->
     <td class="pane">
         <div style="white-space: normal">${%Building}
             <j:choose>

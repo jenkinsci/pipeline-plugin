@@ -29,7 +29,7 @@ THE SOFTWARE.
         <f:textbox/>
     </f:entry>
     <f:entry title="Parameters">
-        <!-- https://trello.com/c/kXyfSioF/133-code-snippet-generation-for-buildtriggerstep-parameters -->
+        <!-- TODO JENKINS-26093 -->
         <f:block><code>parameters</code> may be bound to a list of <code>ParameterValue</code>s.</f:block>
     </f:entry>
 </j:jelly>

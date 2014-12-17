@@ -129,8 +129,7 @@ Note that `changelogFile` may now be null in `checkout`.
 If so, just skip changelog generation.
 `checkout` also now takes an `SCMRevisionState` so you can know what to compare against without referring back to the build.
 
-If you need a `Node` where the build is running to replace `getBuiltOn`, you can find one from the `FilePath`, though currently it is cumbersome;
-a convenience API for this is [expected to be defined soon](https://trello.com/c/doFFMdUm/46-filepath-getcomputer).
+If you need a `Node` where the build is running to replace `getBuiltOn`, you can use `FilePath.getComputer`.
 
 `SCMDescriptor.isApplicable` should be switched to the `Job` overload.
 Typically you will unconditionally return `true`.

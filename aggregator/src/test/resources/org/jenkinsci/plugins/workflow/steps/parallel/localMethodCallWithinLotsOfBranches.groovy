@@ -9,7 +9,7 @@ node {
     def x = [:]
     for (def i=0; i<128; i++) {
         def j = i;
-        // TODO x["branch${i}"] = {…} does not work: https://trello.com/c/TF0aLhA9/15-groovy-cps-transformer-wave-4
+        // TODO JENKINS-25979 x["branch${i}"] = {…} does not work
         x.put("branch${i}", { notify("Hello ${j}") })
     }
 

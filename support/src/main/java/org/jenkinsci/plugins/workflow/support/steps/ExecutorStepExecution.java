@@ -271,7 +271,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         }
 
         @Override public String getUrl() {
-            // TODO ideally this would be found via FlowExecution.owner.executable, but how do we check for something with a URL? There is no marker interface for it: https://trello.com/c/g6MDbyHJ/38-marker-interface-for-things-with-url
+            // TODO ideally this would be found via FlowExecution.owner.executable, but how do we check for something with a URL? There is no marker interface for it: JENKINS-26091
             Run<?,?> r = run();
             return r != null ? r.getUrl() : "";
         }
@@ -462,7 +462,6 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 }
             }
 
-            // TODO extract this from Run to a utility method in Executables: https://trello.com/c/6FVhT94X/39-executables-getexecutor
             @Restricted(DoNotUse.class) // for Jelly
             public @CheckForNull Executor getExecutor() {
                 Jenkins j = Jenkins.getInstance();

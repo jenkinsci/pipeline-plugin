@@ -36,7 +36,6 @@ import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl
 import hudson.model.Result
 import org.junit.Before
 import org.junit.Test
-import org.jvnet.hudson.test.Issue
 
 import javax.inject.Inject
 
@@ -210,7 +209,6 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     /**
      * Trying to run a step without having the required context should result in a graceful error.
      */
-    @Issue("https://trello.com/c/00MaoBTK/121-provide-explicit-error-if-required-context-missing")
     @Test
     public void missingContextCheck() {
         p.definition = new CpsFlowDefinition("""

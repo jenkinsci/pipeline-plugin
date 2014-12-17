@@ -84,7 +84,6 @@ JUC Boston (Jun 2014): [slides](http://www.cloudbees.com/sites/default/files/201
 * [Ongoing plugin compatibility list](COMPATIBILITY.md)
 * [Source repository](https://github.com/jenkinsci/workflow-plugin)
 * [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide)
-* [Trello board](https://trello.com/b/u2fJQnDX/workflow) tracking active and proposed tasks (being moved to JIRA).
 * [Open pull requests](https://github.com/jenkinsci/workflow-plugin/pulls)
 * [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/) with validated merge support.
   [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)

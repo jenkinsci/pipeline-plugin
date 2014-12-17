@@ -304,7 +304,6 @@ public final class CpsThreadGroup implements Serializable {
      * Notifies listeners of the new {@link FlowHead}.
      *
      * The actual call happens later from a place who owns no lock on any of the CPS objects to avoid deadlock.
-     * See https://trello.com/c/7aTFYWM5/26-intermittent-deadlock
      */
     @CpsVmThreadOnly
     /*package*/ void notifyNewHead(final FlowNode head) {
