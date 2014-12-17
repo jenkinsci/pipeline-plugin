@@ -59,7 +59,7 @@ Thereafter it should suffice to run:
 At the base level, any valid Groovy code is OK. So you can define data structures,
 utility functions, and etc., like this:
 
-    $ cat src/org/foo/Bar.groovy
+    $ cat src/org/foo/Point.groovy
     package org.foo;
 
     // point in 3D space
@@ -67,6 +67,7 @@ utility functions, and etc., like this:
       float x,y,z;
     }
 
+However classes written like this cannot call step functions like `sh` or `git`.
 More often than not, what you want to define is a series of functions that in turn invoke
 other workflow step functions. You can do this by not explicitly defining the enclosing class,
 just like your main workflow script itself:
