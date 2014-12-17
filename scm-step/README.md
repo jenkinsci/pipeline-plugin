@@ -70,7 +70,7 @@ Richer configuration may come in the future.
 # Generic SCM step
 
 The `checkout` step may be used to run any other SCM plugin, provided that it has been brought up to date as described below.
-(See the [compatibility list](../COMPATBILITY.md) for the list of currently SCMs.)
+(See the [compatibility list](../COMPATIBILITY.md) for the list of currently SCMs.)
 It could also be used to run an SCM for which there is a special integration that lacks support for an exotic feature.
 The step takes an `scm` parameter which is a map containing at least a `$class` parameter giving the full or simple class name of the desired `SCM` implementation, and the standard `poll` and `changelog` parameters.
 
