@@ -79,6 +79,36 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
         });
     }
 
+    @Test public void catchErrors() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(
+                    "node {\n" +
+                    "  waitUntil {\n" +
+                    "    try {\n" +
+                    "      readFile 'flag'\n" +
+                    "      true\n" +
+                    // Note that catching a specific type verifies JENKINS-26164:
+                    "    } catch (FileNotFoundException x) {\n" +
+                    "      // x.printStackTrace()\n" +
+                    "      semaphore 'waitCatchErrors'\n" +
+                    "      false\n" +
+                    "    }\n" +
+                    "  }\n" +
+                    "}\n" +
+                    "echo 'finished waiting'"));
+                startBuilding();
+                SemaphoreStep.waitForStart("waitCatchErrors/1", b);
+                jenkins().getWorkspaceFor(p).child("flag").write("", null);
+                SemaphoreStep.success("waitCatchErrors/1", null);
+                waitForWorkflowToComplete();
+                assertBuildCompletedSuccessfully();
+                story.j.assertLogContains("finished waiting", b);
+            }
+        });
+    }
+
     @Test public void restartDuringBody() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
