@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import static java.util.Arrays.*;
 import java.util.List;
-import static java.util.concurrent.TimeUnit.*;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
@@ -76,7 +75,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "node {",
                     "  try {",
                     "    parallel(",
-                    "      b: { throw new AbortException(); },",
+                    "      b: { error 'died' },",
 
                         // make sure this branch takes longer than a
                     "      a: { sh('sleep 3'); sh('touch b.done'); }",
@@ -89,7 +88,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "}"
                 )));
 
-                startBuilding().get(15, SECONDS);
+                startBuilding().get();
                 assertBuildCompletedSuccessfully();
                 assert jenkins().getWorkspaceFor(p).child("b.done").exists();
 

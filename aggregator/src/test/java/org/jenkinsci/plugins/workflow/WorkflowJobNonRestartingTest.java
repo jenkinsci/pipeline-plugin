@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow;
 
-import hudson.AbortException;
 import hudson.model.Result;
 import hudson.model.Slave;
 import hudson.model.queue.QueueTaskFuture;
@@ -111,11 +110,10 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     @Test
     public void testRetry() throws Exception {
         p.setDefinition(new CpsFlowDefinition(
-            "import " + AbortException.class.getName() + ";\n" +
             "int i = 0;\n" +
             "retry(3) {\n" +
             "    println 'Trying!'\n" +
-            "    if (i++ < 2) throw new AbortException('oops');\n" +
+            "    if (i++ < 2) error('oops');\n" +
             "    println 'Done!'\n" +
             "}\n" +
             "println 'Over!'"

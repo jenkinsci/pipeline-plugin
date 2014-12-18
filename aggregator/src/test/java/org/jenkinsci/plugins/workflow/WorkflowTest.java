@@ -25,7 +25,6 @@
 package org.jenkinsci.plugins.workflow;
 
 import com.google.common.base.Function;
-import hudson.AbortException;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.ParametersAction;
@@ -490,14 +489,13 @@ public class WorkflowTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
-                    "import " + AbortException.class.getName() + ";\n"+
                     "int count=0;\n" +
                     "retry(3) {\n" +
                         // we'll suspend the execution here
                     "    watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
 
                     "    if (count++ < 2) {\n" + // forcing retry
-                    "        throw new AbortException('died');\n" +
+                    "        error 'died'\n" +
                     "    }\n" +
                     "}"));
 
