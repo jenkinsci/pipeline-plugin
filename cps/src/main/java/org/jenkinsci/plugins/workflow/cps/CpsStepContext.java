@@ -53,13 +53,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.UndeclaredThrowableException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.codehaus.groovy.runtime.InvokerInvocationException;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
@@ -408,7 +408,8 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                 throw (RuntimeException) failure;
             if (failure instanceof Error)
                 throw (Error) failure;
-            throw new UndeclaredThrowableException(failure);
+            // Any GroovyRuntimeException is treated magically by ScriptBytecodeAdapter.unwrap (from PogoMetaClassSite):
+            throw new InvokerInvocationException(failure);
         }
     }
 
