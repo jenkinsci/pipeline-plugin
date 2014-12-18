@@ -9,7 +9,7 @@ import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep
 import org.junit.Rule
 import org.junit.Test
 import org.jvnet.hudson.test.RestartableJenkinsRule
-
+import org.jvnet.hudson.test.RandomlyFails
 import javax.inject.Inject
 
 /**
@@ -33,6 +33,13 @@ class WorkflowLibRepositoryTest {
     /**
      * Have some global libs
      */
+    @RandomlyFails("""TODO periodic failures:
+assert b.log.contains("control\n")
+       | |   |
+       | |   false
+       | Started
+       p #1
+""")
     @Test
     public void globalLib() throws Exception {
         story.step {
