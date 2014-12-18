@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit;
  * </pre>
  *
  * @author Kohsuke Kawaguchi
+ * @deprecated Use either {@code waitUntil} or {@link SemaphoreStep} instead.
  */
 public class WatchYourStep extends AbstractStepImpl implements Serializable {
     /*package*/ final File watch;

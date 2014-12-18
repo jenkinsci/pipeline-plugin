@@ -5,6 +5,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 ## 1.2 (upcoming)
 
 ### User changes
+* JENKINS-25570: added `waitUntil` step.
 * JENKINS-25924: added `error` step.
 * JENKINS-26030: file locks could prevent build deletion.
 * JENKINS-26074: completed parallel branches become invisible until the whole parallel step is done
