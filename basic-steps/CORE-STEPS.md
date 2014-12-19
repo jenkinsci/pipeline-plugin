@@ -21,7 +21,7 @@ Here we are running the standard _Archive the artifacts_ post-build action (`hud
 and configuring the _Files to archive_ property (`artifacts`) to archive our file `something` produced in an earlier step.
 The easiest way to see what class and field names to use is to use the _Snippet Generator_ feature in the workflow configuration page.
 
-See the [compatibility list](../COMPATBILITY.md) for the list of currently supported steps.
+See the [compatibility list](../COMPATIBILITY.md) for the list of currently supported steps.
 
 # Interacting with build status
 
