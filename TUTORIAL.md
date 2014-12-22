@@ -219,6 +219,13 @@ This is convenient because now we can run `mvn` without a fully-qualified path.
 
 We will not use this style again, for reasons that will be explained later in more complex examples.
 
+Some environment variables are defined by Jenkins by default, as for freestyle builds.
+For example, `env.BUILD_TAG` can be used to get a tag like `jenkins-projname-1` from Groovy code, or `$BUILD_TAG` can be used from a `sh` script.
+
+## Build parameters
+
+If you have configured your workflow to accept parameters when it is built (_Build with Parameters_), these will be accessible as Groovy variables of the same name.
+
 # Recording test results and artifacts
 
 Rather than failing the build if there are some test failures, we would like Jenkins to record them, but then proceed.
