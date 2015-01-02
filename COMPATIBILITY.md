@@ -9,7 +9,7 @@ This document captures the ongoing status of plugins known to be compatible or i
 See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for making `SCM`s compatible.
 
 - [X] `GitSCM` (`git`): supported as of 2.3; native `git` step also bundled
-- [X] `SubversionSCM` (`subversion`): supported as of 2.5 betas; native `svn` step also bundled
+- [X] `SubversionSCM` (`subversion`): supported as of 2.5; native `svn` step also bundled
 - [X] `MercurialSCM` (`mercurial`): supported as of 1.51
 - [ ] `PerforceScm` (`p4`, not the older `perforce`): [JENKINS-24206](https://issues.jenkins-ci.org/browse/JENKINS-24206)
 - [ ] `DimensionsSCM` (`dimensionsscm`): [JENKINS-26165](https://issues.jenkins-ci.org/browse/JENKINS-26165)
