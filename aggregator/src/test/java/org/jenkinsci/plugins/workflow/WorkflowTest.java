@@ -419,6 +419,7 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
+    @RandomlyFails("TODO often basename is run but echo is not, or output lost; once got ‘InvalidClassException: cannot bind non-proxy descriptor to a proxy class’ inside BourneShellScript.doLaunch")
     @Test public void acquireWorkspace() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
