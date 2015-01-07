@@ -9,6 +9,7 @@ import java.io.Serializable;
  * <p>The originating {@link Step} may also be {@link Inject}ed, but you must mark it {@link Inject#optional} since it will <em>not</em> be restored here.
  * If it is only used for the benefit of {@link #start}, mark it {@code transient}.
  * If you need any information from the step definition after a restart, make sure the {@link Step} is {@link Serializable} and do not mark it {@code transient}.
+ * (For a {@link AbstractSynchronousStepExecution} these considerations are irrelevant.)
  * @author Kohsuke Kawaguchi
  */
 public abstract class AbstractStepExecutionImpl extends StepExecution {

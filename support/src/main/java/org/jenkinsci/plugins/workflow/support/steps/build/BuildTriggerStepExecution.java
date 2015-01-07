@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.support.steps.build;
 
+import com.google.inject.Inject;
 import hudson.AbortException;
 import hudson.model.Action;
 import hudson.model.Cause;
@@ -16,14 +17,11 @@ import hudson.model.TaskListener;
 import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
-import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-
-import javax.inject.Inject;
 import jenkins.model.ParameterizedJobMixIn;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 
 /**
  * @author Vivek Pandey
@@ -34,8 +32,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
     @StepContextParameter private transient Run<?,?> invokingRun;
     @StepContextParameter private transient FlowNode node;
 
-    @Inject // used only during the start() method, so no need to be persisted
-    transient BuildTriggerStep step;
+    @Inject(optional=true) transient BuildTriggerStep step;
 
     @SuppressWarnings({"unchecked", "rawtypes"}) // cannot get from ParameterizedJob back to ParameterizedJobMixIn trivially
     @Override

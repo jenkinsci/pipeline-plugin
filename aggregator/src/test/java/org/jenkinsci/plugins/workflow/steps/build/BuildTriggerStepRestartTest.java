@@ -65,6 +65,11 @@ public class BuildTriggerStepRestartTest extends Assert {
                               assertEquals(1, r.number);
                               assertEquals(Result.SUCCESS, r.getResult());
                               assertEquals(0, story.j.jenkins.getQueue().getItems().length);
+                              WorkflowJob foo = story.j.jenkins.getItemByFullName("foo", WorkflowJob.class);
+                              assertNotNull(foo);
+                              r = foo.getLastBuild();
+                              assertNotNull(r);
+                              story.j.assertBuildStatusSuccess(r);
                           }
                       }
         );
