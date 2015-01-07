@@ -55,7 +55,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 
 ## Miscellaneous
 
-- [ ] `rebuild`: [JENKINS-26024](https://issues.jenkins-ci.org/browse/JENKINS-26024) (PR filed)
+- [X] `rebuild`: [JENKINS-26024](https://issues.jenkins-ci.org/browse/JENKINS-26024)
 - [ ] `parameterized-trigger` (to support a workflow as downstream): [JENKINS-26050](https://issues.jenkins-ci.org/browse/JENKINS-26050)
 - [ ] `credentials-binding`: [JENKINS-26051](https://issues.jenkins-ci.org/browse/JENKINS-26051)
 
