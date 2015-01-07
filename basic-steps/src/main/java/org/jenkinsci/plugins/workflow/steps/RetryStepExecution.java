@@ -8,7 +8,7 @@ import javax.inject.Inject;
  * @author Kohsuke Kawaguchi
  */
 public class RetryStepExecution extends AbstractStepExecutionImpl {
-    @Inject
+    @Inject // TODO does this need to be optional=true? Not according to WorkflowTest.invokeBodyLaterAfterRestart.
     private transient RetryStep step;
     private volatile BodyExecution body;
 

@@ -486,6 +486,9 @@ public class CpsFlowExecution extends FlowExecution {
      * be invoked (on a random thread, since {@link CpsVmThread} doesn't exist without a valid program.)
      */
     void runInCpsVmThread(final FutureCallback<CpsThreadGroup> callback) {
+        if (programPromise == null) {
+            throw new IllegalStateException("broken flow");
+        }
         // first we need to wait for programPromise to fullfil CpsThreadGroup, then we need to run in its runner, phew!
         Futures.addCallback(programPromise, new FutureCallback<CpsThreadGroup>() {
             final Exception source = new Exception();   // call stack of this object captures who called this. useful during debugging.

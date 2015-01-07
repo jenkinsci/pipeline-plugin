@@ -26,18 +26,45 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.Rule;
-import org.jvnet.hudson.test.JenkinsRule;
+import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class PushdStepTest {
 
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
-    @Test public void basics() throws Exception {
-        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");;
-        p.setDefinition(new CpsFlowDefinition("node {dir('subdir') {sh 'pwd'}}"));
-        r.assertLogContains("/subdir", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+    @Test public void basics() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition("node {dir('subdir') {sh 'pwd'}}"));
+                story.j.assertLogContains("/subdir", story.j.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+            }
+        });
+    }
+
+    @Ignore("TODO as per JENKINS-26149 PushdStep.Execution.step might need to be optional=true, but cannot get this test to pass because of JENKINS-26137")
+    @Test public void restarting() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition("node {dir('subdir') {semaphore 'restarting'; sh 'pwd'}}"));
+                WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
+                SemaphoreStep.waitForStart("restarting/1", b);
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                SemaphoreStep.success("restarting/1", null);
+                WorkflowRun b = story.j.jenkins.getItemByFullName("p", WorkflowJob.class).getLastBuild();
+                story.j.assertLogContains("/subdir", story.j.assertBuildStatusSuccess(b));
+            }
+        });
     }
 
 }
