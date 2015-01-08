@@ -85,6 +85,7 @@ JUC Boston (Jun 2014): [slides](http://www.cloudbees.com/sites/default/files/201
 * [Source repository](https://github.com/jenkinsci/workflow-plugin)
 * [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide)
 * [Open pull requests](https://github.com/jenkinsci/workflow-plugin/pulls)
+* [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow)
 * [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/) with validated merge support.
   [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
 * [Video tutorial on implementing a Step API](http://jenkins-ci.org/content/workflow-plugin-tutorial-writing-step-impl)
