@@ -42,6 +42,7 @@ import org.jenkinsci.plugins.workflow.support.steps.build.BuildTriggerStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
+import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class SnippetizerTest {
@@ -56,6 +57,7 @@ public class SnippetizerTest {
         assertRoundTrip(s, "stage concurrency: 1, name: 'Build'");
     }
 
+    @Email("https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow/jenkinsci-users/DJ15tkEQPw0")
     @Test public void noArgStep() throws Exception {
         assertRoundTrip(new PwdStep(), "pwd()");
     }
