@@ -32,6 +32,7 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `XShellBuilder` (`xshell`): [JENKINS-26169](https://issues.jenkins-ci.org/browse/JENKINS-26169)
 - [ ] `DockerBuilder` (`docker-build-step`): [JENKINS-26178](https://issues.jenkins-ci.org/browse/JENKINS-26178)
 - [ ] `ConfigFileBuildStep` (`config-file-provider`): [JENKINS-26339](https://issues.jenkins-ci.org/browse/JENKINS-26339)
+- [ ] `CucumberTestResultArchiver` (`cucumber-testresult-plugin`): [JENKINS-26340](https://issues.jenkins-ci.org/browse/JENKINS-26340)
 
 ## Build wrappers
 
