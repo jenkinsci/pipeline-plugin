@@ -72,6 +72,8 @@ class Snippetizer {
                     b.append(" {\n    // some block\n}");
                 } else if (singleMap) {
                     b.append(')');
+                } else if (args.isEmpty()) {
+                    b.append("()");
                 }
                 return b.toString();
             }

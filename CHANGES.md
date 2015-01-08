@@ -10,6 +10,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 * JENKINS-25924: added `error` step.
 * JENKINS-26030: file locks could prevent build deletion.
 * JENKINS-26074: completed parallel branches become invisible until the whole parallel step is done
+* Snippet generator incorrectly suggested `pwd` when Groovy requires `pwd()`.
 
 ## 1.1 (Dec 09 2014)
 
