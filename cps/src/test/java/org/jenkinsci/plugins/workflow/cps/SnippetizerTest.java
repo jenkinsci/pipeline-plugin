@@ -32,6 +32,7 @@ import hudson.tasks.ArtifactArchiver;
 import java.util.Arrays;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
+import org.jenkinsci.plugins.workflow.steps.PwdStep;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.support.steps.ExecutorStep;
@@ -41,6 +42,7 @@ import org.jenkinsci.plugins.workflow.support.steps.build.BuildTriggerStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
+import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class SnippetizerTest {
@@ -53,6 +55,11 @@ public class SnippetizerTest {
         assertRoundTrip(s, "stage 'Build'");
         s.concurrency = 1;
         assertRoundTrip(s, "stage concurrency: 1, name: 'Build'");
+    }
+
+    @Email("https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow/jenkinsci-users/DJ15tkEQPw0")
+    @Test public void noArgStep() throws Exception {
+        assertRoundTrip(new PwdStep(), "pwd()");
     }
 
     @Test public void coreStep() throws Exception {
