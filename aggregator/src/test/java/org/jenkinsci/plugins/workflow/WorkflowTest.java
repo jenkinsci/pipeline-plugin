@@ -293,7 +293,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 Handler handler = new ConsoleHandler();
                 handler.setLevel(Level.ALL);
                 LOGGER.addHandler(handler);
-                // Cannot use regular JenkinsRule.createSlave, since its slave dir is thrown out after a restart.
+                // Cannot use regular JenkinsRule.createSlave due to JENKINS-26398.
                 // Nor can we can use JenkinsRule.createComputerLauncher, since spawned commands are killed by CommandLauncher somehow (it is not clear how; apparently before its onClosed kills them off).
                 DumbSlave s = new DumbSlave("dumbo", "dummy", tmp.getRoot().getAbsolutePath(), "1", Node.Mode.NORMAL, "", new JNLPLauncher(), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
                 story.j.jenkins.addNode(s);
