@@ -79,7 +79,7 @@ public class PushdStep extends AbstractStepImpl {
 
     public static class Execution extends AbstractStepExecutionImpl {
         
-        @Inject private transient PushdStep step;
+        @Inject private transient PushdStep step; // TODO should this be marked optional=true?
         @StepContextParameter private transient TaskListener listener;
         @StepContextParameter private transient FilePath cwd;
         private BodyExecution body;
