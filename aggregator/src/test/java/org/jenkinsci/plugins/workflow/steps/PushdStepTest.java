@@ -28,7 +28,6 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
@@ -48,7 +47,6 @@ public class PushdStepTest {
         });
     }
 
-    @Ignore("TODO as per JENKINS-26149 PushdStep.Execution.step might need to be optional=true, but cannot get this test to pass because of JENKINS-26137")
     @Test public void restarting() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -62,6 +60,9 @@ public class PushdStepTest {
             @Override public void evaluate() throws Throwable {
                 SemaphoreStep.success("restarting/1", null);
                 WorkflowRun b = story.j.jenkins.getItemByFullName("p", WorkflowJob.class).getLastBuild();
+                while (b.isBuilding()) { // TODO JENKINS-26399
+                    Thread.sleep(100);
+                }
                 story.j.assertLogContains("/subdir", story.j.assertBuildStatusSuccess(b));
             }
         });
