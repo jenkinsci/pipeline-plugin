@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.workflow.steps;
 
-import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
@@ -27,9 +26,6 @@ public class ArtifactArchiverStepExecution extends AbstractSynchronousStepExecut
     private transient FilePath ws;
 
     @StepContextParameter
-    private transient EnvVars envVars;
-
-    @StepContextParameter
     private transient Run build;
 
     @StepContextParameter
@@ -40,8 +36,7 @@ public class ArtifactArchiverStepExecution extends AbstractSynchronousStepExecut
 
     @Override
     protected Void run() throws Exception {
-        String includes = envVars.expand(step.getIncludes());
-        Map<String,String> files = ws.act(new ListFiles(includes, step.getExcludes()));
+        Map<String,String> files = ws.act(new ListFiles(step.getIncludes(), step.getExcludes()));
         build.pickArtifactManager().archive(ws, launcher, new BuildListenerAdapter(listener), files);
         return null;
     }
