@@ -28,6 +28,7 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.pickles.Pickle;
 import org.jenkinsci.plugins.workflow.pickles.PickleFactory;
 import com.trilead.ssh2.util.IOUtils;
+import hudson.ExtensionList;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
@@ -87,6 +88,10 @@ public class RiverWriter implements Closeable {
 
     // TODO: rename to HibernatingObjectOutputStream?
     public RiverWriter(File f, FlowExecutionOwner _owner) throws IOException {
+        final ExtensionList<PickleFactory> pickleFactories = PickleFactory.all();
+        if (pickleFactories.isEmpty()) {
+            throw new IllegalStateException("JENKINS-26137: Jenkins is shutting down");
+        }
         file = f;
         owner = _owner;
         dout = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
@@ -107,7 +112,7 @@ public class RiverWriter implements Closeable {
                     return new DryOwner();
 
                 if (pickling) {
-                    for (PickleFactory f : PickleFactory.all()) {
+                    for (PickleFactory f : pickleFactories) {
                         Pickle v = f.writeReplace(o);
                         if (v != null) {
                             pickles.add(v);
