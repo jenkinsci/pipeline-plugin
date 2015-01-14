@@ -66,8 +66,14 @@ node {
 
 though this would not automatically adjust the message according to the status of _previous_ builds as the standard mail notifier does.
 
+# Build wrappers
+
+TODO discuss the `wrap` step
+
 # Adding support from plugins
 
 As a plugin author, to add support for use of your build step from a workflow, depend on Jenkins 1.577+, typically 1.580.1 ([tips](../scm-step/README.md#basic-update)).
 Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
 Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](../scm-step/README.md#constructor-vs-setters)).
+
+TODO discuss `SimpleBuildWrapper`
