@@ -302,6 +302,10 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             return ACL.SYSTEM; // TODO should pick up credentials from configuring user or something
         }
 
+        /* TODO 1.592+: @Override */ public Authentication getDefaultAuthentication(Queue.Item item) {
+            return getDefaultAuthentication();
+        }
+
         @Override public boolean isContinued() {
             return cookie != null; // in which case this is after a restart and we still claim the executor
         }
