@@ -32,6 +32,7 @@ import hudson.model.queue.AbstractQueueTask;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.model.queue.SubTask;
 import java.io.IOException;
+import org.acegisecurity.Authentication;
 
 /**
  * Represents a {@link WorkflowRun} still running after a Jenkins restart.
@@ -105,6 +106,10 @@ class AfterRestartTask extends AbstractQueueTask implements Queue.FlyweightTask,
 
     @Override public Queue.Executable createExecutable() throws IOException {
         return new Body(run);
+    }
+
+    /* TODO 1.592+: @Override */ public Authentication getDefaultAuthentication(Queue.Item item) {
+        return getDefaultAuthentication();
     }
 
     public final class Body implements Queue.Executable {
