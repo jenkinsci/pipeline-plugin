@@ -31,7 +31,11 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.tasks.BuildWrapperDescriptor;
+import java.util.ArrayList;
+import java.util.Collection;
 import javax.annotation.Nonnull;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -131,6 +135,17 @@ public class CoreWrapperStep extends AbstractStepImpl {
 
         @Override public boolean takesImplicitBlockArgument() {
             return true;
+        }
+
+        // getPropertyType("delegate").getApplicableDescriptors() does not work, because extension lists do not work on subtypes.
+        public Collection<BuildWrapperDescriptor> getApplicableDescriptors() {
+            Collection<BuildWrapperDescriptor> r = new ArrayList<BuildWrapperDescriptor>();
+            for (BuildWrapperDescriptor d : Jenkins.getActiveInstance().getExtensionList(BuildWrapperDescriptor.class)) {
+                if (SimpleBuildWrapper.class.isAssignableFrom(d.clazz)) {
+                    r.add(d);
+                }
+            }
+            return r;
         }
 
     }
