@@ -34,6 +34,7 @@ import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
@@ -74,12 +75,14 @@ public class CoreWrapperStep extends AbstractStepImpl {
             SimpleBuildWrapper.Context c = new SimpleBuildWrapper.Context();
             step.delegate.setUp(c, run, workspace, launcher, listener, env);
             BodyInvoker bodyInvoker = getContext().newBodyInvoker();
-            if (c.env != null) {
-                EnvVars overrides = new EnvVars(env);
-                overrides.putAll(c.env);
-                bodyInvoker.withContext(overrides);
+            Map<String,String> overrides = c.getEnv();
+            if (overrides != null) {
+                EnvVars overridden = new EnvVars(env);
+                overridden.overrideAll(overrides);
+                bodyInvoker.withContext(overridden);
             }
-            bodyInvoker.withCallback(c.disposer != null ? new Callback(c.disposer) : BodyExecutionCallback.wrap(getContext())).start();
+            SimpleBuildWrapper.Disposer disposer = c.getDisposer();
+            bodyInvoker.withCallback(disposer != null ? new Callback(disposer) : BodyExecutionCallback.wrap(getContext())).start();
             return false;
         }
 
