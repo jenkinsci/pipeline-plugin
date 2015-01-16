@@ -76,7 +76,7 @@ public class CoreWrapperStep extends AbstractStepImpl {
             step.delegate.setUp(c, run, workspace, launcher, listener, env);
             BodyInvoker bodyInvoker = getContext().newBodyInvoker();
             Map<String,String> overrides = c.getEnv();
-            if (overrides != null) {
+            if (!overrides.isEmpty()) {
                 EnvVars overridden = new EnvVars(env);
                 overridden.overrideAll(overrides);
                 bodyInvoker.withContext(overridden);
