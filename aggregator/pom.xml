@@ -131,7 +131,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>mailer</artifactId>
-            <version>1.12</version>
+            <version>1.13-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
