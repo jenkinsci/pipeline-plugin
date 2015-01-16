@@ -130,7 +130,7 @@ public class CoreWrapperStep extends AbstractStepImpl {
         }
 
         @Override public String getDisplayName() {
-            return "Use a build wrapper from another plugin";
+            return "General Build Wrapper";
         }
 
         @Override public boolean takesImplicitBlockArgument() {
