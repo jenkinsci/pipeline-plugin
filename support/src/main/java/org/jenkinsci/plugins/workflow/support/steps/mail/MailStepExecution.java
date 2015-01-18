@@ -27,10 +27,10 @@ import com.google.inject.Inject;
 import hudson.model.TaskListener;
 import jenkins.plugins.mailer.tasks.MimeMessageBuilder;
 import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 
-import javax.annotation.Nullable;
+import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Transport;
@@ -40,9 +40,9 @@ import java.io.UnsupportedEncodingException;
 /**
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
-public class MailStepExecution extends AbstractStepExecutionImpl {
+public class MailStepExecution extends AbstractSynchronousStepExecution {
 
-    public static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
     @Inject
     private transient MailStep step;
@@ -51,43 +51,18 @@ public class MailStepExecution extends AbstractStepExecutionImpl {
     private transient TaskListener listener;
 
     @Override
-    public boolean start() throws Exception {
-        if (StringUtils.isBlank(step.to) || StringUtils.isBlank(step.subject) || StringUtils.isBlank(step.body)) {
-            String errorMessage = "Email not sent. All mandatory properties must be supplied ('to', 'subject', 'body').";
-            if (step.continueOnError) {
-                listener.error(errorMessage);
-                getContext().onSuccess(null);
-                return true;
-            } else {
-                throw new IllegalArgumentException(errorMessage);
-            }
-        }
-
-        MimeMessage mimeMessage = null;
-        try {
-            mimeMessage = buildMimeMessage();
-            Transport.send(mimeMessage);
-            getContext().onSuccess(null);
-        } catch (Exception e) {
-            if (step.continueOnError) {
-                throw e;
-            } else {
-                listener.error("Failed to send email.", e);
-                getContext().onSuccess(null);
-            }
-        }
-
-        // Sync exec.
-        // TODO: See about doing it async ?
-        return true;
-    }
-
-    @Override
-    public void stop(@Nullable Throwable cause) throws Exception {
+    protected Object run() throws Exception {
+        MimeMessage mimeMessage = buildMimeMessage();
+        Transport.send(mimeMessage);
+        return null;
     }
 
     private MimeMessage buildMimeMessage() throws UnsupportedEncodingException, MessagingException {
-        return new MimeMessageBuilder()
+        if (StringUtils.isBlank(step.subject) || StringUtils.isBlank(step.body)) {
+            throw new IllegalArgumentException("Email not sent. All mandatory properties must be supplied ('subject', 'body').");
+        }
+
+        MimeMessage message = new MimeMessageBuilder()
                 .setListener(listener)
                 .setSubject(step.subject)
                 .setBody(step.body)
@@ -100,5 +75,12 @@ public class MailStepExecution extends AbstractStepExecutionImpl {
                 .setReplyTo(step.replyTo)
                 .setDefaultSuffix(step.defaultSuffix)
                 .buildMimeMessage();
+
+        Address[] allRecipients = message.getAllRecipients();
+        if (allRecipients == null || allRecipients.length == 0) {
+            throw new IllegalArgumentException("Email not sent. No recipients of any kind specified ('to', 'cc', 'bcc').");
+        }
+
+        return message;
     }
 }

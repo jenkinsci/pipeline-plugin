@@ -29,8 +29,6 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import javax.annotation.CheckForNull;
-
 /**
  * Simple email sender step.
  *
@@ -41,17 +39,15 @@ public class MailStep extends AbstractStepImpl {
     @DataBoundSetter
     public String charset;
 
-    @DataBoundSetter
-    public @CheckForNull String subject;
+    public String subject;
 
-    @DataBoundSetter
-    public @CheckForNull String body;
+    public String body;
 
     @DataBoundSetter
     public String from;
 
     @DataBoundSetter
-    public @CheckForNull String to;
+    public String to;
 
     @DataBoundSetter
     public String cc;
@@ -68,11 +64,10 @@ public class MailStep extends AbstractStepImpl {
     @DataBoundSetter
     public String defaultSuffix;
 
-    @DataBoundSetter
-    public boolean continueOnError;
-
     @DataBoundConstructor
-    public MailStep() {
+    public MailStep(String subject, String body) {
+        this.subject = subject;
+        this.body = body;
     }
 
     @Extension

@@ -48,31 +48,33 @@ public class MailStepTest {
     public JenkinsRule jenkinsRule = new JenkinsRule();
 
     @Test
-    public void test_missing_param_no_continue() throws Exception {
+    public void test_missing_subject() throws Exception {
         WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "workflow");
-        // leave out he subject and body
-        job.setDefinition(new CpsFlowDefinition("node {" +
-                "   mail(to: 'tom.abcd@jenkins.org');" +
-                "}", true));
+        // leave out he subject
+        job.setDefinition(new CpsFlowDefinition("mail(to: 'tom.abcd@jenkins.org', body: 'body');", true));
 
-        QueueTaskFuture<WorkflowRun> workflowRunQueueTaskFuture = job.scheduleBuild2(0);
-        workflowRunQueueTaskFuture.waitForStart();
-        WorkflowRun run = jenkinsRule.assertBuildStatus(Result.FAILURE, workflowRunQueueTaskFuture.get());
-
-        FlowExecution execution = run.getExecution();
-        Assert.assertEquals("Email not sent. All mandatory properties must be supplied ('to', 'subject', 'body').", execution.getCauseOfFailure().getMessage());
+        WorkflowRun run = jenkinsRule.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0).get());
+        jenkinsRule.assertLogContains("Email not sent. All mandatory properties must be supplied ('subject', 'body').", run);
     }
 
     @Test
-    public void test_missing_param_has_continue() throws Exception {
+    public void test_missing_body() throws Exception {
+        WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "workflow");
+        // leave out he subject
+        job.setDefinition(new CpsFlowDefinition("mail(to: 'tom.abcd@jenkins.org', subject: 'subject');", true));
+
+        WorkflowRun run = jenkinsRule.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0).get());
+        jenkinsRule.assertLogContains("Email not sent. All mandatory properties must be supplied ('subject', 'body').", run);
+    }
+
+    @Test
+    public void test_missing_recipient() throws Exception {
         WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "workflow");
         // leave out he subject and body
-        job.setDefinition(new CpsFlowDefinition("node {" +
-                "   mail(to: 'tom.abcd@jenkins.org', continueOnError: true);" +
-                "}", true));
+        job.setDefinition(new CpsFlowDefinition("mail(subject: 'Hello friend', body: 'Missing you!');", true));
 
-        WorkflowRun run = jenkinsRule.assertBuildStatusSuccess(job.scheduleBuild2(0));
-        Assert.assertTrue(run.getLog(1000).toString().contains("Running: Mail, ERROR: Email not sent. All mandatory properties must be supplied ('to', 'subject', 'body')."));
+        WorkflowRun run = jenkinsRule.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0).get());
+        jenkinsRule.assertLogContains("Email not sent. No recipients of any kind specified ('to', 'cc', 'bcc').", run);
     }
 
     @Test
@@ -80,9 +82,7 @@ public class MailStepTest {
         Mailbox.clearAll();
 
         WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "workflow");
-        job.setDefinition(new CpsFlowDefinition("node {" +
-                "   mail(to: 'tom.abcd@jenkins.org', subject: 'Hello friend', body: 'Missing you!');" +
-                "}", true));
+        job.setDefinition(new CpsFlowDefinition("mail(to: 'tom.abcd@jenkins.org', subject: 'Hello friend', body: 'Missing you!');", true));
 
         jenkinsRule.assertBuildStatusSuccess(job.scheduleBuild2(0));
 
