@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.plugins.workflow.steps.mail;
+package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
