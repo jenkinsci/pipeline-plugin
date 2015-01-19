@@ -54,15 +54,6 @@
             <artifactId>jboss-marshalling-river</artifactId>
             <version>1.4.9.Final</version>
         </dependency>
-        <!--
-        Required for the MailStep.
-        TODO: Is this OK here, or want to create a dedicated module and keep the deps clean here?
-        -->
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>mailer</artifactId>
-            <version>1.13-SNAPSHOT</version>
-        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-step-api</artifactId>
