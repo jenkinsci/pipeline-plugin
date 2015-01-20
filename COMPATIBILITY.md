@@ -31,13 +31,14 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `Maven` (home TBD): [JENKINS-26057](https://issues.jenkins-ci.org/browse/JENKINS-26057)
 - [ ] `XShellBuilder` (`xshell`): [JENKINS-26169](https://issues.jenkins-ci.org/browse/JENKINS-26169)
 - [ ] `DockerBuilder` (`docker-build-step`): [JENKINS-26178](https://issues.jenkins-ci.org/browse/JENKINS-26178)
-- [ ] `ConfigFileBuildStep` (`config-file-provider`): [JENKINS-26339](https://issues.jenkins-ci.org/browse/JENKINS-26339)
 - [ ] `CucumberTestResultArchiver` (`cucumber-testresult-plugin`): [JENKINS-26340](https://issues.jenkins-ci.org/browse/JENKINS-26340)
 - [ ] `HtmlPublisher` (`htmlpublisher`): [JENKINS-26343](https://issues.jenkins-ci.org/browse/JENKINS-26343)
 
 ## Build wrappers
 
-No API to integrate with this yet other than custom steps: [JENKINS-24673](https://issues.jenkins-ci.org/browse/JENKINS-24673)
+- [ ] API to integrate these: [JENKINS-24673](https://issues.jenkins-ci.org/browse/JENKINS-24673)
+- [ ] `ConfigFileBuildWrapper` (`config-file-provider`): [JENKINS-26339](https://issues.jenkins-ci.org/browse/JENKINS-26339)
+- [ ] `Xvnc` (`xvnc`): [JENKINS-26477](https://issues.jenkins-ci.org/browse/JENKINS-26477)
 
 ## Triggers
 
@@ -60,7 +61,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 
 - [X] `rebuild`: [JENKINS-26024](https://issues.jenkins-ci.org/browse/JENKINS-26024)
 - [ ] `parameterized-trigger` (to support a workflow as downstream): [JENKINS-26050](https://issues.jenkins-ci.org/browse/JENKINS-26050)
-- [ ] `credentials-binding`: [JENKINS-26051](https://issues.jenkins-ci.org/browse/JENKINS-26051)
+- [X] `credentials-binding`: `withCredentials` step as of 1.3
 
 ## Custom steps
 
