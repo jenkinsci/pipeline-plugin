@@ -25,9 +25,6 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:entry field="from" title="From">
-        <f:textbox />
-    </f:entry>
     <f:entry field="to" title="To">
         <f:textbox />
     </f:entry>
@@ -41,18 +38,20 @@ THE SOFTWARE.
         <f:textbox />
     </f:entry>
     <f:entry field="body" title="Body">
-        <f:textbox />
+        <f:textarea />
     </f:entry>
-    <f:entry field="replyTo" title="Reply-To">
-        <f:textbox />
-    </f:entry>
-    <f:entry field="mimeType" title="Body MIME Type">
-        <f:textbox />
-    </f:entry>
-    <f:entry field="charset" title="Body Character Set">
-        <f:textbox />
-    </f:entry>
-    <f:entry field="defaultSuffix" title="Default email address suffix">
-        <f:textbox />
-    </f:entry>
+    <f:advanced>
+        <f:entry field="from" title="From">
+            <f:textbox />
+        </f:entry>
+        <f:entry field="replyTo" title="Reply-To">
+            <f:textbox />
+        </f:entry>
+        <f:entry field="mimeType" title="Body MIME Type">
+            <f:textbox />
+        </f:entry>
+        <f:entry field="charset" title="Body Character Set">
+            <f:textbox />
+        </f:entry>
+    </f:advanced>
 </j:jelly>

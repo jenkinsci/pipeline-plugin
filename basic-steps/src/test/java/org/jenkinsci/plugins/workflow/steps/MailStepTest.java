@@ -47,19 +47,9 @@ public class MailStepTest {
         step1.charset = "UTF-8";
         step1.replyTo = "tom.fennelly@gmail.com";
         step1.mimeType = "text/html";
-        step1.defaultSuffix = "@blah.net";
 
         MailStep step2 = new StepConfigTester(r).configRoundTrip(step1);
-        Assert.assertEquals("subject", step2.subject);
-        Assert.assertEquals("body", step2.body);
-        Assert.assertEquals("tom.fennelly@gmail.com", step2.from);
-        Assert.assertEquals("tom.fennelly@gmail.com", step2.to);
-        Assert.assertEquals("tom.fennelly@gmail.com", step2.cc);
-        Assert.assertEquals("tom.fennelly@gmail.com", step2.bcc);
-        Assert.assertEquals("UTF-8", step2.charset);
-        Assert.assertEquals("tom.fennelly@gmail.com", step2.replyTo);
-        Assert.assertEquals("text/html", step2.mimeType);
-        Assert.assertEquals("@blah.net", step2.defaultSuffix);
+        r.assertEqualDataBoundBeans(step1, step2);
     }
 
 }
