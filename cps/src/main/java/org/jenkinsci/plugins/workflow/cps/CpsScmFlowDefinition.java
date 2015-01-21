@@ -34,6 +34,7 @@ import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
+import hudson.slaves.WorkspaceList;
 import hudson.util.LogTaskListener;
 import java.io.IOException;
 import java.util.Collection;
@@ -88,12 +89,19 @@ public class CpsScmFlowDefinition extends FlowDefinition {
             dir = new FilePath(owner.getRootDir());
         }
         try {
-            scm.checkout(build, Jenkins.getInstance().createLauncher(listener), dir, listener, /* TODO consider whether to add to changelog */null, /* TODO consider whether to include in polling */null);
-            FilePath scriptFile = dir.child(scriptPath);
-            if (!scriptFile.absolutize().getRemote().replace('\\', '/').startsWith(dir.absolutize().getRemote().replace('\\', '/') + '/')) { // TODO need some FilePath.isInside(FilePath) method
-                throw new IOException(scriptFile + " is not inside " + dir);
+            String script;
+            WorkspaceList.Lease lease = Jenkins.getInstance().toComputer().getWorkspaceList().acquire(dir);
+            try {
+                scm.checkout(build, Jenkins.getInstance().createLauncher(listener), dir, listener, /* TODO consider whether to add to changelog */null, /* TODO consider whether to include in polling */null);
+                FilePath scriptFile = dir.child(scriptPath);
+                if (!scriptFile.absolutize().getRemote().replace('\\', '/').startsWith(dir.absolutize().getRemote().replace('\\', '/') + '/')) { // TODO need some FilePath.isInside(FilePath) method
+                    throw new IOException(scriptFile + " is not inside " + dir);
+                }
+                script = scriptFile.readToString();
+            } finally {
+                lease.release();
             }
-            return new CpsFlowExecution(scriptFile.readToString(), true, owner);
+            return new CpsFlowExecution(script, true, owner);
         } catch (InterruptedException x) {
             throw new IOException(x); // TODO overload should also permit InterruptedException to be thrown
         }
