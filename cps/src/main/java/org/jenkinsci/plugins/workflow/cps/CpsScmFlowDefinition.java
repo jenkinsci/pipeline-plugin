@@ -47,6 +47,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinitionDescriptor;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
@@ -101,7 +102,9 @@ public class CpsScmFlowDefinition extends FlowDefinition {
             } finally {
                 lease.release();
             }
-            return new CpsFlowExecution(script, true, owner);
+            CpsFlowExecution exec = new CpsFlowExecution(script, true, owner);
+            exec.flowStartNodeActions.add(new WorkspaceActionImpl(dir, null));
+            return exec;
         } catch (InterruptedException x) {
             throw new IOException(x); // TODO overload should also permit InterruptedException to be thrown
         }

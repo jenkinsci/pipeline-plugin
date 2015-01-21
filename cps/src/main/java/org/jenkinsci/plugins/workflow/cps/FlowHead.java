@@ -25,19 +25,19 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.cloudbees.groovy.cps.Outcome;
-import org.jenkinsci.plugins.workflow.actions.ErrorAction;
-import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
-import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
-
+import hudson.model.Action;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import org.jenkinsci.plugins.workflow.actions.ErrorAction;
+import org.jenkinsci.plugins.workflow.actions.FlowNodeAction;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.PROGRAM;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
 
 /**
  * Growing tip of the node graph.
@@ -92,7 +92,13 @@ final class FlowHead implements Serializable {
         return execution;
     }
 
-    void newStartNode(BlockStartNode n) throws IOException {
+    void newStartNode(FlowStartNode n) throws IOException {
+        for (Action a : execution.flowStartNodeActions) {
+            if (a instanceof FlowNodeAction) {
+                ((FlowNodeAction) a).onLoad(n);
+            }
+            n.addAction(a);
+        }
         synchronized (execution) {
             this.head = execution.startNodes.push(n);
         }
