@@ -1,4 +1,5 @@
 node('slave') {
+    git url: '/var/lib/jenkins/workflow-plugin-pipeline-demo'
     env.PATH="${tool 'Maven 3.x'}/bin:${env.PATH}"
     stage 'Dev'
     sh 'mvn -o clean package'
