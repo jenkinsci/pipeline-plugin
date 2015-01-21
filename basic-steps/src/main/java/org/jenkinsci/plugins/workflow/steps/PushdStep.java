@@ -41,12 +41,7 @@ public class PushdStep extends AbstractStepImpl {
     private final String path;
 
     @DataBoundConstructor public PushdStep(String path) {
-        this.path = RelativePathValidator.validate(path);
-    }
-
-    private Object readResolve() {
-        RelativePathValidator.validate(path);
-        return this;
+        this.path = path;
     }
 
     public String getPath() {
