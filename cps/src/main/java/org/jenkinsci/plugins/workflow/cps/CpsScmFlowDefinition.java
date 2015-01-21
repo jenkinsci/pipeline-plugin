@@ -90,7 +90,9 @@ public class CpsScmFlowDefinition extends FlowDefinition {
             throw new IOException("Jenkins is not running");
         }
         if (build.getParent() instanceof TopLevelItem) {
-            dir = jenkins.getWorkspaceFor((TopLevelItem) build.getParent()).withSuffix("@script");
+            FilePath baseWorkspace = jenkins.getWorkspaceFor((TopLevelItem) build.getParent());
+            assert baseWorkspace != null : "this override should actually be @Nonnull";
+            dir = baseWorkspace.withSuffix("@script");
         } else { // should not happen, but just in case:
             dir = new FilePath(owner.getRootDir());
         }
