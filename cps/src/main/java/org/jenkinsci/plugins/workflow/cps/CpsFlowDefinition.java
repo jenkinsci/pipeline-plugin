@@ -98,11 +98,14 @@ public class CpsFlowDefinition extends FlowDefinition {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public CpsFlowExecution create(FlowExecutionOwner owner, List<? extends Action> actions) throws IOException {
         for (Action a : actions) {
             if (a instanceof CpsFlowFactoryAction) {
                 CpsFlowFactoryAction fa = (CpsFlowFactoryAction) a;
                 return fa.create(this,owner,actions);
+            } else if (a instanceof CpsFlowFactoryAction2) {
+                return ((CpsFlowFactoryAction2) a).create(this, owner, actions);
             }
         }
         return new CpsFlowExecution(sandbox ? script : ScriptApproval.get().using(script, GroovyLanguage.get()), sandbox, owner);
