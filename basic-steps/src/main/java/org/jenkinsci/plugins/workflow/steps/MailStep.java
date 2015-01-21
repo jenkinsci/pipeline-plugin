@@ -24,6 +24,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.inject.Inject;
+import hudson.AbortException;
 import hudson.Extension;
 import hudson.model.TaskListener;
 import jenkins.plugins.mailer.tasks.MimeMessageBuilder;
@@ -31,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import javax.annotation.Nonnull;
 import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -48,9 +50,9 @@ public class MailStep extends AbstractStepImpl {
     @DataBoundSetter
     public String charset;
 
-    public String subject;
+    public final String subject;
 
-    public String body;
+    public final String body;
 
     @DataBoundSetter
     public String from;
@@ -70,11 +72,8 @@ public class MailStep extends AbstractStepImpl {
     @DataBoundSetter
     public String mimeType;
 
-    @DataBoundSetter
-    public String defaultSuffix;
-
     @DataBoundConstructor
-    public MailStep(String subject, String body) {
+    public MailStep(@Nonnull String subject, @Nonnull String body) {
         this.subject = subject;
         this.body = body;
     }
@@ -98,7 +97,7 @@ public class MailStep extends AbstractStepImpl {
     /**
      * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
      */
-    public static class MailStepExecution extends AbstractSynchronousStepExecution {
+    public static class MailStepExecution extends AbstractSynchronousStepExecution<Void> {
 
         private static final long serialVersionUID = 1L;
 
@@ -109,34 +108,52 @@ public class MailStep extends AbstractStepImpl {
         private transient TaskListener listener;
 
         @Override
-        protected Object run() throws Exception {
+        protected Void run() throws Exception {
             MimeMessage mimeMessage = buildMimeMessage();
             Transport.send(mimeMessage);
             return null;
         }
 
-        private MimeMessage buildMimeMessage() throws UnsupportedEncodingException, MessagingException {
+        private MimeMessage buildMimeMessage() throws UnsupportedEncodingException, MessagingException, AbortException {
             if (StringUtils.isBlank(step.subject) || StringUtils.isBlank(step.body)) {
-                throw new IllegalArgumentException("Email not sent. All mandatory properties must be supplied ('subject', 'body').");
+                throw new AbortException("Email not sent. All mandatory properties must be supplied ('subject', 'body').");
             }
 
-            MimeMessage message = new MimeMessageBuilder()
-                    .setListener(listener)
-                    .setSubject(step.subject)
-                    .setBody(step.body)
-                    .setCharset(step.charset)
-                    .setMimeType(step.mimeType)
-                    .setFrom(step.from)
-                    .addRecipients(step.to, Message.RecipientType.TO)
-                    .addRecipients(step.cc, Message.RecipientType.CC)
-                    .addRecipients(step.bcc, Message.RecipientType.BCC)
-                    .setReplyTo(step.replyTo)
-                    .setDefaultSuffix(step.defaultSuffix)
-                    .buildMimeMessage();
+            MimeMessageBuilder messageBuilder = new MimeMessageBuilder().setListener(listener);
+
+            if (step.subject != null) {
+                messageBuilder.setSubject(step.subject);
+            }
+            if (step.body != null) {
+                messageBuilder.setBody(step.body);
+            }
+            if (step.from != null) {
+                messageBuilder.setFrom(step.from);
+            }
+            if (step.replyTo != null) {
+                messageBuilder.setReplyTo(step.replyTo);
+            }
+            if (step.to != null) {
+                messageBuilder.addRecipients(step.to, Message.RecipientType.TO);
+            }
+            if (step.cc != null) {
+                messageBuilder.addRecipients(step.cc, Message.RecipientType.CC);
+            }
+            if (step.bcc != null) {
+                messageBuilder.addRecipients(step.bcc, Message.RecipientType.BCC);
+            }
+            if (step.charset != null) {
+                messageBuilder.setCharset(step.charset);
+            }
+            if (step.mimeType != null) {
+                messageBuilder.setMimeType(step.mimeType);
+            }
+
+            MimeMessage message = messageBuilder.buildMimeMessage();
 
             Address[] allRecipients = message.getAllRecipients();
             if (allRecipients == null || allRecipients.length == 0) {
-                throw new IllegalArgumentException("Email not sent. No recipients of any kind specified ('to', 'cc', 'bcc').");
+                throw new AbortException("Email not sent. No recipients of any kind specified ('to', 'cc', 'bcc').");
             }
 
             return message;

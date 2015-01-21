@@ -129,13 +129,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>mailer</artifactId>
-            <!-- Remove SNAPSHOT -->
-            <version>1.13-20150119.123537-1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.jvnet.mock-javamail</groupId>
             <artifactId>mock-javamail</artifactId>
             <version>1.9</version>

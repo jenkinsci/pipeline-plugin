@@ -50,7 +50,7 @@ public class MailStepTest {
     @Test
     public void test_missing_subject() throws Exception {
         WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "workflow");
-        // leave out he subject
+        // leave out the subject
         job.setDefinition(new CpsFlowDefinition("mail(to: 'tom.abcd@jenkins.org', body: 'body');", true));
 
         WorkflowRun run = jenkinsRule.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0).get());
@@ -60,7 +60,7 @@ public class MailStepTest {
     @Test
     public void test_missing_body() throws Exception {
         WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "workflow");
-        // leave out he subject
+        // leave out the body
         job.setDefinition(new CpsFlowDefinition("mail(to: 'tom.abcd@jenkins.org', subject: 'subject');", true));
 
         WorkflowRun run = jenkinsRule.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0).get());
@@ -70,7 +70,7 @@ public class MailStepTest {
     @Test
     public void test_missing_recipient() throws Exception {
         WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "workflow");
-        // leave out he subject and body
+        // leave out the subject and body
         job.setDefinition(new CpsFlowDefinition("mail(subject: 'Hello friend', body: 'Missing you!');", true));
 
         WorkflowRun run = jenkinsRule.assertBuildStatus(Result.FAILURE, job.scheduleBuild2(0).get());
