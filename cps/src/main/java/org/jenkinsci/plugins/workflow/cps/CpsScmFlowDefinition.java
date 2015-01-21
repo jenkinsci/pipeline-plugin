@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.workflow.cps;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Action;
+import hudson.model.Computer;
 import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.model.Run;
@@ -84,16 +85,24 @@ public class CpsScmFlowDefinition extends FlowDefinition {
             throw new IOException("can only check out SCM into a Run");
         }
         Run<?,?> build = (Run<?,?>) _build;
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins == null) {
+            throw new IOException("Jenkins is not running");
+        }
         if (build.getParent() instanceof TopLevelItem) {
-            dir = Jenkins.getInstance().getWorkspaceFor((TopLevelItem) build.getParent()).withSuffix("@script");
+            dir = jenkins.getWorkspaceFor((TopLevelItem) build.getParent()).withSuffix("@script");
         } else { // should not happen, but just in case:
             dir = new FilePath(owner.getRootDir());
         }
         try {
             String script;
-            WorkspaceList.Lease lease = Jenkins.getInstance().toComputer().getWorkspaceList().acquire(dir);
+            Computer masterComputer = jenkins.toComputer();
+            if (masterComputer == null) {
+                throw new IOException("Master computer not available");
+            }
+            WorkspaceList.Lease lease = masterComputer.getWorkspaceList().acquire(dir);
             try {
-                scm.checkout(build, Jenkins.getInstance().createLauncher(listener), dir, listener, /* TODO consider whether to add to changelog */null, /* TODO consider whether to include in polling */null);
+                scm.checkout(build, jenkins.createLauncher(listener), dir, listener, /* TODO consider whether to add to changelog */null, /* TODO consider whether to include in polling */null);
                 FilePath scriptFile = dir.child(scriptPath);
                 if (!scriptFile.absolutize().getRemote().replace('\\', '/').startsWith(dir.absolutize().getRemote().replace('\\', '/') + '/')) { // TODO need some FilePath.isInside(FilePath) method
                     throw new IOException(scriptFile + " is not inside " + dir);
@@ -118,7 +127,8 @@ public class CpsScmFlowDefinition extends FlowDefinition {
 
         public Collection<? extends SCMDescriptor<?>> getApplicableDescriptors() {
             StaplerRequest req = Stapler.getCurrentRequest();
-            return SCM._for(req != null ? req.findAncestorObject(Job.class) : null);
+            Job job = req != null ? req.findAncestorObject(Job.class) : null;
+            return job != null ? SCM._for(job) : SCM.all();
         }
 
         // TODO migrate doGenerateSnippet to a helper class
