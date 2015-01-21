@@ -1,4 +1,4 @@
-def devQAStaging() {
+node('slave') {
     env.PATH="${tool 'Maven 3.x'}/bin:${env.PATH}"
     stage 'Dev'
     sh 'mvn -o clean package'
@@ -19,20 +19,18 @@ def devQAStaging() {
     deploy 'target/x.war', 'staging'
 }
 
-def production() {
-    input message: "Does http://localhost:8080/staging/ look good?"
-    try {
-        checkpoint('Before production')
-    } catch (NoSuchMethodError _) {
-        echo 'Checkpoint feature available in Jenkins Enterprise by CloudBees.'
-    }
-    stage name: 'Production', concurrency: 1
-    node('master') {
-        sh 'curl -I http://localhost:8080/staging/'
-        unarchive mapping: ['target/x.war' : 'x.war']
-        deploy 'x.war', 'production'
-        echo 'Deployed to http://localhost:8080/production/'
-    }
+input message: "Does http://localhost:8080/staging/ look good?"
+try {
+    checkpoint('Before production')
+} catch (NoSuchMethodError _) {
+    echo 'Checkpoint feature available in Jenkins Enterprise by CloudBees.'
+}
+stage name: 'Production', concurrency: 1
+node('master') {
+    sh 'curl -I http://localhost:8080/staging/'
+    unarchive mapping: ['target/x.war' : 'x.war']
+    deploy 'x.war', 'production'
+    echo 'Deployed to http://localhost:8080/production/'
 }
 
 def deploy(war, id) {
