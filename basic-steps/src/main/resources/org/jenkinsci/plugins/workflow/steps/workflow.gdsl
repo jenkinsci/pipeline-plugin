@@ -1,0 +1,137 @@
+package org.jenkinsci.plugins.workflow.steps
+/*
+Author: Gary Clayburg
+This file allows IntelliJ IDEA to perform basic syntax checking and code completion for
+Jenkins workflow groovy scripts. https://github.com/jenkinsci/workflow-plugin
+
+These workflow steps are supported
+sh
+readFile
+node
+echo
+
+Usage:
+1. Place this file somewhere in your classpath for the your IntelliJ project that contains your flow.groovy Jenkins workflow
+2. You may see a note in IntelliJ IDEA that says "DSL descriptor file has been changed and isn't currently executed."  If you see this, click the "Activate back" button.
+OR
+1. Specify this maven dependency in your project:
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-basic-steps</artifactId>
+            <version>1.2-SNAPSHOT</version>
+        </dependency>
+
+
+Your jenkins workflow plugin groovy script should now offer quick Javadoc for supported build steps (sh,readFile,node,echo) and basic autocompletion hints
+
+More background on IntelliJ and groovy DSL support here:
+https://confluence.jetbrains.com/display/GRVY/Scripting+IDE+for+DSL+awareness
+ */
+
+// Create context for Groovy script files which names end with .groovy
+// These definitions allow IntelliJ to autocomplete these variable names injected into groovy scripts/classes.
+//def groovyContext = context(filetypes: ['groovy'], scope: scriptScope(name: "flow.groovy")) //restrict these context hints to only files named flow.groovy
+def groovyContext = context(filetypes: ['groovy'], scope: scriptScope())
+
+contributor(groovyContext) {
+    //injected into all groovy scripts (not necessarily for groovy classes)
+
+    def shDoc = """
+Execute a shell script on a Jenkins node
+<br/>usage examples:<br/>
+<pre>
+    sh("ls")
+    def tmpdir = "/tmp"
+    sh "ls -l \$tmpdir"
+    sh 'chmod 755 ./build.sh'
+    sh "./build.sh"
+    sh script: "ls -l /"
+    sh \"\"\" # multiline script
+    chmod 644 pom.xml
+    ls /
+    echo "user home directory is \$HOME"
+    \"\"\"
+
+</pre>
+"""
+    def shParams = [
+            parameter(name: 'script', type: String.name, doc: "Bourne shell script text"),
+    ]
+    method name: "sh", namedParams: shParams, doc: shDoc
+    method name: "sh", params: [script: 'java.lang.String'], doc: shDoc
+
+    def echoDoc = """
+Print message to Jenkins build log  <br/>
+<br/>
+Parameters:<br/>
+&nbsp&nbsp&nbsp&nbsp<b>message</b>      text of message<br/>
+<br/>
+<br/>
+Usage examples:<br/>
+<pre>
+    echo 'hello world'
+    echo('hi world')
+    echo message: \"verbose form of echo\"
+</pre>
+"""
+    def echoParams = [
+            parameter(name: 'message', type: String.name, doc: "message text to output to console")
+    ]
+    method name: 'echo', params: [message: 'java.lang.String'], doc: echoDoc
+    method name: 'echo', namedParams: echoParams, doc: echoDoc
+
+    def nodeDoc = """
+Allocates an executor on a node (typically a slave) and runs further code in the context of a workspace on that slave. <br/>
+<br/>
+Usage examples:<br/>
+<pre>
+node('testingSlaves') {  //testingSlaves must be defined as Jenkins slave label
+    // some block
+}
+</pre>
+<pre>
+node() {  // execute on any Jenkins slave
+    // some block
+}
+</pre>
+
+"""
+    method name: "node", type: "void", params: [label: 'java.lang.String', closure: 'groovy.lang.Closure'], doc: nodeDoc
+
+    method name: "node", type: "void", params: [ closure: 'groovy.lang.Closure'], doc: nodeDoc
+
+    def readFileParams = [
+            parameter(name: 'file', type: String.name, doc: "relative or absolute filename of file to read"),
+            parameter(name: 'encoding', type: String.name, doc: "character encoding of file (optional)"),
+    ]
+
+    def readFileDoc = """
+Read a file from workspace with specified encoding  file encoding<br/>
+<br/>
+Parameters:<br/>
+&nbsp&nbsp&nbsp&nbsp<b>file</b>      the path of the file to read<br/>
+&nbsp&nbsp&nbsp&nbsp<b>encoding</b>  character encoding of the file.  The platform default is used if this param is not specified<br/>
+<br/>
+Usage examples:<br/>
+<pre>
+    def str = readFile file: 'pom.xml', encoding : 'utf-8'  //read utf-8 encoded file
+</pre>
+<pre>
+    def str = readFile file: 'pom.xml'  //read with default encoding
+</pre>
+<pre>
+    def str = readFile 'pom.xml'  //read with default encoding
+</pre>
+
+"""
+    method name: "readFile", type: "java.lang.String", namedParams: readFileParams, doc: readFileDoc
+    method name: "readFile", params: [file: "java.lang.String"], doc: readFileDoc
+}
+
+def nodeContext = context(filetypes: ['groovy'], scope: closureScope() )
+contributor(nodeContext){
+    if (enclosingCall("node")) {  //allows specified methods in node() closure.  This is too restrictive when the node(){} exists in a parent method
+
+//    method name: "sh", params: [scriptText: "java.lang.String"], doc: "run a java shell script"
+    }
+}
