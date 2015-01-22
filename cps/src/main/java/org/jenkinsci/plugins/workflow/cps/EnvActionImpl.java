@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import groovy.lang.GroovyObjectSupport;
 import hudson.EnvVars;
-import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.util.LogTaskListener;
 import java.io.IOException;
@@ -72,14 +71,14 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
 
     @Override public Object getProperty(String propertyName) {
         try {
-            String val = getEnvironment().get(propertyName);
-            if (val == null) {
-                Computer computer = CpsThread.current().getContextVariable(Computer.class);
-                if (computer != null) {
-                    return computer.getEnvironment().get(propertyName);
+            EnvVars overridden = CpsThread.current().getContextVariable(EnvVars.class);
+            if (overridden != null) {
+                String val = overridden.get(propertyName);
+                if (val != null) {
+                    return val;
                 }
             }
-            return val;
+            return getEnvironment().get(propertyName);
         } catch (Exception x) {
             LOGGER.log(Level.WARNING, null, x);
             return null;
