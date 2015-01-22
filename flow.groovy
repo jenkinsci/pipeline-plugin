@@ -51,5 +51,3 @@ def runWithServer(body) {
         undeploy id
     }
 }
-
-return this;
