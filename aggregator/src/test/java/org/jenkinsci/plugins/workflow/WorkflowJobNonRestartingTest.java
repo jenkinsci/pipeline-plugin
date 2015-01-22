@@ -27,7 +27,10 @@ package org.jenkinsci.plugins.workflow;
 import hudson.model.Result;
 import hudson.model.Slave;
 import hudson.model.queue.QueueTaskFuture;
+import java.util.Collections;
+import java.util.Set;
 import org.apache.commons.io.FileUtils;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
 import org.jenkinsci.plugins.workflow.cps.AbstractCpsFlowTest;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
@@ -40,6 +43,7 @@ import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 /**
@@ -182,14 +186,27 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
     /**
      * If a prohibited method is called, execution should fail.
      */
+    @Issue("JENKINS-26541")
     @Test
     public void sandboxRejection() throws Exception {
-        p.setDefinition(new CpsFlowDefinition("Jenkins.getInstance();", true));
-
+        assertRejected("Jenkins.getInstance()");
+        assertRejected("parallel(main: {Jenkins.getInstance()})");
+        assertRejected("parallel(main: {parallel(main2: {Jenkins.getInstance()})})");
+        assertRejected("node {parallel(main: {ws {parallel(main2: {ws {Jenkins.getInstance()}})}})}");
+    }
+    private void assertRejected(String script) throws Exception {
+        String signature = "staticMethod jenkins.model.Jenkins getInstance";
+        ScriptApproval scriptApproval = ScriptApproval.get();
+        scriptApproval.denySignature(signature);
+        assertEquals(Collections.emptySet(), scriptApproval.getPendingSignatures());
+        p.setDefinition(new CpsFlowDefinition(script, true));
         WorkflowRun b = p.scheduleBuild2(0).get();
-
-        jenkins.assertLogContains("org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException: Scripts not permitted to use staticMethod jenkins.model.Jenkins getInstance", b);
+        jenkins.assertLogContains("org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException: Scripts not permitted to use " + signature, b);
         jenkins.assertBuildStatus(Result.FAILURE, b);
+        Set<ScriptApproval.PendingSignature> pendingSignatures = scriptApproval.getPendingSignatures();
+        assertEquals(script, 1, pendingSignatures.size());
+        assertEquals(signature, pendingSignatures.iterator().next().signature);
+
     }
 
     /**
