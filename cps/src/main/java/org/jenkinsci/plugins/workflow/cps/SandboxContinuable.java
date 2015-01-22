@@ -9,6 +9,7 @@ import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 
 import java.util.concurrent.Callable;
+import javax.annotation.CheckForNull;
 
 /**
  * {@link Continuable} that executes code inside sandbox execution.
@@ -30,9 +31,9 @@ class SandboxContinuable extends Continuable {
                 @Override
                 public Outcome call() {
                     Outcome outcome = SandboxContinuable.super.run0(cn);
-                    Throwable t = outcome.getAbnormal();
-                    if (t instanceof RejectedAccessException) {
-                        ScriptApproval.get().accessRejected((RejectedAccessException) t, ApprovalContext.create());
+                    RejectedAccessException x = findRejectedAccessException(outcome.getAbnormal());
+                    if (x != null) {
+                        ScriptApproval.get().accessRejected(x, ApprovalContext.create());
                     }
                     return outcome;
                 }
@@ -43,4 +44,15 @@ class SandboxContinuable extends Continuable {
             throw new AssertionError(e);    // Callable doesn't throw anything
         }
     }
+
+    private static @CheckForNull RejectedAccessException findRejectedAccessException(@CheckForNull Throwable t) {
+        if (t == null) {
+            return null;
+        } else if (t instanceof RejectedAccessException) {
+            return (RejectedAccessException) t;
+        } else {
+            return findRejectedAccessException(t.getCause());
+        }
+    }
+
 }
