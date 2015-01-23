@@ -130,7 +130,7 @@ public class CpsScmFlowDefinition extends FlowDefinition {
         public Collection<? extends SCMDescriptor<?>> getApplicableDescriptors() {
             StaplerRequest req = Stapler.getCurrentRequest();
             Job job = req != null ? req.findAncestorObject(Job.class) : null;
-            return job != null ? SCM._for(job) : SCM.all();
+            return job != null ? SCM._for(job) : /* TODO 1.599+ does this for job == null */ SCM.all();
         }
 
         // TODO migrate doGenerateSnippet to a helper class
