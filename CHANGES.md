@@ -5,6 +5,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 ## 1.2 (upcoming)
 
 ### User changes
+* JENKINS-26101: the complete workflow script can now be loaded from an SCM repository of your choice.
 * JENKINS-26149: the `build` step did not survive Jenkins restarts while running.
 * JENKINS-25570: added `waitUntil` step.
 * JENKINS-25924: added `error` step.

@@ -593,10 +593,19 @@ Consult the [Docker demo](demo/README.md) for an example of a flow using multipl
 Complex flows would be cumbersome to write and maintain in the textarea provided in the Jenkins job configuration.
 Therefore it makes sense to load the program from another source, one that you can maintain using version control and standalone Groovy editors.
 
+## Entire script from SCM
+
+The easiest way to do this is to select _Groovy CPS DSL from SCM_ when defining the workflow.
+In that case you do not enter any Groovy code in the Jenkins UI; you just indicate where in source code you want to retrieve the program.
+(If you update this repository, a new build will be triggered, so long as your job is configured with an SCM polling trigger.)
+
+## Manual loading
+
+For some cases you may prefer to explicitly load Groovy script text from some source.
 The standard Groovy `evaluate` function can be used, but most likely you will want to load a flow definition from a workspace.
 For this purpose you can use the `load` step, which takes a filename in the workspace and runs it as Groovy source text.
 The loaded file can either contain statements at top level, which are run immediately; or it can define functions and return `this`, in which case the result of the `load` step can be used to invoke those functions like methods.
-Again the [Docker demo](demo/README.md) shows this technique in practice:
+An older version of the [Docker demo](demo/README.md) showed this technique in practice:
 
 ```groovy
 def flow
@@ -608,7 +617,7 @@ node('slave') {
 flow.production()
 ```
 
-where [flow.groovy](https://github.com/jenkinsci/workflow-plugin-pipeline-demo/blob/master/flow.groovy) defines `devQAStaging` and `production` functions (among others) before ending with
+where [flow.groovy](https://github.com/jenkinsci/workflow-plugin-pipeline-demo/blob/641a3491d49570f4f8b9e3e583eb71bad1aa493f/flow.groovy) defines `devQAStaging` and `production` functions (among others) before ending with
 
 ```groovy
 return this;
@@ -616,6 +625,8 @@ return this;
 
 The subtle part here is that we actually have to do a bit of work with the `node` and `git` steps just to check out a workspace so that we can `load` something.
 In this case `devQAStaging` runs on the same node as the main source code checkout, while `production` runs outside of that block (and in fact allocates a different node).
+
+## Global libraries
 
 Injection of function and class names into a flow before it runs is handled by plugins, and one is bundled with workflow that allows you to get rid of the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
 A [separate document](cps-global-lib/README.md) has details on this system.
