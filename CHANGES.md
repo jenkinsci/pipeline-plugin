@@ -13,6 +13,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 * JENKINS-26074: completed parallel branches become invisible until the whole parallel step is done
 * JENKINS-26541: rejected sandbox methods were not offered for approval when inside `parallel`.
 * Snippet generator incorrectly suggested `pwd` when Groovy requires `pwd()`.
+* JENKINS-26104: Custom Workflow step for sending mail
 
 ## 1.1 (Dec 09 2014)
 
