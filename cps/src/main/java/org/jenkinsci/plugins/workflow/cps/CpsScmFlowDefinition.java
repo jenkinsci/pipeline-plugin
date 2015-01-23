@@ -125,7 +125,9 @@ public class CpsScmFlowDefinition extends FlowDefinition {
             return job != null ? SCM._for(job) : /* TODO 1.599+ does this for job == null */ SCM.all();
         }
 
-        // TODO migrate doGenerateSnippet to a helper class
+        public Snippetizer getSnippetizer() {
+            return Snippetizer.get();
+        }
 
     }
 

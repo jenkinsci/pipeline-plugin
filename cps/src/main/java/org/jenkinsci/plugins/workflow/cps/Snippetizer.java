@@ -24,21 +24,40 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import hudson.Extension;
+import hudson.ExtensionList;
+import hudson.Functions;
+import hudson.model.RootAction;
+import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.lang.model.SourceVersion;
+import javax.servlet.ServletException;
+import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.ClassDescriptor;
+import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.HttpResponses;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 
 /**
  * Takes a {@link Step} as configured through the UI and tries to produce equivalent Groovy code.
  */
-class Snippetizer {
+@Extension public class Snippetizer implements RootAction {
     
-    public static String object2Groovy(Object o) throws UnsupportedOperationException {
+    static String object2Groovy(Object o) throws UnsupportedOperationException {
         Class<? extends Object> clazz = o.getClass();
         for (StepDescriptor d : StepDescriptor.all()) {
             if (d.clazz.equals(clazz)) {
@@ -86,7 +105,7 @@ class Snippetizer {
         return names.length == 1 && key.equals(names[0]);
     }
 
-    static void render(StringBuilder b, Object value) {
+    private static void render(StringBuilder b, Object value) {
         if (value == null) {
             b.append("null");
             return;
@@ -139,6 +158,65 @@ class Snippetizer {
         }
     }
 
-    private Snippetizer() {}
+    private static final String ACTION_URL = "workflow-cps-snippetizer";
+
+    @Override public String getUrlName() {
+        return ACTION_URL;
+    }
+
+    @Override public String getIconFileName() {
+        return null;
+    }
+
+    @Override public String getDisplayName() {
+        return null;
+    }
+
+    /**
+     * Gets the default instance.
+     * Render using: {@code <st:include it="${theResult}" page="block.jelly"/>}
+     */
+    public static Snippetizer get() {
+        return ExtensionList.lookup(RootAction.class).get(Snippetizer.class);
+    }
+
+    @Restricted(DoNotUse.class) // JENKINS-26579: j:invokeStatic does not work on plugin classes
+    public Collection<? extends StepDescriptor> getStepDescriptors() {
+        return StepDescriptor.all();
+    }
+
+    @Restricted(NoExternalUse.class)
+    public static final String HELP_URL = ACTION_URL + "/help";
+
+    @Restricted(DoNotUse.class)
+    public void doHelp(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
+        rsp.serveLocalizedFile(req, Snippetizer.class.getResource("Snippetizer/help.html"));
+    }
+
+    @Restricted(NoExternalUse.class)
+    public static final String GENERATE_URL = ACTION_URL + "/generateSnippet";
+
+    @Restricted(DoNotUse.class) // accessed via REST API
+    public HttpResponse doGenerateSnippet(StaplerRequest req, @QueryParameter String json) throws Exception {
+        // TODO is there not an easier way to do this?
+        JSONObject jsonO = JSONObject.fromObject(json);
+        Jenkins j = Jenkins.getInstance();
+        if (j == null) {
+            throw new IllegalStateException("Jenkins is not running");
+        }
+        Class<?> c = j.getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
+        Object o;
+        try {
+            o = req.bindJSON(c, jsonO);
+        } catch (RuntimeException x) { // e.g. IllegalArgumentException
+            return HttpResponses.plainText(Functions.printThrowable(x));
+        }
+        try {
+            return HttpResponses.plainText(object2Groovy(o));
+        } catch (UnsupportedOperationException x) {
+            Logger.getLogger(CpsFlowExecution.class.getName()).log(Level.WARNING, "failed to render " + json, x);
+            return HttpResponses.plainText(x.getMessage());
+        }
+    }
 
 }

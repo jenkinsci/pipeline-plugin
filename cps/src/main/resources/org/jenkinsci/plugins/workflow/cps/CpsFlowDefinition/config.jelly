@@ -23,55 +23,12 @@
   ~ THE SOFTWARE.
   -->
 
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
   <f:entry title="${%Script}" field="script">
     <f:textarea checkMethod="post"/>
   </f:entry>
   <f:entry field="sandbox">
     <f:checkbox title="${%Use Groovy Sandbox}"/>
   </f:entry>
-  <f:optionalBlock name="snippetizer" title="Snippet Generator" help="${descriptor.getHelpFile('snippetizer')}">
-  <!-- Similar to f:dropdownDescriptorSelector, but adds fallback content to block, and JENKINS-25130 adds per-selection help: -->
-  <f:dropdownList name="prototype" title="Sample Step">
-      <j:forEach var="stepDescriptor" items="${descriptor.stepDescriptors}">
-          <f:dropdownListBlock title="${stepDescriptor.displayName}" staplerClass="${stepDescriptor.clazz.name}" lazy="stepDescriptor,it">
-              <l:ajax>
-                  <j:set var="instance" value="${null}"/>
-                  <j:set var="descriptor" value="${stepDescriptor}"/>
-                  <j:set var="help" value="${descriptor.helpFile}"/>
-                  <j:if test="${help != null}">
-                      <tr>
-                          <td colspan="3"/>
-                          <f:helpLink url="${help}"/>
-                      </tr>
-                      <f:helpArea/>
-                  </j:if>
-                  <st:include from="${descriptor}" page="${descriptor.configPage}" optional="true">
-                      <f:block>
-                          ${%This step has not yet defined any visual configuration.}
-                      </f:block>
-                  </st:include>
-              </l:ajax>
-          </f:dropdownListBlock>
-      </j:forEach>
-  </f:dropdownList>
-  <f:block>
-      <input type="button" value="Generate Groovy" onclick="handlePrototype(); return false" class="submit-button primary"/>
-      <f:textarea id="prototypeText" readonly="true"/>
-  </f:block>
-  <script>
-      function handlePrototype() {
-          buildFormTree(document.forms.config);
-          // TODO JSON.stringify fails in some circumstances: https://gist.github.com/jglick/70ec4b15c1f628fdf2e9 due to Array.prototype.toJSON
-          var json = Object.toJSON(JSON.parse(document.forms.config.elements.json.value).definition.snippetizer.prototype);
-          new Ajax.Request('${descriptor.descriptorFullUrl}/generateSnippet', {
-              method: 'POST',
-              parameters: {json: json},
-              onSuccess: function(r) {
-                  document.getElementById('prototypeText').value = r.responseText;
-              }
-          });
-      }
-  </script>
-  </f:optionalBlock>
+  <st:include it="${descriptor.snippetizer}" page="block.jelly"/>
 </j:jelly>

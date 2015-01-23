@@ -25,7 +25,6 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import hudson.Extension;
-import hudson.Functions;
 import hudson.model.Action;
 import hudson.model.Item;
 import hudson.model.TaskListener;
@@ -39,23 +38,14 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import jenkins.model.Jenkins;
-import net.sf.json.JSONObject;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
-import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.DoNotUse;
-import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
@@ -133,32 +123,8 @@ public class CpsFlowDefinition extends FlowDefinition {
             return sandbox ? FormValidation.ok() : ScriptApproval.get().checking(value, GroovyLanguage.get());
         }
 
-        @Restricted(DoNotUse.class) // j:invokeStatic does not consistently work on plugin classes
-        public Collection<? extends StepDescriptor> getStepDescriptors() {
-            return StepDescriptor.all();
-        }
-
-        @Restricted(DoNotUse.class) // from config.jelly
-        public HttpResponse doGenerateSnippet(StaplerRequest req, @QueryParameter String json) throws Exception {
-            // TODO is there not an easier way to do this?
-            JSONObject jsonO = JSONObject.fromObject(json);
-            Jenkins j = Jenkins.getInstance();
-            if (j == null) {
-                throw new IllegalStateException("Jenkins is not running");
-            }
-            Class<?> c = j.getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
-            Object o;
-            try {
-                o = req.bindJSON(c, jsonO);
-            } catch (RuntimeException x) { // e.g. IllegalArgumentException
-                return HttpResponses.plainText(Functions.printThrowable(x));
-            }
-            try {
-                return HttpResponses.plainText(Snippetizer.object2Groovy(o));
-            } catch (UnsupportedOperationException x) {
-                Logger.getLogger(CpsFlowExecution.class.getName()).log(Level.WARNING, "failed to render " + json, x);
-                return HttpResponses.plainText(x.getMessage());
-            }
+        public Snippetizer getSnippetizer() {
+            return Snippetizer.get();
         }
 
     }
