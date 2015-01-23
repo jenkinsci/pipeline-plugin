@@ -64,8 +64,12 @@ public class SubversionStepTest {
         } catch (NoSuchMethodException x) {
             // prior to Java 7
         }
-        int r = pb.directory(cwd).start().waitFor();
-        Assume.assumeTrue(Arrays.toString(cmds) + " failed with error code " + r, r == 0);
+        try {
+            int r = pb.directory(cwd).start().waitFor();
+            Assume.assumeTrue(Arrays.toString(cmds) + " failed with error code " + r, r == 0);
+        } catch (Exception ex) {
+            Assume.assumeNoException(Arrays.toString(cmds) + " failed with exception (required tooling not installed?)", ex);
+        }
     }
 
     private static String uuid(String url) throws Exception {
