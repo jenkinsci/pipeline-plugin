@@ -60,7 +60,7 @@ public final class GitStep extends SCMStep {
         this.branch = branch;
     }
 
-    @Override protected SCM createSCM() {
+    @Override public SCM createSCM() {
         return new GitSCM(createRepoList(url), Collections.singletonList(new BranchSpec("*/" + branch)), false, Collections.<SubmoduleConfig>emptyList(), null, null, null);
     }
 

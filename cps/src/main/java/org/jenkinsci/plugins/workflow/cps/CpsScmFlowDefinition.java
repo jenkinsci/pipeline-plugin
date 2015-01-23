@@ -45,6 +45,8 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinitionDescriptor;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.jenkinsci.plugins.workflow.steps.scm.GenericSCMStep;
+import org.jenkinsci.plugins.workflow.steps.scm.SCMStep;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.Stapler;
@@ -69,7 +71,7 @@ public class CpsScmFlowDefinition extends FlowDefinition {
         return scriptPath;
     }
 
-    @Override public CpsFlowExecution create(FlowExecutionOwner owner, TaskListener listener, List<? extends Action> actions) throws IOException, InterruptedException {
+    @Override public CpsFlowExecution create(FlowExecutionOwner owner, TaskListener listener, List<? extends Action> actions) throws Exception {
         for (Action a : actions) {
             if (a instanceof CpsFlowFactoryAction2) {
                 return ((CpsFlowFactoryAction2) a).create(this, owner, actions);
@@ -97,9 +99,12 @@ public class CpsScmFlowDefinition extends FlowDefinition {
         if (masterComputer == null) {
             throw new IOException("Master computer not available");
         }
+        SCMStep delegate = new GenericSCMStep(scm);
+        delegate.setPoll(true);
+        delegate.setChangelog(true);
         WorkspaceList.Lease lease = masterComputer.getWorkspaceList().acquire(dir);
         try {
-            scm.checkout(build, jenkins.createLauncher(listener), dir, listener, /* TODO consider whether to add to changelog */null, /* TODO consider whether to include in polling */null);
+            delegate.checkout(build, dir, listener, jenkins.createLauncher(listener));
             FilePath scriptFile = dir.child(scriptPath);
             if (!scriptFile.absolutize().getRemote().replace('\\', '/').startsWith(dir.absolutize().getRemote().replace('\\', '/') + '/')) { // TODO need some FilePath.isInside(FilePath) method
                 throw new IOException(scriptFile + " is not inside " + dir);

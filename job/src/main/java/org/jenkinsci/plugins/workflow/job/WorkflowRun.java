@@ -163,13 +163,13 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 listener.error("No flow definition, cannot run");
                 return;
             }
+            checkouts = new LinkedList<SCMCheckout>();
             Owner owner = new Owner(this);
             execution = definition.create(owner, listener, getAllActions());
             FlowExecutionList.get().register(owner);
             execution.addListener(new GraphL());
             completed = new AtomicBoolean();
             logsToCopy = new LinkedHashMap<String,Long>();
-            checkouts = new LinkedList<SCMCheckout>();
             execution.start();
             executionPromise.set(execution);
             waitForCompletion();
