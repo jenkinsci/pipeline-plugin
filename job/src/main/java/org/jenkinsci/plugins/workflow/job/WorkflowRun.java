@@ -173,7 +173,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             execution.start();
             executionPromise.set(execution);
             waitForCompletion();
-        } catch (Exception x) {
+        } catch (Throwable x) {
             if (listener == null) {
                 LOGGER.log(Level.WARNING, this + " failed to start", x);
             } else {
