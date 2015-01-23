@@ -25,10 +25,15 @@
 package org.jenkinsci.plugins.workflow.flow;
 
 import hudson.ExtensionPoint;
+import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Action;
+import hudson.model.TaskListener;
+import hudson.util.LogTaskListener;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Actual executable script.
@@ -43,7 +48,26 @@ public abstract class FlowDefinition extends AbstractDescribableImpl<FlowDefinit
      * @param actions
      *      Additional parameters to how
      */
-    public abstract FlowExecution create(FlowExecutionOwner handle, List<? extends Action> actions) throws IOException;
+    public /*abstract*/ FlowExecution create(FlowExecutionOwner handle, TaskListener listener, List<? extends Action> actions) throws IOException, InterruptedException {
+        if (Util.isOverridden(FlowDefinition.class, getClass(), "create", FlowExecutionOwner.class, List.class)) {
+            return create(handle, actions);
+        } else {
+            throw new NoSuchMethodError();
+        }
+    }
+
+    @Deprecated
+    public FlowExecution create(FlowExecutionOwner handle, List<? extends Action> actions) throws IOException {
+        if (Util.isOverridden(FlowDefinition.class, getClass(), "create", FlowExecutionOwner.class, TaskListener.class, List.class)) {
+            try {
+                return create(handle, new LogTaskListener(Logger.getLogger(FlowDefinition.class.getName()), Level.INFO), actions);
+            } catch (InterruptedException x) {
+                throw new IOException(x);
+            }
+        } else {
+            throw new NoSuchMethodError();
+        }
+    }
 
     @Override public FlowDefinitionDescriptor getDescriptor() {
         return (FlowDefinitionDescriptor) super.getDescriptor();

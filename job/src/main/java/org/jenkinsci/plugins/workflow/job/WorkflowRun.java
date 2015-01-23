@@ -33,7 +33,6 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
-import hudson.model.AbstractBuild;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Queue;
@@ -51,7 +50,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -166,7 +164,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 return;
             }
             Owner owner = new Owner(this);
-            execution = definition.create(owner, getAllActions());
+            execution = definition.create(owner, listener, getAllActions());
             FlowExecutionList.get().register(owner);
             execution.addListener(new GraphL());
             completed = new AtomicBoolean();

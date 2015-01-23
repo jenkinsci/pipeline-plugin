@@ -55,6 +55,7 @@ public class CpsScmFlowDefinitionTest {
         p.setDefinition(new CpsScmFlowDefinition(new SingleFileSCM("flow.groovy", "echo 'hello from SCM'"), "flow.groovy"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("hello from SCM", b);
+        r.assertLogContains("Staging flow.groovy", b);
         FlowGraphWalker w = new FlowGraphWalker(b.getExecution());
         int workspaces = 0;
         FlowNode n;
@@ -66,7 +67,7 @@ public class CpsScmFlowDefinitionTest {
         assertEquals(1, workspaces);
     }
 
-    // TODO https://github.com/jenkinsci/jenkins/pull/1540
+    // TODO 1.599+ use standard version
     private static class SingleFileSCM extends NullSCM {
         private final String path;
         private final byte[] contents;

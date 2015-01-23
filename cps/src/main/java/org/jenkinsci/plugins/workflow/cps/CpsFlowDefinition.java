@@ -28,7 +28,9 @@ import hudson.Extension;
 import hudson.Functions;
 import hudson.model.Action;
 import hudson.model.Item;
+import hudson.model.TaskListener;
 import hudson.util.FormValidation;
+import hudson.util.StreamTaskListener;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinitionDescriptor;
@@ -94,12 +96,12 @@ public class CpsFlowDefinition extends FlowDefinition {
 
     // Used only from Groovy tests.
     public CpsFlowExecution create(FlowExecutionOwner handle, Action... actions) throws IOException {
-        return create(handle, Arrays.asList(actions));
+        return create(handle, StreamTaskListener.fromStderr(), Arrays.asList(actions));
     }
 
     @Override
     @SuppressWarnings("deprecation")
-    public CpsFlowExecution create(FlowExecutionOwner owner, List<? extends Action> actions) throws IOException {
+    public CpsFlowExecution create(FlowExecutionOwner owner, TaskListener listener, List<? extends Action> actions) throws IOException {
         for (Action a : actions) {
             if (a instanceof CpsFlowFactoryAction) {
                 CpsFlowFactoryAction fa = (CpsFlowFactoryAction) a;
