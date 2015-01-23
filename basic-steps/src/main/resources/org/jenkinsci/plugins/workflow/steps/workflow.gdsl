@@ -4,7 +4,7 @@ Author: Gary Clayburg
 This file allows IntelliJ IDEA to perform basic syntax checking and code completion for
 Jenkins workflow groovy scripts. https://github.com/jenkinsci/workflow-plugin
 
-These workflow steps are supported
+These workflow steps are supported:
 sh
 readFile
 node
