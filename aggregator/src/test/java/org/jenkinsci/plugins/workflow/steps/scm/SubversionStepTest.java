@@ -57,7 +57,7 @@ public class SubversionStepTest {
     @Rule public JenkinsRule r = new JenkinsRule();
     @Rule public TemporaryFolder tmp = new TemporaryFolder();
 
-    static void run(File cwd, String... cmds) throws Exception {
+    public static void run(File cwd, String... cmds) throws Exception {
         ProcessBuilder pb = new ProcessBuilder(cmds);
         try {
             ProcessBuilder.class.getMethod("inheritIO").invoke(pb);

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<scriptApproval plugin="script-security@1.12">
+  <approvedScriptHashes/>
+  <approvedSignatures>
+    <!-- TODO these seem like they should be whitelisted in script-security, especially Closure.call overloads -->
+    <string>method groovy.lang.Closure call java.lang.Object</string>
+    <string>method java.lang.Object toString</string>
+    <string>staticMethod java.util.UUID randomUUID</string>
+  </approvedSignatures>
+  <aclApprovedSignatures/>
+  <approvedClasspathEntries/>
+  <pendingScripts/>
+  <pendingSignatures/>
+  <pendingClasspathEntries/>
+</scriptApproval>

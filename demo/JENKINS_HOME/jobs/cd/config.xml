@@ -4,15 +4,24 @@
   <description></description>
   <keepDependencies>false</keepDependencies>
   <properties/>
-  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition">
-    <script>def flow
-node('slave') {
-    git url: '/var/lib/jenkins/workflow-plugin-pipeline-demo'
-    flow = load 'flow.groovy'
-    flow.devQAStaging()
-}
-flow.production()
-</script>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition">
+    <scm class="hudson.plugins.git.GitSCM">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>/var/lib/jenkins/workflow-plugin-pipeline-demo</url>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>*/master</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <submoduleCfg class="list"/>
+      <extensions/>
+    </scm>
+    <scriptPath>flow.groovy</scriptPath>
   </definition>
   <triggers>
     <hudson.triggers.SCMTrigger>

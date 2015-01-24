@@ -38,13 +38,8 @@ public final class WriteFileStep extends AbstractStepImpl {
     private String encoding;
 
     @DataBoundConstructor public WriteFileStep(String file, String text) {
-        this.file = RelativePathValidator.validate(file);
+        this.file = file;
         this.text = text;
-    }
-
-    private Object readResolve() {
-        RelativePathValidator.validate(file);
-        return this;
     }
 
     public String getFile() {

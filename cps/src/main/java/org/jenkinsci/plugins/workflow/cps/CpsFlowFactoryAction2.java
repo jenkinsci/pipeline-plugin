@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014, CloudBees, Inc.
+ * Copyright 2015 Jesse Glick.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,15 +24,18 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import hudson.model.Action;
-
 import java.io.IOException;
 import java.util.List;
+import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 
 /**
- * @deprecated Use {@link CpsFlowFactoryAction2} instead.
+ * {@link Action} that can be passed to {@link FlowDefinition#create(FlowExecutionOwner, List)}
+ * that can take over the instantiation of {@link CpsFlowExecution}.
  */
-public interface CpsFlowFactoryAction extends Action {
-    CpsFlowExecution create(CpsFlowDefinition def, FlowExecutionOwner owner, List<? extends Action> actions) throws IOException;
+public interface CpsFlowFactoryAction2 extends Action {
+
+    CpsFlowExecution create(FlowDefinition def, FlowExecutionOwner owner, List<? extends Action> actions) throws IOException;
+    
 }

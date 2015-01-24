@@ -17,7 +17,7 @@ RUN echo 'root:root' | chpasswd
 # make a local checkout of the demo workspace
 WORKDIR /var/lib/jenkins
 # Set this before clone so if we have to go to a newer head revision, docker-build will rerun git-clone:
-ENV REV 641a3491d49570f4f8b9e3e583eb71bad1aa493f
+ENV REV d8a8aa047ac959916f8fdf30c7a82e882f9e8748
 RUN git clone https://github.com/jenkinsci/workflow-plugin-pipeline-demo && cd workflow-plugin-pipeline-demo
 WORKDIR /var/lib/jenkins/workflow-plugin-pipeline-demo
 # Specify a particular master revision in the Dockerfile so we can track changes (and so Docker cache works correctly):

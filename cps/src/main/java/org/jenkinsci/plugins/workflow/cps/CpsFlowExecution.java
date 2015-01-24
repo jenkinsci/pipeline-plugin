@@ -250,6 +250,9 @@ public class CpsFlowExecution extends FlowExecution {
      */
     private transient CpsGroovyShell shell;
 
+    /** Actions to add to the {@link FlowStartNode}. */
+    transient final List<Action> flowStartNodeActions = new ArrayList<Action>();
+
     @Deprecated
     public CpsFlowExecution(String script, FlowExecutionOwner owner) throws IOException {
         this(script, false, owner);
