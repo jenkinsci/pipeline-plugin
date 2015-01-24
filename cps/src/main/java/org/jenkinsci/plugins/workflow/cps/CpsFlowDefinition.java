@@ -39,6 +39,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import javax.inject.Inject;
 import jenkins.model.Jenkins;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
@@ -105,6 +106,9 @@ public class CpsFlowDefinition extends FlowDefinition {
 
     @Extension
     public static class DescriptorImpl extends FlowDefinitionDescriptor {
+
+        @Inject public Snippetizer snippetizer;
+
         @Override
         public String getDisplayName() {
             return "Groovy CPS DSL";
@@ -121,10 +125,6 @@ public class CpsFlowDefinition extends FlowDefinition {
                 return FormValidation.error(x.getLocalizedMessage());
             }
             return sandbox ? FormValidation.ok() : ScriptApproval.get().checking(value, GroovyLanguage.get());
-        }
-
-        public Snippetizer getSnippetizer() {
-            return Snippetizer.get();
         }
 
     }

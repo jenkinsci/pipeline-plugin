@@ -39,6 +39,7 @@ import hudson.slaves.WorkspaceList;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import javax.inject.Inject;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.JOB;
@@ -120,6 +121,8 @@ public class CpsScmFlowDefinition extends FlowDefinition {
 
     @Extension public static class DescriptorImpl extends FlowDefinitionDescriptor {
 
+        @Inject public Snippetizer snippetizer;
+
         @Override public String getDisplayName() {
             return "Groovy CPS DSL from SCM";
         }
@@ -128,10 +131,6 @@ public class CpsScmFlowDefinition extends FlowDefinition {
             StaplerRequest req = Stapler.getCurrentRequest();
             Job job = req != null ? req.findAncestorObject(Job.class) : null;
             return job != null ? SCM._for(job) : /* TODO 1.599+ does this for job == null */ SCM.all();
-        }
-
-        public Snippetizer getSnippetizer() {
-            return Snippetizer.get();
         }
 
     }

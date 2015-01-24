@@ -25,7 +25,6 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import hudson.Extension;
-import hudson.ExtensionList;
 import hudson.Functions;
 import hudson.model.RootAction;
 import java.io.IOException;
@@ -54,6 +53,7 @@ import org.kohsuke.stapler.StaplerResponse;
 
 /**
  * Takes a {@link Step} as configured through the UI and tries to produce equivalent Groovy code.
+ * Render using: {@code <st:include it="${theSnippetizerInstance}" page="block.jelly"/>}
  */
 @Extension public class Snippetizer implements RootAction {
     
@@ -170,14 +170,6 @@ import org.kohsuke.stapler.StaplerResponse;
 
     @Override public String getDisplayName() {
         return null;
-    }
-
-    /**
-     * Gets the default instance.
-     * Render using: {@code <st:include it="${theResult}" page="block.jelly"/>}
-     */
-    public static Snippetizer get() {
-        return ExtensionList.lookup(RootAction.class).get(Snippetizer.class);
     }
 
     @Restricted(DoNotUse.class) // JENKINS-26579: j:invokeStatic does not work on plugin classes
