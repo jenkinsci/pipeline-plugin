@@ -29,6 +29,7 @@ import hudson.FilePath;
 import hudson.model.Action;
 import hudson.model.Computer;
 import hudson.model.Job;
+import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -84,28 +85,30 @@ public class CpsScmFlowDefinition extends FlowDefinition {
             throw new IOException("can only check out SCM into a Run");
         }
         Run<?,?> build = (Run<?,?>) _build;
-        Jenkins jenkins = Jenkins.getInstance();
-        if (jenkins == null) {
+        Node node = Jenkins.getInstance(); // TODO offer to select a slave based on a configured Label
+        if (node == null) {
             throw new IOException("Jenkins is not running");
         }
         if (build.getParent() instanceof TopLevelItem) {
-            FilePath baseWorkspace = jenkins.getWorkspaceFor((TopLevelItem) build.getParent());
-            assert baseWorkspace != null : "this override should actually be @Nonnull";
+            FilePath baseWorkspace = node.getWorkspaceFor((TopLevelItem) build.getParent());
+            if (baseWorkspace == null) {
+                throw new IOException(node.getDisplayName() + " may be offline");
+            }
             dir = baseWorkspace.withSuffix("@script");
         } else { // should not happen, but just in case:
             dir = new FilePath(owner.getRootDir());
         }
         String script;
-        Computer masterComputer = jenkins.toComputer();
-        if (masterComputer == null) {
-            throw new IOException("Master computer not available");
+        Computer computer = node.toComputer();
+        if (computer == null) {
+            throw new IOException(node.getDisplayName() + " may be offline");
         }
         SCMStep delegate = new GenericSCMStep(scm);
         delegate.setPoll(true);
         delegate.setChangelog(true);
-        WorkspaceList.Lease lease = masterComputer.getWorkspaceList().acquire(dir);
+        WorkspaceList.Lease lease = computer.getWorkspaceList().acquire(dir);
         try {
-            delegate.checkout(build, dir, listener, jenkins.createLauncher(listener));
+            delegate.checkout(build, dir, listener, node.createLauncher(listener));
             FilePath scriptFile = dir.child(scriptPath);
             if (!scriptFile.absolutize().getRemote().replace('\\', '/').startsWith(dir.absolutize().getRemote().replace('\\', '/') + '/')) { // TODO need some FilePath.isInside(FilePath) method
                 throw new IOException(scriptFile + " is not inside " + dir);
