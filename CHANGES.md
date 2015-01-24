@@ -2,7 +2,9 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
-## 1.2 (upcoming)
+## 1.3 (upcoming)
+
+## 1.2 (Jan 24 2015)
 
 ### User changes
 * JENKINS-26101: the complete workflow script can now be loaded from an SCM repository of your choice.
