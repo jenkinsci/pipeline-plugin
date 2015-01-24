@@ -99,6 +99,7 @@ final class FlowHead implements Serializable {
             }
             n.addAction(a);
         }
+        execution.flowStartNodeActions.clear();
         synchronized (execution) {
             this.head = execution.startNodes.push(n);
         }
