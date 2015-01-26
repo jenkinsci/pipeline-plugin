@@ -23,7 +23,7 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [X] `JUnitResultArchiver` (`junit`)
 - [X] `JavadocArchiver` (`javadoc`)
 - [X] `Mailer` (`mailer`)
-- [ ] `CopyArtifact` (`copyartifact`): [JENKINS-24887](https://issues.jenkins-ci.org/browse/JENKINS-24887)
+- [X] `CopyArtifact` (`copyartifact`): supported as of 1.34
 - [ ] `DeployPublisher` (`deployer-framework`): [JENKINS-25976](https://issues.jenkins-ci.org/browse/JENKINS-25976)
 - [ ] `FindBugsPublisher` (`findbugs`): [JENKINS-25977](https://issues.jenkins-ci.org/browse/JENKINS-25977)
 - [ ] `ExtendedEmailPublisher` (`email-ext`): [PR 97](https://github.com/jenkinsci/email-ext-plugin/pull/97)
@@ -69,4 +69,4 @@ For cases when a first-class Workflow step (rather than an adaptation of functio
 
 - [X] `parallel-test-executor`: supported with `splitTests` step since 1.6
 - [ ] `gerrit-trigger`: [JENKINS-26102](https://issues.jenkins-ci.org/browse/JENKINS-26102), [JENKINS-26103](https://issues.jenkins-ci.org/browse/JENKINS-26103)
-- [ ] `mailer`: [JENKINS-26104](https://issues.jenkins-ci.org/browse/JENKINS-26104)
+- [X] `mailer` (`workflow`): supported with `mail` step since 1.2
