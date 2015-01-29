@@ -45,7 +45,6 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 Implement `Trigger<ParameterizedJobMixIn.ParameterizedJob>` and implement `TriggerDescriptor.isApplicable` accordingly.
 
 - [ ] `gerrit-trigger`: [JENKINS-26010](https://issues.jenkins-ci.org/browse/JENKINS-26010)
-- [ ] `build-token-root`: [JENKINS-26693](https://issues.jenkins-ci.org/browse/JENKINS-26693)
 
 ## Clouds
 
@@ -62,6 +61,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 
 - [X] `rebuild`: [JENKINS-26024](https://issues.jenkins-ci.org/browse/JENKINS-26024)
 - [ ] `parameterized-trigger` (to support a workflow as downstream): [JENKINS-26050](https://issues.jenkins-ci.org/browse/JENKINS-26050)
+- [ ] `build-token-root`: [JENKINS-26693](https://issues.jenkins-ci.org/browse/JENKINS-26693)
 - [X] `credentials-binding`: `withCredentials` step as of 1.3
 
 ## Custom steps
