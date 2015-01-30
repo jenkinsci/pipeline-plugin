@@ -141,7 +141,11 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
     @RequirePOST
     public HttpResponse doProceed(StaplerRequest request) throws IOException, ServletException, InterruptedException {
         preSubmissionCheck();
-
+        User user = User.current();
+        if (user!=null){
+            run.addAction(new ApproverAction(user.getId()));
+            listener.getLogger().println("Approved by " + hudson.console.ModelHyperlinkNote.encodeTo(user));
+        }
         Object v = parseValue(request);
         return proceed(v);
     }
