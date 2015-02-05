@@ -8,6 +8,10 @@ work
 .idea
 out
 
+.classpath
+.project
+.settings
+
 demo/jenkins-war.war
 demo/JENKINS_HOME/plugins/
 demo/snapshot/plugins/
