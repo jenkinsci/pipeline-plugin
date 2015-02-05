@@ -123,6 +123,8 @@ Use the specified workspace rather than the former `build.getWorkspace()`, which
 Similarly, some methods formerly taking `AbstractProject` now take the more generic `Job`.
 Be sure to use `@Override` wherever possible to make sure you are using the right overloads.
 
+Replace `AbstractBuild.getProject` with `Run.getParent`.
+
 `BuildListener` has also been replaced with `TaskListener` in new method overloads.
 
 Note that `changelogFile` may now be null in `checkout`.
