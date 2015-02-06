@@ -110,7 +110,7 @@ public class CpsScmFlowDefinition extends FlowDefinition {
         try {
             delegate.checkout(build, dir, listener, node.createLauncher(listener));
             FilePath scriptFile = dir.child(scriptPath);
-            if (!scriptFile.absolutize().getRemote().replace('\\', '/').startsWith(dir.absolutize().getRemote().replace('\\', '/') + '/')) { // TODO need some FilePath.isInside(FilePath) method
+            if (!scriptFile.absolutize().getRemote().replace('\\', '/').startsWith(dir.absolutize().getRemote().replace('\\', '/') + '/')) { // TODO JENKINS-26838
                 throw new IOException(scriptFile + " is not inside " + dir);
             }
             script = scriptFile.readToString();
