@@ -4,6 +4,9 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.3 (upcoming)
 
+### User changes
+* Ability to configure project display name.
+
 ## 1.2 (Jan 24 2015)
 
 ### User changes

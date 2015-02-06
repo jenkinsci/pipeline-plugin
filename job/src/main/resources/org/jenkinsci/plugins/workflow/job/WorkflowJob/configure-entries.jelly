@@ -27,6 +27,15 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:p="/lib/hudson/project">
     <p:config-quietPeriod/>
     <p:config-trigger/>
+
+    <f:section title="${%Advanced Project Options}">
+        <f:advanced>
+            <f:entry title="${%Display Name}" field="displayNameOrNull">
+                <f:textbox checkUrl="'${rootURL}/checkDisplayName?displayName='+encodeURIComponent(this.value)+'&amp;jobName='+encodeURIComponent('${h.jsStringEscape(it.name)}')"/>
+            </f:entry>
+        </f:advanced>
+    </f:section>
+
     <f:section title="Workflow">
         <f:dropdownDescriptorSelector title="Definition" field="definition"/>
     </f:section>
