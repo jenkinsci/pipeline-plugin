@@ -70,15 +70,23 @@ public abstract class SCMStep extends AbstractStepImpl implements Serializable {
     public static final class StepExecutionImpl extends AbstractSynchronousStepExecution<Void> {
 
         @Inject private transient SCMStep step;
-        @StepContextParameter private transient Run run;
+        @StepContextParameter private transient Run<?,?> run;
         @StepContextParameter private transient FilePath workspace;
         @StepContextParameter private transient TaskListener listener;
         @StepContextParameter private transient Launcher launcher;
 
         @Override
         protected Void run() throws Exception {
+            step.checkout(run, workspace, listener, launcher);
+            return null;
+        }
+
+        private static final long serialVersionUID = 1L;
+    }
+
+    public final void checkout(Run<?,?> run, FilePath workspace, TaskListener listener, Launcher launcher) throws Exception {
             File changelogFile = null;
-            if (step.changelog) {
+            if (changelog) {
                 for (int i = 0; ; i++) {
                     changelogFile = new File(run.getRootDir(), "changelog" + i + ".xml");
                     if (!changelogFile.exists()) {
@@ -86,7 +94,7 @@ public abstract class SCMStep extends AbstractStepImpl implements Serializable {
                     }
                 }
             }
-            SCM scm = step.createSCM();
+            SCM scm = createSCM();
             SCMRevisionState baseline = null;
             Run<?,?> prev = run.getPreviousBuild();
             if (prev != null) {
@@ -97,7 +105,7 @@ public abstract class SCMStep extends AbstractStepImpl implements Serializable {
             }
             scm.checkout(run, launcher, workspace, listener, changelogFile, baseline);
             SCMRevisionState pollingBaseline = null;
-            if (step.poll || step.changelog) {
+            if (poll || changelog) {
                 pollingBaseline = scm.calcRevisionsFromBuild(run, workspace, launcher, listener);
                 if (pollingBaseline != null) {
                     MultiSCMRevisionState state = run.getAction(MultiSCMRevisionState.class);
@@ -113,10 +121,6 @@ public abstract class SCMStep extends AbstractStepImpl implements Serializable {
             }
             scm.postCheckout(run, launcher, workspace, listener);
             // TODO should we call buildEnvVars and return the result?
-            return null;
-        }
-
-        private static final long serialVersionUID = 1L;
     }
 
     public static abstract class SCMStepDescriptor extends AbstractStepDescriptorImpl {

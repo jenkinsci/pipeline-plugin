@@ -6,6 +6,7 @@ import hudson.model.Result
 import org.jenkinsci.plugins.workflow.actions.ErrorAction
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker
 import org.junit.Test
+import org.jvnet.hudson.test.RandomlyFails
 
 /**
  *
@@ -55,6 +56,7 @@ evaluate('Jenkins.getInstance()')
     /**
      * The code getting evaluated must also get CPS transformation.
      */
+    @RandomlyFails("TODO future != null")
     @Test
     void evaluateShallBeCpsTransformed() {
         def flow = new CpsFlowDefinition("""

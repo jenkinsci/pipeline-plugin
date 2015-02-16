@@ -21,18 +21,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package org.jenkinsci.plugins.workflow.steps;
 
-package org.jenkinsci.plugins.workflow.cps;
-
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-import hudson.model.Action;
-
-import java.io.IOException;
-import java.util.List;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
- * @deprecated Use {@link CpsFlowFactoryAction2} instead.
+ * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
-public interface CpsFlowFactoryAction extends Action {
-    CpsFlowExecution create(CpsFlowDefinition def, FlowExecutionOwner owner, List<? extends Action> actions) throws IOException;
+public class MailStepTest {
+
+    @Rule
+    public JenkinsRule r = new JenkinsRule();
+
+    @Test
+    public void configRoundTrip() throws Exception {
+        MailStep step1 = new MailStep("subject", "body");
+
+        step1.from = "tom.fennelly@gmail.com";
+        step1.to = "tom.fennelly@gmail.com";
+        step1.cc = "tom.fennelly@gmail.com";
+        step1.bcc = "tom.fennelly@gmail.com";
+        step1.charset = "UTF-8";
+        step1.replyTo = "tom.fennelly@gmail.com";
+        step1.mimeType = "text/html";
+
+        MailStep step2 = new StepConfigTester(r).configRoundTrip(step1);
+        r.assertEqualDataBoundBeans(step1, step2);
+    }
+
 }

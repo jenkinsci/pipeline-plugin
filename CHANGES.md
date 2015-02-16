@@ -2,15 +2,23 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
-## 1.2 (upcoming)
+## 1.3 (upcoming)
 
 ### User changes
+* Ability to configure project display name.
+
+## 1.2 (Jan 24 2015)
+
+### User changes
+* JENKINS-26101: the complete workflow script can now be loaded from an SCM repository of your choice.
 * JENKINS-26149: the `build` step did not survive Jenkins restarts while running.
 * JENKINS-25570: added `waitUntil` step.
 * JENKINS-25924: added `error` step.
 * JENKINS-26030: file locks could prevent build deletion.
 * JENKINS-26074: completed parallel branches become invisible until the whole parallel step is done
+* JENKINS-26541: rejected sandbox methods were not offered for approval when inside `parallel`.
 * Snippet generator incorrectly suggested `pwd` when Groovy requires `pwd()`.
+* JENKINS-26104: Custom Workflow step for sending mail
 
 ## 1.1 (Dec 09 2014)
 
