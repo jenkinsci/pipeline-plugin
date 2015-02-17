@@ -167,4 +167,47 @@ public class StageTest {
         });
     }
 
+    @SuppressWarnings("SleepWhileInLoop")
+    @Test public void serializability() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                        "try {\n" +
+                        "  stage name: 'S', concurrency: 1\n" +
+                        "  echo 'in A'\n" +
+                        "  semaphore 'serializability'\n" +
+                        "} finally {\n" +
+                        "  node {\n" +
+                        "    echo 'in finally'\n" +
+                        "  }\n" +
+                        "}"));
+                WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
+                SemaphoreStep.waitForStart("serializability/1", b1);
+                WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
+                while (!JenkinsRule.getLog(b2).contains("Waiting for builds [1]")) {
+                    // TODO similar to JENKINS-26399 though waiting for a particular message rather than completion
+                    Thread.sleep(100);
+                }
+                WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
+                while (!JenkinsRule.getLog(b3).contains("Waiting for builds [1]")) {
+                    Thread.sleep(100);
+                }
+                SemaphoreStep.success("serializability/1", null); // b1
+                while (b1.isBuilding()) {
+                    Thread.sleep(100);
+                }
+                story.j.assertBuildStatusSuccess(b1);
+                SemaphoreStep.success("serializability/2", null); // b3
+                while (b3.isBuilding()) {
+                    Thread.sleep(100);
+                }
+                story.j.assertBuildStatusSuccess(b3);
+                story.j.assertBuildStatus(Result.NOT_BUILT, b2);
+                story.j.assertLogContains("Canceled since #3 got here", b2);
+                story.j.assertLogContains("in finally", b2);
+            }
+        });
+    }
+
 }
