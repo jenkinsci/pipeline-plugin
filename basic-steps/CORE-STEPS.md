@@ -10,7 +10,7 @@ Therefore selected build steps can be called directly from workflows.
 
 As an example, you can write a flow:
 
-```
+```groovy
 node {
     sh 'make something'
     step([$class: 'ArtifactArchiver', artifacts: 'something'])
@@ -37,7 +37,7 @@ When a recorder is run from a flow, it might set the build’s status (for examp
 Running a notifier is trickier since normally a flow in progress has no status yet, unlike a freestyle project whose status is determined before the notifier is called.
 To help interoperate better with these, you can use the `catchError` step:
 
-```
+```groovy
 node {
     catchError {
         sh 'might fail'
@@ -50,21 +50,27 @@ If its body fails, the flow build’s status will be set to failed, so that subs
 In the case of the mail sender, this means that it will send mail.
 (It may also send mail if this build _succeeded_ but previous ones failed, and so on.)
 
-In the future some important publishers may get dedicated Workflow steps, so that you could use a more flexible idiom:
+## Plain catch blocks
 
-```
+Some important publishers also have dedicated Workflow steps, so that you can use a more flexible idiom.
+For example, `mail` lets you unconditionally send mail of your choice:
+
+```groovy
 node {
     try {
         sh 'might fail'
-        mail subject: 'all well', recipients: 'admin@somewhere'
+        mail subject: 'all well', to: 'admin@somewhere', body: 'All well.'
     } catch (e) {
-        mail subject: "failed with #{e.message}", recipients: 'admin@somewhere'
+        def w = new StringWriter()
+        e.printStackTrace(w)
+        mail subject: "failed with ${e.message}", to: 'admin@somewhere', body: "Failed: ${w}"
         throw e
     }
 }
 ```
 
 though this would not automatically adjust the message according to the status of _previous_ builds as the standard mail notifier does.
+That would be possible only via [JENKINS-26834](https://issues.jenkins-ci.org/browse/JENKINS-26834).
 
 # Adding support from plugins
 
