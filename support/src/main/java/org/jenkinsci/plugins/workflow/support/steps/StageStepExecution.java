@@ -11,6 +11,7 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -248,7 +249,9 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     /**
      * Records that a flow was canceled while waiting in a stage step because a newer flow entered that stage instead.
      */
-    public static final class CanceledCause extends CauseOfInterruption {
+    public static final class CanceledCause extends CauseOfInterruption implements Serializable {
+
+        private static final long serialVersionUID = 1;
 
         private final String newerBuild;
 

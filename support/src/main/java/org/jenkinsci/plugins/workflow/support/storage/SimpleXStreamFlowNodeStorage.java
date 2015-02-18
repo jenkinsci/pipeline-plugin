@@ -46,10 +46,13 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 /**
  * {@link FlowNodeStorage} that stores one node per one file.
@@ -80,6 +83,7 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
 
     @Override
     public FlowNode getNode(String id) throws IOException {
+        // TODO according to Javadoc this should return null if !getNodeFile(id).isFile()
         return get().loadOuter(id).node;
     }
 
@@ -95,7 +99,7 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
     public List<Action> loadActions(FlowNode node) throws IOException {
         if (!getNodeFile(node.getId()).exists())
             return new ArrayList<Action>(); // not yet saved
-        return Arrays.asList(get().loadOuter(node.getId()).actions);
+        return get().loadOuter(node.getId()).actions();
     }
 
     /**
@@ -160,12 +164,16 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
      * To group node and their actions together into one object.
      */
     private static class Tag {
-        FlowNode node;
-        Action[] actions;
+        final @Nonnull FlowNode node;
+        private final @CheckForNull Action[] actions;
 
-        private Tag(FlowNode node, List<Action> actions) {
+        private Tag(@Nonnull FlowNode node, @Nonnull List<Action> actions) {
             this.node = node;
-            this.actions = actions.toArray(new Action[actions.size()]);
+            this.actions = actions.isEmpty() ? null : actions.toArray(new Action[actions.size()]);
+        }
+
+        public @Nonnull List<Action> actions() {
+            return actions != null ? Arrays.asList(actions) : Collections.<Action>emptyList();
         }
     }
 
@@ -190,7 +198,7 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
                     n = queue.remove(0);
                     XmlFile f = getNodeFile(n.getId());
                     if (!f.exists()) {
-                        f.write(new Tag(n,new ArrayList<Action>()));
+                        f.write(new Tag(n, Collections.<Action>emptyList()));
                     }
                 }
             } finally {
@@ -219,7 +227,7 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
             } catch (IllegalAccessException e) {
                 throw (IllegalAccessError)new IllegalAccessError("Failed to set owner").initCause(e);
             }
-            for (FlowNodeAction a : Util.filter(Arrays.asList(v.actions), FlowNodeAction.class))
+            for (FlowNodeAction a : Util.filter(v.actions(), FlowNodeAction.class))
                 a.onLoad(v.node);
             references.put(id,v);
 
