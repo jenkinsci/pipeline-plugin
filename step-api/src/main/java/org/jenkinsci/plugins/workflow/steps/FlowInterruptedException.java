@@ -26,12 +26,8 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Executor;
 import hudson.model.Result;
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import jenkins.model.CauseOfInterruption;
 
@@ -44,34 +40,17 @@ import jenkins.model.CauseOfInterruption;
  */
 public final class FlowInterruptedException extends InterruptedException {
 
-    private static final Logger LOG = Logger.getLogger(FlowInterruptedException.class.getName());
-
     private final @Nonnull Result result;
     private final @Nonnull List<CauseOfInterruption> causes;
-    private /*final*/ transient @Nonnull List<CauseOfInterruption> allCauses;
 
     /**
      * Creates a new exception.
      * @param result the desired result for the flow, typically {@link Result#ABORTED}
-     * @param causes any indications (should be {@link Serializable})
+     * @param causes any indications
      */
     public FlowInterruptedException(@Nonnull Result result, @Nonnull CauseOfInterruption... causes) {
         this.result = result;
-        allCauses = Arrays.asList(causes);
-        this.causes = new ArrayList<CauseOfInterruption>();
-        for (CauseOfInterruption cause : causes) {
-            if (cause instanceof Serializable) {
-                this.causes.add(cause);
-            } else {
-                // TODO 1.591+ this is impossible as CauseOfInterruption implements Serializable
-                LOG.log(Level.WARNING, "nonserializable CauseOfInterruption: {0}", cause.getClass().getName());
-            }
-        }
-    }
-
-    private Object readResolve() {
-        allCauses = causes;
-        return this;
+        this.causes = Arrays.asList(causes);
     }
 
     public @Nonnull Result getResult() {
@@ -79,7 +58,7 @@ public final class FlowInterruptedException extends InterruptedException {
     }
 
     public @Nonnull List<CauseOfInterruption> getCauses() {
-        return allCauses;
+        return causes;
     }
 
 }

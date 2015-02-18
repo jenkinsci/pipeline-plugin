@@ -9,7 +9,7 @@ import org.kohsuke.stapler.export.Exported;
 /**
  * Indicates that the input step was rejected by the user.
  */
-public final class Rejection extends CauseOfInterruption implements Serializable {
+public final class Rejection extends CauseOfInterruption {
 
     private static final long serialVersionUID = 1;
 

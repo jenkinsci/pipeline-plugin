@@ -249,7 +249,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     /**
      * Records that a flow was canceled while waiting in a stage step because a newer flow entered that stage instead.
      */
-    public static final class CanceledCause extends CauseOfInterruption implements Serializable {
+    public static final class CanceledCause extends CauseOfInterruption {
 
         private static final long serialVersionUID = 1;
 
