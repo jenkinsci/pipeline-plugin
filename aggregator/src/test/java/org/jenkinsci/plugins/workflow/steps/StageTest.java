@@ -35,6 +35,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.support.steps.StageStepExecution;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
@@ -45,6 +46,10 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class StageTest {
 
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
+
+    @Before public void clear() {
+        StageStepExecution.clear();
+    }
 
     @Test public void basics() throws Exception {
         // Timeline (A has concurrency 2, B 1):
