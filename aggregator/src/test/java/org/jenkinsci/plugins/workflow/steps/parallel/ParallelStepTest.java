@@ -358,7 +358,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                 assertEquals("Expecting 3 heads for 3 branches", 3,e.getCurrentHeads().size());
 
                 a.getExecutions().get(0).proceed(null);
-                waitForWorkflowToSuspend();
+                waitForWorkflowToComplete();
 
                 story.j.assertBuildStatus(Result.FAILURE, b);
 
