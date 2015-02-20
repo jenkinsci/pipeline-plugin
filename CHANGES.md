@@ -7,6 +7,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 ### User changes
 * Ability to configure project display name.
 * Fixing `java.io.NotSerializableException: org.jenkinsci.plugins.workflow.support.steps.StageStepExecution$CanceledCause` thrown from certain scripts using `stage`.
+* JENKINS-27052: `stage` step did not prevent a third build from entering a stage after a second was unblocked by a first leaving it.
 
 ## 1.2 (Jan 24 2015)
 

@@ -157,6 +157,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
                 if (stage2.waitingContext != null) {
                     println(stage2.waitingContext, "Unblocked since " + r.getDisplayName() + " is moving into stage " + name);
                     stage2.waitingContext.onSuccess(null);
+                    stage2.holding.add(stage2.waitingBuild);
                     stage2.waitingBuild = null;
                     stage2.waitingContext = null;
                 }
@@ -194,6 +195,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
                 if (stage.waitingContext != null) {
                     println(stage.waitingContext, "Unblocked since " + r.getDisplayName() + " finished");
                     stage.waitingContext.onSuccess(null);
+                    stage.holding.add(stage.waitingBuild);
                     stage.waitingContext = null;
                     stage.waitingBuild = null;
                 }

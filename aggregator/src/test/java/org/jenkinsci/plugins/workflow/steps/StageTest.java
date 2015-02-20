@@ -38,6 +38,7 @@ import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
@@ -206,6 +207,62 @@ public class StageTest {
                 story.j.assertBuildStatus(Result.NOT_BUILT, b2);
                 story.j.assertLogContains("Canceled since #3 got here", b2);
                 story.j.assertLogContains("in finally", b2);
+            }
+        });
+    }
+
+    @Issue("JENKINS-27052")
+    @Test public void holdingAfterUnblock() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                        "stage name: 'A', concurrency: 1\n" +
+                        "semaphore 'holdingAfterUnblockA'\n" +
+                        "stage name: 'B', concurrency: 1\n" +
+                        "semaphore 'holdingAfterUnblockB'\n" +
+                        ""));
+                WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
+                SemaphoreStep.waitForStart("holdingAfterUnblockA/1", b1); // about to leave A
+                WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
+                while (!JenkinsRule.getLog(b2).contains("Waiting for builds [1]")) {
+                    Thread.sleep(100);
+                }
+                SemaphoreStep.success("holdingAfterUnblockA/1", null);
+                SemaphoreStep.waitForStart("holdingAfterUnblockB/1", b1); // now in B
+                SemaphoreStep.waitForStart("holdingAfterUnblockA/2", b2); // b2 unblocked, now in A
+                WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
+                while (!JenkinsRule.getLog(b3).contains("Waiting for builds [2]")) {
+                    Thread.sleep(100);
+                }
+            }
+        });
+    }
+
+    @Issue("JENKINS-27052")
+    @Test public void holdingAfterExitUnblock() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                        "stage name: 'A', concurrency: 1\n" +
+                        "semaphore 'holdingAfterExitUnblock'\n" +
+                        ""));
+                WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
+                SemaphoreStep.waitForStart("holdingAfterExitUnblock/1", b1); // about to leave
+                WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
+                while (!JenkinsRule.getLog(b2).contains("Waiting for builds [1]")) {
+                    Thread.sleep(100);
+                }
+                SemaphoreStep.success("holdingAfterExitUnblock/1", null);
+                while (b1.isBuilding()) {
+                    Thread.sleep(100);
+                }
+                SemaphoreStep.waitForStart("holdingAfterExitUnblock/2", b2); // b2 unblocked
+                WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
+                while (!JenkinsRule.getLog(b3).contains("Waiting for builds [2]")) {
+                    Thread.sleep(100);
+                }
             }
         });
     }
