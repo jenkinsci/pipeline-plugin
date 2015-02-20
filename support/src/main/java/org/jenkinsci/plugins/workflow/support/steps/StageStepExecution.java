@@ -224,7 +224,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
                 }
             }
             if (holding.isEmpty()) {
-                assert entry.getValue().waitingContext == null;
+                assert entry.getValue().waitingContext == null : entry;
                 it.remove();
             }
         }
