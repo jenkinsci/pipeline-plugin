@@ -75,7 +75,7 @@
         <dependency>
             <groupId>com.cloudbees</groupId>
             <artifactId>groovy-cps</artifactId>
-            <version>1.2-SNAPSHOT</version> <!-- TODO memory-leak branch -->
+            <version>1.2</version>
         </dependency>
     </dependencies>
     <!-- TODO currently job depends on tests from here; this dependency should probably be broken -->
