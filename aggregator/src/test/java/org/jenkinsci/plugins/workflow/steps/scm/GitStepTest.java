@@ -53,7 +53,7 @@ public class GitStepTest {
 
     private File sampleRepo;
 
-    private static void git(File repo, String... cmds) throws Exception {
+    static void git(File repo, String... cmds) throws Exception {
         List<String> args = new ArrayList<String>();
         args.add("git");
         args.addAll(Arrays.asList(cmds));
@@ -66,11 +66,16 @@ public class GitStepTest {
     }
 
     @Before public void sampleRepo() throws Exception {
-        sampleRepo = tmp.newFolder();
+        sampleRepo = createSampleRepo(tmp);
+    }
+
+    static File createSampleRepo(TemporaryFolder tmp) throws Exception {
+        File sampleRepo = tmp.newFolder();
         git(sampleRepo, "init");
         FileUtils.touch(new File(sampleRepo, "file"));
         git(sampleRepo, "add", "file");
         git(sampleRepo, "commit", "--message=init");
+        return sampleRepo;
     }
     
     @Test public void basicCloneAndUpdate() throws Exception {
