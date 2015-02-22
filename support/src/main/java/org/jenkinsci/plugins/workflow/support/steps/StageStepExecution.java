@@ -155,23 +155,15 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
             // If we were holding another stage in the same job, release it, unlocking its waiter to proceed.
             if (stage2.holding.remove(build)) {
                 if (stage2.waitingContext != null) {
-                    println(stage2.waitingContext, "Unblocked since " + r.getDisplayName() + " is moving into stage " + name);
-                    stage2.waitingContext.onSuccess(null);
-                    stage2.holding.add(stage2.waitingBuild);
-                    stage2.waitingBuild = null;
-                    stage2.waitingContext = null;
+                    stage2.unblock("Unblocked since " + r.getDisplayName() + " is moving into stage " + name);
                 }
             }
         }
+        stage.waitingBuild = build;
+        stage.waitingContext = context;
         if (stage.concurrency == null || stage.holding.size() < stage.concurrency) {
-            stage.waitingBuild = null;
-            stage.waitingContext = null;
-            stage.holding.add(build);
-            println(context, "Proceeding");
-            context.onSuccess(null);
+            stage.unblock("Proceeding");
         } else {
-            stage.waitingBuild = build;
-            stage.waitingContext = context;
             println(context, "Waiting for builds " + stage.holding);
         }
         cleanUp(job, jobName);
@@ -193,11 +185,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
                 stage.holding.remove(r.number); // XSTR-757: do not rely on return value of TreeSet.remove(Object)
                 modified = true;
                 if (stage.waitingContext != null) {
-                    println(stage.waitingContext, "Unblocked since " + r.getDisplayName() + " finished");
-                    stage.waitingContext.onSuccess(null);
-                    stage.holding.add(stage.waitingBuild);
-                    stage.waitingContext = null;
-                    stage.waitingBuild = null;
+                    stage.unblock("Unblocked since " + r.getDisplayName() + " finished");
                 }
             }
         }
@@ -284,6 +272,24 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         Integer waitingBuild;
         @Override public String toString() {
             return "Stage[holding=" + holding + ",waitingBuild=" + waitingBuild + ",concurrency=" + concurrency + "]";
+        }
+        /**
+         * Unblocks the build currently waiting.
+         * @param message a message to print to the log of the unblocked build
+         */
+        void unblock(String message) {
+            assert Thread.holdsLock(StageStepExecution.class);
+            assert waitingContext != null;
+            assert waitingBuild != null;
+            assert !holding.contains(waitingBuild);
+            /* Not necessarily true, since a later build could reduce the concurrency of an existing stage; could perhaps adjust semantics to skip unblocking in this special case:
+            assert concurrency == null || holding.size() < concurrency;
+            */
+            println(waitingContext, message);
+            waitingContext.onSuccess(null);
+            holding.add(waitingBuild);
+            waitingContext = null;
+            waitingBuild = null;
         }
     }
 
