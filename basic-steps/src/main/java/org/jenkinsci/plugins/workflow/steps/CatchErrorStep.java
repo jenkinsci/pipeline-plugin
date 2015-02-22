@@ -87,12 +87,17 @@ public final class CatchErrorStep extends AbstractStepImpl {
             @Override public void onFailure(StepContext context, Throwable t) {
                 try {
                     TaskListener listener = context.get(TaskListener.class);
+                    Result r = Result.FAILURE;
                     if (t instanceof AbortException) {
                         listener.error(t.getMessage());
+                    } else if (t instanceof FlowInterruptedException) {
+                        FlowInterruptedException fie = (FlowInterruptedException) t;
+                        fie.handle(context.get(Run.class), listener);
+                        r = fie.getResult();
                     } else {
                         t.printStackTrace(listener.getLogger());
                     }
-                    context.get(Run.class).setResult(Result.FAILURE);
+                    context.get(Run.class).setResult(r);
                     context.onSuccess(null);
                 } catch (Exception x) {
                     context.onFailure(x);

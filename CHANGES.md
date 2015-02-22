@@ -8,6 +8,8 @@ Only noting significant user-visible or major API changes, not internal code cle
 * Ability to configure project display name.
 * Fixing `java.io.NotSerializableException: org.jenkinsci.plugins.workflow.support.steps.StageStepExecution$CanceledCause` thrown from certain scripts using `stage`.
 * JENKINS-27052: `stage` step did not prevent a third build from entering a stage after a second was unblocked by a first leaving it.
+* JENKINS-26605: Missing link to _Full Log_ under _Running Steps_ when a single step produced >150Kb of output.
+* `catchError` was incorrectly setting build status to failed when it was merely aborted, canceled, etc.
 
 ## 1.2 (Jan 24 2015)
 
