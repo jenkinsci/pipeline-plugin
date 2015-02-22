@@ -29,7 +29,6 @@ import org.jenkinsci.plugins.workflow.steps.StepConfigTester;
 import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -49,7 +48,6 @@ public class InputStepTest {
         assertEquals(s1.getSubmitter(), s2.getSubmitter());
     }
 
-    @Ignore("TODO expected:<{message=hello world}> but was:<{id=5eb63bbbe01eeed093cb22bb8f5acdc3, message=hello world, ok=Proceed, parameters=[]}>")
     @Issue("JENKINS-25779")
     @WithoutJenkins
     @Test public void uninstantiate() throws Exception {

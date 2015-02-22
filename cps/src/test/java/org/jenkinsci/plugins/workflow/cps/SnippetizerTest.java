@@ -75,7 +75,12 @@ public class SnippetizerTest {
     @Test public void coreStep() throws Exception {
         ArtifactArchiver aa = new ArtifactArchiver("x.jar");
         aa.setAllowEmptyArchive(true);
-        assertRoundTrip(new CoreStep(aa), "step([$class: 'ArtifactArchiver', allowEmptyArchive: true, artifacts: 'x.jar', defaultExcludes: true, excludes: '', fingerprint: false, onlyIfSuccessful: false])");
+        assertRoundTrip(new CoreStep(aa), "step([$class: 'ArtifactArchiver', allowEmptyArchive: true, artifacts: 'x.jar'])");
+    }
+
+    @Ignore("TODO https://github.com/jenkinsci/jenkins/pull/1579 expected:<step[([$class: 'ArtifactArchiver', artifacts: 'x.jar'])]> but was:<step[ <object of type hudson.tasks.ArtifactArchiver>]>")
+    @Test public void coreStep2() throws Exception {
+        assertRoundTrip(new CoreStep(new ArtifactArchiver("x.jar")), "step([$class: 'ArtifactArchiver', artifacts: 'x.jar'])");
     }
 
     @Test public void blockSteps() throws Exception {
@@ -103,7 +108,6 @@ public class SnippetizerTest {
         */
     }
 
-    @Ignore("TODO expected:<input ['Ready?']> but was:<input [id: '9f0de62738120076abeedd636a7629f7', message: 'Ready?', ok: 'Proceed', parameters: []]>")
     @Issue("JENKINS-25779")
     @Test public void defaultValues() throws Exception {
         assertRoundTrip(new InputStep("Ready?"), "input 'Ready?'");

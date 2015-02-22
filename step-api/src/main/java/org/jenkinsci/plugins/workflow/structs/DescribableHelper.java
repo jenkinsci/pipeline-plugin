@@ -38,18 +38,22 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import net.java.sezpoz.Index;
 import net.java.sezpoz.IndexItem;
+import org.apache.commons.lang.ObjectUtils;
 import org.codehaus.groovy.reflection.ReflectionCache;
 import org.kohsuke.stapler.ClassDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -61,6 +65,8 @@ import org.kohsuke.stapler.NoStaplerConstructorException;
  * Ultimately should live in Jenkins core (or Stapler).
  */
 public class DescribableHelper {
+
+    private static final Logger LOG = Logger.getLogger(DescribableHelper.class.getName());
 
     /**
      * Creates an instance of a class via {@link DataBoundConstructor} and {@link DataBoundSetter}.
@@ -103,20 +109,63 @@ public class DescribableHelper {
         for (String name : names) {
             inspect(r, o, clazz, name);
         }
+        Map<String,Object> byCtor = new TreeMap<String,Object>(r);
+        List<String> dataBoundSetters = new ArrayList<String>();
         for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {
                 if (f.isAnnotationPresent(DataBoundSetter.class)) {
-                    inspect(r, o, clazz, f.getName());
+                    String field = f.getName();
+                    dataBoundSetters.add(field);
+                    inspect(r, o, clazz, field);
                 }
             }
             for (Method m : c.getDeclaredMethods()) {
                 if (m.isAnnotationPresent(DataBoundSetter.class) && m.getName().startsWith("set")) {
-                    inspect(r, o, clazz, Introspector.decapitalize(m.getName().substring(3)));
+                    String field = Introspector.decapitalize(m.getName().substring(3));
+                    dataBoundSetters.add(field);
+                    inspect(r, o, clazz, field);
                 }
             }
         }
-        r.values().removeAll(Collections.singleton(null));
+        clearDefaultSetters(clazz, o, r, byCtor, dataBoundSetters);
         return r;
+    }
+
+    /**
+     * Removes configuration of any properties based on {@link DataBoundSetter} which appear unmodified from the default.
+     * @param clazz the class of {@code o}
+     * @param o some object being inspected
+     * @param r all its properties, including those from its {@link DataBoundConstructor} as well as any {@link DataBoundSetter}s; some of the latter might be deleted
+     * @param byCtor properties from {@link DataBoundConstructor} only
+     * @param dataBoundSetters a list of property names marked with {@link DataBoundSetter}
+     */
+    private static void clearDefaultSetters(Class<?> clazz, Object o, Map<String,Object> r, Map<String,Object> byCtor, Collection<String> dataBoundSetters) {
+        if (dataBoundSetters.isEmpty()) {
+            return;
+        }
+        Object control;
+        try {
+            control = instantiate(clazz, byCtor);
+        } catch (Exception x) {
+            LOG.log(Level.WARNING, "Cannot create control version of " + clazz + " using " + byCtor, x);
+            return;
+        }
+        Map<String,Object> fromControl = new HashMap<String,Object>(byCtor);
+        Iterator<String> fields = dataBoundSetters.iterator();
+        while (fields.hasNext()) {
+            String field = fields.next();
+            try {
+                inspect(fromControl, control, clazz, field);
+            } catch (RuntimeException x) {
+                LOG.log(Level.WARNING, "Failed to check property " + field + " of " + clazz + " on " + control, x);
+                fields.remove();
+            }
+        }
+        for (String field : dataBoundSetters) {
+            if (ObjectUtils.equals(r.get(field), fromControl.get(field))) {
+                r.remove(field);
+            }
+        }
     }
 
     private static final String CLAZZ = "$class";
@@ -296,6 +345,9 @@ public class DescribableHelper {
                 return nested;
             } catch (UnsupportedOperationException x) {
                 // then leave it raw
+                if (!(x.getCause() instanceof NoStaplerConstructorException)) {
+                    LOG.log(Level.WARNING, "failed to uncoerce " + o, x);
+                }
             }
         }
         return o;
