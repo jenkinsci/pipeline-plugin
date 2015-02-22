@@ -39,6 +39,7 @@ import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -109,6 +110,7 @@ public class DescribableHelper {
         for (String name : names) {
             inspect(r, o, clazz, name);
         }
+        r.values().removeAll(Collections.singleton(null));
         Map<String,Object> byCtor = new TreeMap<String,Object>(r);
         List<String> dataBoundSetters = new ArrayList<String>();
         for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {

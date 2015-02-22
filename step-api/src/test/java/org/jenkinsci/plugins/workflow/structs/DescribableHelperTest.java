@@ -412,7 +412,7 @@ public class DescribableHelperTest {
 
     @Issue("JENKINS-25779")
     @Test public void defaultValuesNullConstructorParameter() throws Exception {
-        roundTrip(DefaultStructArray.class, map("stuff", null), "DefaultStructArray[Impl1[default], Impl2[true]];stuff=null");
+        roundTrip(DefaultStructArray.class, map(), "DefaultStructArray[Impl1[default], Impl2[true]];stuff=null");
     }
 
     public static final class DefaultStructArray {
