@@ -66,8 +66,6 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
-import jenkins.model.CauseOfInterruption;
-import jenkins.model.InterruptedBuildAction;
 import jenkins.model.Jenkins;
 import jenkins.model.lazy.BuildReference;
 import jenkins.model.lazy.LazyBuildMixIn;
@@ -334,11 +332,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (t instanceof AbortException) {
             listener.error(t.getMessage());
         } else if (t instanceof FlowInterruptedException) {
-            List<CauseOfInterruption> causes = ((FlowInterruptedException) t).getCauses();
-            addAction(new InterruptedBuildAction(causes));
-            for (CauseOfInterruption cause : causes) {
-                cause.print(listener);
-            }
+            ((FlowInterruptedException) t).handle(this, listener);
         } else if (t != null) {
             t.printStackTrace(listener.getLogger());
         }
