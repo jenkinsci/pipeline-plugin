@@ -39,10 +39,13 @@ import java.util.TreeMap;
 import org.codehaus.groovy.runtime.GStringImpl;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+@SuppressWarnings("unchecked") // generic array construction
 public class DescribableHelperTest {
 
     @BeforeClass public static void isUnitTest() {
@@ -120,7 +123,6 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void findSubtypes() throws Exception {
         assertEquals(new HashSet<Class<?>>(Arrays.asList(Impl1.class, Impl2.class)), DescribableHelper.findSubtypes(Base.class));
         assertEquals(Collections.singleton(Impl1.class), DescribableHelper.findSubtypes(Marker.class));
@@ -267,7 +269,6 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structArrayHomo() throws Exception {
         roundTrip(UsesStructArrayHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructArrayHomo[Impl2[false], Impl2[true]]");
     }
@@ -285,7 +286,6 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structListHomo() throws Exception {
         roundTrip(UsesStructListHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructListHomo[Impl2[false], Impl2[true]]");
     }
@@ -303,7 +303,6 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structCollectionHomo() throws Exception {
         roundTrip(UsesStructCollectionHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructCollectionHomo[Impl2[false], Impl2[true]]");
     }
@@ -321,7 +320,6 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structArrayHetero() throws Exception {
         roundTrip(UsesStructArrayHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructArrayHetero[Impl1[hello], Impl2[true]]");
     }
@@ -339,7 +337,6 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structListHetero() throws Exception {
         roundTrip(UsesStructListHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructListHetero[Impl1[hello], Impl2[true]]");
     }
@@ -357,7 +354,6 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structCollectionHetero() throws Exception {
         roundTrip(UsesStructCollectionHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructCollectionHetero[Impl1[hello], Impl2[true]]");
     }
@@ -373,6 +369,71 @@ public class DescribableHelperTest {
         @Override public String toString() {
             return "UsesStructCollectionHetero" + bases;
         }
+    }
+
+    @Test public void defaultValuesStructCollectionCommon() throws Exception {
+        roundTrip(DefaultStructCollection.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "special"))), "DefaultStructCollection[Impl1[special]]");
+    }
+
+    @Test public void defaultValuesStructCollectionEmpty() throws Exception {
+        roundTrip(DefaultStructCollection.class, map("bases", Collections.emptyList()), "DefaultStructCollection[]");
+    }
+
+    @Ignore("TODO expected:<{}> but was:<{bases=[{$class=Impl1, text=default}]}>")
+    @Issue("JENKINS-25779")
+    @Test public void defaultValuesStructCollection() throws Exception {
+        roundTrip(DefaultStructCollection.class, map(), "DefaultStructCollection[Impl1[default]]");
+    }
+
+    @Ignore("TODO expected:<{bases=[{$class=Impl2}, {$class=Impl2, flag=true}]}> but was:<{bases=[{$class=Impl2, flag=false}, {$class=Impl2, flag=true}]}>")
+    @Issue("JENKINS-25779")
+    @Test public void defaultValuesNestedStruct() throws Exception {
+        roundTrip(DefaultStructCollection.class, map("bases", Arrays.asList(map("$class", "Impl2"), map("$class", "Impl2", "flag", true))), "DefaultStructCollection[Impl2[false], Impl2[true]]");
+    }
+
+    @Ignore("TODO expected:<{bases=null}> but was:<{}>")
+    @Issue("JENKINS-25779")
+    @Test public void defaultValuesNullSetter() throws Exception {
+        roundTrip(DefaultStructCollection.class, map("bases", null), "DefaultStructCollectionnull");
+    }
+
+    public static final class DefaultStructCollection {
+        private Collection<Base> bases = Arrays.<Base>asList(new Impl1("default"));
+        @DataBoundConstructor public DefaultStructCollection() {}
+        public Collection<Base> getBases() {return bases;}
+        @DataBoundSetter public void setBases(Collection<Base> bases) {this.bases = bases;}
+        @Override public String toString() {return "DefaultStructCollection" + bases;}
+    }
+
+    @Test public void defaultValuesStructArrayCommon() throws Exception {
+        roundTrip(DefaultStructArray.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "special")), "stuff", "val"), "DefaultStructArray[Impl1[special]];stuff=val");
+    }
+
+    @Ignore("TODO expected:<{stuff=val}> but was:<{bases=[{$class=Impl1, text=default}, {$class=Impl2, flag=true}], stuff=val}>")
+    @Issue("JENKINS-25779")
+    @Test public void defaultValuesStructArray() throws Exception {
+        roundTrip(DefaultStructArray.class, map("stuff", "val"), "DefaultStructArray[Impl1[default], Impl2[true]];stuff=val");
+    }
+
+    @Ignore("TODO expected:<{stuff=null}> but was:<{bases=[{$class=Impl1, text=default}, {$class=Impl2, flag=true}]}>")
+    @Issue("JENKINS-25779")
+    @Test public void defaultValuesNullConstructorParameter() throws Exception {
+        roundTrip(DefaultStructArray.class, map("stuff", null), "DefaultStructArray[Impl1[default], Impl2[true]];stuff=null");
+    }
+
+    public static final class DefaultStructArray {
+        private final String stuff;
+        private Base[] bases;
+        @DataBoundConstructor public DefaultStructArray(String stuff) {
+            this.stuff = stuff;
+            Impl2 impl2 = new Impl2();
+            impl2.setFlag(true);
+            bases = new Base[] {new Impl1("default"), impl2};
+        }
+        public Base[] getBases() {return bases;}
+        @DataBoundSetter public void setBases(Base[] bases) {this.bases = bases;}
+        public String getStuff() {return stuff;}
+        @Override public String toString() {return "DefaultStructArray" + Arrays.toString(bases) + ";stuff=" + stuff;}
     }
 
     private static Map<String,Object> map(Object... keysAndValues) {
