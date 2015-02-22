@@ -272,14 +272,14 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     }
 
     private static final class Stage {
-        /** number of builds current in this stage */
+        /** Numbers of builds currently running in this stage. */
         final Set<Integer> holding = new TreeSet<Integer>();
-        /** maximum permitted size of {@link #holding} */
+        /** Maximum permitted size of {@link #holding}, or null for unbounded. */
         @CheckForNull
         Integer concurrency;
-        /** context of the build currently waiting to enter this stage, if any */
+        /** Context of the build currently waiting to enter this stage, if any. */
         @CheckForNull StepContext waitingContext;
-        /** number of the waiting build, if any */
+        /** Number of the build corresponding to {@link #waitingContext}, if any. */
         @Nullable
         Integer waitingBuild;
         @Override public String toString() {
