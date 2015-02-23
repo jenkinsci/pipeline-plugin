@@ -51,6 +51,6 @@ echo("Hello I'm Gilbert")
         assert exec.isComplete()
         FlowNode atom = exec.currentHeads[0].parents[0]
         LogActionImpl la = atom.getAction(LogAction)
-        assert la.logFile.text=="Hello I'm Gilbert\n"
+        assert la.logFile.text.trim() == "Hello I'm Gilbert"
     }
 }
