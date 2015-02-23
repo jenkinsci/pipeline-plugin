@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow.cps
 
-import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep
 import hudson.FilePath
 import org.junit.Test
 import static org.junit.Assert.*;
@@ -43,9 +42,6 @@ import org.jvnet.hudson.test.JenkinsRule;
  * @author Kohsuke Kawaguchi
  */
 class CpsFlowDefinitionTest extends AbstractCpsFlowTest {
-    @Inject
-    WatchYourStep.DescriptorImpl watchDescriptor;
-
 
     /**
      * CpsFlowDefinition's simplest possible test.
@@ -66,42 +62,6 @@ for (int i=0; i<10; i++)
         exec.start()
         exec.waitForSuspension()
 
-        assert exec.isComplete()
-    }
-
-    /**
-     * I should be able to have DSL call into async step and then bring it to the completion.
-     */
-    @Test
-    void suspendExecutionAndComeBack() {
-        def dir = tmp.newFolder()
-
-        def flow = new CpsFlowDefinition("""
-            watch(new File("${dir}/marker"))
-            println 'Yo'
-        """)
-
-        // get this going...
-        createExecution(flow)
-        exec.start()
-
-        // it should stop at watch and suspend.
-        exec.waitForSuspension()
-        Thread.sleep(1000)  // wait a bit to really ensure workflow has suspended
-
-        assert !exec.isComplete() : "Expected the execution to be suspended but it has completed";
-        assert watchDescriptor.activeWatches.size()==1
-
-        exec = roundtripXStream(exec);    // poor man's simulation of Jenkins restart
-        exec.onLoad()
-
-        println "Touching the file";
-
-        // now create the marker file to resume workflow execution
-        new FilePath(new File(dir,"marker")).touch(0);
-        watchDescriptor.watchUpdate();
-
-        exec.waitForSuspension();
         assert exec.isComplete()
     }
 
