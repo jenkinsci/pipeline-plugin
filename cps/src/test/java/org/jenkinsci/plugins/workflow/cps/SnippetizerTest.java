@@ -133,7 +133,7 @@ public class SnippetizerTest {
         wrs.setRequestParameters(params);
         WebResponse response = wc.getPage(wrs).getWebResponse();
         assertEquals("text/plain", response.getContentType());
-        assertEquals("echo 'hello world'\n", response.getContentAsString());
+        assertEquals("echo 'hello world'", response.getContentAsString().trim());
     }
 
 }
