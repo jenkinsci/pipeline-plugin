@@ -23,16 +23,16 @@ class LoadStepTest {
         def p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.definition = new CpsFlowDefinition("""
 node {
-  sh 'echo "println(21*2)" > test.groovy'
-  println "control" // make sure that 'println' in groovy script works
+  writeFile text: 'println(21*2)', file: 'test.groovy'
+  println "something printed" // make sure that 'println' in groovy script works
   load 'test.groovy'
 }
 """, true);
         def b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
 
         println b.log
-        assert b.log.contains("control\n");
-        assert b.log.contains("42\n");
+        assert b.log.contains("something printed");
+        assert b.log.contains("42");
     }
 
     /**
@@ -43,7 +43,7 @@ node {
         def p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.definition = new CpsFlowDefinition("""
 node {
-  sh 'echo "21*2" > test.groovy'
+  writeFile text: '21*2', file: 'test.groovy'
   def o = load('test.groovy')
   println "output="+o
 }
@@ -51,7 +51,7 @@ node {
         def b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
 
         println b.log
-        assert b.log.contains("output=42\n");
+        assert b.log.contains("output=42");
     }
 
 }
