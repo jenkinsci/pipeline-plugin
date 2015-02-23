@@ -6,14 +6,13 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
-import org.jvnet.hudson.test.RandomlyFails;
 import javax.inject.Inject;
 import org.apache.commons.io.FileUtils;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -30,15 +29,11 @@ public class WorkflowLibRepositoryTest {
     Jenkins jenkins;
 
     @Inject
-    WatchYourStep.DescriptorImpl watchDescriptor;
-
-    @Inject
     WorkflowLibRepository repo;
 
     /**
      * Have some global libs
      */
-    @RandomlyFails("TODO periodic failures: p #1 log is just 'Started'")
     @Test
     public void globalLib() throws Exception {
         story.addStep(new Statement() {
@@ -49,8 +44,8 @@ public class WorkflowLibRepositoryTest {
                 FileUtils.write(new File(dir, "Foo.groovy"),
                         "package foo;\n" +
                         "def answer() {\n" +
-                        "  println 'control'\n" +
-                        "  watch new File('" + jenkins.getRootPath() + "/go')\n" +
+                        "  echo 'running the answer method'\n" +
+                        "  semaphore 'watch'\n" +
                         "  return 42;\n" +
                         "}");
 
@@ -64,12 +59,12 @@ public class WorkflowLibRepositoryTest {
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
                 CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
 
-                // wait until the executor gets assigned and the execution pauses at the watch step
-                while (watchDescriptor.getActiveWatches().isEmpty() && b.isBuilding())
-                    e.waitForSuspension();
+                // wait until the executor gets assigned and the execution pauses
+                SemaphoreStep.waitForStart("watch/1", b);
+                e.waitForSuspension();
 
                 assertTrue(JenkinsRule.getLog(b), b.isBuilding());
-                story.j.assertLogContains("control\n", b);
+                story.j.assertLogContains("running the answer method", b);
             }
         });
         story.addStep(new Statement() {
@@ -79,8 +74,7 @@ public class WorkflowLibRepositoryTest {
                 CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
 
                 // resume from where it left off
-                jenkins.getRootPath().child("go").touch(0);
-                watchDescriptor.watchUpdate();
+                SemaphoreStep.success("watch/1", null);
 
                 // wait until the completion
                 while (b.isBuilding())
@@ -88,7 +82,7 @@ public class WorkflowLibRepositoryTest {
 
                 story.j.assertBuildStatusSuccess(b);
 
-                story.j.assertLogContains("o=42\n", b);
+                story.j.assertLogContains("o=42", b);
             }
         });
     }
