@@ -78,7 +78,7 @@ public class SnippetizerTest {
         assertRoundTrip(new CoreStep(aa), "step([$class: 'ArtifactArchiver', allowEmptyArchive: true, artifacts: 'x.jar'])");
     }
 
-    @Ignore("TODO https://github.com/jenkinsci/jenkins/pull/1579 expected:<step[([$class: 'ArtifactArchiver', artifacts: 'x.jar'])]> but was:<step[ <object of type hudson.tasks.ArtifactArchiver>]>")
+    @Ignore("TODO until 1.601+ expected:<step[([$class: 'ArtifactArchiver', artifacts: 'x.jar'])]> but was:<step[ <object of type hudson.tasks.ArtifactArchiver>]>")
     @Test public void coreStep2() throws Exception {
         assertRoundTrip(new CoreStep(new ArtifactArchiver("x.jar")), "step([$class: 'ArtifactArchiver', artifacts: 'x.jar'])");
     }
