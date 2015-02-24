@@ -8,8 +8,10 @@ Only noting significant user-visible or major API changes, not internal code cle
 * JENKINS-25779: snippet generator now omits default values of complex steps.
 * Ability to configure project display name.
 * Fixing `java.io.NotSerializableException: org.jenkinsci.plugins.workflow.support.steps.StageStepExecution$CanceledCause` thrown from certain scripts using `stage`.
+* JENKINS-27052: `stage` step did not prevent a third build from entering a stage after a second was unblocked by a first leaving it.
 * JENKINS-26605: Missing link to _Full Log_ under _Running Steps_ when a single step produced >150Kb of output.
 * `catchError` was incorrectly setting build status to failed when it was merely aborted, canceled, etc.
+* PR 52: fixed some memory leaks causing the permanent generation and heap to grow unbounded after many flow builds.
 
 ## 1.2 (Jan 24 2015)
 

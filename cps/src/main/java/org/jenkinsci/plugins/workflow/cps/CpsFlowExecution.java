@@ -33,7 +33,6 @@ import com.cloudbees.groovy.cps.impl.ThrowBlock;
 import com.cloudbees.groovy.cps.sandbox.DefaultInvoker;
 import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -89,7 +88,6 @@ import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -97,11 +95,13 @@ import java.util.logging.Logger;
 import static com.thoughtworks.xstream.io.ExtendedHierarchicalStreamWriterHelper.*;
 import hudson.model.User;
 import hudson.security.ACL;
+import java.beans.Introspector;
 import javax.annotation.CheckForNull;
 import javax.annotation.concurrent.GuardedBy;
 
 import org.acegisecurity.Authentication;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
+import org.jboss.marshalling.reflect.SerializableClassRegistry;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
 /**
@@ -247,8 +247,11 @@ public class CpsFlowExecution extends FlowExecution {
     /**
      * Groovy compiler with CPS+sandbox transformation correctly setup.
      * By the time the script starts running, this field is set to non-null.
+     * It is reset to null after completion.
      */
     private transient CpsGroovyShell shell;
+    /** Class of the {@link CpsScript}; its loader is a {@link groovy.lang.GroovyClassLoader.InnerLoader}, not the same as {@code shell.getClassLoader()}. */
+    private transient Class<?> scriptClass;
 
     /** Actions to add to the {@link FlowStartNode}. */
     transient final List<Action> flowStartNodeActions = new ArrayList<Action>();
@@ -315,6 +318,7 @@ public class CpsFlowExecution extends FlowExecution {
     @Override
     public void start() throws IOException {
         final CpsScript s = parseScript();
+        scriptClass = s.getClass();
         s.initialize();
 
         final FlowHead h = new FlowHead(this);
@@ -398,9 +402,9 @@ public class CpsFlowExecution extends FlowExecution {
         programPromise = result;
 
         try {
-            final ClassLoader scriptClassLoader = parseScript().getClass().getClassLoader();
+            scriptClass = parseScript().getClass();
 
-            RiverReader r = new RiverReader(programDataFile, scriptClassLoader, owner);
+            RiverReader r = new RiverReader(programDataFile, scriptClass.getClassLoader(), owner);
             Futures.addCallback(
                     r.restorePickles(),
 
@@ -683,6 +687,12 @@ public class CpsFlowExecution extends FlowExecution {
         first.setNewHead(head);
         heads.clear();
         heads.put(first.getId(),first);
+
+        // clean up heap
+        shell = null;
+        SerializableClassRegistry.getInstance().release(scriptClass.getClassLoader());
+        Introspector.flushFromCaches(scriptClass); // does not handle other derived script classes, but this is only SoftReference anyway
+        scriptClass = null;
     }
 
     synchronized FlowHead getFirstHead() {
