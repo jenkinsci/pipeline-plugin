@@ -78,7 +78,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "      b: { error 'died' },",
 
                         // make sure this branch takes longer than a
-                    "      a: { sh('sleep 3'); sh('touch b.done'); }",
+                    "      a: { sleep 3; sh('touch b.done'); }",
                     "    )",
                     "    assert false;",
                     "  } catch (ParallelStepException e) {",

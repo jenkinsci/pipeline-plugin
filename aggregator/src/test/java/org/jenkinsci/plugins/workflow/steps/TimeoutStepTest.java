@@ -8,14 +8,12 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.steps.durable_task.ShellStep;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.RandomlyFails;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -27,17 +25,15 @@ public class TimeoutStepTest extends Assert {
     /**
      * The simplest possible timeout step ever.
      */
-    @RandomlyFails("TODO sometimes the whole build just hangs (for longer than the 10s)")
     @Test
     public void basic() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition(
-                "node { timeout(time:5, unit:'SECONDS') { sh 'sleep 10'; echo 'NotHere' } }"));
-        WorkflowRun b = assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0));
+                "node { timeout(time:5, unit:'SECONDS') { sleep 10; echo 'NotHere' } }"));
+        WorkflowRun b = assertBuildStatus(Result.ABORTED, p.scheduleBuild2(0));
         r.assertLogNotContains("NotHere", b);
     }
 
-    @RandomlyFails("as above")
     @Test
     public void killingParallel() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
@@ -45,27 +41,27 @@ public class TimeoutStepTest extends Assert {
                 "node { ",
                     "timeout(time:5, unit:'SECONDS') { ",
                         "parallel(",
-                            " a: { echo 'ShouldBeHere1'; sh 'sleep 10'; echo 'NotHere' }, ",
-                            " b: { echo 'ShouldBeHere2'; sh 'sleep 10'; echo 'NotHere' }, ",
+                            " a: { echo 'ShouldBeHere1'; sleep 10; echo 'NotHere' }, ",
+                            " b: { echo 'ShouldBeHere2'; sleep 10; echo 'NotHere' }, ",
                         ");",
                         "echo 'NotHere'",
                     "}",
                     "echo 'NotHere'",
                 "}")));
-        WorkflowRun b = assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0));
+        WorkflowRun b = assertBuildStatus(/* TODO JENKINS-25894 should really be ABORTED */Result.FAILURE, p.scheduleBuild2(0));
 
         // make sure things that are supposed to run do, and things that are NOT supposed to run do not.
         r.assertLogNotContains("NotHere", b);
         r.assertLogContains("ShouldBeHere1",b);
         r.assertLogContains("ShouldBeHere2", b);
 
-        // we expect every shell step to have failed
+        // we expect every sleep step to have failed
         FlowGraphTable t = new FlowGraphTable(b.getExecution());
         t.build();
         for (Row r : t.getRows()) {
             if (r.getNode() instanceof StepAtomNode) {
                 StepAtomNode a = (StepAtomNode) r.getNode();
-                if (a.getDescriptor().getClass()==ShellStep.DescriptorImpl.class) {
+                if (a.getDescriptor().getClass()==SleepStep.DescriptorImpl.class) {
                     assertTrue(a.getAction(ErrorAction.class)!=null);
                 }
             }
@@ -76,7 +72,9 @@ public class TimeoutStepTest extends Assert {
     private static WorkflowRun assertBuildStatus(Result result, QueueTaskFuture<WorkflowRun> f) throws Exception {
         WorkflowRun b = f.waitForStart();
         try {
-            return f.get();
+            assertEquals(b, f.get());
+            assertEquals(JenkinsRule.getLog(b), result, b.getResult());
+            return b;
         } catch (InterruptedException x) {
             System.err.println(JenkinsRule.getLog(b));
             throw x;
