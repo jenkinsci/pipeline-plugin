@@ -67,7 +67,7 @@ public class GitStepRestartTest {
                 p.setDefinition(new CpsFlowDefinition(
                     "node('remote') {\n" +
                     "    ws {\n" +
-                    "        git '" + sampleRepo + "'\n" +
+                    "        git($/" + sampleRepo + "/$)\n" +
                     "    }\n" +
                     "}"));
                 p.save();
