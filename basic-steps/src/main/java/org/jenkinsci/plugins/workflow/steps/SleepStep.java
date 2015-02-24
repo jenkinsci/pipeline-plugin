@@ -103,7 +103,7 @@ public final class SleepStep extends AbstractStepImpl {
         }
 
         @Override public String getFunctionName() {
-            return "sleepXXX";
+            return "sleep";
         }
 
         @Override public String getDisplayName() {
