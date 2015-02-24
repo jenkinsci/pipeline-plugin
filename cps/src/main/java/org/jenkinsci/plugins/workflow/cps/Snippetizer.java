@@ -64,7 +64,6 @@ import org.kohsuke.stapler.StaplerResponse;
                 StringBuilder b = new StringBuilder(d.getFunctionName());
                 Step step = (Step) o;
                 Map<String,Object> args = new TreeMap<String,Object>(d.defineArguments(step));
-                args.values().removeAll(Collections.singleton(null)); // do not write null values
                 boolean first = true;
                 boolean singleMap = args.size() == 1 && args.values().iterator().next() instanceof Map;
                 for (Map.Entry<String,Object> entry : args.entrySet()) {
