@@ -6,7 +6,7 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,9 +26,6 @@ public class RestartingLoadStepTest {
     @Inject
     Jenkins jenkins;
 
-    @Inject
-    WatchYourStep.DescriptorImpl watchDescriptor;
-
     /**
      * Makes sure that loaded scripts survive persistence.
      */
@@ -41,7 +38,7 @@ public class RestartingLoadStepTest {
                     "def answer(i) { return i*2; }\n" +
                     "def foo() {\n" +
                     "    def i=21;\n" +
-                    "    watch new File('" + jenkins.getRootPath() + "/go');\n" +
+                    "    semaphore 'watchA'\n" +
                     "    return answer(i);\n" +
                     "}\n" +
                     "return this;", null);
@@ -56,9 +53,8 @@ public class RestartingLoadStepTest {
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
                 CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
 
-                // wait until the executor gets assigned and the execution pauses at the watch step
-                while (watchDescriptor.getActiveWatches().isEmpty() && b.isBuilding())
-                    e.waitForSuspension();
+                // wait until the executor gets assigned and the execution pauses
+                SemaphoreStep.waitForStart("watchA/1", b);
 
                 assertTrue(JenkinsRule.getLog(b), b.isBuilding());
             }
@@ -70,8 +66,7 @@ public class RestartingLoadStepTest {
                 CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
 
                 // resume from where it left off
-                jenkins.getRootPath().child("go").touch(0);
-                watchDescriptor.watchUpdate();
+                SemaphoreStep.success("watchA/1", null);
 
                 // wait until the completion
                 while (b.isBuilding())
@@ -79,7 +74,7 @@ public class RestartingLoadStepTest {
 
                 story.j.assertBuildStatusSuccess(b);
 
-                story.j.assertLogContains("o=42\n", b);
+                story.j.assertLogContains("o=42", b);
             }
         });
     }
@@ -95,7 +90,7 @@ public class RestartingLoadStepTest {
                 jenkins.getWorkspaceFor(p).child("test.groovy").write(
                     "def answer(i) { return i*2; }\n" +
                     "def i=21;\n" +
-                    "watch new File('" + jenkins.getRootPath() + "/go');\n" +
+                    "semaphore 'watchB'\n" +
                     "return answer(i);\n", null);
                 p.setDefinition(new CpsFlowDefinition(
                     "node {\n" +
@@ -108,9 +103,8 @@ public class RestartingLoadStepTest {
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
                 CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
 
-                // wait until the executor gets assigned and the execution pauses at the watch step
-                while (watchDescriptor.getActiveWatches().isEmpty() && b.isBuilding())
-                    e.waitForSuspension();
+                // wait until the executor gets assigned and the execution pauses
+                SemaphoreStep.waitForStart("watchB/1", b);
 
                 assertTrue(JenkinsRule.getLog(b), b.isBuilding());
             }
@@ -122,8 +116,7 @@ public class RestartingLoadStepTest {
                 CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
 
                 // resume from where it left off
-                jenkins.getRootPath().child("go").touch(0);
-                watchDescriptor.watchUpdate();
+                SemaphoreStep.success("watchB/1", null);
 
                 // wait until the completion
                 while (b.isBuilding())
@@ -131,7 +124,7 @@ public class RestartingLoadStepTest {
 
                 story.j.assertBuildStatusSuccess(b);
 
-                story.j.assertLogContains("o=42\n", b);
+                story.j.assertLogContains("o=42", b);
             }
         });
     }
