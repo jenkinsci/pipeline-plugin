@@ -1,9 +1,9 @@
 package org.jenkinsci.plugins.workflow.steps.durable_task;
 
 import com.google.common.base.Predicate;
+import hudson.Functions;
 import hudson.model.BallColor;
 import hudson.model.Result;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
@@ -17,12 +17,8 @@ import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 
-/**
- * @author Kohsuke Kawaguchi
- */
 public class ShellStepTest extends Assert {
     @Rule
     public JenkinsRule j = new JenkinsRule();
@@ -34,12 +30,7 @@ public class ShellStepTest extends Assert {
     public void failureShouldMarkNodeRed() throws Exception {
         // job setup
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
-        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList(
-                "node {",
-                "  sh 'false'",
-                "}"
-        ), "\n")));
-
+        foo.setDefinition(new CpsFlowDefinition(Functions.isWindows() ? "node {bat 'whatever'}" : "node {sh 'false'}"));
 
         // get the build going, and wait until workflow pauses
         WorkflowRun b = j.assertBuildStatus(Result.FAILURE, foo.scheduleBuild2(0).get());
@@ -50,7 +41,7 @@ public class ShellStepTest extends Assert {
         for (Row r : t.getRows()) {
             if (r.getNode() instanceof StepAtomNode) {
                 StepAtomNode sa = (StepAtomNode) r.getNode();
-                if (sa.getDescriptor().getFunctionName().equals("sh")) {
+                if (sa.getDescriptor().getFunctionName().matches("sh|bat")) {
                     assertSame(BallColor.RED, sa.getIconColor());
                     found = true;
                 }
@@ -70,11 +61,12 @@ public class ShellStepTest extends Assert {
 
         // job setup
         WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
-        foo.setDefinition(new CpsFlowDefinition(StringUtils.join(Arrays.asList(
-                "node {",
-                "  sh 'while true; do touch "+tmp+"; sleep 1; done'",
-                "}"
-        ), "\n")));
+        foo.setDefinition(new CpsFlowDefinition(Functions.isWindows() ?
+            "node {bat($/:loop\r\n" +
+                "echo . >" + tmp + "\r\n" +
+                "ping -n 2 127.0.0.1 >nul\r\n" + // http://stackoverflow.com/a/4317036/12916
+                "goto :loop/$)}" :
+            "node {sh 'while true; do touch " + tmp + "; sleep 1; done'}"));
 
         // get the build going, and wait until workflow pauses
         WorkflowRun b = foo.scheduleBuild2(0).getStartCondition().get();
