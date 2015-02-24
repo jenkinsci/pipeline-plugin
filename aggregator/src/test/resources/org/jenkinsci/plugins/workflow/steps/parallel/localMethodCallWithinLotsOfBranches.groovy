@@ -1,7 +1,14 @@
 def notify(msg) {
-    sh "echo ${msg}"
-    sh "echo ${msg} 2"
-    sh "echo ${msg} 3"
+    doNotify msg
+    doNotify "${msg} 2"
+    doNotify "${msg} 3"
+}
+def doNotify(msg) {
+    if (hudson.Functions.windows) {
+        bat "echo ${msg}"
+    } else {
+        sh "echo ${msg}"
+    }
 }
 
 node {
