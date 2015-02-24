@@ -39,12 +39,15 @@ import org.jenkinsci.plugins.workflow.pickles.Pickle;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 import java.io.BufferedInputStream;
+import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.apache.commons.io.IOUtils.*;
 
@@ -59,7 +62,7 @@ import static org.apache.commons.io.IOUtils.*;
  *
  * @author Kohsuke Kawaguchi
  */
-public class RiverReader {
+public class RiverReader implements Closeable {
     private final File file;
     private final ClassLoader classLoader;
     /**
@@ -83,6 +86,8 @@ public class RiverReader {
             throw new IllegalStateException();
         }
     };
+
+    private InputStream in;
 
     public RiverReader(File f, ClassLoader classLoader, FlowExecutionOwner owner) throws IOException {
         this.file = f;
@@ -109,7 +114,9 @@ public class RiverReader {
      * that can be then used to load the objects persisted by {@link RiverWriter}.
      */
     public ListenableFuture<Unmarshaller> restorePickles() throws IOException {
-        DataInputStream din = new DataInputStream(openStreamAt(0));
+        in = openStreamAt(0);
+        try {
+        DataInputStream din = new DataInputStream(in);
         int offset = parseHeader(din);
 
         // load the pickle stream
@@ -130,6 +137,10 @@ public class RiverReader {
                 return eu;
             }
         });
+        } catch (IOException x) {
+            in.close();
+            throw x;
+        }
     }
 
     private List<Pickle> readPickles(int offset) throws IOException {
@@ -160,5 +171,15 @@ public class RiverReader {
 
     private ObjectResolver combine(ObjectResolver... resolvers) {
         return new ChainingObjectResolver(resolvers);
+    }
+
+    @Override public void close() {
+        if (in != null) {
+            try {
+                in.close();
+            } catch (IOException x) {
+                Logger.getLogger(RiverReader.class.getName()).log(Level.WARNING, "could not close stream on " + file, x);
+            }
+        }
     }
 }
