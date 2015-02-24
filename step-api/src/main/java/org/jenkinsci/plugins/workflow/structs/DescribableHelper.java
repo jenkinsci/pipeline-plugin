@@ -111,7 +111,7 @@ public class DescribableHelper {
             inspect(r, o, clazz, name);
         }
         r.values().removeAll(Collections.singleton(null));
-        Map<String,Object> byCtor = new TreeMap<String,Object>(r);
+        Map<String,Object> constructorOnlyDataBoundProps = new TreeMap<String,Object>(r);
         List<String> dataBoundSetters = new ArrayList<String>();
         for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {
@@ -129,30 +129,29 @@ public class DescribableHelper {
                 }
             }
         }
-        clearDefaultSetters(clazz, o, r, byCtor, dataBoundSetters);
+        clearDefaultSetters(clazz, r, constructorOnlyDataBoundProps, dataBoundSetters);
         return r;
     }
 
     /**
      * Removes configuration of any properties based on {@link DataBoundSetter} which appear unmodified from the default.
      * @param clazz the class of {@code o}
-     * @param o some object being inspected
-     * @param r all its properties, including those from its {@link DataBoundConstructor} as well as any {@link DataBoundSetter}s; some of the latter might be deleted
-     * @param byCtor properties from {@link DataBoundConstructor} only
+     * @param allDataBoundProps all its properties, including those from its {@link DataBoundConstructor} as well as any {@link DataBoundSetter}s; some of the latter might be deleted
+     * @param constructorOnlyDataBoundProps properties from {@link DataBoundConstructor} only
      * @param dataBoundSetters a list of property names marked with {@link DataBoundSetter}
      */
-    private static void clearDefaultSetters(Class<?> clazz, Object o, Map<String,Object> r, Map<String,Object> byCtor, Collection<String> dataBoundSetters) {
+    private static void clearDefaultSetters(Class<?> clazz, Map<String,Object> allDataBoundProps, Map<String,Object> constructorOnlyDataBoundProps, Collection<String> dataBoundSetters) {
         if (dataBoundSetters.isEmpty()) {
             return;
         }
         Object control;
         try {
-            control = instantiate(clazz, byCtor);
+            control = instantiate(clazz, constructorOnlyDataBoundProps);
         } catch (Exception x) {
-            LOG.log(Level.WARNING, "Cannot create control version of " + clazz + " using " + byCtor, x);
+            LOG.log(Level.WARNING, "Cannot create control version of " + clazz + " using " + constructorOnlyDataBoundProps, x);
             return;
         }
-        Map<String,Object> fromControl = new HashMap<String,Object>(byCtor);
+        Map<String,Object> fromControl = new HashMap<String,Object>(constructorOnlyDataBoundProps);
         Iterator<String> fields = dataBoundSetters.iterator();
         while (fields.hasNext()) {
             String field = fields.next();
@@ -164,8 +163,8 @@ public class DescribableHelper {
             }
         }
         for (String field : dataBoundSetters) {
-            if (ObjectUtils.equals(r.get(field), fromControl.get(field))) {
-                r.remove(field);
+            if (ObjectUtils.equals(allDataBoundProps.get(field), fromControl.get(field))) {
+                allDataBoundProps.remove(field);
             }
         }
     }
