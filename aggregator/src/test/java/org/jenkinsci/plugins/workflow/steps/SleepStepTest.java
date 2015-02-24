@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.workflow.steps;
 import java.util.List;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -52,7 +53,7 @@ public class SleepStepTest {
                 ((CpsFlowExecution) b.getExecution()).waitForSuspension();
                 List<FlowNode> heads = b.getExecution().getCurrentHeads();
                 assertEquals(1, heads.size());
-                assertEquals(r.j.jenkins.getDescriptorByType(SleepStep.DescriptorImpl.class).getDisplayName(), heads.get(0).getDisplayName());
+                assertEquals(r.j.jenkins.getDescriptorByType(SleepStep.DescriptorImpl.class), ((StepAtomNode) heads.get(0)).getDescriptor());
             }
         });
         r.addStep(new Statement() {
