@@ -48,6 +48,7 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 Implement `Trigger<ParameterizedJobMixIn.ParameterizedJob>` and implement `TriggerDescriptor.isApplicable` accordingly.
 
 - [ ] `gerrit-trigger`: [JENKINS-26010](https://issues.jenkins-ci.org/browse/JENKINS-26010)
+- [ ] `ghprb`: [JENKINS-26591](https://issues.jenkins-ci.org/browse/JENKINS-26591)
 
 ## Clouds
 
