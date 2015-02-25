@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014, CloudBees, Inc.
+ * Copyright 2015 Jesse Glick.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,35 +22,38 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.cps
+package org.jenkinsci.plugins.workflow.cps;
 
-import org.jenkinsci.plugins.workflow.graph.FlowNode
-import org.jenkinsci.plugins.workflow.actions.LogAction
-import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl
-import org.junit.Test
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
+import static org.junit.Assert.*;
+import org.junit.Test;
 
-/**
- *
- *
- * @author Kohsuke Kawaguchi
- */
-class LogActionTest extends AbstractCpsFlowTest {
+public class CpsFlowDefinition2Test extends AbstractCpsFlowTest {
+
     /**
-     * CpsFlowDefinition's simplest possible test.
+     * I should be able to have DSL call into async step and then bring it to the completion.
      */
-    @Test
-    public void echo() {
-        def flow = new CpsFlowDefinition("""
-echo("Hello I'm Gilbert")
-""")
+    @Test public void suspendExecutionAndComeBack() throws Exception {
+        CpsFlowDefinition flow = new CpsFlowDefinition(
+                "semaphore 'watch'\n" +
+                "println 'Yo'");
 
-        def exec = createExecution(flow)
-        exec.start()
-        exec.waitForSuspension()
+        // get this going...
+        createExecution(flow);
+        exec.start();
 
-        assert exec.isComplete()
-        FlowNode atom = exec.currentHeads[0].parents[0]
-        LogActionImpl la = atom.getAction(LogAction)
-        assert la.logFile.text.trim() == "Hello I'm Gilbert"
+        SemaphoreStep.waitForStart("watch/1", null);
+
+        assertFalse("Expected the execution to be suspended but it has completed", exec.isComplete());
+
+        exec = roundtripXStream(exec);    // poor man's simulation of Jenkins restart
+        exec.onLoad();
+
+        // now resume workflow execution
+        SemaphoreStep.success("watch/1", null);
+
+        exec.waitForSuspension();
+        assertTrue(exec.isComplete());
     }
+
 }

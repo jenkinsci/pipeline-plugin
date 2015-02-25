@@ -404,12 +404,13 @@ public class CpsFlowExecution extends FlowExecution {
         try {
             scriptClass = parseScript().getClass();
 
-            RiverReader r = new RiverReader(programDataFile, scriptClass.getClassLoader(), owner);
+            final RiverReader r = new RiverReader(programDataFile, scriptClass.getClassLoader(), owner);
             Futures.addCallback(
                     r.restorePickles(),
 
                     new FutureCallback<Unmarshaller>() {
                         public void onSuccess(Unmarshaller u) {
+                            try {
                             CpsFlowExecution old = PROGRAM_STATE_SERIALIZATION.get();
                             PROGRAM_STATE_SERIALIZATION.set(CpsFlowExecution.this);
                             try {
@@ -420,10 +421,17 @@ public class CpsFlowExecution extends FlowExecution {
                             } finally {
                                 PROGRAM_STATE_SERIALIZATION.set(old);
                             }
+                            } finally {
+                                r.close();
+                            }
                         }
 
                         public void onFailure(Throwable t) {
-                            loadProgramFailed(t, result);
+                            try {
+                                loadProgramFailed(t, result);
+                            } finally {
+                                r.close();
+                            }
                         }
                     });
 
