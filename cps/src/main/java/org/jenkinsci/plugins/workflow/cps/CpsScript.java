@@ -31,15 +31,14 @@ import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
 import hudson.model.Run;
-import org.codehaus.groovy.control.CompilationFailedException;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
-import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-
 import java.io.File;
 import java.io.IOException;
-
+import org.codehaus.groovy.control.CompilationFailedException;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.codehaus.groovy.runtime.DefaultGroovyStaticMethods;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 
 /**
  * The script of a workflow.
@@ -182,6 +181,11 @@ public abstract class CpsScript extends SerializableScript {
     @Override
     public void printf(String format, Object[] values) {
         print(DefaultGroovyMethods.sprintf(this/*not actually used*/, format, values));
+    }
+
+    /** Effectively overrides {@link DefaultGroovyStaticMethods#sleep(Object, long)} so that {@code SleepStep} works even in the bare form {@code sleep 5}. */
+    public Object sleep(long arg) {
+        return invokeMethod("sleep", arg);
     }
 
     private static final long serialVersionUID = 1L;

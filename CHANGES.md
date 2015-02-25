@@ -13,6 +13,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 * JENKINS-26605: Missing link to _Full Log_ under _Running Steps_ when a single step produced >150Kb of output.
 * `catchError` was incorrectly setting build status to failed when it was merely aborted, canceled, etc.
 * PR 52: fixed some memory leaks causing the permanent generation and heap to grow unbounded after many flow builds.
+* JENKINS-26120: added `sleep` step.
 
 ## 1.2 (Jan 24 2015)
 
