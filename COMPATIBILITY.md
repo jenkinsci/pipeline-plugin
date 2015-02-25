@@ -33,12 +33,15 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `DockerBuilder` (`docker-build-step`): [JENKINS-26178](https://issues.jenkins-ci.org/browse/JENKINS-26178)
 - [ ] `CucumberTestResultArchiver` (`cucumber-testresult-plugin`): [JENKINS-26340](https://issues.jenkins-ci.org/browse/JENKINS-26340)
 - [ ] `HtmlPublisher` (`htmlpublisher`): [JENKINS-26343](https://issues.jenkins-ci.org/browse/JENKINS-26343)
+- [ ] `JaCoCoPublisher` (`jacoco`): [JENKINS-27120](https://issues.jenkins-ci.org/browse/JENKINS-27120)
+- [ ] `Publisher` (`testng`): [JENKINS-27121](https://issues.jenkins-ci.org/browse/JENKINS-27121)
 
 ## Build wrappers
 
 - [ ] API to integrate these: [JENKINS-24673](https://issues.jenkins-ci.org/browse/JENKINS-24673)
 - [ ] `ConfigFileBuildWrapper` (`config-file-provider`): [JENKINS-26339](https://issues.jenkins-ci.org/browse/JENKINS-26339)
 - [ ] `Xvnc` (`xvnc`): [JENKINS-26477](https://issues.jenkins-ci.org/browse/JENKINS-26477)
+- [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
 
 ## Triggers
 
@@ -63,6 +66,8 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [ ] `parameterized-trigger` (to support a workflow as downstream): [JENKINS-26050](https://issues.jenkins-ci.org/browse/JENKINS-26050)
 - [ ] `build-token-root`: [JENKINS-26693](https://issues.jenkins-ci.org/browse/JENKINS-26693)
 - [X] `credentials-binding`: `withCredentials` step as of 1.3
+- [ ] `build-failure-analyzer`: [JENKINS-27123](https://issues.jenkins-ci.org/browse/JENKINS-27123)
+- [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
 
 ## Custom steps
 
