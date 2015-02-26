@@ -71,6 +71,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [ ] `build-failure-analyzer`: [JENKINS-27123](https://issues.jenkins-ci.org/browse/JENKINS-27123)
 - [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
 - [X] `job-dsl`: implemented in 1.29
+- [ ] `zentimestamp`: [JENKINS-26958](https://issues.jenkins-ci.org/browse/JENKINS-26958)
 
 ## Custom steps
 
