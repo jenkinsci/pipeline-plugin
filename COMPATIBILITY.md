@@ -70,6 +70,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [X] `credentials-binding`: `withCredentials` step as of 1.3
 - [ ] `build-failure-analyzer`: [JENKINS-27123](https://issues.jenkins-ci.org/browse/JENKINS-27123)
 - [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
+- [X] `job-dsl`: implemented in 1.29
 
 ## Custom steps
 
