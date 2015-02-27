@@ -666,7 +666,9 @@ public class WorkflowTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 story.j.createSlave("special", null);
                 rebuildContext(story.j);
-                waitForWorkflowToComplete();
+                while (b.isBuilding()) {
+                    Thread.sleep(100);
+                }
                 assertBuildCompletedSuccessfully();
                 story.j.assertLogContains("OK ran", b);
             }
