@@ -650,6 +650,7 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
+    @RandomlyFails("TODO JENKINS-25890 sometimes triggers a deadlock after restart")
     @Issue("JENKINS-26513")
     @Test public void executorStepRestart() {
         story.addStep(new Statement() {
