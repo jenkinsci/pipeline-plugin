@@ -32,4 +32,7 @@ THE SOFTWARE.
         <!-- TODO JENKINS-26093 -->
         <f:block><code>parameters</code> may be bound to a list of <code>ParameterValue</code>s.</f:block>
     </f:entry>
+    <f:entry field="wait">
+        <f:checkbox default="true" title="Wait for completion"/>
+    </f:entry>
 </j:jelly>

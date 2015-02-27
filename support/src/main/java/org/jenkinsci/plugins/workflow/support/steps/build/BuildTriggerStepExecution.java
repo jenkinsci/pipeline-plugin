@@ -49,7 +49,9 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         }
         node.addAction(new LabelAction(Messages.BuildTriggerStepExecution_building_(project.getFullDisplayName())));
         List<Action> actions = new ArrayList<Action>();
-        actions.add(new BuildTriggerAction(getContext()));
+        if (step.getWait()) {
+            actions.add(new BuildTriggerAction(getContext()));
+        }
         actions.add(new CauseAction(new Cause.UpstreamCause(invokingRun)));
         List<ParameterValue> parameters = step.getParameters();
         if (parameters != null) {
@@ -60,7 +62,12 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
                 return (Job) project;
             }
         }.scheduleBuild2(project.getQuietPeriod(), actions.toArray(new Action[actions.size()]));
-        return false;
+        if (step.getWait()) {
+            return false;
+        } else {
+            getContext().onSuccess(null);
+            return true;
+        }
     }
 
     @Override

@@ -4,6 +4,7 @@ import hudson.model.BooleanParameterDefinition;
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.model.Label;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
 import hudson.model.Result;
@@ -22,6 +23,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockFolder;
 
 import java.util.Arrays;
+import org.jvnet.hudson.test.Issue;
 
 /**
  * @author Vivek Pandey
@@ -163,6 +165,14 @@ public class BuildTriggerStepTest extends Assert {
         us.setDefinition(new CpsFlowDefinition("build job: 'ds', parameters: [new hudson.model.StringParameterValue('branch', 'release'), new hudson.model.BooleanParameterValue('extra', true)]"));
         j.assertBuildStatusSuccess(us.scheduleBuild2(0));
         j.assertLogContains("branch=release extra=true", ds.getBuildByNumber(3));
+    }
+
+    @Issue("JENKINS-26123")
+    @Test public void noWait() throws Exception {
+        j.createFreeStyleProject("ds").setAssignedLabel(Label.get("nonexistent"));
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("build job: 'ds', wait: false"));
+        j.assertBuildStatusSuccess(us.scheduleBuild2(0));
     }
 
 }
