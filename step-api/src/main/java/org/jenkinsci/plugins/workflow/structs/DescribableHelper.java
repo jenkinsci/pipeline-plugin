@@ -200,7 +200,9 @@ public class DescribableHelper {
 
     @SuppressWarnings("unchecked")
     private static boolean isList(Type type) {
-        return type instanceof ParameterizedType && ((ParameterizedType) type).getRawType() instanceof Class && ((Class) ((ParameterizedType) type).getRawType()).isAssignableFrom(List.class);
+        return type instanceof ParameterizedType
+                && ((ParameterizedType) type).getRawType() instanceof Class
+                && List.class.isAssignableFrom((Class) ((ParameterizedType) type).getRawType());
     }
 
     private static List<Object> mapList(String context, Type type, List<?> list) throws Exception {
