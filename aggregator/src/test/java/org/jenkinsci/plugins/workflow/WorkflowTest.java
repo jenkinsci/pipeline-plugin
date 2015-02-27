@@ -81,6 +81,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockQueueItemAuthenticator;
 import org.jvnet.hudson.test.RandomlyFails;
@@ -645,6 +646,29 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertNotNull(a);
                 assertEquals("custom2", a.getEnvironment().get("BUILD_TAG"));
                 assertEquals("more", a.getEnvironment().get("STUFF"));
+            }
+        });
+    }
+
+    @Issue("JENKINS-26513")
+    @Test public void executorStepRestart() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition("node('special') {echo 'OK ran'}"));
+                startBuilding();
+                while (!JenkinsRule.getLog(b).contains("Still waiting to schedule task")) {
+                    Thread.sleep(100);
+                }
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                story.j.createSlave("special", null);
+                rebuildContext(story.j);
+                waitForWorkflowToComplete();
+                assertBuildCompletedSuccessfully();
+                story.j.assertLogContains("OK ran", b);
             }
         });
     }
