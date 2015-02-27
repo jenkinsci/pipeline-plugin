@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.steps.build;
 
+import hudson.model.Action;
 import hudson.model.BooleanParameterDefinition;
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
@@ -23,7 +24,9 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockFolder;
 
 import java.util.Arrays;
+import java.util.List;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.TestExtension;
 
 /**
  * @author Vivek Pandey
@@ -173,6 +176,19 @@ public class BuildTriggerStepTest extends Assert {
         WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
         us.setDefinition(new CpsFlowDefinition("build job: 'ds', wait: false"));
         j.assertBuildStatusSuccess(us.scheduleBuild2(0));
+    }
+
+    @Test public void rejectedStart() throws Exception {
+        j.createFreeStyleProject("ds");
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        // wait: true also fails as expected w/o fix, just more slowly (test timeout):
+        us.setDefinition(new CpsFlowDefinition("build job: 'ds', wait: false"));
+        j.assertLogContains("Failed to trigger build of ds", j.assertBuildStatus(Result.FAILURE, us.scheduleBuild2(0).get()));
+    }
+    @TestExtension("rejectedStart") public static final class QDH extends Queue.QueueDecisionHandler {
+        @Override public boolean shouldSchedule(Queue.Task p, List<Action> actions) {
+            return p instanceof WorkflowJob; // i.e., refuse FreestyleProject
+        }
     }
 
 }

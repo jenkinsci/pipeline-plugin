@@ -14,6 +14,7 @@ import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.model.queue.QueueTaskFuture;
 import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.Jenkins;
@@ -57,11 +58,14 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         if (parameters != null) {
             actions.add(new ParametersAction(parameters));
         }
-        new ParameterizedJobMixIn() {
+        QueueTaskFuture<?> f = new ParameterizedJobMixIn() {
             @Override protected Job asJob() {
                 return (Job) project;
             }
         }.scheduleBuild2(project.getQuietPeriod(), actions.toArray(new Action[actions.size()]));
+        if (f == null) {
+            throw new AbortException("Failed to trigger build of " + project.getFullName());
+        }
         if (step.getWait()) {
             return false;
         } else {
