@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
+import hudson.Functions;
+import java.io.File;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -37,12 +39,16 @@ public class PushdStepTest {
 
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
+    private String pwdStep() {
+        return Functions.isWindows() ? "bat 'cd'" : "sh 'pwd'";
+    }
+
     @Test public void basics() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
-                p.setDefinition(new CpsFlowDefinition("node {dir('subdir') {sh 'pwd'}}"));
-                story.j.assertLogContains("/subdir", story.j.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+                p.setDefinition(new CpsFlowDefinition("node {dir('subdir') {" + pwdStep() + "}}"));
+                story.j.assertLogContains(File.separator + "subdir", story.j.assertBuildStatusSuccess(p.scheduleBuild2(0)));
             }
         });
     }
@@ -51,7 +57,7 @@ public class PushdStepTest {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
-                p.setDefinition(new CpsFlowDefinition("node {dir('subdir') {semaphore 'restarting'; sh 'pwd'}}"));
+                p.setDefinition(new CpsFlowDefinition("node {dir('subdir') {semaphore 'restarting'; " + pwdStep() + "}}"));
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
                 SemaphoreStep.waitForStart("restarting/1", b);
             }
@@ -63,7 +69,7 @@ public class PushdStepTest {
                 while (b.isBuilding()) { // TODO JENKINS-26399
                     Thread.sleep(100);
                 }
-                story.j.assertLogContains("/subdir", story.j.assertBuildStatusSuccess(b));
+                story.j.assertLogContains(File.separator + "subdir", story.j.assertBuildStatusSuccess(b));
             }
         });
     }

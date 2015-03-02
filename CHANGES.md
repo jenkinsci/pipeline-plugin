@@ -11,7 +11,10 @@ Only noting significant user-visible or major API changes, not internal code cle
 * Fixing `java.io.NotSerializableException: org.jenkinsci.plugins.workflow.support.steps.StageStepExecution$CanceledCause` thrown from certain scripts using `stage`.
 * JENKINS-27052: `stage` step did not prevent a third build from entering a stage after a second was unblocked by a first leaving it.
 * JENKINS-26605: Missing link to _Full Log_ under _Running Steps_ when a single step produced >150Kb of output.
+* JENKINS-26513: deserialization error when restarting Jenkins inside `node {}` while it is still waiting for a slave to come online.
 * `catchError` was incorrectly setting build status to failed when it was merely aborted, canceled, etc.
+* JENKINS-26123: added `wait` option to `build`.
+* Check for failure to even trigger a build from `build`.
 * PR 52: fixed some memory leaks causing the permanent generation and heap to grow unbounded after many flow builds.
 * JENKINS-26120: added `sleep` step.
 

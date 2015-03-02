@@ -33,6 +33,7 @@ import hudson.triggers.SCMTrigger;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import jenkins.util.VirtualFile;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -100,7 +102,8 @@ public class SubversionStepTest {
 
     @Test public void multipleSCMs() throws Exception {
         File sampleRepo = tmp.newFolder();
-        String sampleRepoU = "file://" + sampleRepo; // TODO SVN rejects File.toUri syntax (requires blank authority field)
+        URI u = sampleRepo.toURI();
+        String sampleRepoU = new URI(u.getScheme(), "", u.getPath(), u.getFragment()).toString(); // TODO SVN rejects File.toUri syntax (requires blank authority field)
         run(sampleRepo, "svnadmin", "create", "--compatible-version=1.5", sampleRepo.getAbsolutePath());
         File sampleWc = tmp.newFolder();
         run(sampleWc, "svn", "co", sampleRepoU, ".");
@@ -108,7 +111,8 @@ public class SubversionStepTest {
         run(sampleWc, "svn", "add", "file");
         run(sampleWc, "svn", "commit", "--message=init");
         File otherRepo = tmp.newFolder();
-        String otherRepoU = "file://" + otherRepo;
+        u = otherRepo.toURI();
+        String otherRepoU = new URI(u.getScheme(), "", u.getPath(), u.getFragment()).toString();
         run(otherRepo, "svnadmin", "create", "--compatible-version=1.5", otherRepo.getAbsolutePath());
         File otherWc = tmp.newFolder();
         run(otherWc, "svn", "co", otherRepoU, ".");
@@ -127,12 +131,13 @@ public class SubversionStepTest {
             "        dir('other') {\n" +
             "            svn(url: '" + otherRepoU + "')\n" +
             "        }\n" +
-            "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +
+            "        archive '**'\n" +
             "    }\n" +
             "}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        r.assertLogContains("PRESENT: main/file", b);
-        r.assertLogContains("PRESENT: other/otherfile", b);
+        VirtualFile artifacts = b.getArtifactManager().root();
+        assertTrue(artifacts.child("main/file").isFile());
+        assertTrue(artifacts.child("other/otherfile").isFile());
         FileUtils.touch(new File(sampleWc, "file2"));
         run(sampleWc, "svn", "add", "file2");
         run(sampleWc, "svn", "commit", "--message=+file2");
@@ -144,13 +149,14 @@ public class SubversionStepTest {
         r.waitUntilNoActivity();
         b = p.getLastBuild();
         assertEquals(2, b.number);
-        r.assertLogContains("PRESENT: main/file2", b);
-        r.assertLogContains("PRESENT: other/otherfile2", b);
+        artifacts = b.getArtifactManager().root();
+        assertTrue(artifacts.child("main/file2").isFile());
+        assertTrue(artifacts.child("other/otherfile2").isFile());
         Iterator<? extends SCM> scms = p.getSCMs().iterator();
         assertTrue(scms.hasNext());
-        assertEquals(sampleRepoU, ((SubversionSCM) scms.next()).getLocations()[0].getURL());
+        assertEquals(sampleRepoU.replaceFirst("/$", ""), ((SubversionSCM) scms.next()).getLocations()[0].getURL());
         assertTrue(scms.hasNext());
-        assertEquals(otherRepoU, ((SubversionSCM) scms.next()).getLocations()[0].getURL());
+        assertEquals(otherRepoU.replaceFirst("/$", ""), ((SubversionSCM) scms.next()).getLocations()[0].getURL());
         assertFalse(scms.hasNext());
         List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = b.getChangeSets();
         assertEquals(2, changeSets.size());

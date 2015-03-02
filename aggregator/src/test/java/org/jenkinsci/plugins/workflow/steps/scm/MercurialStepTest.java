@@ -29,11 +29,13 @@ import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.triggers.SCMTrigger;
 import java.io.File;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import jenkins.util.VirtualFile;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -70,11 +72,13 @@ public class MercurialStepTest {
         FileUtils.touch(new File(sampleRepo, "file"));
         hg(sampleRepo, "add", "file");
         hg(sampleRepo, "commit", "--message=init");
+        URI sampleRepoU = sampleRepo.toURI();
         File otherRepo = tmp.newFolder();
         hg(otherRepo, "init");
         FileUtils.touch(new File(otherRepo, "otherfile"));
         hg(otherRepo, "add", "otherfile");
         hg(otherRepo, "commit", "--message=init");
+        URI otherRepoU = otherRepo.toURI();
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         p.addTrigger(new SCMTrigger(""));
         p.setQuietPeriod(3); // so it only does one build
@@ -82,39 +86,47 @@ public class MercurialStepTest {
             "node {\n" +
             "    ws {\n" +
             "        dir('main') {\n" +
-            "            checkout([$class: 'MercurialSCM', source: '" + sampleRepo + "'])\n" +
+            "            checkout([$class: 'MercurialSCM', source: $/" + sampleRepoU + "/$])\n" +
             "        }\n" +
             "        dir('other') {\n" +
-            "            checkout([$class: 'MercurialSCM', source: '" + otherRepo + "', clean: true])\n" +
-            "            sh 'echo stuff >> unversioned; wc -l unversioned'\n" +
+            "            checkout([$class: 'MercurialSCM', source: $/" + otherRepoU + "/$, clean: true])\n" +
+            "            try {\n" +
+            "                readFile 'unversioned'\n" +
+            "                error 'unversioned did exist'\n" +
+            "            } catch (FileNotFoundException x) {\n" +
+            "                echo 'unversioned did not exist'\n" +
+            "            }\n" +
+            "            writeFile text: '', file: 'unversioned'\n" +
             "        }\n" +
-            "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +
+            "        archive '**'\n" +
             "    }\n" +
             "}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        r.assertLogContains("PRESENT: main/file", b);
-        r.assertLogContains("PRESENT: other/otherfile", b);
-        r.assertLogContains("1 unversioned", b);
+        VirtualFile artifacts = b.getArtifactManager().root();
+        assertTrue(artifacts.child("main/file").isFile());
+        assertTrue(artifacts.child("other/otherfile").isFile());
+        r.assertLogContains("unversioned did not exist", b);
         FileUtils.touch(new File(sampleRepo, "file2"));
         hg(sampleRepo, "add", "file2");
         hg(sampleRepo, "commit", "--message=file2");
         FileUtils.touch(new File(otherRepo, "otherfile2"));
         hg(otherRepo, "add", "otherfile2");
         hg(otherRepo, "commit", "--message=otherfile2");
-        System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
-        System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(otherRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
+        System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(sampleRepoU.toString(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
+        System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(otherRepoU.toString(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
         r.waitUntilNoActivity();
         FileUtils.copyFile(p.getSCMTrigger().getLogFile(), System.out);
-        b = p.getLastBuild();
+        b = r.assertBuildStatusSuccess(p.getLastBuild());
         assertEquals(2, b.number);
-        r.assertLogContains("PRESENT: main/file2", b);
-        r.assertLogContains("PRESENT: other/otherfile2", b);
-        r.assertLogContains("1 unversioned", b);
+        artifacts = b.getArtifactManager().root();
+        assertTrue(artifacts.child("main/file2").isFile());
+        assertTrue(artifacts.child("other/otherfile2").isFile());
+        r.assertLogContains("unversioned did not exist", b);
         Iterator<? extends SCM> scms = p.getSCMs().iterator();
         assertTrue(scms.hasNext());
-        assertEquals(sampleRepo.getAbsolutePath(), ((MercurialSCM) scms.next()).getSource());
+        assertEquals(sampleRepoU.toString(), ((MercurialSCM) scms.next()).getSource());
         assertTrue(scms.hasNext());
-        assertEquals(otherRepo.getAbsolutePath(), ((MercurialSCM) scms.next()).getSource());
+        assertEquals(otherRepoU.toString(), ((MercurialSCM) scms.next()).getSource());
         assertFalse(scms.hasNext());
         List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = b.getChangeSets();
         assertEquals(2, changeSets.size());
