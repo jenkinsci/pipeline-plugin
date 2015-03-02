@@ -13,6 +13,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [X] `MercurialSCM` (`mercurial`): supported as of 1.51
 - [ ] `PerforceScm` (`p4`, not the older `perforce`): [JENKINS-24206](https://issues.jenkins-ci.org/browse/JENKINS-24206)
 - [ ] `DimensionsSCM` (`dimensionsscm`): [JENKINS-26165](https://issues.jenkins-ci.org/browse/JENKINS-26165)
+- [ ] `SubversionTagging` (`svn-tag`): [JENKINS-26949](https://issues.jenkins-ci.org/browse/JENKINS-26949)
 
 ## Build steps and post-build actions
 
@@ -36,6 +37,10 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `JaCoCoPublisher` (`jacoco`): [JENKINS-27120](https://issues.jenkins-ci.org/browse/JENKINS-27120)
 - [ ] `Publisher` (`testng`): [JENKINS-27121](https://issues.jenkins-ci.org/browse/JENKINS-27121)
 - [ ] `GroovyPostbuildRecorder` (`groovy-postbuild`): [JENKINS-26918](https://issues.jenkins-ci.org/browse/JENKINS-26918)
+- [ ] `MSbuild` (`msbuild`): [JENKINS-26948](https://issues.jenkins-ci.org/browse/JENKINS-26948)
+- [ ] `HipChat` (`hipchat`): [JENKINS-27202](https://issues.jenkins-ci.org/browse/JENKINS-27202)
+- [ ] `Log Parser` (`log-parser`): [JENKINS-27208](https://issues.jenkins-ci.org/browse/JENKINS-27208)
+- [ ] `Warnings` (`warnings`): [JENKINS-27209](https://issues.jenkins-ci.org/browse/JENKINS-27209)
 
 ## Build wrappers
 
@@ -44,6 +49,7 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `Xvnc` (`xvnc`): [JENKINS-26477](https://issues.jenkins-ci.org/browse/JENKINS-26477)
 - [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
 - [ ] `DashboardBuilder` (`environment-dashboard`): [PR 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
+- [ ] `Timestamper` (`timestamper`): [JENKINS-27207](https://issues.jenkins-ci.org/browse/JENKINS-27207)
 
 ## Triggers
 
@@ -74,6 +80,8 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
 - [X] `job-dsl`: implemented in 1.29
 - [ ] `zentimestamp`: [JENKINS-26958](https://issues.jenkins-ci.org/browse/JENKINS-26958)
+- [ ] `claim`: [JENKINS-27206](https://issues.jenkins-ci.org/browse/JENKINS-27206)
+
 
 ## Custom steps
 
