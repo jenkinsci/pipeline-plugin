@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import jenkins.util.VirtualFile;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -84,19 +85,19 @@ public class GitStepTest {
         p.setDefinition(new CpsFlowDefinition(
             "node('remote') {\n" +
             "    ws {\n" +
-            "        git(url: '" + sampleRepo + "', poll: false, changelog: false)\n" +
-            "        sh 'for f in *; do echo PRESENT: $f; done'\n" +
+            "        git(url: $/" + sampleRepo + "/$, poll: false, changelog: false)\n" +
+            "        archive '**'\n" +
             "    }\n" +
             "}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("Cloning the remote Git repository", b); // GitSCM.retrieveChanges
-        r.assertLogContains("PRESENT: file", b);
+        assertTrue(b.getArtifactManager().root().child("file").isFile());
         FileUtils.touch(new File(sampleRepo, "nextfile"));
         git(sampleRepo, "add", "nextfile");
         git(sampleRepo, "commit", "--message=next");
         b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("Fetching changes from the remote Git repository", b); // GitSCM.retrieveChanges
-        r.assertLogContains("PRESENT: nextfile", b);
+        assertTrue(b.getArtifactManager().root().child("nextfile").isFile());
     }
 
     @Test public void changelogAndPolling() throws Exception {
@@ -106,7 +107,7 @@ public class GitStepTest {
         p.setDefinition(new CpsFlowDefinition(
             "node('remote') {\n" +
             "    ws {\n" +
-            "        git '" + sampleRepo + "'\n" +
+            "        git($/" + sampleRepo + "/$)\n" +
             "    }\n" +
             "}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
@@ -144,17 +145,18 @@ public class GitStepTest {
             "node {\n" +
             "    ws {\n" +
             "        dir('main') {\n" +
-            "            git(url: '" + sampleRepo + "')\n" +
+            "            git($/" + sampleRepo + "/$)\n" +
             "        }\n" +
             "        dir('other') {\n" +
-            "            git(url: '" + otherRepo + "')\n" +
+            "            git($/" + otherRepo + "/$)\n" +
             "        }\n" +
-            "        sh 'for f in */*; do echo PRESENT: $f; done'\n" +
+            "        archive '**'\n" +
             "    }\n" +
             "}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        r.assertLogContains("PRESENT: main/file", b);
-        r.assertLogContains("PRESENT: other/otherfile", b);
+        VirtualFile artifacts = b.getArtifactManager().root();
+        assertTrue(artifacts.child("main/file").isFile());
+        assertTrue(artifacts.child("other/otherfile").isFile());
         FileUtils.touch(new File(sampleRepo, "file2"));
         git(sampleRepo, "add", "file2");
         git(sampleRepo, "commit", "--message=file2");
@@ -166,8 +168,9 @@ public class GitStepTest {
         r.waitUntilNoActivity();
         b = p.getLastBuild();
         assertEquals(2, b.number);
-        r.assertLogContains("PRESENT: main/file2", b);
-        r.assertLogContains("PRESENT: other/otherfile2", b);
+        artifacts = b.getArtifactManager().root();
+        assertTrue(artifacts.child("main/file2").isFile());
+        assertTrue(artifacts.child("other/otherfile2").isFile());
         Iterator<? extends SCM> scms = p.getSCMs().iterator();
         assertTrue(scms.hasNext());
         assertEquals(sampleRepo.getAbsolutePath(), ((GitSCM) scms.next()).getRepositories().get(0).getURIs().get(0).toString());

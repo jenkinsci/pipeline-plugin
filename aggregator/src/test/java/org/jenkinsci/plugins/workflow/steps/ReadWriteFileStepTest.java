@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
+import hudson.Functions;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Rule;
@@ -36,7 +37,15 @@ public class ReadWriteFileStepTest {
 
     @Test public void basics() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("node {sh 'echo hello > f1'; def text = readFile 'f1'; text = text.toUpperCase(); writeFile file: 'f2', text: text; sh 'cat f2'}"));
+        boolean win = Functions.isWindows();
+        p.setDefinition(new CpsFlowDefinition(
+                "node {\n" +
+                (win ? "  bat 'echo hello > f1'\n" : "  sh 'echo hello > f1'\n") +
+                "  def text = readFile 'f1'\n" +
+                "  text = text.toUpperCase()\n" +
+                "  writeFile file: 'f2', text: text\n" +
+                (win ? "  bat 'type f2'\n" : "  sh 'cat f2'\n") +
+                "}"));
         r.assertLogContains("HELLO", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
 

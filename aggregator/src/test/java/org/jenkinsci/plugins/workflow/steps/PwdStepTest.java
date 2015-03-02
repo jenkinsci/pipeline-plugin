@@ -36,7 +36,7 @@ public class PwdStepTest {
 
     @Test public void basics() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("node {def cwd = pwd(); sh \"echo cwd='$cwd'\"}",true));
+        p.setDefinition(new CpsFlowDefinition("node {echo \"cwd=${pwd()}\"}", true));
         r.assertLogContains("cwd=" + r.jenkins.getWorkspaceFor(p), r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
 

@@ -15,16 +15,18 @@ import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ParallelLabelAction
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStepException;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.steps.EchoStep;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.durable_task.BatchScriptStep;
 import org.jenkinsci.plugins.workflow.steps.durable_task.ShellStep;
 import org.jenkinsci.plugins.workflow.support.steps.input.InputAction;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
-import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
-import org.junit.Ignore;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  * Tests for {@link ParallelStep}.
@@ -78,7 +80,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "      b: { error 'died' },",
 
                         // make sure this branch takes longer than a
-                    "      a: { sleep 3; sh('touch b.done'); }",
+                    "      a: { sleep 3; writeFile text: '', file: 'b.done' }",
                     "    )",
                     "    assert false;",
                     "  } catch (ParallelStepException e) {",
@@ -98,33 +100,6 @@ public class ParallelStepTest extends SingleJobTestBase {
         });
     }
 
-    /**
-     * Nameless closures.
-     */
-    @Ignore("TODO CpsBuiltinSteps.parallel(Closure[]) used to handle this, but there is no replacement")
-    @Test
-    public void nameslessBranches() throws Exception {
-        story.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
-                FilePath aa = jenkins().getRootPath().child("a");
-                FilePath bb = jenkins().getRootPath().child("b");
-
-                p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition(join(
-                    "node {",
-                    "  parallel( { sh('touch "+aa+"'); }, { sh('touch "+bb+"'); } )",
-                    "}"
-                )));
-
-                startBuilding().get();
-                assertBuildCompletedSuccessfully();
-
-                assertTrue(aa.exists());
-                assertTrue(bb.exists());
-            }
-        });
-    }
-
     @Test
     public void localMethodCallWithinBranch() {
         story.addStep(new Statement() {
@@ -134,9 +109,9 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                    "def touch(f) { sh 'touch '+f }",
+                    "def touch(f) { writeFile text: '', file: f }",
                     "node {",
-                    "  parallel(aa: {touch '" + aa + "'}, bb: {touch '" + bb + "'})",
+                    "  parallel(aa: {touch($/" + aa + "/$)}, bb: {touch($/" + bb + "/$)})",
                     "}"
                 )));
 
@@ -156,23 +131,25 @@ public class ParallelStepTest extends SingleJobTestBase {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
                         "def notify(msg) {",
-                        "  sh \"echo ${msg}\"",
+                        "  echo msg",
                         "}",
                         "node {",
                         "  ws {",
-                        "    sh 'echo start'",
+                        "    echo 'start'",
                         "    parallel(one: {",
                         "      notify('one')",
                         "    }, two: {",
                         "      notify('two')",
                         "    })",
-                        "    sh 'echo end'",
+                        "    echo 'end'",
                         "  }",
                         "}"
                 )));
 
                 startBuilding().get();
                 assertBuildCompletedSuccessfully();
+                story.j.assertLogContains("one", b);
+                story.j.assertLogContains("two", b);
             }
         });
     }
@@ -193,8 +170,10 @@ public class ParallelStepTest extends SingleJobTestBase {
                 int shell=0;
                 for (Row r : t.getRows()) {
                     if (r.getNode() instanceof StepAtomNode) {
-                        if (((StepAtomNode)r.getNode()).getDescriptor() instanceof ShellStep.DescriptorImpl)
-                        shell++;
+                        StepDescriptor descriptor = ((StepAtomNode)r.getNode()).getDescriptor();
+                        if (descriptor instanceof ShellStep.DescriptorImpl || descriptor instanceof BatchScriptStep.DescriptorImpl) {
+                            shell++;
+                        }
                     }
                 }
                 assertEquals(128*3,shell);
@@ -210,30 +189,25 @@ public class ParallelStepTest extends SingleJobTestBase {
     public void suspend() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                FilePath aa = jenkins().getRootPath().child("a");
-                FilePath bb = jenkins().getRootPath().child("b");
-                FilePath cc = jenkins().getRootPath().child("c");
-
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(join(
-                    "import "+ParallelStepException.class.getName(),
-
                     "node {",
                     "    parallel(",
-                    "      a: { watch(new File('"+aa+"')); sh('touch a.done'); },",
-                    "      b: { watch(new File('"+bb+"')); sh('touch b.done'); },",
-                    "      c: { watch(new File('"+cc+"')); sh('touch c.done'); },",
+                    "      a: { semaphore 'suspendA'; echo 'A done' },",
+                    "      b: { semaphore 'suspendB'; echo 'B done' },",
+                    "      c: { semaphore 'suspendC'; echo 'C done' },",
                     "    )",
                     "}"
                 )));
 
                 startBuilding();
 
-                // let the workflow run until all parallel branches settle in the watch()
-                while (watchDescriptor().getActiveWatches().size()<3 && !e.isComplete())
-                    waitForWorkflowToSuspend();
+                // let the workflow run until all parallel branches settle
+                SemaphoreStep.waitForStart("suspendA/1", b);
+                SemaphoreStep.waitForStart("suspendB/1", b);
+                SemaphoreStep.waitForStart("suspendC/1", b);
 
-                System.out.println(b.getLog());
+                System.out.println(JenkinsRule.getLog(b));
                 assert !e.isComplete();
                 assert e.getCurrentHeads().size()==3;
                 assert b.isBuilding();
@@ -246,18 +220,13 @@ public class ParallelStepTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
 
-                FilePath aa = jenkins().getRootPath().child("a");
-                FilePath bb = jenkins().getRootPath().child("b");
-                FilePath cc = jenkins().getRootPath().child("c");
-
                 // make sure we are still running two heads
                 assert e.getCurrentHeads().size()==3;
                 assert b.isBuilding();
 
                 // we let one branch go at a time
-                for (FilePath f : asList(aa, bb)) {
-                    f.touch(0);
-                    watchDescriptor().watchUpdate();
+                for (String branch : asList("A", "B")) {
+                    SemaphoreStep.success("suspend" + branch + "/1", null);
                     waitForWorkflowToSuspend();
 
                     // until all execution joins into one, we retain all heads
@@ -266,26 +235,25 @@ public class ParallelStepTest extends SingleJobTestBase {
                 }
 
                 // when we let the last one go, it will now run till the completion
-                cc.touch(0);
-                watchDescriptor().watchUpdate();
+                SemaphoreStep.success("suspendC/1", null);
                 while (!e.isComplete())
                     waitForWorkflowToSuspend();
 
                 // make sure all the three branches have executed to the end.
-                for (String marker : asList("a", "b", "c")) {
-                    assert jenkins().getWorkspaceFor(p).child(marker+".done").exists();
+                for (String branch : asList("A", "B", "C")) {
+                    story.j.assertLogContains(branch + " done", b);
                 }
 
                 // check the shape of the graph
                 buildTable();
-                shouldHaveWatchSteps(ShellStep.DescriptorImpl.class, 3);
-                shouldHaveWatchSteps(WatchYourStep.DescriptorImpl.class, 3);
+                shouldHaveSteps(SemaphoreStep.DescriptorImpl.class, 3);
+                shouldHaveSteps(EchoStep.DescriptorImpl.class, 3);
                 shouldHaveParallelStepsInTheOrder("a","b","c");
             }
         });
     }
 
-    private void shouldHaveWatchSteps(Class<? extends StepDescriptor> d, int n) {
+    private void shouldHaveSteps(Class<? extends StepDescriptor> d, int n) {
         int count=0;
         for (Row row : t.getRows()) {
             if (row.getNode() instanceof StepAtomNode) {
@@ -294,7 +262,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                     count++;
             }
         }
-        assertEquals(n,count);
+        assertEquals(d.getName(), n, count);
     }
 
     /**
@@ -315,10 +283,6 @@ public class ParallelStepTest extends SingleJobTestBase {
         }
 
         assertEquals(Arrays.asList(expected),actual);
-    }
-
-    private WatchYourStep.DescriptorImpl watchDescriptor() {
-        return jenkins().getInjector().getInstance(WatchYourStep.DescriptorImpl.class);
     }
 
     /**

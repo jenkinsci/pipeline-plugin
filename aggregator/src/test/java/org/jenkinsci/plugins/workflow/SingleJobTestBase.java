@@ -47,7 +47,7 @@ public abstract class SingleJobTestBase extends Assert {
     @Rule
     public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
-
+    @Deprecated
     @Inject
     WatchYourStep.DescriptorImpl watchDescriptor;
 
