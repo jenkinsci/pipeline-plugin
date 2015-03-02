@@ -20,6 +20,7 @@ public class BuildTriggerStep extends AbstractStepImpl {
 
     private final String job;
     private List<ParameterValue> parameters;
+    private boolean wait = true;
 
     @DataBoundConstructor
     public BuildTriggerStep(String job) {
@@ -36,6 +37,14 @@ public class BuildTriggerStep extends AbstractStepImpl {
 
     @DataBoundSetter public void setParameters(List<ParameterValue> parameters) {
         this.parameters = parameters;
+    }
+
+    public boolean getWait() {
+        return wait;
+    }
+
+    @DataBoundSetter public void setWait(boolean wait) {
+        this.wait = wait;
     }
 
     @Extension
