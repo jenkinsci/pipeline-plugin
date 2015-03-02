@@ -35,6 +35,7 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `HtmlPublisher` (`htmlpublisher`): [JENKINS-26343](https://issues.jenkins-ci.org/browse/JENKINS-26343)
 - [ ] `JaCoCoPublisher` (`jacoco`): [JENKINS-27120](https://issues.jenkins-ci.org/browse/JENKINS-27120)
 - [ ] `Publisher` (`testng`): [JENKINS-27121](https://issues.jenkins-ci.org/browse/JENKINS-27121)
+- [ ] `GroovyPostbuildRecorder` (`groovy-postbuild`): [JENKINS-26918](https://issues.jenkins-ci.org/browse/JENKINS-26918)
 
 ## Build wrappers
 
@@ -42,12 +43,15 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `ConfigFileBuildWrapper` (`config-file-provider`): [JENKINS-26339](https://issues.jenkins-ci.org/browse/JENKINS-26339)
 - [ ] `Xvnc` (`xvnc`): [JENKINS-26477](https://issues.jenkins-ci.org/browse/JENKINS-26477)
 - [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
+- [ ] `DashboardBuilder` (`environment-dashboard`): [PR 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
 
 ## Triggers
 
 Implement `Trigger<ParameterizedJobMixIn.ParameterizedJob>` and implement `TriggerDescriptor.isApplicable` accordingly.
 
 - [ ] `gerrit-trigger`: [JENKINS-26010](https://issues.jenkins-ci.org/browse/JENKINS-26010)
+- [ ] `ghprb`: [JENKINS-26591](https://issues.jenkins-ci.org/browse/JENKINS-26591)
+- [ ] `github`: [JENKINS-27136](https://issues.jenkins-ci.org/browse/JENKINS-27136)
 
 ## Clouds
 
@@ -68,6 +72,8 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [X] `credentials-binding`: `withCredentials` step as of 1.3
 - [ ] `build-failure-analyzer`: [JENKINS-27123](https://issues.jenkins-ci.org/browse/JENKINS-27123)
 - [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
+- [X] `job-dsl`: implemented in 1.29
+- [ ] `zentimestamp`: [JENKINS-26958](https://issues.jenkins-ci.org/browse/JENKINS-26958)
 
 ## Custom steps
 
