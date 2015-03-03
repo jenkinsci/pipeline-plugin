@@ -164,6 +164,12 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      */
     private transient volatile StepDescriptor stepDescriptor;
 
+    /**
+     * Cached value of {@link #getProgramPromise}.
+     * Never null once set (might be overwritten).
+     */
+    private transient volatile ListenableFuture<CpsThreadGroup> programPromise;
+
     @CpsVmThreadOnly
     CpsStepContext(StepDescriptor step, CpsThread thread, FlowExecutionOwner executionRef, FlowNode node, Closure body) {
         this.threadId = thread.id;
@@ -231,20 +237,23 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
 
     private static final ExecutorService getProgramPromiseExecutorService = new ContextResettingExecutorService(Executors.newCachedThreadPool(new NamingThreadFactory(new DaemonThreadFactory(), "CpsStepContext.getProgramPromise")));
     private @Nonnull ListenableFuture<CpsThreadGroup> getProgramPromise() {
-        final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
-        // TODO is there some more convenient way of writing this using Futures.transform? FlowExecutionOwner.get should really return ListenableFuture<FlowExecution>
-        getProgramPromiseExecutorService.submit(new Runnable() {
-            @Override public void run() {
-                try {
-                    ListenableFuture<CpsThreadGroup> pp = getFlowExecution().programPromise;
-                    assert pp != null;
-                    f.set(pp.get());
-                } catch (Exception x) { // from getFlowExecution() or get()
-                    f.setException(x);
+        if (programPromise == null) {
+            final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
+            // TODO is there some more convenient way of writing this using Futures.transform? FlowExecutionOwner.get should really return ListenableFuture<FlowExecution>
+            getProgramPromiseExecutorService.submit(new Runnable() {
+                @Override public void run() {
+                    try {
+                        ListenableFuture<CpsThreadGroup> pp = getFlowExecution().programPromise;
+                        assert pp != null;
+                        f.set(pp.get());
+                    } catch (Exception x) { // from getFlowExecution() or get()
+                        f.setException(x);
+                    }
                 }
-            }
-        });
-        return f;
+            });
+            programPromise = f;
+        }
+        return programPromise;
     }
 
     @Override public boolean isReady() {
