@@ -63,6 +63,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.util.ContextResettingExecutorService;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -228,7 +229,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         }
     }
 
-    private static final ExecutorService getProgramPromiseExecutorService = Executors.newCachedThreadPool(new NamingThreadFactory(new DaemonThreadFactory(), "CpsStepContext.getProgramPromise"));
+    private static final ExecutorService getProgramPromiseExecutorService = new ContextResettingExecutorService(Executors.newCachedThreadPool(new NamingThreadFactory(new DaemonThreadFactory(), "CpsStepContext.getProgramPromise")));
     private @Nonnull ListenableFuture<CpsThreadGroup> getProgramPromise() {
         final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
         // TODO is there some more convenient way of writing this using Futures.transform? FlowExecutionOwner.get should really return ListenableFuture<FlowExecution>
