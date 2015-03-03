@@ -427,6 +427,7 @@ public class CpsFlowExecution extends FlowExecution {
                         }
 
                         public void onFailure(Throwable t) {
+                            // Note: not calling result.setException(t) since loadProgramFailed in fact sets a result
                             try {
                                 loadProgramFailed(t, result);
                             } finally {
