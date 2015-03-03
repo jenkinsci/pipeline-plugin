@@ -24,15 +24,31 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
+    <j:set var="jobFieldId" value="${h.generateId()}"/>
     <f:entry field="job" title="Project to Build">
-        <f:textbox/>
-    </f:entry>
-    <f:entry title="Parameters">
-        <!-- TODO JENKINS-26093 load *ParameterDefinition/index.jelly blocks from downstream project -->
-        <f:block>To set parameters, use for example: <code>parameters: [[$class: 'StringParameterValue', name: 'branch', value: 'master']]</code></f:block>
+        <f:textbox onblur="loadParams()" id="${jobFieldId}"/>
     </f:entry>
     <f:entry field="wait">
         <f:checkbox default="true" title="Wait for completion"/>
     </f:entry>
+    <f:entry title="Parameters">
+        <div id="params"/>
+    </f:entry>
+    <script>
+        function loadParams() {
+            var div = $$('params');
+   console.log($$('${jobFieldId}').text);
+            new Ajax.Request('${descriptor.descriptorUrl}/parameters?job=' + encodeURIComponent($$('${jobFieldId}').value), {
+                method : 'get',
+                onSuccess : function(x) {
+                    div.innerHTML = x.responseText;
+                    Behaviour.applySubtree(div);
+                },
+                onFailure : function(x) {
+                    div.innerHTML = "<b>ERROR</b>: Failed to load parameter definitions: " + x.statusText;
+                }
+            });
+        }
+    </script>
 </j:jelly>

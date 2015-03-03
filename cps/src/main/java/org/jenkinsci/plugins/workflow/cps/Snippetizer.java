@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import hudson.Extension;
 import hudson.Functions;
+import hudson.model.Descriptor;
 import hudson.model.RootAction;
 import java.io.IOException;
 import java.util.Collection;
@@ -196,9 +197,10 @@ import org.kohsuke.stapler.StaplerResponse;
             throw new IllegalStateException("Jenkins is not running");
         }
         Class<?> c = j.getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
+        Descriptor<?> descriptor = j.getDescriptor(c.asSubclass(Step.class));
         Object o;
         try {
-            o = req.bindJSON(c, jsonO);
+            o = descriptor.newInstance(req, jsonO);
         } catch (RuntimeException x) { // e.g. IllegalArgumentException
             return HttpResponses.plainText(Functions.printThrowable(x));
         }
