@@ -63,6 +63,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [X] `docker`: supported as of 0.8
 - [X] `nectar-vmware` (Jenkins Enterprise): supported as of 4.3.2
 - [ ] `operations-center-cloud` (Jenkins Enterprise/Operations Center): RM-2642
+- [ ] `ec2`: known to just work
 
 ## Miscellaneous
 
