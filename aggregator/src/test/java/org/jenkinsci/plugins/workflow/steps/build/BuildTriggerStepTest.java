@@ -160,12 +160,11 @@ public class BuildTriggerStepTest extends Assert {
         Cause.UpstreamCause cause = ds1.getCause(Cause.UpstreamCause.class);
         assertNotNull(cause);
         assertEquals(us1, cause.getUpstreamRun());
-        // TODO JENKINS-26093 let us bind a simple Groovy map
-        us.setDefinition(new CpsFlowDefinition("build job: 'ds', parameters: [new hudson.model.StringParameterValue('branch', 'release')]"));
+        us.setDefinition(new CpsFlowDefinition("build job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'branch', value: 'release']]", true));
         j.assertBuildStatusSuccess(us.scheduleBuild2(0));
-        // TODO IIRC there is an open PR regarding automatic filling in of default parameter values; should that be used, or is BuildTriggerStepExecution responsible, or ParameterizedJobMixIn.scheduleBuild2?
+        // TODO JENKINS-13768 proposes automatic filling in of default parameter values; should that be used, or is BuildTriggerStepExecution responsible, or ParameterizedJobMixIn.scheduleBuild2?
         j.assertLogContains("branch=release extra=", ds.getBuildByNumber(2));
-        us.setDefinition(new CpsFlowDefinition("build job: 'ds', parameters: [new hudson.model.StringParameterValue('branch', 'release'), new hudson.model.BooleanParameterValue('extra', true)]"));
+        us.setDefinition(new CpsFlowDefinition("build job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'branch', value: 'release'], [$class: 'BooleanParameterValue', name: 'extra', value: true]]", true));
         j.assertBuildStatusSuccess(us.scheduleBuild2(0));
         j.assertLogContains("branch=release extra=true", ds.getBuildByNumber(3));
     }

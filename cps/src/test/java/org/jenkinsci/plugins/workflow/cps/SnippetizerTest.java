@@ -101,11 +101,7 @@ public class SnippetizerTest {
         BuildTriggerStep step = new BuildTriggerStep("downstream");
         assertRoundTrip(step, "build 'downstream'");
         step.setParameters(Arrays.asList(new StringParameterValue("branch", "default"), new BooleanParameterValue("correct", true)));
-        /* TODO figure out how to add support for ParameterValue without those having Descriptor’s yet
-                currently instantiate works but uninstantiate does not offer a FQN
-                (which does not matter in this case since BuildTriggerStep/config.jelly does not offer to bind parameters anyway)
-        assertRoundTrip(step, "build job: 'downstream', parameters: [[$class: 'hudson.model.StringParameterValue', name: 'branch', value: 'default'], [$class: 'hudson.model.BooleanParameterValue', name: 'correct', value: true]]");
-        */
+        assertRoundTrip(step, "build job: 'downstream', parameters: [[$class: 'StringParameterValue', name: 'branch', value: 'default'], [$class: 'BooleanParameterValue', name: 'correct', value: true]]");
     }
 
     @Issue("JENKINS-25779")

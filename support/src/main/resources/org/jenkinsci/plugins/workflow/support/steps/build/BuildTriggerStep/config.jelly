@@ -29,8 +29,8 @@ THE SOFTWARE.
         <f:textbox/>
     </f:entry>
     <f:entry title="Parameters">
-        <!-- TODO JENKINS-26093 -->
-        <f:block><code>parameters</code> may be bound to a list of <code>ParameterValue</code>s.</f:block>
+        <!-- TODO JENKINS-26093 load *ParameterDefinition/index.jelly blocks from downstream project -->
+        <f:block>To set parameters, use for example: <code>parameters: [[$class: 'StringParameterValue', name: 'branch', value: 'master']]</code></f:block>
     </f:entry>
     <f:entry field="wait">
         <f:checkbox default="true" title="Wait for completion"/>

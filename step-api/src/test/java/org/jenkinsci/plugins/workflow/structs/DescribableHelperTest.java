@@ -27,7 +27,9 @@ package org.jenkinsci.plugins.workflow.structs;
 import hudson.Extension;
 import hudson.Main;
 import hudson.model.AbstractDescribableImpl;
+import hudson.model.BooleanParameterValue;
 import hudson.model.Descriptor;
+import hudson.model.ParameterValue;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -428,6 +430,35 @@ public class DescribableHelperTest {
         @DataBoundSetter public void setBases(Base[] bases) {this.bases = bases;}
         public String getStuff() {return stuff;}
         @Override public String toString() {return "DefaultStructArray" + Arrays.toString(bases) + ";stuff=" + stuff;}
+    }
+
+    @Issue("JENKINS-26093")
+    @Test public void parameterValues() throws Exception {
+        assertTrue(DescribableHelper.findSubtypes(ParameterValue.class).contains(BooleanParameterValue.class)); //  do not want to enumerate ListSubversionTagsParameterValue etc.
+        // Omitting RunParameterValue since it is not friendly for a unit test.
+        // JobParameterDefinition is not registered as an extension, so not supporting FileParameterValue.
+        // FileParameterValue is unsupportable as an input to a WorkflowJob since it requires createBuildWrapper to work;
+        // as an argument to BuildTriggerStep it could perhaps work, but we would need to provide a custom FileItem implementation.
+        // PasswordParameterValue requires Secret.fromString and thus JenkinsRule.
+        // For others: https://github.com/search?type=Code&q=user%3Ajenkinsci+user%3Acloudbees+%22extends+ParameterDefinition%22
+        roundTrip(TakesParams.class, map("parameters", Arrays.asList(
+                map("$class", "BooleanParameterValue", "name", "flag", "value", true),
+                map("$class", "StringParameterValue", "name", "n", "value", "stuff"),
+                map("$class", "TextParameterValue", "name", "text", "value", "here\nthere"))),
+            "TakesParams;BooleanParameterValue:flag=true;StringParameterValue:n=stuff;TextParameterValue:text=here\nthere");
+    }
+    public static final class TakesParams {
+        public final List<ParameterValue> parameters;
+        @DataBoundConstructor public TakesParams(List<ParameterValue> parameters) {
+            this.parameters = parameters;
+        }
+        @Override public String toString() {
+            StringBuilder b = new StringBuilder("TakesParams");
+            for (ParameterValue v : parameters) {
+                b.append(';').append(v.getClass().getSimpleName()).append(':').append(v.getShortDescription());
+            }
+            return b.toString();
+        }
     }
 
     private static Map<String,Object> map(Object... keysAndValues) {
