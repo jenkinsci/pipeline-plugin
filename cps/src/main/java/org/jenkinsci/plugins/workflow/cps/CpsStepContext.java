@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.util.Timer;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -215,7 +216,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      *
      * This can block for the entire duration of the PREPARING state.
      */
-    @CheckForNull CpsThread getThreadSynchronously() throws InterruptedException, IOException {
+    private @CheckForNull CpsThread getThreadSynchronously() throws InterruptedException, IOException {
         try {
             CpsThreadGroup g = getProgramPromise().get();
             return getThread(g);
@@ -224,13 +225,24 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         }
     }
     
-    private @Nonnull ListenableFuture<CpsThreadGroup> getProgramPromise() throws IOException {
-        ListenableFuture<CpsThreadGroup> pp = getFlowExecution().programPromise;
-        assert pp != null;
-        return pp;
+    private @Nonnull ListenableFuture<CpsThreadGroup> getProgramPromise() {
+        final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
+        // TODO is there some more convenient way of writing this using Futures.transform?
+        Timer.get().submit(new Runnable() {
+            @Override public void run() {
+                try {
+                    ListenableFuture<CpsThreadGroup> pp = getFlowExecution().programPromise;
+                    assert pp != null;
+                    f.set(pp.get());
+                } catch (Exception x) { // from getFlowExecution() or get()
+                    f.setException(x);
+                }
+            }
+        });
+        return f;
     }
 
-    @Override public boolean isReady() throws IOException, InterruptedException {
+    @Override public boolean isReady() {
         return getProgramPromise().isDone();
     }
 
