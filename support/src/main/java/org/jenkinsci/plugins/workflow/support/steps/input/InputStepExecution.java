@@ -6,6 +6,7 @@ import hudson.Util;
 import hudson.console.HyperlinkNote;
 import hudson.model.Failure;
 import hudson.model.FileParameterValue;
+import hudson.model.Job;
 import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
@@ -166,7 +167,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
      */
     @RequirePOST
     public HttpResponse doAbort() throws IOException, ServletException {
-        preSubmissionCheck();
+        preAbortCheck();
 
         FlowInterruptedException e = new FlowInterruptedException(Result.ABORTED, new Rejection(User.current()));
         outcome = new Outcome(null,e);
@@ -177,6 +178,17 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
         // TODO: record this decision to FlowNode
 
         return HttpResponses.ok();
+    }
+
+    /**
+     * Check if the current user can abort/cancel the run from the input.
+     */
+    private void preAbortCheck() {
+        if (isSettled()) {
+            throw new Failure("This input has been already given");
+        } if (!canCancel() && !input.canSubmit()) {
+            throw new Failure("You need to be '"+ input.getSubmitter() +"' (or have Job CANCEL permissions) to cancel this.");
+        }
     }
 
     /**
@@ -197,6 +209,10 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
         } finally {
             PauseAction.endCurrentPause(node);
         }
+    }
+
+    private boolean canCancel() {
+        return getRun().getParent().hasPermission(Job.CANCEL);
     }
 
     /**
