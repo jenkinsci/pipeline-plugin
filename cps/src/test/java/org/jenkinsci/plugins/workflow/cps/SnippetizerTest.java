@@ -30,6 +30,9 @@ import com.gargoylesoftware.htmlunit.WebResponse;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.GroovyShell;
 import hudson.model.BooleanParameterValue;
+import hudson.model.FreeStyleProject;
+import hudson.model.ParametersDefinitionProperty;
+import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
 import hudson.tasks.ArtifactArchiver;
 import java.net.URL;
@@ -136,13 +139,28 @@ public class SnippetizerTest {
         JenkinsRule.WebClient wc = r.createWebClient();
         WebRequestSettings wrs = new WebRequestSettings(new URL(r.getURL(), Snippetizer.GENERATE_URL), HttpMethod.POST);
         List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new NameValuePair("json", "{'stapler-class':'org.jenkinsci.plugins.workflow.steps.EchoStep', 'message':'hello world'}"));
+        params.add(new NameValuePair("json", "{'stapler-class':'" + EchoStep.class.getName() + "', 'message':'hello world'}"));
         // WebClient.addCrumb *replaces* rather than *adds*:
         params.add(new NameValuePair(r.jenkins.getCrumbIssuer().getDescriptor().getCrumbRequestField(), r.jenkins.getCrumbIssuer().getCrumb(null)));
         wrs.setRequestParameters(params);
         WebResponse response = wc.getPage(wrs).getWebResponse();
         assertEquals("text/plain", response.getContentType());
         assertEquals("echo 'hello world'", response.getContentAsString().trim());
+    }
+
+    @Issue("JENKINS-26093")
+    @Test public void generateSnippetForBuildTrigger() throws Exception {
+        FreeStyleProject ds = r.createFreeStyleProject("ds");
+        ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("key", "")));
+        JenkinsRule.WebClient wc = r.createWebClient();
+        WebRequestSettings wrs = new WebRequestSettings(new URL(r.getURL(), Snippetizer.GENERATE_URL), HttpMethod.POST);
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new NameValuePair("json", "{'stapler-class':'" + BuildTriggerStep.class.getName() + "', 'job':'ds', 'parameter':[{'name':'key', 'value':'stuff'}]}"));
+        params.add(new NameValuePair(r.jenkins.getCrumbIssuer().getDescriptor().getCrumbRequestField(), r.jenkins.getCrumbIssuer().getCrumb(null)));
+        wrs.setRequestParameters(params);
+        WebResponse response = wc.getPage(wrs).getWebResponse();
+        assertEquals("text/plain", response.getContentType());
+        assertEquals("build job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'key', value: 'stuff']]", response.getContentAsString().trim());
     }
 
 }
