@@ -15,6 +15,7 @@ l.ajax {
                 table(width: '100%', class: 'parameters') {
                     for (parameterDefinition in pdp.parameterDefinitions) {
                         tbody {
+                            // TODO JENKINS-26578 does not work for CredentialsParameterDefinition: pulldown is not populated because select.js is never loaded; <script> section in https://github.com/jenkinsci/credentials-plugin/commit/1045207207fb69d4dc1ede70d7ab743ad463708c not executed
                             st.include(it: parameterDefinition, page: parameterDefinition.descriptor.valuePage)
                         }
                     }
