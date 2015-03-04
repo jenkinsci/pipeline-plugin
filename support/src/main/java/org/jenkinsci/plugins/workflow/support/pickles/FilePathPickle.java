@@ -86,6 +86,18 @@ public class FilePathPickle extends Pickle {
         // TODO better to use a synchronized accessor
         @Restricted(NoExternalUse.class)
         public static final Map<VirtualChannel,String> channelNames = new WeakHashMap<VirtualChannel,String>();
+
+        static {
+            // Add channels that may already be known to Jenkins. This can be the case
+            // just after the Workflow plugins are installed (see JENKINS-25958).
+            Jenkins instance = Jenkins.getInstance();
+            if (instance != null) {
+                for (Computer c : instance.getComputers()) {
+                    channelNames.put(c.getChannel(), c.getName());
+                }
+            }
+        }
+
         @Override public void onOnline(Computer c, TaskListener l) { // TODO currently preOnline is not called for MasterComputer
             if (c instanceof Jenkins.MasterComputer) {
                 channelNames.put(c.getChannel(), c.getName());
