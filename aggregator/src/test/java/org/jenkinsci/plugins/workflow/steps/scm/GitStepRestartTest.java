@@ -61,7 +61,9 @@ public class GitStepRestartTest {
     @Test public void checkoutsRestored() throws Exception {
         r.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                r.j.jenkins.getDescriptorByType(SCMTrigger.DescriptorImpl.class).synchronousPolling = true;
+                SCMTrigger.DescriptorImpl scmTriggerDescriptor = r.j.jenkins.getDescriptorByType(SCMTrigger.DescriptorImpl.class);
+                scmTriggerDescriptor.synchronousPolling = true;
+                scmTriggerDescriptor.save();
                 WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.addTrigger(new SCMTrigger(""));
                 r.j.createOnlineSlave(Label.get("remote"));
