@@ -71,7 +71,8 @@ public class BuildTriggerStep extends AbstractStepImpl {
             JSONArray params = formData.optJSONArray("parameter");
             if (params != null) {
                 Jenkins jenkins = Jenkins.getInstance();
-                Job<?,?> job = jenkins != null ? jenkins.getItemByFullName(step.getJob(), Job.class) : null;
+                Job<?,?> context = StaplerReferer.findItemFromRequest(Job.class);
+                Job<?,?> job = jenkins != null ? jenkins.getItem(step.getJob(), context, Job.class) : null;
                 if (job != null) {
                     ParametersDefinitionProperty pdp = job.getProperty(ParametersDefinitionProperty.class);
                     if (pdp != null) {

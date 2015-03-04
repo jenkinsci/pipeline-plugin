@@ -57,6 +57,7 @@ import org.junit.Ignore;
 import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.MockFolder;
 
 public class SnippetizerTest {
 
@@ -150,17 +151,22 @@ public class SnippetizerTest {
 
     @Issue("JENKINS-26093")
     @Test public void generateSnippetForBuildTrigger() throws Exception {
-        FreeStyleProject ds = r.createFreeStyleProject("ds");
+        MockFolder d1 = r.createFolder("d1");
+        FreeStyleProject ds = d1.createProject(FreeStyleProject.class, "ds");
+        MockFolder d2 = r.createFolder("d2");
+        // Really this would be a WorkflowJob, but we cannot depend on that here, and it should not matter since we are just looking for Job:
+        FreeStyleProject us = d2.createProject(FreeStyleProject.class, "us");
         ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("key", "")));
         JenkinsRule.WebClient wc = r.createWebClient();
         WebRequestSettings wrs = new WebRequestSettings(new URL(r.getURL(), Snippetizer.GENERATE_URL), HttpMethod.POST);
+        wrs.setAdditionalHeader("Referer", us.getAbsoluteUrl() + "configure");
         List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new NameValuePair("json", "{'stapler-class':'" + BuildTriggerStep.class.getName() + "', 'job':'ds', 'parameter':[{'name':'key', 'value':'stuff'}]}"));
+        params.add(new NameValuePair("json", "{'stapler-class':'" + BuildTriggerStep.class.getName() + "', 'job':'../d1/ds', 'parameter':[{'name':'key', 'value':'stuff'}]}"));
         params.add(new NameValuePair(r.jenkins.getCrumbIssuer().getDescriptor().getCrumbRequestField(), r.jenkins.getCrumbIssuer().getCrumb(null)));
         wrs.setRequestParameters(params);
         WebResponse response = wc.getPage(wrs).getWebResponse();
         assertEquals("text/plain", response.getContentType());
-        assertEquals("build job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'key', value: 'stuff']]", response.getContentAsString().trim());
+        assertEquals("build job: '../d1/ds', parameters: [[$class: 'StringParameterValue', name: 'key', value: 'stuff']]", response.getContentAsString().trim());
     }
 
 }
