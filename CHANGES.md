@@ -2,7 +2,11 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
-## 1.3 (upcoming)
+## 1.4 (upcoming)
+
+### User changes
+
+## 1.3 (Mar 04 2015)
 
 ### User changes
 * JENKINS-25958: the basic `node` step did not work if Workflow was dynamically installed in Jenkins (with no restart).
