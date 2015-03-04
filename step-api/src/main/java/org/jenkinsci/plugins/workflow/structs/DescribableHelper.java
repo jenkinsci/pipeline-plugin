@@ -28,6 +28,8 @@ import hudson.Extension;
 import com.google.common.primitives.Primitives;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.model.ParameterDefinition;
+import hudson.model.ParameterValue;
 import java.beans.Introspector;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -388,6 +390,21 @@ public class DescribableHelper {
         for (Descriptor<?> d : getDescriptorList()) {
             if (supertype.isAssignableFrom(d.clazz)) {
                 clazzes.add(d.clazz.asSubclass(supertype));
+            }
+        }
+        if (supertype == ParameterValue.class) { // TODO JENKINS-26093 hack, pending core change
+            for (Class<? extends ParameterDefinition> d : findSubtypes(ParameterDefinition.class)) {
+                String name = d.getName();
+                if (name.endsWith("Definition")) {
+                    try {
+                        Class<?> c = d.getClassLoader().loadClass(name.replaceFirst("Definition$", "Value"));
+                        if (supertype.isAssignableFrom(c)) {
+                            clazzes.add(c.asSubclass(supertype));
+                        }
+                    } catch (ClassNotFoundException x) {
+                        // ignore
+                    }
+                }
             }
         }
         return clazzes;
