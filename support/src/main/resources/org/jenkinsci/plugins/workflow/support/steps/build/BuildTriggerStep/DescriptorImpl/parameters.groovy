@@ -4,10 +4,14 @@ def l = namespace('/lib/layout')
 l.ajax {
     def jobName = request.getParameter('job')
     if (jobName != null) {
-        def job = app.getItemByFullName(jobName, hudson.model.Job)
+        // Cf. BuildTriggerStepExecution:
+        def contextName = request.getParameter('context')
+        def context = contextName != null ? app.getItemByFullName(contextName) : null
+        def job = app.getItem(jobName, (hudson.model.Item) context, jenkins.model.ParameterizedJobMixIn.ParameterizedJob)
         if (job != null) {
             def pdp = job.getProperty(hudson.model.ParametersDefinitionProperty)
             if (pdp != null) {
+                // Cf. ParametersDefinitionProperty/index.jelly:
                 table(width: '100%', class: 'parameters') {
                     for (parameterDefinition in pdp.parameterDefinitions) {
                         tbody {

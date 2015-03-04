@@ -16,6 +16,8 @@ import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.Step;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -107,6 +109,12 @@ public class BuildTriggerStep extends AbstractStepImpl {
 
         public AutoCompletionCandidates doAutoCompleteJob(@AncestorInPath ItemGroup<?> context, @QueryParameter String value) {
             return AutoCompletionCandidates.ofJobNames(ParameterizedJobMixIn.ParameterizedJob.class, value, context);
+        }
+
+        @Restricted(DoNotUse.class) // for use from config.jelly
+        public String getContext() {
+            Job<?,?> job = StaplerReferer.findItemFromRequest(Job.class);
+            return job != null ? job.getFullName() : null;
         }
 
     }
