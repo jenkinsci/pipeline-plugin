@@ -6,6 +6,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ### User changes
 * JENKINS-26093: `build` can now accept `parameters` in a more uniform (and sandbox-friendly) syntax, and the _Snippet Generator_ proposes them based on the actual parameter definitions of the downstream job.
+* JENKINS-25784: Sandbox mode defauling based on RUN_SCRIPTS privileges.
 * JENKINS-25890: deadlock during restart.
 * Fixed some file handle leaks caught by tests which may have affected Windows masters.
 * JENKINS-25779: snippet generator now omits default values of complex steps.
