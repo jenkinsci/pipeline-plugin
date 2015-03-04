@@ -15,8 +15,11 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.User;
 import hudson.util.HttpResponses;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.acegisecurity.Authentication;
+import org.acegisecurity.GrantedAuthority;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.support.actions.PauseAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -186,7 +189,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
     private void preAbortCheck() {
         if (isSettled()) {
             throw new Failure("This input has been already given");
-        } if (!canCancel() && !input.canSubmit()) {
+        } if (!canCancel() && !canSubmit()) {
             throw new Failure("You need to be '"+ input.getSubmitter() +"' (or have Job CANCEL permissions) to cancel this.");
         }
     }
@@ -197,7 +200,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
     private void preSubmissionCheck() {
         if (isSettled())
             throw new Failure("This input has been already given");
-        if (!input.canSubmit()) {
+        if (!canSubmit()) {
             throw new Failure("You need to be "+ input.getSubmitter() +" to submit this");
         }
     }
@@ -213,6 +216,27 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
 
     private boolean canCancel() {
         return getRun().getParent().hasPermission(Job.CANCEL);
+    }
+
+    private boolean canSubmit() {
+        Authentication a = Jenkins.getAuthentication();
+        return canSettle(a);
+    }
+
+    /**
+     * Checks if the given user can settle this input.
+     */
+    private boolean canSettle(Authentication a) {
+        String submitter = input.getSubmitter();
+        if (submitter==null || a.getName().equals(submitter)) {
+            return true;
+        }
+        for (GrantedAuthority ga : a.getAuthorities()) {
+            if (ga.getAuthority().equals(submitter)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
