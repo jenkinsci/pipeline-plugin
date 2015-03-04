@@ -34,22 +34,31 @@ import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.slaves.ComputerListener;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+
+import javax.annotation.Nonnull;
 
 /**
  * @author Kohsuke Kawaguchi
  */
 public class FilePathPickle extends Pickle {
+
+    private static final Logger LOGGER = Logger.getLogger(FilePathPickle.class.getName());
+
     private final String slave;
     private final String path;
 
     private FilePathPickle(FilePath v) {
         // TODO JENKINS-26096 switch to FilePath.toComputer once it uses something like Listener here and so is actually reliable
-        slave = Listener.channelNames.get(v.getChannel());
+        slave = Listener.getChannelName(v.getChannel());
         if (slave == null) {
             throw new IllegalStateException("no known slave for " + v);
         }
@@ -83,28 +92,53 @@ public class FilePathPickle extends Pickle {
     }
 
     @Extension public static final class Listener extends ComputerListener {
-        // TODO better to use a synchronized accessor
         @Restricted(NoExternalUse.class)
-        public static final Map<VirtualChannel,String> channelNames = new WeakHashMap<VirtualChannel,String>();
+        private static final Map<VirtualChannel,String> channelNames = new WeakHashMap<VirtualChannel,String>();
 
-        static {
-            // Add channels that may already be known to Jenkins. This can be the case
-            // just after the Workflow plugins are installed (see JENKINS-25958).
-            Jenkins instance = Jenkins.getInstance();
-            if (instance != null) {
-                for (Computer c : instance.getComputers()) {
-                    channelNames.put(c.getChannel(), c.getName());
+        // TODO: sync access?
+        public static String getChannelName(@Nonnull VirtualChannel channel) {
+            String channelName = channelNames.get(channel);
+
+            if (channelName == null) {
+                // We don't have a cache entry for the name of the Computer associated with the supplied Channel
+                // instance. Lets fallback and search the list of Computers on Jenkins.
+                Jenkins jenkins = Jenkins.getInstance();
+                if (jenkins != null) {
+                    for (Computer computer : jenkins.getComputers()) {
+                        VirtualChannel computerChannel = computer.getChannel();
+                        if (computerChannel != null && computerChannel.equals(channel)) {
+                            channelName = computer.getName();
+                            addChannel(computerChannel, channelName);
+                        }
+                    }
                 }
             }
+
+            return channelName;
+        }
+
+        public static Collection<String> getChannelNames() {
+            return channelNames.values();
         }
 
         @Override public void onOnline(Computer c, TaskListener l) { // TODO currently preOnline is not called for MasterComputer
             if (c instanceof Jenkins.MasterComputer) {
-                channelNames.put(c.getChannel(), c.getName());
+                addChannel(c.getChannel(), c.getName());
             }
         }
         @Override public void preOnline(Computer c, Channel channel, FilePath root, TaskListener listener) throws IOException, InterruptedException {
-            channelNames.put(channel, c.getName());
+            addChannel(channel, c.getName());
+        }
+
+        private static void addChannel(VirtualChannel channel, String computerName) {
+            if (channel == null) {
+                LOGGER.log(Level.WARNING, "Invalid attempt to add a 'null' Channel instance.");
+                return;
+            } else if (computerName == null) {
+                LOGGER.log(Level.WARNING, "Invalid attempt to add a Channel for a 'null' Computer name.");
+                return;
+            }
+            channelNames.put(channel, computerName);
         }
     }
 

@@ -52,9 +52,9 @@ public final class WorkspaceActionImpl extends WorkspaceAction implements FlowNo
 
     public WorkspaceActionImpl(FilePath workspace, FlowNode parent) {
         // TODO see FilePathPickle:
-        node = FilePathPickle.Listener.channelNames.get(workspace.getChannel());
+        node = FilePathPickle.Listener.getChannelName(workspace.getChannel());
         if (node == null) {
-            throw new IllegalStateException("no known slave for " + workspace + " among " + FilePathPickle.Listener.channelNames.values());
+            throw new IllegalStateException("no known slave for " + workspace + " among " + FilePathPickle.Listener.getChannelNames());
         }
         Jenkins j = Jenkins.getInstance();
         Node n = j == null ? null : node.isEmpty() ? j : j.getNode(node);
