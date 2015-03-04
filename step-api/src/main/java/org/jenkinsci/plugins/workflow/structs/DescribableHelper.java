@@ -40,6 +40,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -243,15 +244,16 @@ public class DescribableHelper {
             Class<?> componentType = ((Class) type).getComponentType();
             List<Object> list = mapList(context, componentType, (List) o);
             return list.toArray((Object[]) Array.newInstance(componentType, list.size()));
-        } else if (o instanceof List && isList(type)) {
+        } else if (o instanceof List && acceptsList(type)) {
             return mapList(context, ((ParameterizedType) type).getActualTypeArguments()[0], (List) o);
         } else {
             throw new ClassCastException(context + " expects " + type + " but received " + o.getClass());
         }
     }
 
+    /** Whether this type is generic of {@link List} or a supertype thereof (such as {@link Collection}). */
     @SuppressWarnings("unchecked")
-    private static boolean isList(Type type) {
+    private static boolean acceptsList(Type type) {
         return type instanceof ParameterizedType && ((ParameterizedType) type).getRawType() instanceof Class && ((Class) ((ParameterizedType) type).getRawType()).isAssignableFrom(List.class);
     }
 
@@ -315,6 +317,19 @@ public class DescribableHelper {
     private static void inspect(Map<String, Object> r, Object o, Class<?> clazz, String field) {
         AtomicReference<Type> type = new AtomicReference<Type>();
         Object value = inspect(o, clazz, field, type);
+        try {
+            String[] names = new ClassDescriptor(clazz).loadConstructorParamNames();
+            int idx = Arrays.asList(names).indexOf(field);
+            if (idx >= 0) {
+                Type ctorType = findConstructor(clazz, names.length).getGenericParameterTypes()[idx];
+                if (!type.get().equals(ctorType)) {
+                    LOG.log(Level.WARNING, "For {0}.{1}, preferring constructor type {2} to differing getter type {3}", new Object[] {clazz.getName(), field, ctorType, type});
+                    type.set(ctorType);
+                }
+            }
+        } catch (IllegalArgumentException x) {
+            // From loadConstructorParamNames or findConstructor; ignore
+        }
         r.put(field, uncoerce(value, type.get()));
     }
 
@@ -332,7 +347,7 @@ public class DescribableHelper {
                 list.add(uncoerce(elt, array.getClass().getComponentType()));
             }
             return list;
-        } else if (o instanceof List && isList(type)) {
+        } else if (o instanceof List && acceptsList(type)) {
             List<Object> list = new ArrayList<Object>();
             for (Object elt : (List<?>) o) {
                 list.add(uncoerce(elt, ((ParameterizedType) type).getActualTypeArguments()[0]));
