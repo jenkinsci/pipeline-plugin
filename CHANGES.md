@@ -5,6 +5,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 ## 1.3 (upcoming)
 
 ### User changes
+* JENKINS-25958: the basic `node` step did not work if Workflow was dynamically installed in Jenkins (with no restart).
 * JENKINS-26363: anyone permitted to cancel a flow build should also be permitted to cancel an `input` step.
 * JENKINS-25784: Sandbox mode defauling based on RUN_SCRIPTS privileges.
 * JENKINS-25890: deadlock during restart.
