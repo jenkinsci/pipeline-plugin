@@ -58,7 +58,7 @@ THE SOFTWARE.
             function handlePrototype() {
                 buildFormTree(document.forms.config);
                 // TODO JSON.stringify fails in some circumstances: https://gist.github.com/jglick/70ec4b15c1f628fdf2e9 due to Array.prototype.toJSON
-                var json = Object.toJSON(JSON.parse(document.forms.config.elements.json.value).definition.snippetizer.prototype);
+                var json = Object.toJSON(JSON.parse(${configFormJS ?: 'document.forms.config'}.elements.json.value).${definitionJS ?: 'definition'}.snippetizer.prototype);
                 new Ajax.Request('${rootURL}/${it.GENERATE_URL}', {
                     method: 'POST',
                     parameters: {json: json},
