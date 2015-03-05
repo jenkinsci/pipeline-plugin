@@ -58,11 +58,15 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         if (parameters != null) {
             actions.add(new ParametersAction(parameters));
         }
+        Integer quietPeriod = step.getQuietPeriod();
+        if (quietPeriod == null) {
+            quietPeriod = project.getQuietPeriod();
+        }
         QueueTaskFuture<?> f = new ParameterizedJobMixIn() {
             @Override protected Job asJob() {
                 return (Job) project;
             }
-        }.scheduleBuild2(project.getQuietPeriod(), actions.toArray(new Action[actions.size()]));
+        }.scheduleBuild2(quietPeriod, actions.toArray(new Action[actions.size()]));
         if (f == null) {
             throw new AbortException("Failed to trigger build of " + project.getFullName());
         }
