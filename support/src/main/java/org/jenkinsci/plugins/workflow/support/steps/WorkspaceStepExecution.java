@@ -23,42 +23,42 @@ import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
 
     @Inject(optional=true) private transient WorkspaceStep step;
-    @StepContextParameter private transient Computer c;
-    @StepContextParameter private transient Run<?,?> r;
+    @StepContextParameter private transient Computer computer;
+    @StepContextParameter private transient Run<?,?> run;
     @StepContextParameter private transient TaskListener listener;
     @StepContextParameter private transient FlowNode flowNode;
     private BodyExecution body;
 
     @Override
     public boolean start() throws Exception {
-        Job<?,?> j = r.getParent();
-        if (!(j instanceof TopLevelItem)) {
-            throw new Exception(j + " must be a top-level job");
+        Job<?,?> job = run.getParent();
+        if (!(job instanceof TopLevelItem)) {
+            throw new Exception(job + " must be a top-level job");
         }
-        Node n = c.getNode();
-        if (n == null) {
+        Node node = computer.getNode();
+        if (node == null) {
             throw new Exception("computer does not correspond to a live node");
         }
         WorkspaceList.Lease lease;
         String dir = step.getDir();
         if (dir == null) {
-            FilePath p = n.getWorkspaceFor((TopLevelItem) j);
-            if (p == null) {
-                throw new IllegalStateException(n + " is offline");
+            FilePath baseWorkspace = node.getWorkspaceFor((TopLevelItem) job);
+            if (baseWorkspace == null) {
+                throw new IllegalStateException(node + " is offline");
             }
-            lease = c.getWorkspaceList().allocate(p);
+            lease = computer.getWorkspaceList().allocate(baseWorkspace);
         } else {
-            FilePath rootPath = n.getRootPath();
+            FilePath rootPath = node.getRootPath();
             if (rootPath == null) {
-                throw new IllegalStateException(n + " is offline");
+                throw new IllegalStateException(node + " is offline");
             }
-            FilePath p = rootPath.child(dir);
+            FilePath baseWorkspace = rootPath.child(dir);
             // TODO acquire would block the CPS VM thread and not survive restarts.
             // Could force the exact path to be acquired only by setting up a background thread (w/ onResume) to block,
             // or adding core API to register a callback listener when any existing lease is released.
-            lease = c.getWorkspaceList().allocate(p);
+            lease = computer.getWorkspaceList().allocate(baseWorkspace);
         }
-        FilePath workspace = lease.path;
+        FilePath workspace = lease.path; // may be baseWorkspace + @2, @3, etc.
         flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
         listener.getLogger().println("Running in " + workspace);
         body = getContext().newBodyInvoker()
