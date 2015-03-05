@@ -30,6 +30,8 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.BooleanParameterValue;
 import hudson.model.Descriptor;
 import hudson.model.ParameterValue;
+import hudson.plugins.git.GitSCM;
+import hudson.plugins.git.extensions.impl.CleanBeforeCheckout;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -459,6 +461,17 @@ public class DescribableHelperTest {
             }
             return b.toString();
         }
+    }
+
+    @Issue("JENKINS-26619")
+    @Test public void getterDescribableList() throws Exception {
+        roundTrip(GitSCM.class, map(
+            "extensions", Arrays.asList(map("$class", CleanBeforeCheckout.class.getSimpleName())),
+            // Default values for these things do not work because GitSCM fails to use @DataBoundSetter:
+            "branches", Arrays.asList(map("name", "*/master")),
+            "doGenerateSubmoduleConfigurations", false,
+            "submoduleCfg", Collections.emptyList(),
+            "userRemoteConfigs", Collections.emptyList()));
     }
 
     private static Map<String,Object> map(Object... keysAndValues) {
