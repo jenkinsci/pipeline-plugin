@@ -34,28 +34,31 @@ below the list for Workflow specific details.
     <iframe src="${rootURL}/env-vars.html" width="100%"></iframe>
 </p>
 
-The following variables are only available inside <code>node</code>s (i.e. not available outside):
+The following variables are currently not available inside a workflow script:
 <ul>
     <li>EXECUTOR_NUMBER</li>
     <li>NODE_NAME</li>
     <li>NODE_LABELS</li>
     <li>WORKSPACE</li>
+    <li>JENKINS_URL</li>
+    <li>BUILD_URL</li>
+    <li>JOB_URL</li>
 </ul>
 
 <h4>Using Environment Variables</h4>
 
-Environemnt variables are injected into scripts through a variable named "<strong>env</strong>". This variable,
+Environment variables are injected into scripts through a variable named "<strong>env</strong>". This variable,
 like any other variable, can be used in the general flow of the script, or in variable substitutions e.g. when
 constructing email content when using the <code>mail</code> step:
 
-<p>
+<p/>
 <pre>
     mail (to: 'devops@acme.com',
         subject: "Job '${env.JOB_NAME}' (${env.BUILD_NUMBER}) is waiting for input",
-        body: "Please go to ${env.BUILD_URL}.");
+        body: "Please go to http://builds.acme.ccom:8080/jenkins/job/foo/${env.BUILD_NUMBER}/.");
 </pre>
-</p>
 
+<p/>
 For more on environment variables,
-<a href="https://github.com/jenkinsci/workflow-plugin/blob/master/TUTORIAL.md#managing-the-environment">see
+<a href="https://github.com/jenkinsci/workflow-plugin/blob/master/TUTORIAL.md#managing-the-environment" target="_blank">see
 here</a>.
