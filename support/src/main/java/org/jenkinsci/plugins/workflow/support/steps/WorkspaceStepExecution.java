@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
+import com.google.inject.Inject;
 import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Job;
@@ -21,6 +22,7 @@ import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
  */
 public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
 
+    @Inject(optional=true) private transient WorkspaceStep step;
     @StepContextParameter private transient Computer c;
     @StepContextParameter private transient Run<?,?> r;
     @StepContextParameter private transient TaskListener listener;
@@ -37,11 +39,25 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
         if (n == null) {
             throw new Exception("computer does not correspond to a live node");
         }
-        FilePath p = n.getWorkspaceFor((TopLevelItem) j);
-        if (p == null) {
-            throw new IllegalStateException(n + " is offline");
+        WorkspaceList.Lease lease;
+        String dir = step.getDir();
+        if (dir == null) {
+            FilePath p = n.getWorkspaceFor((TopLevelItem) j);
+            if (p == null) {
+                throw new IllegalStateException(n + " is offline");
+            }
+            lease = c.getWorkspaceList().allocate(p);
+        } else {
+            FilePath rootPath = n.getRootPath();
+            if (rootPath == null) {
+                throw new IllegalStateException(n + " is offline");
+            }
+            FilePath p = rootPath.child(dir);
+            // TODO acquire would block the CPS VM thread and not survive restarts.
+            // Could force the exact path to be acquired only by setting up a background thread (w/ onResume) to block,
+            // or adding core API to register a callback listener when any existing lease is released.
+            lease = c.getWorkspaceList().allocate(p);
         }
-        WorkspaceList.Lease lease = c.getWorkspaceList().allocate(p);
         FilePath workspace = lease.path;
         flowNode.addAction(new WorkspaceActionImpl(workspace, flowNode));
         listener.getLogger().println("Running in " + workspace);
