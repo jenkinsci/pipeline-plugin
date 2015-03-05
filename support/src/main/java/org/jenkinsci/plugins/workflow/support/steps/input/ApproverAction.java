@@ -26,8 +26,12 @@ package org.jenkinsci.plugins.workflow.support.steps.input;
 
 import hudson.model.InvisibleAction;
 import hudson.model.User;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
+
+import javax.annotation.Nonnull;
 
 /**
  * @author Valentina Armenise
@@ -38,20 +42,19 @@ public class ApproverAction extends InvisibleAction {
 
     public ApproverAction(String userId) {
         this.userId = userId;
-        this.username=User.get(userId).getDisplayName();
     }
 
+    @Nonnull
     final private String userId;
-    final private String username;
 
-    @Exported
+    @Restricted(DoNotUse.class)
     public String getUserId() {
         return userId;
     }
 
-    @Exported
+    @Restricted(DoNotUse.class)
     public String getUserName() {
-        return userId == null ? "anonymous" : username;
+        return User.get(userId).getDisplayName();
     }
 
 

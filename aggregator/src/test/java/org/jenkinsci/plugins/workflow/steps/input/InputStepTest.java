@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.steps.input;
 
+import com.gargoylesoftware.htmlunit.ElementNotFoundException;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.model.BooleanParameterDefinition;
 import hudson.model.Job;
@@ -101,9 +103,21 @@ public class InputStepTest extends Assert {
         JenkinsRule.WebClient wc = j.createWebClient();
         wc.login("alice");
         HtmlPage p = wc.getPage(b, a.getUrlName());
-        j.submit(p.getFormByName(is.getId()),"proceed");
+        j.submit(p.getFormByName(is.getId()), "proceed");
         assertEquals(0, a.getExecutions().size());
         q.get();
+
+        // make sure the valid hyperlink of the approver is created in the build index page
+        HtmlAnchor pu =null;
+
+        try {
+            pu = p.getAnchorByText("alice");
+        }
+        catch(ElementNotFoundException ex){
+            System.out.println("valid hyperlink of the approved does not appears on the build index page");
+        }
+
+        assertNotNull(pu);
 
         // make sure 'x' gets assigned to false
         System.out.println(b.getLog());
@@ -112,7 +126,7 @@ public class InputStepTest extends Assert {
         //make sure the approver name corresponds to the submitter
         ApproverAction action = b.getAction(ApproverAction.class);
         assertNotNull(action);
-        assertEquals(is.getInput().getSubmitter(), action.getUserId());
+        assertEquals("alice", action.getUserId());;
     }
 
     @Test
