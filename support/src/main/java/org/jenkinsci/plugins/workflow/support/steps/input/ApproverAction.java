@@ -47,7 +47,7 @@ public class ApproverAction extends InvisibleAction {
     @Nonnull
     final private String userId;
 
-    @Restricted(DoNotUse.class)
+    @Exported
     public String getUserId() {
         return userId;
     }
