@@ -39,23 +39,24 @@ public class BuildVarTest {
 
     @Rule public RestartableJenkinsRule r = new RestartableJenkinsRule();
 
-    @Test public void basicsAndPickling() {
+    @Test public void historyAndPickling() {
         r.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
                     "for (b = build; b != null; b = b.previousBuild) {\n" +
                     "  semaphore 'basics'\n" +
-                    "  echo \"number=${b.number}\"\n" +
+                    // TODO JENKINS-27271 cannot simply use ${b.result?.isWorseThan(hudson.model.Result.SUCCESS)}
+                    "  def r = b.result; echo \"number=${b.number} problem=${r != null ? r.isWorseThan(hudson.model.Result.SUCCESS) : null}\"\n" +
                     "}", true));
                 SemaphoreStep.success("basics/1", null);
                 WorkflowRun b1 = r.j.assertBuildStatusSuccess(p.scheduleBuild2(0).get());
-                r.j.assertLogContains("number=1", b1);
+                r.j.assertLogContains("number=1 problem=null", b1);
                 WorkflowRun b2 = p.scheduleBuild2(0).getStartCondition().get();
                 SemaphoreStep.success("basics/2", null);
                 SemaphoreStep.waitForStart("basics/3", b2);
-                Thread.sleep(1000); // TODO why is this necessary? will #80 help?
-                r.j.assertLogContains("number=2", b2);
+                Thread.sleep(1000); // TODO why is this necessary? will the flush() in #80 help?
+                r.j.assertLogContains("number=2 problem=null", b2);
                 r.j.assertLogNotContains("number=1", b2);
             }
         });
@@ -68,7 +69,7 @@ public class BuildVarTest {
                     Thread.sleep(100);
                 }
                 r.j.assertBuildStatusSuccess(b2);
-                r.j.assertLogContains("number=1", b2);
+                r.j.assertLogContains("number=1 problem=false", b2);
             }
         });
     }
