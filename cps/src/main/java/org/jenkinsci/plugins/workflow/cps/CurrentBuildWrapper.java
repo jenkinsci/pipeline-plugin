@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.security.ACL;
@@ -36,13 +37,16 @@ import org.jenkinsci.plugins.workflow.support.pickles.RunPickle;
 
 /**
  * Allows access to some privileged methods of the current build only, as well as some otherwise whitelisted {@link Run} methods.
- * <p>Note that though this is {@link Serializable}, the actual serialized field becomes a {@link RunPickle}.
- * (Alternately could keep a reference to the {@link CpsScript} and call {@link CpsScript#build} on demand.)
  */
 final class CurrentBuildWrapper implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Although this class is {@link Serializable}, the actual serialized field becomes a {@link RunPickle}.
+     * (Alternately could keep a reference to the {@link CpsScript} and call {@link CpsScript#build} on demand.)
+     */
+    @SuppressWarnings("SE_BAD_FIELD")
     private final Run<?,?> build;
 
     CurrentBuildWrapper(Run<?,?> build) {
