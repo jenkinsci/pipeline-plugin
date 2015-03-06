@@ -40,9 +40,12 @@ public class BuildTriggerStepTest {
         BuildTriggerStep s = new BuildTriggerStep("ds");
         s = new StepConfigTester(r).configRoundTrip(s);
         assertEquals(null, s.getQuietPeriod());
+        assertTrue(s.isPropagate());
+        s.setPropagate(false);
         s.setQuietPeriod(5);
         s = new StepConfigTester(r).configRoundTrip(s);
         assertEquals(Integer.valueOf(5), s.getQuietPeriod());
+        assertFalse(s.isPropagate());
         s.setQuietPeriod(0);
         s = new StepConfigTester(r).configRoundTrip(s);
         assertEquals(Integer.valueOf(0), s.getQuietPeriod());

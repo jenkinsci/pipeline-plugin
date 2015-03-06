@@ -51,7 +51,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         node.addAction(new LabelAction(Messages.BuildTriggerStepExecution_building_(project.getFullDisplayName())));
         List<Action> actions = new ArrayList<Action>();
         if (step.getWait()) {
-            actions.add(new BuildTriggerAction(getContext()));
+            actions.add(new BuildTriggerAction(getContext(), step.isPropagate()));
         }
         actions.add(new CauseAction(new Cause.UpstreamCause(invokingRun)));
         List<ParameterValue> parameters = step.getParameters();

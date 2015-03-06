@@ -25,6 +25,7 @@ import org.jvnet.hudson.test.MockFolder;
 
 import java.util.Arrays;
 import java.util.List;
+import org.jvnet.hudson.test.FailureBuilder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.TestExtension;
 
@@ -43,6 +44,16 @@ public class BuildTriggerStepTest extends Assert {
             "def ds = build 'ds'\n" +
             "echo \"ds.result=${ds.result} ds.number=${ds.number}\"", true));
         j.assertLogContains("ds.result=SUCCESS ds.number=1", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
+    }
+
+    @Issue("JENKINS-25851")
+    @Test public void failingBuild() throws Exception {
+        j.createFreeStyleProject("ds").getBuildersList().add(new FailureBuilder());
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("build 'ds'", true));
+        j.assertBuildStatus(Result.FAILURE, us.scheduleBuild2(0).get());
+        us.setDefinition(new CpsFlowDefinition("echo \"ds.result=${build(job: 'ds', propagate: false).result}\"", true));
+        j.assertLogContains("ds.result=FAILURE", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
     }
 
     @SuppressWarnings("deprecation")

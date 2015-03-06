@@ -7,6 +7,7 @@ import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersDefinitionProperty;
+import hudson.util.FormValidation;
 import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.Jenkins;
@@ -29,6 +30,7 @@ public class BuildTriggerStep extends AbstractStepImpl {
     private final String job;
     private List<ParameterValue> parameters;
     private boolean wait = true;
+    private boolean propagate = true;
     private Integer quietPeriod;
 
     @DataBoundConstructor
@@ -62,6 +64,14 @@ public class BuildTriggerStep extends AbstractStepImpl {
 
     @DataBoundSetter public void setQuietPeriod(Integer quietPeriod) {
         this.quietPeriod = quietPeriod;
+    }
+
+    public boolean isPropagate() {
+        return propagate;
+    }
+
+    @DataBoundSetter public void setPropagate(boolean propagate) {
+        this.propagate = propagate;
     }
 
     @Extension
@@ -122,6 +132,13 @@ public class BuildTriggerStep extends AbstractStepImpl {
         public String getContext() {
             Job<?,?> job = StaplerReferer.findItemFromRequest(Job.class);
             return job != null ? job.getFullName() : null;
+        }
+
+        public FormValidation doCheckPropagate(@QueryParameter boolean value, @QueryParameter boolean wait) {
+            if (!value && !wait) {
+                return FormValidation.errorWithMarkup("It makes no sense to specify <code>propagate</code> if <code>wait</code> is disabled.");
+            }
+            return FormValidation.ok();
         }
 
     }
