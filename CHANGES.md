@@ -6,6 +6,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ### User changes
 * JENKINS-26072: you can now specify a custom workspace location to lock in a `ws` step.
+* JENKINS-26692: add `quietPeriod` option for the `build` step.
 * JENKINS-26619: _Snippet Generator_ did not work on Git SCM extensions.
 
 ## 1.3 (Mar 04 2015)

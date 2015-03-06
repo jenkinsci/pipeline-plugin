@@ -24,14 +24,12 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-/**
- * @author Vivek Pandey
- */
 public class BuildTriggerStep extends AbstractStepImpl {
 
     private final String job;
     private List<ParameterValue> parameters;
     private boolean wait = true;
+    private Integer quietPeriod;
 
     @DataBoundConstructor
     public BuildTriggerStep(String job) {
@@ -56,6 +54,14 @@ public class BuildTriggerStep extends AbstractStepImpl {
 
     @DataBoundSetter public void setWait(boolean wait) {
         this.wait = wait;
+    }
+
+    public Integer getQuietPeriod() {
+        return quietPeriod;
+    }
+
+    @DataBoundSetter public void setQuietPeriod(Integer quietPeriod) {
+        this.quietPeriod = quietPeriod;
     }
 
     @Extension

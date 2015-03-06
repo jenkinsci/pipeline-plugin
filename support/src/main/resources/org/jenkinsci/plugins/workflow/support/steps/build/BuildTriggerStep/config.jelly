@@ -32,6 +32,9 @@ THE SOFTWARE.
     <f:entry field="wait">
         <f:checkbox default="true" title="Wait for completion"/>
     </f:entry>
+    <f:entry field="quietPeriod" title="Quiet period">
+        <f:number clazz="number"/>
+    </f:entry>
     <f:entry title="Parameters">
         <div id="params"/>
     </f:entry>
