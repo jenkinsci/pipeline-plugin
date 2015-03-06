@@ -35,9 +35,9 @@ class CpsWhitelist extends AbstractWhitelist {
                 return true;
             }
             if (name.equals("getProperty") && args.length == 1) {
-                if ("env".equals(args[0])) {
+                if (CpsScript.PROP_ENV.equals(args[0])) {
                     return true;
-                } else if ("build".equals(args[0])) {
+                } else if (CpsScript.PROP_BUILD.equals(args[0])) {
                     return true;
                 }
             }

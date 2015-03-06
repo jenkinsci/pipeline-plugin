@@ -50,6 +50,8 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 public abstract class CpsScript extends SerializableScript {
 
     private static final String STEPS_VAR = "steps";
+    static final String PROP_BUILD = "build";
+    static final String PROP_ENV = "env";
 
     transient CpsFlowExecution execution;
 
@@ -99,9 +101,9 @@ public abstract class CpsScript extends SerializableScript {
 
     @Override
     public Object getProperty(String property) {
-        if (property.equals("env")) {
+        if (property.equals(PROP_ENV)) {
             return env();
-        } else if (property.equals("build")) {
+        } else if (property.equals(PROP_BUILD)) {
             try {
                 return new CurrentBuildWrapper(build());
             } catch (IOException x) {
