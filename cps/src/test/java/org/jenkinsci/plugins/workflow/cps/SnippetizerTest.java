@@ -90,7 +90,8 @@ public class SnippetizerTest {
     @Test public void blockSteps() throws Exception {
         assertRoundTrip(new ExecutorStep(null), "node {\n    // some block\n}");
         assertRoundTrip(new ExecutorStep("linux"), "node('linux') {\n    // some block\n}");
-        assertRoundTrip(new WorkspaceStep(), "ws {\n    // some block\n}");
+        assertRoundTrip(new WorkspaceStep(null), "ws {\n    // some block\n}");
+        assertRoundTrip(new WorkspaceStep("loc"), "ws('loc') {\n    // some block\n}");
     }
 
     @Test public void escapes() throws Exception {
