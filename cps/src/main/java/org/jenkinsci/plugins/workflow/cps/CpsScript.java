@@ -50,8 +50,8 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 public abstract class CpsScript extends SerializableScript {
 
     private static final String STEPS_VAR = "steps";
-    static final String PROP_BUILD = "build";
     static final String PROP_ENV = "env";
+    static final String PROP_BUILD = "currentBuild";
 
     transient CpsFlowExecution execution;
 

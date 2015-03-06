@@ -48,7 +48,7 @@ public class BuildVarTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
-                    "def b0 = build\n" +
+                    "def b0 = currentBuild\n" +
                     "for (b = b0; b != null; b = b.previousBuild) {\n" +
                     "  semaphore 'basics'\n" +
                     // TODO JENKINS-27271 cannot simply use ${b.result?.isWorseThan(hudson.model.Result.SUCCESS)}
@@ -84,10 +84,10 @@ public class BuildVarTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
-                    "build.result = hudson.model.Result.UNSTABLE\n" +
-                    "build.description = 'manipulated'\n" +
-                    "build.displayName = 'special'\n" +
-                    "def pb = build.previousBuild; if (pb != null) {pb.displayName = 'verboten'}", true));
+                    "currentBuild.result = hudson.model.Result.UNSTABLE\n" +
+                    "currentBuild.description = 'manipulated'\n" +
+                    "currentBuild.displayName = 'special'\n" +
+                    "def pb = currentBuild.previousBuild; if (pb != null) {pb.displayName = 'verboten'}", true));
                 WorkflowRun b1 = r.j.assertBuildStatus(Result.UNSTABLE, p.scheduleBuild2(0).get());
                 assertEquals("manipulated", b1.getDescription());
                 assertEquals("special", b1.getDisplayName());
@@ -104,7 +104,7 @@ public class BuildVarTest {
         r.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
-                p.setDefinition(new CpsFlowDefinition("build.reload()", true));
+                p.setDefinition(new CpsFlowDefinition("currentBuild.reload()", true));
                 WorkflowRun b1 = r.j.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
                 String message = ((RejectedAccessException) b1.getExecution().getCauseOfFailure()).getMessage();
                 // If using GroovyObjectSupport for CurrentBuildWrapper, would expect RejectedAccessException.signature == "method hudson.model.Run reload"; otherwise it is an “unclassified method”:
