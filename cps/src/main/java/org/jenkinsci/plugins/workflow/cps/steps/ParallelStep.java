@@ -4,7 +4,8 @@ import com.cloudbees.groovy.cps.Outcome;
 import groovy.lang.Closure;
 import hudson.Extension;
 import hudson.model.TaskListener;
-import org.jenkinsci.plugins.workflow.actions.BodyExecutionLabelAction;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
 import org.jenkinsci.plugins.workflow.cps.CpsVmThreadOnly;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
@@ -13,6 +14,7 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,7 +49,7 @@ public class ParallelStep extends Step {
     }
 
     @PersistIn(FLOW_NODE)
-    public static class ParallelLabelAction extends BodyExecutionLabelAction {
+    public static class ParallelLabelAction extends LabelAction implements ThreadNameAction {
         private final String branchName;
 
         ParallelLabelAction(String branchName) {
@@ -61,6 +63,12 @@ public class ParallelStep extends Step {
         }
 
         public String getBranchName() {
+            return branchName;
+        }
+
+        @Nonnull
+        @Override
+        public String getThreadName() {
             return branchName;
         }
     }

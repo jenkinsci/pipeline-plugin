@@ -23,28 +23,17 @@
  */
 package org.jenkinsci.plugins.workflow.actions;
 
-// TODO: Seems like this should be in the step-api module alongside BodyExecution. Can't go there though because of module dependencies, which I dare not touch :)
-// I'd have thought the workflow-api module (where LabelAction lives) would be the one module that all other modules would depend on, but that's not he case.
+import hudson.model.Action;
+
+import javax.annotation.Nonnull;
 
 /**
- * Body execution label.
- * <p>
- * Used to label the branches of an the asynchronous execution represented by a
- * BodyExecution.
- * </p>
+ * Thread name action.
  *
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
-public abstract class BodyExecutionLabelAction extends LabelAction {
+public interface ThreadNameAction extends Action {
 
-    private final String bodyLabel;
-
-    public BodyExecutionLabelAction(String displayName) {
-        super(displayName);
-        this.bodyLabel = displayName;
-    }
-
-    public final String getBodyLabel() {
-        return bodyLabel;
-    }
+    @Nonnull
+    String getThreadName();
 }

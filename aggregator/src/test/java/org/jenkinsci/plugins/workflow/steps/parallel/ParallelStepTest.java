@@ -357,6 +357,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                 assertBuildCompletedSuccessfully();
 
                 // Check that the individual labeled lines are as expected
+                //System.out.println(b.getLog());
                 List<String> logLines = b.getLog(50);
                 assertGoodLabeledLogs(logLines);
 
@@ -381,7 +382,8 @@ public class ParallelStepTest extends SingleJobTestBase {
                         String.format("[%s] Running: Print Message", label),
                         String.format("[%s] echo %s", label, label)
                 );
-                assertTrue(possibleLogLines.contains(logLine));
+                boolean contains = possibleLogLines.contains(logLine);
+                assertTrue(contains);
             }
             private void assertGoodSequence(String label, List<String> logLines) {
                 String running = String.format("[%s] Running: Print Message", label);

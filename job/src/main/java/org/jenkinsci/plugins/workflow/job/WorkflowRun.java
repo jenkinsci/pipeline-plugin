@@ -25,8 +25,8 @@
 package org.jenkinsci.plugins.workflow.job;
 
 import hudson.console.LineTransformationOutputStream;
-import org.jenkinsci.plugins.workflow.actions.BodyExecutionLabelAction;
 import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction;
+import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
 import org.jenkinsci.plugins.workflow.actions.TimingAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -270,8 +270,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                         }
                     } finally {
                         if (prefix != null) {
-                            // It's a LogLinePrefixOutputFilter (see above). Force an EOL by closing.
-                            logger.close();
+                            // It's a LogLinePrefixOutputFilter (see above). Force an EOL.
+                            ((LogLinePrefixOutputFilter)logger).forceEol();
                         }
                     }
                 } catch (IOException x) {
@@ -297,10 +297,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         BodyInvocationAction bodyInvocationAction = node.getAction(BodyInvocationAction.class);
 
         if (bodyInvocationAction != null) {
-            BodyExecutionLabelAction bodyLabelAction = node.getAction(BodyExecutionLabelAction.class);
+            ThreadNameAction threadNameAction = node.getAction(ThreadNameAction.class);
 
-            if (bodyLabelAction != null) {
-                return bodyLabelAction.getBodyLabel();
+            if (threadNameAction != null) {
+                return threadNameAction.getThreadName();
             } else {
                 // This exec body does not have a body label. Stop now.
                 return null;
@@ -320,7 +320,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return null;
     }
 
-    protected static final class LogLinePrefixOutputFilter extends LineTransformationOutputStream {
+    private static final class LogLinePrefixOutputFilter extends LineTransformationOutputStream {
 
         private final PrintStream logger;
         private final String prefix;
@@ -656,7 +656,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         PrintStream logger = listener.getLogger();
         String prefix = getLogPrefix(node);
         if (prefix != null) {
-            logger.println(String.format("[%s] %s", prefix, message));
+            logger.printf("[%s] %s%n", prefix, message);
         } else {
             logger.println(message);
         }
