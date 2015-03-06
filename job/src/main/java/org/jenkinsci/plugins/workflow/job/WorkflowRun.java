@@ -302,7 +302,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             if (threadNameAction != null) {
                 return threadNameAction.getThreadName();
             } else {
-                // This exec body does not have a body label. Stop now.
+                // This exec body does not impl ThreadNameAction. Stop now.
                 return null;
             }
         }
