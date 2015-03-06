@@ -5,6 +5,12 @@ method hudson.model.Run getDisplayName
 method hudson.model.Run getDescription
 method hudson.model.Run getNextBuild
 method hudson.model.Run getPreviousBuild
+method hudson.model.Run getId
+method hudson.model.Run getTimeInMillis
+method hudson.model.Run getStartTimeInMillis
+method hudson.model.Run getDuration
+method hudson.model.Run isBuilding
+method hudson.model.Run isInProgress
 staticField hudson.model.Result *
 method hudson.model.Result * hudson.model.Result
 
