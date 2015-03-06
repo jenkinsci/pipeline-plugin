@@ -53,7 +53,7 @@ public class ParallelStep extends Step {
         private final String branchName;
 
         ParallelLabelAction(String branchName) {
-            super(branchName);
+            super(null);
             this.branchName = branchName;
         }
 
