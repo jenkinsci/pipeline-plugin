@@ -59,3 +59,35 @@ constructing email content when using the <code>mail</code> step:
 For more on environment variables,
 <a href="https://github.com/jenkinsci/workflow-plugin/blob/master/TUTORIAL.md#managing-the-environment" target="_blank">see
 here</a>.
+
+<h3>Current build</h3>
+<p>
+    The <code>currentBuild</code> variable may be used to refer to the currently running build.
+    It is a <code>hudson.model.Run</code> object
+    on which you can obtain at least the following read-only properties, even when using the Groovy sandbox:
+</p>
+<ul>
+    <li><code>number</code></li>
+    <li><code>result</code> (a <code>hudson.model.Result</code>, with fields like <code>SUCCESS</code>, <code>UNSTABLE</code>, and <code>FAILED</code>)</li>
+    <li><code>displayName</code></li>
+    <li><code>description</code></li>
+    <li><code>id</code></li>
+    <li><code>timeInMillis</code></li>
+    <li><code>startTimeInMillis</code></li>
+    <li><code>duration</code></li>
+    <li><code>building</code></li>
+    <li><code>inProgress</code></li>
+    <li><code>previousBuild</code> (another <code>Run</code>)</li>
+    <li><code>nextBuild</code></li>
+</ul>
+<p>
+    Additionally, for this build only (but not for other builds), the following properties are writable even in the sandbox:
+</p>
+<ul>
+    <li><code>result</code></li>
+    <li><code>displayName</code></li>
+    <li><code>description</code></li>
+</ul>
+<p>
+    (Administrator-approved scripts outside the sandbox can use any APIs.)
+</p>
