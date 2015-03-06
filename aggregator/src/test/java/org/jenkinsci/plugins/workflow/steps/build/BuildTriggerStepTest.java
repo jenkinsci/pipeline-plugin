@@ -35,17 +35,14 @@ public class BuildTriggerStepTest extends Assert {
     @Rule
     public JenkinsRule j = new JenkinsRule();
 
-    @Test
-    public void buildTopLevelProject() throws Exception {
-        FreeStyleProject p = j.createFreeStyleProject("test1");
-        p.getBuildersList().add(new Shell("echo 'Hello World'"));
-
-
-        WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
-        foo.setDefinition(new CpsFlowDefinition("build 'test1'"));
-
-        QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
-        j.assertBuildStatusSuccess(q);
+    @Issue("JENKINS-25851")
+    @Test public void buildTopLevelProject() throws Exception {
+        j.createFreeStyleProject("ds");
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition(
+            "def ds = build 'ds'\n" +
+            "echo \"ds.result=${ds.result} ds.number=${ds.number}\"", true));
+        j.assertLogContains("ds.result=SUCCESS ds.number=1", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
     }
 
     @SuppressWarnings("deprecation")

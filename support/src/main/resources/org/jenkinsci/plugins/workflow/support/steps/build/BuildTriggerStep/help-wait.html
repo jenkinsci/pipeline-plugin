@@ -1,0 +1,9 @@
+<p>
+    You may ask that this workflow build wait for completion of the downstream build.
+    In that case the return value of the step is a <code>Run</code> similar to the <code>currentBuild</code> variable,
+    so you can inspect its <code>result</code> and so on.
+</p>
+<p>
+    If you do not wait, this step succeeds so long as the downstream build can be added to the queue (it will not even have been started).
+    In that case there is currently no return value.
+</p>
