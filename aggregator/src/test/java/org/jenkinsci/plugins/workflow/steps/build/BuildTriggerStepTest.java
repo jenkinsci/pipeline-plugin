@@ -198,4 +198,13 @@ public class BuildTriggerStepTest extends Assert {
         }
     }
 
+    @Issue("JENKINS-25851")
+    @Test public void buildVariables() throws Exception {
+        j.createFreeStyleProject("ds").addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("param", "default")));
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        // TODO apparent sandbox bug using buildVariables.param: unclassified field java.util.HashMap param
+        us.setDefinition(new CpsFlowDefinition("echo \"build var: ${build(job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'param', value: 'override']]).buildVariables.get('param')}\"", true));
+        j.assertLogContains("build var: override", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
+    }
+
 }

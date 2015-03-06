@@ -13,6 +13,8 @@ method hudson.model.Run isBuilding
 method hudson.model.Run isInProgress
 staticField hudson.model.Result *
 method hudson.model.Result * hudson.model.Result
+method hudson.model.AbstractBuild getBuildVariables
 
 # to go into generic-whitelist:
 staticMethod org.codehaus.groovy.runtime.ScriptBytecodeAdapter compareNotEqual java.lang.Object java.lang.Object
+method java.util.Map get java.lang.Object
