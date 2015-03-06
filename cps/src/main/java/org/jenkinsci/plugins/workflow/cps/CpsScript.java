@@ -33,9 +33,11 @@ import hudson.model.Queue;
 import hudson.model.Run;
 import java.io.File;
 import java.io.IOException;
+import javax.annotation.CheckForNull;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.codehaus.groovy.runtime.DefaultGroovyStaticMethods;
+import org.codehaus.groovy.runtime.InvokerInvocationException;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
@@ -65,12 +67,10 @@ public abstract class CpsScript extends SerializableScript {
 
     @SuppressWarnings("unchecked") // Binding
     void initialize() throws IOException {
-        FlowExecutionOwner owner = execution.getOwner();
-        getBinding().setVariable(STEPS_VAR, new DSL(owner));
-        Queue.Executable qe = owner.getExecutable();
-        if (qe instanceof Run) {
+        getBinding().setVariable(STEPS_VAR, new DSL(execution.getOwner()));
+        Run<?,?> run = build();
+        if (run != null) {
             EnvVars paramEnv = new EnvVars();
-            Run<?,?> run = (Run) qe;
             ParametersAction a = run.getAction(ParametersAction.class);
             if (a != null) {
                 for (ParameterValue v : a) {
@@ -101,16 +101,30 @@ public abstract class CpsScript extends SerializableScript {
     public Object getProperty(String property) {
         if (property.equals("env")) {
             return env();
+        } else if (property.equals("build")) {
+            try {
+                return build();
+            } catch (IOException x) {
+                throw new InvokerInvocationException(x);
+            }
         }
         return super.getProperty(property);
     }
 
-    private EnvActionImpl env() {
+    private @CheckForNull Run<?,?> build() throws IOException {
         FlowExecutionOwner owner = execution.getOwner();
+        Queue.Executable qe = owner.getExecutable();
+        if (qe instanceof Run) {
+            return (Run) qe;
+        } else {
+            return null;
+        }
+    }
+
+    private EnvActionImpl env() {
         try {
-            Queue.Executable qe = owner.getExecutable();
-            if (qe instanceof Run) {
-                Run<?,?> run = (Run) qe;
+            Run<?,?> run = build();
+            if (run != null) {
                 EnvActionImpl action = run.getAction(EnvActionImpl.class);
                 if (action == null) {
                     action = new EnvActionImpl();

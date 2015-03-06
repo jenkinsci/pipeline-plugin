@@ -1,0 +1,3 @@
+method hudson.model.Run setDisplayName String
+method hudson.model.Run setDescription String
+# TODO but allow either on this build

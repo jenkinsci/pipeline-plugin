@@ -1,0 +1,2 @@
+method hudson.model.Run getNumber
+# no setResult, but allow on this build
