@@ -4,7 +4,7 @@ import com.cloudbees.groovy.cps.Outcome;
 import groovy.lang.Closure;
 import hudson.Extension;
 import hudson.model.TaskListener;
-import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.actions.BodyExecutionLabelAction;
 import org.jenkinsci.plugins.workflow.cps.CpsVmThreadOnly;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
@@ -47,11 +47,11 @@ public class ParallelStep extends Step {
     }
 
     @PersistIn(FLOW_NODE)
-    public static class ParallelLabelAction extends LabelAction {
+    public static class ParallelLabelAction extends BodyExecutionLabelAction {
         private final String branchName;
 
         ParallelLabelAction(String branchName) {
-            super(null);
+            super(branchName);
             this.branchName = branchName;
         }
 
