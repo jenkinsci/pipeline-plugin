@@ -1,0 +1,19 @@
+<p>
+    A workspace is automatically allocated for you with the <code>node</code> step,
+    or you can get an alternate workspace with this <code>ws</code> step,
+    but by default the location is chosen automatically.
+    (Something like <code>SLAVE_ROOT/workspace/JOB_NAME@2</code>.)
+</p>
+<p>
+    You can instead specify a path here and that workspace will be locked instead.
+    (The path may be relative to the slave root, or absolute.)
+</p>
+<p>
+    If concurrent builds ask for the same workspace, a directory with a suffix such as <code>@2</code> may be locked instead.
+    Currently there is no option to wait to lock the exact directory requested;
+    if you need to enforce that behavior, you can either fail (<code>error</code>) when <code>pwd</code> indicates that you got a different directory,
+    or you may enforce serial execution of this part of the build by some other means such as <code>stage name: '…', concurrency: 1</code>.
+</p>
+<p>
+    If you do not care about locking, just use the <code>dir</code> step to change current directory.
+</p>
