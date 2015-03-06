@@ -34,15 +34,12 @@ below the list for Workflow specific details.
     <iframe src="${rootURL}/env-vars.html" width="100%"></iframe>
 </p>
 
-The following variables are currently not available inside a workflow script:
+The following variables are currently unavailable inside a workflow script:
 <ul>
     <li>EXECUTOR_NUMBER</li>
     <li>NODE_NAME</li>
     <li>NODE_LABELS</li>
     <li>WORKSPACE</li>
-    <li>JENKINS_URL</li>
-    <li>BUILD_URL</li>
-    <li>JOB_URL</li>
 </ul>
 
 <h4>Using Environment Variables</h4>
@@ -55,7 +52,7 @@ constructing email content when using the <code>mail</code> step:
 <pre>
     mail (to: 'devops@acme.com',
         subject: "Job '${env.JOB_NAME}' (${env.BUILD_NUMBER}) is waiting for input",
-        body: "Please go to http://builds.acme.ccom:8080/jenkins/job/foo/${env.BUILD_NUMBER}/.");
+        body: "Please go to ${env.BUILD_URL} and verify the build");
 </pre>
 
 <p/>
