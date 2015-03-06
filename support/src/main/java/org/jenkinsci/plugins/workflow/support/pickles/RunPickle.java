@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import hudson.Extension;
 import hudson.model.Run;
 import org.jenkinsci.plugins.workflow.pickles.Pickle;
-import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 
 /**
  * Represents a {@link Run}, or null if it has since been deleted.
@@ -44,13 +43,19 @@ public class RunPickle extends Pickle {
     }
 
     @Override public ListenableFuture<?> rehydrate() {
-        try {
-            return Futures.immediateFuture(Run.fromExternalizableId(externalizableId));
-        } catch (IllegalArgumentException x) {
-            // TODO 1.588+ fromExternalizableId will already return null when appropriate if the build has been deleted after restart
-            // (probably preferable to have a null var and produce an NPE somewhere than to break whole flow loading due to this normal condition)
-            return Futures.immediateFuture(null);
-        }
+        // Need to use TryRepeatedly rather than Futures.immediateFuture to avoid a stack overflow when the current build serialized itself.
+        // TODO tried to pass a delay of 0, but this apparently triggers a race condition in 1.580.1 whereby two copies of the build are loaded, thus BuildVarTest.historyAndPickling hang (rewrite in 1.597 might have fixed this).
+        return new TryRepeatedly<Run<?,?>>(1) {
+            @Override protected Run<?,?> tryResolve() throws Exception {
+                try {
+                    return Run.fromExternalizableId(externalizableId);
+                } catch (IllegalArgumentException x) {
+                    // TODO 1.588+ fromExternalizableId will already return null when appropriate if the build has been deleted after restart
+                    // (probably preferable to have a null var and produce an NPE somewhere than to break whole flow loading due to this normal condition)
+                    return null;
+                }
+            }
+        };
     }
 
     @Extension public static final class Factory extends SingleTypedPickleFactory<Run<?,?>> {

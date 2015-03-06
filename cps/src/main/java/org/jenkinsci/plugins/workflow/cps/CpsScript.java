@@ -103,7 +103,7 @@ public abstract class CpsScript extends SerializableScript {
             return env();
         } else if (property.equals("build")) {
             try {
-                return build();
+                return new CurrentBuildWrapper(build());
             } catch (IOException x) {
                 throw new InvokerInvocationException(x);
             }
