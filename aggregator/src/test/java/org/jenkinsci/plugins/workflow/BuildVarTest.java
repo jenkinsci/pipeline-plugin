@@ -26,6 +26,8 @@ package org.jenkinsci.plugins.workflow;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Test;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
@@ -37,12 +39,36 @@ public class BuildVarTest {
 
     @Rule public RestartableJenkinsRule r = new RestartableJenkinsRule();
 
-    @Test public void basics() {
+    @Test public void basicsAndPickling() {
         r.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("echo \"number=${build.number}\"", true));
-                r.j.assertLogContains("number=1", r.j.assertBuildStatusSuccess(p.scheduleBuild2(0).get()));
+                WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                    "for (b = build; b != null; b = b.previousBuild) {\n" +
+                    "  semaphore 'basics'\n" +
+                    "  echo \"number=${b.number}\"\n" +
+                    "}", true));
+                SemaphoreStep.success("basics/1", null);
+                WorkflowRun b1 = r.j.assertBuildStatusSuccess(p.scheduleBuild2(0).get());
+                r.j.assertLogContains("number=1", b1);
+                WorkflowRun b2 = p.scheduleBuild2(0).getStartCondition().get();
+                SemaphoreStep.success("basics/2", null);
+                SemaphoreStep.waitForStart("basics/3", b2);
+                Thread.sleep(1000); // TODO why is this necessary? will #80 help?
+                r.j.assertLogContains("number=2", b2);
+                r.j.assertLogNotContains("number=1", b2);
+            }
+        });
+        r.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = r.j.jenkins.getItemByFullName("p", WorkflowJob.class);
+                WorkflowRun b2 = p.getBuildByNumber(2);
+                SemaphoreStep.success("basics/3", b2);
+                while (b2.isBuilding()) {
+                    Thread.sleep(100);
+                }
+                r.j.assertBuildStatusSuccess(b2);
+                r.j.assertLogContains("number=1", b2);
             }
         });
     }
