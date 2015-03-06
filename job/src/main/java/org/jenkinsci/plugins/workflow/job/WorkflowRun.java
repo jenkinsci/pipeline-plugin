@@ -25,7 +25,6 @@
 package org.jenkinsci.plugins.workflow.job;
 
 import hudson.console.LineTransformationOutputStream;
-import org.jenkinsci.plugins.workflow.actions.BodyInvocationAction;
 import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
 import org.jenkinsci.plugins.workflow.actions.TimingAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
@@ -78,6 +77,7 @@ import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
+import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
@@ -293,26 +293,20 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     }
 
     private String getLogPrefix(FlowNode node) {
-        BodyInvocationAction bodyInvocationAction = node.getAction(BodyInvocationAction.class);
-
-        if (bodyInvocationAction != null) {
-            ThreadNameAction threadNameAction = node.getAction(ThreadNameAction.class);
-
-            if (threadNameAction != null) {
-                return threadNameAction.getThreadName();
-            } else {
-                // This exec body does not impl ThreadNameAction. Stop now.
-                return null;
-            }
+        if (node instanceof BlockEndNode) {
+            return null;
         }
 
-        List<FlowNode> parents = node.getParents();
-        if (parents != null && !parents.isEmpty()) {
-            for (FlowNode parent : parents) {
-                String prefix = getLogPrefix(parent);
-                if (prefix != null) {
-                    return prefix;
-                }
+        ThreadNameAction threadNameAction = node.getAction(ThreadNameAction.class);
+
+        if (threadNameAction != null) {
+            return threadNameAction.getThreadName();
+        }
+
+        for (FlowNode parent : node.getParents()) {
+            String prefix = getLogPrefix(parent);
+            if (prefix != null) {
+                return prefix;
             }
         }
 
