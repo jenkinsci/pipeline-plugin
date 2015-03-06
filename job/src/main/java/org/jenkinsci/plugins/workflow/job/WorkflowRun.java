@@ -270,7 +270,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                         }
                     } finally {
                         if (prefix != null) {
-                            // It's a LogLinePrefixOutputFilter (see above). Force an EOL.
                             ((LogLinePrefixOutputFilter)logger).forceEol();
                         }
                     }
