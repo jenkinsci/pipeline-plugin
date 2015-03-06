@@ -279,7 +279,7 @@ public class ParallelStepTest extends SingleJobTestBase {
         for (Row row : t.getRows()) {
             ParallelLabelAction a = row.getNode().getAction(ParallelLabelAction.class);
             if (a!=null)
-                actual.add(a.getBranchName());
+                actual.add(a.getThreadName());
         }
 
         assertEquals(Arrays.asList(expected),actual);

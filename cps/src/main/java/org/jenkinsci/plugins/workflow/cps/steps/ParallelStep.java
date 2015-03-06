@@ -62,10 +62,6 @@ public class ParallelStep extends Step {
             return "Parallel branch: "+branchName;
         }
 
-        public String getBranchName() {
-            return branchName;
-        }
-
         @Nonnull
         @Override
         public String getThreadName() {
