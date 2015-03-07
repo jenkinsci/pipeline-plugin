@@ -9,9 +9,9 @@ import static java.util.Arrays.*;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.SingleJobTestBase;
+import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep;
-import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ParallelLabelAction;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStepException;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -277,7 +277,7 @@ public class ParallelStepTest extends SingleJobTestBase {
         List<String> actual = new ArrayList<String>();
 
         for (Row row : t.getRows()) {
-            ParallelLabelAction a = row.getNode().getAction(ParallelLabelAction.class);
+            ThreadNameAction a = row.getNode().getAction(ThreadNameAction.class);
             if (a!=null)
                 actual.add(a.getThreadName());
         }

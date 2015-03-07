@@ -4,8 +4,6 @@ import com.cloudbees.groovy.cps.Outcome;
 import groovy.lang.Closure;
 import hudson.Extension;
 import hudson.model.TaskListener;
-import org.jenkinsci.plugins.workflow.actions.LabelAction;
-import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
 import org.jenkinsci.plugins.workflow.cps.CpsVmThreadOnly;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
@@ -14,7 +12,6 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
-import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,27 +43,6 @@ public class ParallelStep extends Step {
     @CpsVmThreadOnly("CPS program calls this, which is run by CpsVmThread")
     public StepExecution start(StepContext context) throws Exception {
         return new ParallelStepExecution(this, context);
-    }
-
-    @PersistIn(FLOW_NODE)
-    public static class ParallelLabelAction extends LabelAction implements ThreadNameAction {
-        private final String branchName;
-
-        ParallelLabelAction(String branchName) {
-            super(null);
-            this.branchName = branchName;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return "Parallel branch: "+branchName;
-        }
-
-        @Nonnull
-        @Override
-        public String getThreadName() {
-            return branchName;
-        }
     }
 
     @PersistIn(PROGRAM)

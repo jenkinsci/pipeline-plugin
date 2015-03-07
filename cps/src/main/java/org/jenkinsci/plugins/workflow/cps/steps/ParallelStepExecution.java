@@ -1,17 +1,22 @@
 package org.jenkinsci.plugins.workflow.cps.steps;
 
 import groovy.lang.Closure;
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
 import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.cps.CpsThread;
-import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ParallelLabelAction;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ResultHandler;
 import org.jenkinsci.plugins.workflow.steps.BodyExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+
+import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.FLOW_NODE;
 
 /**
  * {@link StepExecution} for {@link ParallelStep}.
@@ -55,4 +60,25 @@ class ParallelStepExecution extends StepExecution {
     }
 
     private static final long serialVersionUID = 1L;
+
+    @PersistIn(FLOW_NODE)
+    private static class ParallelLabelAction extends LabelAction implements ThreadNameAction {
+        private final String branchName;
+
+        ParallelLabelAction(String branchName) {
+            super(null);
+            this.branchName = branchName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Parallel branch: "+branchName;
+        }
+
+        @Nonnull
+        @Override
+        public String getThreadName() {
+            return branchName;
+        }
+    }
 }
