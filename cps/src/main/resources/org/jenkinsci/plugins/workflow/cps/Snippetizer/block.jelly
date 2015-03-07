@@ -50,20 +50,21 @@ THE SOFTWARE.
                 </f:dropdownListBlock>
             </j:forEach>
         </f:dropdownList>
+        <j:set var="id" value="${h.generateId()}"/>
         <f:block>
-            <input type="button" value="Generate Groovy" onclick="handlePrototype(); return false" class="submit-button primary"/>
-            <f:textarea id="prototypeText" readonly="true"/>
+            <input type="button" value="Generate Groovy" onclick="handlePrototype_${id}(); return false" class="submit-button primary"/>
+            <f:textarea id="prototypeText_${id}" readonly="true"/>
         </f:block>
         <script>
-            function handlePrototype() {
+            function handlePrototype_${id}() {
                 buildFormTree(document.forms.config);
                 // TODO JSON.stringify fails in some circumstances: https://gist.github.com/jglick/70ec4b15c1f628fdf2e9 due to Array.prototype.toJSON
-                var json = Object.toJSON(JSON.parse(document.forms.config.elements.json.value).definition.snippetizer.prototype);
+                var json = Object.toJSON(JSON.parse(${configFormJS ?: 'document.forms.config'}.elements.json.value).${definitionJS ?: 'definition'}.snippetizer.prototype);
                 new Ajax.Request('${rootURL}/${it.GENERATE_URL}', {
                     method: 'POST',
                     parameters: {json: json},
                     onSuccess: function(r) {
-                        document.getElementById('prototypeText').value = r.responseText;
+                        document.getElementById('prototypeText_${id}').value = r.responseText;
                     }
                 });
             }
