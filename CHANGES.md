@@ -5,6 +5,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 ## 1.4 (upcoming)
 
 ### User changes
+* JENKINS-26121: record the approver of an `input` step in build history.
 * JENKINS-26122: Prepend `parallel` step execution logs with the branch label.
 * JENKINS-26072: you can now specify a custom workspace location to lock in a `ws` step.
 * JENKINS-26692: add `quietPeriod` option for the `build` step.
