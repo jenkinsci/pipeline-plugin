@@ -24,12 +24,15 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
     <f:entry field="url" title="Repository URL">
         <f:textbox/>
     </f:entry>
     <f:entry field="branch" title="Branch">
         <f:textbox default="master"/>
+    </f:entry>
+    <f:entry field="credentialsId" title="Credentials">
+        <c:select/>
     </f:entry>
     <st:include page="config-generic.jelly" class="org.jenkinsci.plugins.workflow.steps.scm.SCMStep"/>
 </j:jelly>
