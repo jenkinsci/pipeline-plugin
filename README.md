@@ -1,24 +1,21 @@
 # Introduction
 
-Building continuous delivery pipelines and similarly complex tasks in Jenkins using freestyle projects and existing plugins is very awkward.
+Building continuous delivery pipelines and similarly complex tasks in Jenkins using freestyle projects and traditional plugins can be awkward.
 You need to mix Parameterized Trigger, Copy Artifact, Promoted Builds, Conditional Build Step, and more just to express what should be a simple script.
-This project attempts to make it possible to directly write that script, what people often call a _workflow_ (sometimes abbreviated _flow_), while integrating with Jenkins features like slaves and publishers.
+The Workflow plugin suite attempts to make it possible to directly write that script, what people often call a _workflow_ (sometimes abbreviated _flow_), while integrating with Jenkins features like slaves and publishers.
 
-# Core features
-
-Specific status of implementation below.
+# Features
 
 ## Scripted control flow
 
 Your whole workflow is a single Groovy script using an embedded DSL, possibly quite short and legible; there is no need to jump between multiple job configuration screens to see what is going on.
 Conditions, loops, variables, parallel tasks, and so on are defined using regular language constructs.
-At any point you can insert a shell script to do “real work” (compilation, etc.).
+At any point you can insert a shell/batch script to do “real work” (compilation, etc.).
 
-## Jenkins model object integration
+## Useful steps
 
-Standard DSL functions let you run external processes, grab slave nodes, allocate workspaces, build “legacy” (freestyle) jobs, and so on.
-
-See [here](basic-steps/CORE-STEPS.md) for information on reusing build steps from freestyle projects.
+Standard DSL functions (“steps”) let you run external processes, grab slave nodes and workspaces, perform SCM checkouts, build other projects (workflow or freestyle), wait for external conditions, and so on.
+Plugins can add further steps.
 
 ## Pause and resume execution
 
@@ -26,11 +23,7 @@ If Jenkins is restarted (intentionally, or because of a crash) while your workfl
 This applies to external processes (shell scripts) so long as the slave can be reattached, and losing the slave connection temporarily is not fatal either.
 
 Flows can pause in the middle and wait for a human to approve something, or enter some information.
-Executors are not consumed while the flow is waiting.
-
-## SCM integration
-
-See [here](scm-step/README.md) for details on using version control from a workflow.
+Executors need not be consumed while the flow is waiting.
 
 ## Pipeline stages
 
@@ -42,19 +35,53 @@ Read the [tutorial](TUTORIAL.md) to get started writing workflows.
 
 # Installation
 
-If you do not want to build from sources, releases (see the [changelog](CHANGES.md) for details on which) are available on the Jenkins update center.
-You need to be running a sufficiently recent Jenkins release, currently an LTS in the 1.580.x line, or a newer weekly release.
+Releases are available on the Jenkins update center.
+You need to be running a sufficiently recent Jenkins release, currently an LTS in the 1.580.x line or newer, or a newer weekly release.
+See the [changelog](CHANGES.md) for news.
 
 For OSS Jenkins users, install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
 You will need to restart Jenkins to complete installation.
 
-Jenkins Enterprise by CloudBees users get Workflow automatically as of the 14.11 release.
+Jenkins Enterprise by CloudBees users get Workflow automatically as of the 14.11 (1.580.1.1) release.
 Otherwise install _CloudBees Workflow: Aggregator_ from the update center.
 Again dependencies will be pulled in automatically, including all the OSS plugins.
 
 # Demo
 
-See the [demo overview](demo/README.md) using Docker if you want to try a complete setup quickly.
+See the [demo overview](demo/README.md) using Docker if you want to try a complete setup quickly. In short:
+
+    docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo
+
+and browse [localhost:8081](http://localhost:8081/).
+
+# Presentations
+
+Workflow Meetup London (Mar 2015): [slides](http://www.slideshare.net/jgcloudbees/london-workflow-summit-kkjg)
+
+Webinar _Orchestrating the Continuous Delivery Process in Jenkins with Workflow_ (Dec 2014): [video](http://youtu.be/ZqfiW8eVcuQ)
+
+JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJY)
+
+# Detailed guides
+
+[Reusing build steps from freestyle projects](basic-steps/CORE-STEPS.md)
+
+[Using version control from a workflow](scm-step/README.md)
+
+# Development
+
+* [Changelog](CHANGES.md)
+* [Ongoing plugin compatibility list](COMPATIBILITY.md)
+* [Source repository](https://github.com/jenkinsci/workflow-plugin)
+* [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide) (file issues in the `workflow-plugin` component, or other components with the `workflow` label)
+* [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow)
+* [Open pull requests](https://github.com/jenkinsci/workflow-plugin/pulls)
+* [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
+  [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
+* [Video tutorial on implementing a Step API](http://jenkins-ci.org/content/workflow-plugin-tutorial-writing-step-impl)
+* [Video walkthrough of code](https://www.youtube.com/watch?v=tZygoTlW6YE)
+
+## Running from sources
 
 If you want to try running recent development changes, rather than released binaries, you have two options. You can run directly from the source tree; from the root of the repository:
 
@@ -70,28 +97,7 @@ You can also run the Docker demo with snapshot binaries:
 
 The snapshot Docker demo is mainly useful for verifying the effect of ongoing changes on future demo binary releases. You get the `cd` sample job set up, but your environment is thrown away if you kill the Docker container (for example with Ctrl-C). When using `hpi:run` the same `aggregator/work/` home directory is reused so long as you do not explicitly delete it.
 
-# Presentations
-
-Webinar _Orchestrating the Continuous Delivery Process in Jenkins with Workflow_ (Dec 2014): [video](http://youtu.be/ZqfiW8eVcuQ)
-
-JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJY)
-
-JUC Boston (Jun 2014): [slides](http://www.cloudbees.com/sites/default/files/2014-0618-Boston-Jesse_Glick-Workflow.pdf) and [video](https://www.youtube.com/watch?v=gpaV6x9QwDo&index=9&list=UUKlF3GIFy9KVUefVbycx_vw)
-
-# Development
-
-* [Changelog](CHANGES.md)
-* [Ongoing plugin compatibility list](COMPATIBILITY.md)
-* [Source repository](https://github.com/jenkinsci/workflow-plugin)
-* [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide)
-* [Open pull requests](https://github.com/jenkinsci/workflow-plugin/pulls)
-* [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow)
-* [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/) with validated merge support.
-  [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
-* [Video tutorial on implementing a Step API](http://jenkins-ci.org/content/workflow-plugin-tutorial-writing-step-impl)
-* [Video walkthrough of code](https://www.youtube.com/watch?v=tZygoTlW6YE)
-
-# Source organization
+## Source organization
 
 While the implementation is divided into a number of plugins, for ease of prototyping they are all kept in one repository using snapshot dependencies.
 
