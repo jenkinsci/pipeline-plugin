@@ -13,6 +13,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [X] `MercurialSCM` (`mercurial`): supported as of 1.51
 - [ ] `PerforceScm` (`p4`, not the older `perforce`): [JENKINS-24206](https://issues.jenkins-ci.org/browse/JENKINS-24206)
 - [ ] `DimensionsSCM` (`dimensionsscm`): [JENKINS-26165](https://issues.jenkins-ci.org/browse/JENKINS-26165)
+- [ ] `IntegritySCM` (`integrity-plugin`): [JENKINS-27140](https://issues.jenkins-ci.org/browse/JENKINS-27140)
 
 ## Build steps and post-build actions
 
