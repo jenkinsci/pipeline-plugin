@@ -668,6 +668,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 rebuildContext(story.j);
                 while (b.isBuilding()) {
                     Thread.sleep(100);
+                    System.err.println(JenkinsRule.getLog(b));
                 }
                 assertBuildCompletedSuccessfully();
                 story.j.assertLogContains("OK ran", b);
