@@ -9,9 +9,9 @@ import static java.util.Arrays.*;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.SingleJobTestBase;
+import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep;
-import org.jenkinsci.plugins.workflow.cps.steps.ParallelStep.ParallelLabelAction;
 import org.jenkinsci.plugins.workflow.cps.steps.ParallelStepException;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -277,9 +277,9 @@ public class ParallelStepTest extends SingleJobTestBase {
         List<String> actual = new ArrayList<String>();
 
         for (Row row : t.getRows()) {
-            ParallelLabelAction a = row.getNode().getAction(ParallelLabelAction.class);
+            ThreadNameAction a = row.getNode().getAction(ThreadNameAction.class);
             if (a!=null)
-                actual.add(a.getBranchName());
+                actual.add(a.getThreadName());
         }
 
         assertEquals(Arrays.asList(expected),actual);
@@ -328,6 +328,72 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 // make sure the table builds OK
                 buildTable();
+            }
+        });
+    }
+
+    @Test
+    @Issue("JENKINS-26122")
+    public void parallelBranchLabels() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(join(
+                        "node {\n" +
+                                "    parallel( \n" +
+                                "        a: { \n" +
+                                "            echo('echo a');\n" +
+                                "            echo('echo a');\n" +
+                                "        }, \n" +
+                                "        b: { \n" +
+                                "            echo('echo b'); \n" +
+                                "            echo('echo b'); \n" +
+                                "        }\n" +
+                                "    )\n" +
+                                "}\n"
+                )));
+
+                startBuilding().get();
+                assertBuildCompletedSuccessfully();
+
+                // Check that the individual labeled lines are as expected
+                //System.out.println(b.getLog());
+                List<String> logLines = b.getLog(50);
+                assertGoodLabeledLogs(logLines);
+
+                // Check that the logs are printed in the right sequence e.g. that a
+                // "[a] Running: Print Message" is followed by a "[a] echo a"
+                assertGoodSequence("a", logLines);
+                assertGoodSequence("b", logLines);
+            }
+            private void assertGoodLabeledLogs(List<String> logLines) {
+                for (int i = 0; i < logLines.size(); i++) {
+                    String logLine = logLines.get(i);
+                    if (logLine.startsWith("[a] ")) {
+                        assertGoodLabeledLog("a", logLine);
+                    } else if (logLine.startsWith("[b] ")) {
+                        assertGoodLabeledLog("b", logLine);
+                    }
+                }
+            }
+            private void assertGoodLabeledLog(String label, String logLine) {
+                List<String> possibleLogLines = Arrays.asList(
+                        String.format("[%s] Running: Parallel branch: %s", label, label),
+                        String.format("[%s] Running: Print Message", label),
+                        String.format("[%s] echo %s", label, label)
+                );
+                boolean contains = possibleLogLines.contains(logLine);
+                assertTrue(contains);
+            }
+            private void assertGoodSequence(String label, List<String> logLines) {
+                String running = String.format("[%s] Running: Print Message", label);
+                String echo = String.format("[%s] echo %s", label, label);
+
+                for (int i = 0; i < logLines.size() - 1; i++) { // skip the last log line in this loop
+                    if (logLines.get(i).equals(running)) {
+                        assertEquals(echo, logLines.get(i + 1));
+                    }
+                }
             }
         });
     }

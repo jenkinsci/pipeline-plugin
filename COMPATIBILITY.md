@@ -13,6 +13,8 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [X] `MercurialSCM` (`mercurial`): supported as of 1.51
 - [ ] `PerforceScm` (`p4`, not the older `perforce`): [JENKINS-24206](https://issues.jenkins-ci.org/browse/JENKINS-24206)
 - [ ] `DimensionsSCM` (`dimensionsscm`): [JENKINS-26165](https://issues.jenkins-ci.org/browse/JENKINS-26165)
+- [ ] `IntegritySCM` (`integrity-plugin`): [JENKINS-27140](https://issues.jenkins-ci.org/browse/JENKINS-27140)
+- [ ] `RepoScm` (`repo`): [JENKINS-26836](https://issues.jenkins-ci.org/browse/JENKINS-26836)
 
 ## Build steps and post-build actions
 
@@ -36,6 +38,7 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `JaCoCoPublisher` (`jacoco`): [JENKINS-27120](https://issues.jenkins-ci.org/browse/JENKINS-27120)
 - [ ] `Publisher` (`testng`): [JENKINS-27121](https://issues.jenkins-ci.org/browse/JENKINS-27121)
 - [ ] `GroovyPostbuildRecorder` (`groovy-postbuild`): [JENKINS-26918](https://issues.jenkins-ci.org/browse/JENKINS-26918)
+- [ ] `Gradle` (`gradle`): [JENKINS-27393](https://issues.jenkins-ci.org/browse/JENKINS-27393)
 
 ## Build wrappers
 
@@ -69,7 +72,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 
 - [X] `rebuild`: [JENKINS-26024](https://issues.jenkins-ci.org/browse/JENKINS-26024)
 - [ ] `parameterized-trigger` (to support a workflow as downstream): [JENKINS-26050](https://issues.jenkins-ci.org/browse/JENKINS-26050)
-- [ ] `build-token-root`: [JENKINS-26693](https://issues.jenkins-ci.org/browse/JENKINS-26693)
+- [X] `build-token-root`: [JENKINS-26693](https://issues.jenkins-ci.org/browse/JENKINS-26693)
 - [X] `credentials-binding`: `withCredentials` step as of 1.3
 - [ ] `build-failure-analyzer`: [JENKINS-27123](https://issues.jenkins-ci.org/browse/JENKINS-27123)
 - [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
