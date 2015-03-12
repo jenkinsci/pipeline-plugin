@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
 import com.cloudbees.groovy.cps.SerializableScript;
 import groovy.lang.GroovyShell;
 import hudson.EnvVars;
@@ -105,7 +106,7 @@ public abstract class CpsScript extends SerializableScript {
             return env();
         } else if (property.equals(PROP_BUILD)) {
             try {
-                return new CurrentBuildWrapper(build());
+                return new RunWrapper(build(), true);
             } catch (IOException x) {
                 throw new InvokerInvocationException(x);
             }

@@ -19,7 +19,7 @@ public class BuildTriggerListener extends RunListener<Run<?,?>>{
         BuildTriggerAction action = run.getAction(BuildTriggerAction.class);
         if (action != null) {
             if (!action.isPropagate() || run.getResult() == Result.SUCCESS) {
-                action.getStepContext().onSuccess(run);
+                action.getStepContext().onSuccess(new RunWrapper(run, false));
             } else {
                 action.getStepContext().onFailure(new Exception(String.valueOf(run.getResult())));
             }

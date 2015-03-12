@@ -22,10 +22,10 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow;
+package org.jenkinsci.plugins.workflow.steps.build;
 
 import hudson.model.Result;
-import org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -35,33 +35,32 @@ import org.junit.Test;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 @Issue("JENKINS-26834")
-public class BuildVarTest {
+public class RunWrapperTest {
 
     @Rule public RestartableJenkinsRule r = new RestartableJenkinsRule();
 
     @Test public void historyAndPickling() {
         r.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
+                ScriptApproval.get().approveSignature("staticMethod org.codehaus.groovy.runtime.ScriptBytecodeAdapter compareNotEqual java.lang.Object java.lang.Object"); // TODO JENKINS-27390
                 WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
                     "def b0 = currentBuild\n" +
                     "for (b = b0; b != null; b = b.previousBuild) {\n" +
                     "  semaphore 'basics'\n" +
-                    // TODO JENKINS-27271 cannot simply use ${b.result?.isWorseThan(hudson.model.Result.SUCCESS)}
-                    "  def r = b.result; echo \"number=${b.number} problem=${r != null ? r.isWorseThan(hudson.model.Result.SUCCESS) : null}\"\n" +
+                    "  echo \"number=${b.number} result=${b.result}\"\n" +
                     "}", true));
                 SemaphoreStep.success("basics/1", null);
                 WorkflowRun b1 = r.j.assertBuildStatusSuccess(p.scheduleBuild2(0).get());
-                r.j.assertLogContains("number=1 problem=null", b1);
+                r.j.assertLogContains("number=1 result=null", b1);
                 WorkflowRun b2 = p.scheduleBuild2(0).getStartCondition().get();
                 SemaphoreStep.success("basics/2", null);
                 SemaphoreStep.waitForStart("basics/3", b2);
-                Thread.sleep(1000); // TODO why is this necessary? will the flush() in #80 help?
-                r.j.assertLogContains("number=2 problem=null", b2);
+                Thread.sleep(1000); // TODO why is this necessary? the flush() in WorkflowRun.logNodeMessage apparently does not suffice
+                r.j.assertLogContains("number=2 result=null", b2);
                 r.j.assertLogNotContains("number=1", b2);
             }
         });
@@ -74,7 +73,7 @@ public class BuildVarTest {
                     Thread.sleep(100);
                 }
                 r.j.assertBuildStatusSuccess(b2);
-                r.j.assertLogContains("number=1 problem=false", b2);
+                r.j.assertLogContains("number=1 result=SUCCESS", b2);
             }
         });
     }
@@ -82,9 +81,10 @@ public class BuildVarTest {
     @Test public void updateSelf() {
         r.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
+                ScriptApproval.get().approveSignature("staticMethod org.codehaus.groovy.runtime.ScriptBytecodeAdapter compareNotEqual java.lang.Object java.lang.Object"); // TODO JENKINS-27390
                 WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
-                    "currentBuild.result = hudson.model.Result.UNSTABLE\n" +
+                    "currentBuild.result = 'UNSTABLE'\n" +
                     "currentBuild.description = 'manipulated'\n" +
                     "currentBuild.displayName = 'special'\n" +
                     "def pb = currentBuild.previousBuild; if (pb != null) {pb.displayName = 'verboten'}", true));
@@ -92,23 +92,10 @@ public class BuildVarTest {
                 assertEquals("manipulated", b1.getDescription());
                 assertEquals("special", b1.getDisplayName());
                 WorkflowRun b2 = r.j.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
-                assertEquals("field hudson.model.Run displayName", ((RejectedAccessException) b2.getExecution().getCauseOfFailure()).getSignature());
+                assertEquals(SecurityException.class, b2.getExecution().getCauseOfFailure().getClass());
                 assertEquals("manipulated", b2.getDescription());
                 assertEquals("special", b2.getDisplayName());
                 assertEquals("special", b1.getDisplayName());
-            }
-        });
-    }
-
-    @Test public void verboten() {
-        r.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
-                WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
-                p.setDefinition(new CpsFlowDefinition("currentBuild.reload()", true));
-                WorkflowRun b1 = r.j.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
-                String message = ((RejectedAccessException) b1.getExecution().getCauseOfFailure()).getMessage();
-                // If using GroovyObjectSupport for CurrentBuildWrapper, would expect RejectedAccessException.signature == "method hudson.model.Run reload"; otherwise it is an “unclassified method”:
-                assertTrue(message + "\n" + JenkinsRule.getLog(b1), message.contains("reload"));
             }
         });
     }
