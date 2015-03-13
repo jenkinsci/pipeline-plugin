@@ -32,7 +32,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  */
 public class ParallelStep extends Step {
 
-    /** should a failure in a parallel branch early terminate other branches. */
+    /** should a failure in a parallel branch terminate other still executing branches. */
     private final boolean failFast;
 
     /**
@@ -102,16 +102,16 @@ public class ParallelStep extends Step {
             @Override
             public void onSuccess(StepContext context, Object result) {
                 handler.outcomes.put(name, new Outcome(result, null));
-                checkAllDone();
+                checkAllDone(false);
             }
 
             @Override
             public void onFailure(StepContext context, Throwable t) {
                 handler.outcomes.put(name, new Outcome(null, t));
-                checkAllDone();
+                checkAllDone(true);
             }
 
-            private void checkAllDone() {
+            private void checkAllDone(boolean stepFailed) {
                 Map<String,Object> success = new HashMap<String, Object>();
                 Entry<String,Outcome> failure = null;
                 for (Entry<String,Outcome> e : handler.outcomes.entrySet()) {
@@ -119,10 +119,10 @@ public class ParallelStep extends Step {
 
                     if (o==null) {
                         // some of the results are not yet ready
-                        if (handler.failFast && ! handler.isStopSent()) {
+                        if (stepFailed && handler.failFast && ! handler.isStopSent()) {
                             handler.stopSent();
                             try {
-                                handler.stepExecution.stop(new InterruptedException("Interupted due to early termination of parallel step."));
+                                handler.stepExecution.stop(new InterruptedException("Interupted due to failFast termination of parallel step."));
                             }
                             catch (Exception ignored) {
                                 // ignored.
@@ -154,6 +154,8 @@ public class ParallelStep extends Step {
 
     @Extension
     public static class DescriptorImpl extends StepDescriptor {
+        private final static String FAIL_FAST_FLAG = "failFast";
+
         @Override
         public String getFunctionName() {
             return "parallel";
@@ -161,27 +163,27 @@ public class ParallelStep extends Step {
 
         @Override
         public Step newInstance(Map<String,Object> arguments) {
-            boolean earlyTermination = false;
+            boolean failFast = false;
             Map<String,Closure<?>> closures = new LinkedHashMap<String, Closure<?>>();
             for (Entry<String,Object> e : arguments.entrySet()) {
                 if ((e.getValue() instanceof Closure)) {
                     closures.put(e.getKey(), (Closure<?>)e.getValue());
                 }
-                else if ("earlyTermination".equals(e.getKey())) {
-                    earlyTermination = Boolean.valueOf(e.getValue().toString());
+                else if (FAIL_FAST_FLAG.equals(e.getKey()) && e.getValue() instanceof Boolean) {
+                    failFast = (Boolean)e.getValue();
                 }
                 else {
-                    throw new IllegalArgumentException("Expected a closure but found "+e.getKey()+"="+e.getValue());
+                    throw new IllegalArgumentException("Expected a closure or failFast but found "+e.getKey()+"="+e.getValue());
                 }
             }
-            return new ParallelStep((Map)closures, earlyTermination);
+            return new ParallelStep((Map)closures, failFast);
         }
 
         @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
             ParallelStep ps = (ParallelStep) step;
             Map<String,Object> retVal = new TreeMap<String,Object>(ps.closures);
             if (ps.failFast) {
-                retVal.put("earlyTermination", Boolean.TRUE);
+                retVal.put(FAIL_FAST_FLAG, Boolean.TRUE);
             }
             return retVal;
         }

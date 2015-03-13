@@ -123,7 +123,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "      a: { sleep 10; writeFile text: '', file: 'b.done' },",
                     "      failFast: true",
                     "    )",
-                    "    assert false;",
+                    "    assert false",
                     "  } catch (ParallelStepException e) {",
                     "    assert e.name=='b'",
                     "    assert e.cause instanceof AbortException",
@@ -135,8 +135,36 @@ public class ParallelStepTest extends SingleJobTestBase {
                 assertBuildCompletedSuccessfully();
                 Assert.assertFalse("b should have aborted", jenkins().getWorkspaceFor(p).child("b.done").exists());
 
-                buildTable();
-                shouldHaveParallelStepsInTheOrder("b","a");
+            }
+        });
+    }
+
+    /**
+     * FailFast should not kill branches if there is no failure.
+     */
+    @Test @Issue("JENKINS-26034")
+    public void failFast_has_no_effect_on_suceess() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(join(
+                    "import "+AbortException.class.getName(),
+                    "import "+ParallelStepException.class.getName(),
+
+                    "node {",
+                    "    parallel(",
+                    "      a: { echo 'hello from a';sleep 1;echo 'goodbye from a' },",
+                    "      b: { echo 'hello from b';sleep 1;echo 'goodbye from b' },",
+                    "      c: { echo 'hello from c';sleep 1;echo 'goodbye from c' },",
+                    // make sure this branch is quicker than the others.
+                    "      d: { echo 'hello from d' },",
+                    "      failFast: true",
+                    "    )",
+                    "}"
+                )));
+
+                startBuilding().get();
+                assertBuildCompletedSuccessfully();
             }
         });
     }

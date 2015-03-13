@@ -5,6 +5,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 ## 1.4 (upcoming)
 
 ### User changes
+* JENKINS-26034: added `failFast` option to the `parallel` step.
 * JENKINS-26085: added `credentialsId` to the `git` step.
 * JENKINS-26121: record the approver of an `input` step in build history.
 * JENKINS-26122: Prepend `parallel` step execution logs with the branch label.
