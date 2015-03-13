@@ -23,6 +23,7 @@ import org.jenkinsci.plugins.workflow.support.steps.input.InputAction;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.Issue;
@@ -80,7 +81,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "      b: { error 'died' },",
 
                         // make sure this branch takes longer than a
-                    "      a: { sleep 3; writeFile text: '', file: 'b.done' }",
+                    "      a: { sleep 3; writeFile text: '', file: 'a.done' }",
                     "    )",
                     "    assert false;",
                     "  } catch (ParallelStepException e) {",
@@ -92,13 +93,83 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 startBuilding().get();
                 assertBuildCompletedSuccessfully();
-                assert jenkins().getWorkspaceFor(p).child("b.done").exists();
+                assert jenkins().getWorkspaceFor(p).child("a.done").exists();
 
                 buildTable();
                 shouldHaveParallelStepsInTheOrder("b","a");
             }
         });
     }
+
+
+    /**
+     * Failure in a branch will cause the join to fail.
+     */
+    @Test @Issue("JENKINS-26034")
+    public void failure_in_subflow_will_fail_fast() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(join(
+                    "import "+AbortException.class.getName(),
+                    "import "+ParallelStepException.class.getName(),
+
+                    "node {",
+                    "  try {",
+                    "    parallel(",
+                    "      b: { error 'died' },",
+
+                        // make sure this branch takes longer than a
+                    "      a: { sleep 25; writeFile text: '', file: 'a.done' },",
+                    "      failFast: true",
+                    "    )",
+                    "    assert false",
+                    "  } catch (ParallelStepException e) {",
+                    "    echo e.toString()",
+                    "    assert e.name=='b'",
+                    "    assert e.cause instanceof AbortException",
+                    "  }",
+                    "}"
+                )));
+
+                startBuilding().get();
+                assertBuildCompletedSuccessfully();
+                Assert.assertFalse("a should have aborted", jenkins().getWorkspaceFor(p).child("a.done").exists());
+
+            }
+        });
+    }
+
+    /**
+     * FailFast should not kill branches if there is no failure.
+     */
+    @Test @Issue("JENKINS-26034")
+    public void failFast_has_no_effect_on_suceess() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(join(
+                    "import "+AbortException.class.getName(),
+                    "import "+ParallelStepException.class.getName(),
+
+                    "node {",
+                    "    parallel(",
+                    "      a: { echo 'hello from a';sleep 1;echo 'goodbye from a' },",
+                    "      b: { echo 'hello from b';sleep 1;echo 'goodbye from b' },",
+                    "      c: { echo 'hello from c';sleep 1;echo 'goodbye from c' },",
+                    // make sure this branch is quicker than the others.
+                    "      d: { echo 'hello from d' },",
+                    "      failFast: true",
+                    "    )",
+                    "}"
+                )));
+
+                startBuilding().get();
+                assertBuildCompletedSuccessfully();
+            }
+        });
+    }
+
 
     @Test
     public void localMethodCallWithinBranch() {
