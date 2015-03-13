@@ -54,6 +54,7 @@ import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.util.Arrays;
+import org.jvnet.hudson.test.RandomlyFails;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -129,6 +130,7 @@ public class InputStepTest extends Assert {
         assertEquals("alice", action.getUserId());;
     }
 
+    @RandomlyFails("TODO pending AtomicFileWriter.commit diagnostic improvement in 1.591")
     @Test
     @Issue("JENKINS-26363")
     public void test_cancel_run_by_input() throws Exception {
