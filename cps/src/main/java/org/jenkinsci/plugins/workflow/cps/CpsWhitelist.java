@@ -8,8 +8,9 @@ import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.ProxyWhitelist;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
+import jenkins.model.Jenkins;
 
 /**
  * {@link Whitelist} implementation for CPS flow execution.
@@ -36,8 +37,12 @@ class CpsWhitelist extends AbstractWhitelist {
                 // These are just aliases for EchoStep.
                 return true;
             }
-            if (name.equals("getProperty") && Arrays.asList(args).equals(Collections.singletonList("env"))) {
-                return true;
+            if (name.equals("getProperty") && args.length == 1) {
+                if (CpsScript.PROP_ENV.equals(args[0])) {
+                    return true;
+                } else if (CpsScript.PROP_BUILD.equals(args[0])) {
+                    return true;
+                }
             }
         }
         // TODO JENKINS-24982: it would be nice if AnnotatedWhitelist accepted @Whitelisted on an override
@@ -70,12 +75,18 @@ class CpsWhitelist extends AbstractWhitelist {
     /**
      * Stuff we whitelist specifically for CPS, with the rest of the installed rules combined.
      */
-    private static Whitelist INSTANCE;
+    private static final Map<Jenkins,Whitelist> wrappedByJenkins = new WeakHashMap<Jenkins,Whitelist>();
 
     public static synchronized Whitelist get() {
-        if (INSTANCE==null) {
-            INSTANCE = new ProxyWhitelist(new CpsWhitelist(),Whitelist.all());
+        Jenkins j = Jenkins.getInstance();
+        if (j == null) {
+            return new ProxyWhitelist();
         }
-        return INSTANCE;
+        Whitelist wrapped = wrappedByJenkins.get(j);
+        if (wrapped == null) {
+            wrapped = new ProxyWhitelist(new CpsWhitelist(), Whitelist.all());
+            wrappedByJenkins.put(j, wrapped);
+        }
+        return wrapped;
     }
 }

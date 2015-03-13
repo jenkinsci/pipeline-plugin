@@ -1,0 +1,30 @@
+<p>
+    You may ask that this workflow build wait for completion of the downstream build.
+    In that case the return value of the step is an object on which you can obtain the following read-only properties:
+    so you can inspect its <code>result</code> and so on.
+</p>
+<ul>
+    <li><code>number</code></li>
+    <li><code>result</code> (typically <code>SUCCESS</code>, <code>UNSTABLE</code>, or <code>FAILED</code>)</li>
+    <li><code>displayName</code></li>
+    <li><code>description</code></li>
+    <li><code>id</code></li>
+    <li><code>timeInMillis</code></li>
+    <li><code>startTimeInMillis</code></li>
+    <li><code>duration</code></li>
+    <li><code>building</code></li>
+    <li><code>inProgress</code></li>
+    <li><code>previousBuild</code> (another similar object)</li>
+    <li><code>nextBuild</code></li>
+</ul>
+<p>
+    For a non-Workflow downstream build, the <code>buildVariables</code> property offers access to a map of defined build variables.
+</p>
+<p>
+    Administrator-approved scripts outside the sandbox can use the <code>rawBuild</code> property to get access to a <code>hudson.model.Run</code> with further APIs.
+    You will generally need to do so inside a method marked <code>@NonCps</code> to avoid storing intermediate values.
+</p>
+<p>
+    If you do not wait, this step succeeds so long as the downstream build can be added to the queue (it will not even have been started).
+    In that case there is currently no return value.
+</p>

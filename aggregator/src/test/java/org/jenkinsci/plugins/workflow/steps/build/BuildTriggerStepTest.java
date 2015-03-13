@@ -25,6 +25,8 @@ import org.jvnet.hudson.test.MockFolder;
 
 import java.util.Arrays;
 import java.util.List;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.jvnet.hudson.test.FailureBuilder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.TestExtension;
 
@@ -35,17 +37,24 @@ public class BuildTriggerStepTest extends Assert {
     @Rule
     public JenkinsRule j = new JenkinsRule();
 
-    @Test
-    public void buildTopLevelProject() throws Exception {
-        FreeStyleProject p = j.createFreeStyleProject("test1");
-        p.getBuildersList().add(new Shell("echo 'Hello World'"));
+    @Issue("JENKINS-25851")
+    @Test public void buildTopLevelProject() throws Exception {
+        j.createFreeStyleProject("ds");
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition(
+            "def ds = build 'ds'\n" +
+            "echo \"ds.result=${ds.result} ds.number=${ds.number}\"", true));
+        j.assertLogContains("ds.result=SUCCESS ds.number=1", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
+    }
 
-
-        WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
-        foo.setDefinition(new CpsFlowDefinition("build 'test1'"));
-
-        QueueTaskFuture<WorkflowRun> q = foo.scheduleBuild2(0);
-        j.assertBuildStatusSuccess(q);
+    @Issue("JENKINS-25851")
+    @Test public void failingBuild() throws Exception {
+        j.createFreeStyleProject("ds").getBuildersList().add(new FailureBuilder());
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("build 'ds'", true));
+        j.assertBuildStatus(Result.FAILURE, us.scheduleBuild2(0).get());
+        us.setDefinition(new CpsFlowDefinition("echo \"ds.result=${build(job: 'ds', propagate: false).result}\"", true));
+        j.assertLogContains("ds.result=FAILURE", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
     }
 
     @SuppressWarnings("deprecation")
@@ -188,6 +197,16 @@ public class BuildTriggerStepTest extends Assert {
         @Override public boolean shouldSchedule(Queue.Task p, List<Action> actions) {
             return p instanceof WorkflowJob; // i.e., refuse FreestyleProject
         }
+    }
+
+    @Issue("JENKINS-25851")
+    @Test public void buildVariables() throws Exception {
+        j.createFreeStyleProject("ds").addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("param", "default")));
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        // TODO apparent sandbox bug using buildVariables.param: unclassified field java.util.HashMap param
+        ScriptApproval.get().approveSignature("method java.util.Map get java.lang.Object"); // TODO should be prewhitelisted
+        us.setDefinition(new CpsFlowDefinition("echo \"build var: ${build(job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'param', value: 'override']]).buildVariables.get('param')}\"", true));
+        j.assertLogContains("build var: override", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
     }
 
 }
