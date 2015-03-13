@@ -1,9 +1,11 @@
 package org.jenkinsci.plugins.workflow.cps.steps;
 
 import com.cloudbees.groovy.cps.Outcome;
+
 import groovy.lang.Closure;
 import hudson.Extension;
 import hudson.model.TaskListener;
+
 import org.jenkinsci.plugins.workflow.cps.CpsVmThreadOnly;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
@@ -13,6 +15,7 @@ import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.Serializable;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -63,6 +66,8 @@ public class ParallelStep extends Step {
         private final boolean failFast;
         /** Have we called stop on the StepExecution? */
         private boolean stopSent = false;
+        /** if we failFast we need to record the first failure */
+        private SimpleEntry<String,Throwable> originalFailure = null;
 
         /**
          * Collect the results of sub-workflows as they complete.
@@ -108,12 +113,14 @@ public class ParallelStep extends Step {
             @Override
             public void onFailure(StepContext context, Throwable t) {
                 handler.outcomes.put(name, new Outcome(null, t));
+                if (handler.originalFailure == null) {
+                    handler.originalFailure = new SimpleEntry<String, Throwable>(name, t);
+                }
                 checkAllDone(true);
             }
 
             private void checkAllDone(boolean stepFailed) {
                 Map<String,Object> success = new HashMap<String, Object>();
-                Entry<String,Outcome> failure = null;
                 for (Entry<String,Outcome> e : handler.outcomes.entrySet()) {
                     Outcome o = e.getValue();
 
@@ -122,7 +129,7 @@ public class ParallelStep extends Step {
                         if (stepFailed && handler.failFast && ! handler.isStopSent()) {
                             handler.stopSent();
                             try {
-                                handler.stepExecution.stop(new InterruptedException("Interupted due to failFast termination of parallel step."));
+                                handler.stepExecution.stop(new FailFastException());
                             }
                             catch (Exception ignored) {
                                 // ignored.
@@ -131,24 +138,32 @@ public class ParallelStep extends Step {
                         return;
                     }
                     if (o.isFailure()) {
-                        failure= e;
+                        if (handler.originalFailure == null) {
+                            // in case the plugin is upgraded whilst a parallel step is running
+                            handler.originalFailure = new SimpleEntry<String, Throwable>(e.getKey(), e.getValue().getAbnormal());
+                        }
+                        // recorded in the onFailure
                     } else {
                         success.put(e.getKey(), o.getNormal());
                     }
                 }
-
                 // all done
-                if (failure!=null) {
+                if (handler.originalFailure!=null) {
                     // wrap the exception so that the call stack leading up to parallel is visible
-                    handler.context.onFailure(new ParallelStepException(failure.getKey(), failure.getValue().getAbnormal()));
+                    handler.context.onFailure(new ParallelStepException(handler.originalFailure.getKey(), handler.originalFailure.getValue()));
                 } else {
                     handler.context.onSuccess(success);
                 }
             }
-
+            
             private static final long serialVersionUID = 1L;
         }
 
+        private static final long serialVersionUID = 1L;
+    }
+
+    /** Internal exception that is only used internally to abort a parallel body in the case of a failFast body failing. */
+    private static final class FailFastException extends Exception {
         private static final long serialVersionUID = 1L;
     }
 
