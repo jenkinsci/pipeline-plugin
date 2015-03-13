@@ -15,6 +15,7 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -30,13 +31,18 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  * @author Kohsuke Kawaguchi
  */
 public class ParallelStep extends Step {
+
+    /** should a failure in a parallel branch early terminate other branches. */
+    private final boolean failFast;
+
     /**
      * All the sub-workflows as {@link Closure}s, keyed by their names.
      */
     /*package*/ final Map<String,Closure> closures;
 
-    public ParallelStep(Map<String,Closure> closures) {
+    public ParallelStep(Map<String,Closure> closures, boolean failFast) {
         this.closures = closures;
+        this.failFast = failFast;
     }
 
     @Override
@@ -45,22 +51,42 @@ public class ParallelStep extends Step {
         return new ParallelStepExecution(this, context);
     }
 
+    /*package*/ boolean isFailFast() {
+        return failFast;
+    }
+
+
     @PersistIn(PROGRAM)
     static class ResultHandler implements Serializable {
         private final StepContext context;
+        private final ParallelStepExecution stepExecution;
+        private final boolean failFast;
+        /** Have we called stop on the StepExecution? */
+        private boolean stopSent = false;
+
         /**
          * Collect the results of sub-workflows as they complete.
          * The key set is fully populated from the beginning.
          */
         private final Map<String,Outcome> outcomes = new HashMap<String, Outcome>();
 
-        ResultHandler(StepContext context) {
+        ResultHandler(StepContext context, ParallelStepExecution parallelStepExecution, boolean failFast) {
             this.context = context;
+            this.stepExecution = parallelStepExecution;
+            this.failFast = failFast;
         }
 
         Callback callbackFor(String name) {
             outcomes.put(name, null);
             return new Callback(this, name);
+        }
+
+        private void stopSent() {
+            stopSent = true;
+        }
+
+        private boolean isStopSent() {
+            return stopSent;
         }
 
         private static class Callback extends BodyExecutionCallback {
@@ -91,8 +117,19 @@ public class ParallelStep extends Step {
                 for (Entry<String,Outcome> e : handler.outcomes.entrySet()) {
                     Outcome o = e.getValue();
 
-                    if (o==null)
-                        return; // some of the results are not yet ready
+                    if (o==null) {
+                        // some of the results are not yet ready
+                        if (handler.failFast && ! handler.isStopSent()) {
+                            handler.stopSent();
+                            try {
+                                handler.stepExecution.stop(new InterruptedException("Interupted due to early termination of parallel step."));
+                            }
+                            catch (Exception ignored) {
+                                // ignored.
+                            }
+                        }
+                        return;
+                    }
                     if (o.isFailure()) {
                         failure= e;
                     } else {
@@ -124,15 +161,29 @@ public class ParallelStep extends Step {
 
         @Override
         public Step newInstance(Map<String,Object> arguments) {
+            boolean earlyTermination = false;
+            Map<String,Closure<?>> closures = new LinkedHashMap<String, Closure<?>>();
             for (Entry<String,Object> e : arguments.entrySet()) {
-                if (!(e.getValue() instanceof Closure))
+                if ((e.getValue() instanceof Closure)) {
+                    closures.put(e.getKey(), (Closure<?>)e.getValue());
+                }
+                else if ("earlyTermination".equals(e.getKey())) {
+                    earlyTermination = Boolean.valueOf(e.getValue().toString());
+                }
+                else {
                     throw new IllegalArgumentException("Expected a closure but found "+e.getKey()+"="+e.getValue());
+                }
             }
-            return new ParallelStep((Map)arguments);
+            return new ParallelStep((Map)closures, earlyTermination);
         }
 
         @Override public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
-            return new TreeMap<String,Object>(((ParallelStep) step).closures);
+            ParallelStep ps = (ParallelStep) step;
+            Map<String,Object> retVal = new TreeMap<String,Object>(ps.closures);
+            if (ps.failFast) {
+                retVal.put("earlyTermination", Boolean.TRUE);
+            }
+            return retVal;
         }
 
         @Override

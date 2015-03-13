@@ -23,6 +23,7 @@ import org.jenkinsci.plugins.workflow.support.steps.input.InputAction;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.Issue;
@@ -99,6 +100,47 @@ public class ParallelStepTest extends SingleJobTestBase {
             }
         });
     }
+
+
+    /**
+     * Failure in a branch will cause the join to fail.
+     */
+    @Test @Issue("JENKINS-26034")
+    public void failure_in_subflow_will_fail_fast() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(join(
+                    "import "+AbortException.class.getName(),
+                    "import "+ParallelStepException.class.getName(),
+
+                    "node {",
+                    "  try {",
+                    "    parallel(",
+                    "      b: { error 'died' },",
+
+                        // make sure this branch takes longer than a
+                    "      a: { sleep 10; writeFile text: '', file: 'b.done' },",
+                    "      failFast: true",
+                    "    )",
+                    "    assert false;",
+                    "  } catch (ParallelStepException e) {",
+                    "    assert e.name=='b'",
+                    "    assert e.cause instanceof AbortException",
+                    "  }",
+                    "}"
+                )));
+
+                startBuilding().get();
+                assertBuildCompletedSuccessfully();
+                Assert.assertFalse("b should have aborted", jenkins().getWorkspaceFor(p).child("b.done").exists());
+
+                buildTable();
+                shouldHaveParallelStepsInTheOrder("b","a");
+            }
+        });
+    }
+
 
     @Test
     public void localMethodCallWithinBranch() {

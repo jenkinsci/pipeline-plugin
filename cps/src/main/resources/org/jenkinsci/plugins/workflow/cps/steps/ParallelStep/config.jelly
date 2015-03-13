@@ -27,12 +27,14 @@ THE SOFTWARE.
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
     <f:block>
         <p>
-            (No visual configuration.) Takes a map from branch names to closures:
+            (No visual configuration.) Takes a map from branch names to closures and an optional argument <code>failFast</code>
+             which will terminate all branches upon a failure in any other branch:
         </p>
         <pre>parallel firstBranch: {
     // do something
 }, secondBranch: {
     // do something else
-}</pre>
+},
+failFast: true|false</pre>
     </f:block>
 </j:jelly>
