@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Extension;
+import hudson.model.Item;
 import hudson.model.AbstractProject;
 import hudson.model.FreeStyleProject;
 import hudson.tasks.BuildStepDescriptor;
@@ -57,7 +58,8 @@ public final class StepConfigTester {
         FreeStyleProject p = rule.createFreeStyleProject();
         try {
             p.getBuildersList().add(new StepBuilder(before));
-            p = rule.configRoundtrip(p);
+            // workaround for eclipse compiler Ambiguous method call
+            p = (FreeStyleProject) rule.configRoundtrip((Item)p);
             StepBuilder b = p.getBuildersList().get(StepBuilder.class);
             assertNotNull(b);
             Step after = b.s;
