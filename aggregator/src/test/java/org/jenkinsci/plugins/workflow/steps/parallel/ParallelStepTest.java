@@ -81,7 +81,7 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "      b: { error 'died' },",
 
                         // make sure this branch takes longer than a
-                    "      a: { sleep 3; writeFile text: '', file: 'b.done' }",
+                    "      a: { sleep 3; writeFile text: '', file: 'a.done' }",
                     "    )",
                     "    assert false;",
                     "  } catch (ParallelStepException e) {",
@@ -93,7 +93,7 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 startBuilding().get();
                 assertBuildCompletedSuccessfully();
-                assert jenkins().getWorkspaceFor(p).child("b.done").exists();
+                assert jenkins().getWorkspaceFor(p).child("a.done").exists();
 
                 buildTable();
                 shouldHaveParallelStepsInTheOrder("b","a");
@@ -120,11 +120,12 @@ public class ParallelStepTest extends SingleJobTestBase {
                     "      b: { error 'died' },",
 
                         // make sure this branch takes longer than a
-                    "      a: { sleep 10; writeFile text: '', file: 'b.done' },",
+                    "      a: { sleep 25; writeFile text: '', file: 'a.done' },",
                     "      failFast: true",
                     "    )",
                     "    assert false",
                     "  } catch (ParallelStepException e) {",
+                    "    echo e.toString()",
                     "    assert e.name=='b'",
                     "    assert e.cause instanceof AbortException",
                     "  }",
@@ -133,7 +134,7 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 startBuilding().get();
                 assertBuildCompletedSuccessfully();
-                Assert.assertFalse("b should have aborted", jenkins().getWorkspaceFor(p).child("b.done").exists());
+                Assert.assertFalse("a should have aborted", jenkins().getWorkspaceFor(p).child("a.done").exists());
 
             }
         });
