@@ -2,7 +2,9 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
-## 1.4 (upcoming)
+## 1.5 (upcoming)
+
+## 1.4 (Mar 16 2015)
 
 ### User changes
 * JENKINS-26034: added `failFast` option to the `parallel` step.
