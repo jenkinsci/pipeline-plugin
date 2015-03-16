@@ -14,7 +14,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 * JENKINS-26619: _Snippet Generator_ did not work on Git SCM extensions.
 * JENKINS-27145: showing available environment variables from help.
 * JENKINS-26834: `currentBuild` can be used to refer to the running build, examine the status of its predecessor, etc.
-* JENKINS-25851: the `build` step (in the default `wait: true` mode) now returns the actual downstream build. You may also set `propagate: false` to proceed even if that build is not stable.
+* JENKINS-25851: the `build` step (in the default `wait: true` mode) now returns a handle to the downstream build. You may also set `propagate: false` to proceed even if that build is not stable.
 
 ## 1.3 (Mar 04 2015)
 
