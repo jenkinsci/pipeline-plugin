@@ -246,7 +246,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
                         ListenableFuture<CpsThreadGroup> pp = getFlowExecution().programPromise;
                         assert pp != null;
                         f.set(pp.get());
-                    } catch (Exception x) { // from getFlowExecution() or get()
+                    } catch (Throwable x) { // from getFlowExecution() or get()
                         f.setException(x);
                     }
                 }
