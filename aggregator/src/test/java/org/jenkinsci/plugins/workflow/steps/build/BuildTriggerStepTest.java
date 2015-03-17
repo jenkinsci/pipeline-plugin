@@ -17,7 +17,7 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Assert;
+import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -30,12 +30,9 @@ import org.jvnet.hudson.test.FailureBuilder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.TestExtension;
 
-/**
- * @author Vivek Pandey
- */
-public class BuildTriggerStepTest extends Assert {
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+public class BuildTriggerStepTest {
+    
+    @Rule public JenkinsRule j = new JenkinsRule();
 
     @Issue("JENKINS-25851")
     @Test public void buildTopLevelProject() throws Exception {
@@ -118,7 +115,9 @@ public class BuildTriggerStepTest extends Assert {
         }
         fb.getExecutor().interrupt();
 
-        while(fb.isBuilding());
+        while (fb.isBuilding()) {
+            Thread.sleep(100);
+        }
 
         assertEquals(Result.ABORTED, fb.getResult());
         j.assertBuildStatus(Result.FAILURE,q.get());
