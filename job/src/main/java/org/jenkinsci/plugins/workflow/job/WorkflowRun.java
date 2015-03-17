@@ -348,6 +348,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     @Override protected void onLoad() {
         super.onLoad();
+        if (completed != null) {
+            throw new IllegalStateException("double onLoad of " + this);
+        }
         if (execution != null) {
             execution.onLoad();
             execution.addListener(new GraphL());
