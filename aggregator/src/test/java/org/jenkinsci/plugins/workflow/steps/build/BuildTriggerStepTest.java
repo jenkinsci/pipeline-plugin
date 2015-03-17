@@ -28,6 +28,7 @@ import java.util.List;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jvnet.hudson.test.FailureBuilder;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.TestExtension;
 
 public class BuildTriggerStepTest {
@@ -144,6 +145,40 @@ public class BuildTriggerStepTest {
         j.jenkins.getQueue().cancel(items[0]);
 
         j.assertBuildStatus(Result.FAILURE,q.get());
+    }
+
+    /** Interrupting the flow ought to interrupt its downstream builds too, even across nested parallel branches. */
+    @Test public void interruptFlow() throws Exception {
+        FreeStyleProject ds1 = j.createFreeStyleProject("ds1");
+        ds1.getBuildersList().add(new SleepBuilder(Long.MAX_VALUE));
+        FreeStyleProject ds2 = j.createFreeStyleProject("ds2");
+        ds2.getBuildersList().add(new SleepBuilder(Long.MAX_VALUE));
+        FreeStyleProject ds3 = j.createFreeStyleProject("ds3");
+        ds3.getBuildersList().add(new SleepBuilder(Long.MAX_VALUE));
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("parallel ds1: {build 'ds1'}, ds23: {parallel ds2: {build 'ds2'}, ds3: {build 'ds3'}}", true));
+        j.jenkins.setNumExecutors(3);
+        j.jenkins.setNodes(j.jenkins.getNodes()); // TODO this seems to be the only way to trigger a call to updateComputerList
+        WorkflowRun usb = us.scheduleBuild2(0).getStartCondition().get();
+        assertEquals(1, usb.getNumber());
+        FreeStyleBuild ds1b, ds2b, ds3b;
+        while ((ds1b = ds1.getLastBuild()) == null || (ds2b = ds2.getLastBuild()) == null || (ds3b = ds3.getLastBuild()) == null) {
+            Thread.sleep(100);
+        }
+        assertEquals(1, ds1b.getNumber());
+        assertEquals(1, ds2b.getNumber());
+        assertEquals(1, ds3b.getNumber());
+        // Same as X button in UI.
+        // Should be the same as, e.g., GerritTrigger.RunningJobs.cancelJob, which calls Executor.interrupt directly.
+        // (Not if the Executor.currentExecutable is an AfterRestartTask.Body, though in that case probably the FreeStyleBuild would have been killed by restart anyway!)
+        usb.doStop();
+        while (usb.isBuilding() || ds1b.isBuilding() || ds2b.isBuilding() || ds3b.isBuilding()) {
+            Thread.sleep(100);
+        }
+        assertEquals(Result.ABORTED, usb.getResult());
+        assertEquals(Result.ABORTED, ds1b.getResult());
+        assertEquals(Result.ABORTED, ds2b.getResult());
+        assertEquals(Result.ABORTED, ds3b.getResult());
     }
 
     @SuppressWarnings("deprecation")
