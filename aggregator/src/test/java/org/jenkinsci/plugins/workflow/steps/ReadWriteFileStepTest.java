@@ -25,19 +25,24 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Functions;
+
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReadWriteFileStepTest {
+
+	Logger LOG = LoggerFactory.getLogger(ReadWriteFileStepTest.class);
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
     @Test public void basics() throws Exception {
-        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        boolean win = Functions.isWindows();
+        final WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        final boolean win = Functions.isWindows();
         p.setDefinition(new CpsFlowDefinition(
                 "node {\n" +
                 (win ? "  bat 'echo hello > f1'\n" : "  sh 'echo hello > f1'\n") +
@@ -48,5 +53,34 @@ public class ReadWriteFileStepTest {
                 "}"));
         r.assertLogContains("HELLO", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
+
+	@Test
+	public void shouldTestFileExistsAndNotFindFile() throws Exception
+	{
+        final WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition(
+                "node {\n" +
+                "  def exists = fileExists('test.txt')  \n" +
+                "  echo \"FileExists: ${exists}\" \n" +
+                "}"));
+
+		r.assertLogContains("FileExists: false", p.scheduleBuild2(0).get());
+		r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+    }
+
+	@Test
+	public void shouldTestFileExistsAndFindFile() throws Exception
+	{
+		final WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+		p.setDefinition(new CpsFlowDefinition(
+				"node {\n" +
+				"  writeFile file: 'test2.txt', text:'content of file' \n" +
+				"  def exists = fileExists('test2.txt')  \n" +
+				"  echo \"FileExists: ${exists}\" \n" +
+				"}"));
+
+		r.assertLogContains("FileExists: true", p.scheduleBuild2(0).get());
+		r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+	}
 
 }
