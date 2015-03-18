@@ -154,7 +154,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 startBuilding();
                 waitForWorkflowToSuspend();
 
-                assertTrue(JenkinsRule.getLog(b), b.isBuilding());
+                assertTrue(b.isBuilding());
             }
         });
         story.addStep(new Statement() {
@@ -167,7 +167,6 @@ public class WorkflowTest extends SingleJobTestBase {
                 watchDescriptor.watchUpdate();
 
                 e.waitForSuspension();
-                System.out.println(JenkinsRule.getLog(b));
                 assertTrue(e.isComplete());
 
                 assertBuildCompletedSuccessfully();
@@ -206,7 +205,7 @@ public class WorkflowTest extends SingleJobTestBase {
 
                 // wait until the execution gets to the watch task
                 while (watchDescriptor.getActiveWatches().isEmpty()) {
-                    assertTrue(JenkinsRule.getLog(b), b.isBuilding());
+                    assertTrue(b.isBuilding());
                     waitForWorkflowToSuspend();
                 }
             }
@@ -319,7 +318,7 @@ public class WorkflowTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
-                assertTrue(JenkinsRule.getLog(b), b.isBuilding());
+                assertTrue(b.isBuilding());
                 startJnlpProc(); // Have to relaunch JNLP agent, since the Jenkins port has changed, and we cannot force JenkinsRule to reuse the same port as before.
                 File f1 = new File(story.j.jenkins.getRootDir(), "f1");
                 File f2 = new File(story.j.jenkins.getRootDir(), "f2");
@@ -339,7 +338,7 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
-    @RandomlyFails("first sleep interrupted")
+    @RandomlyFails("never printed 'finished waiting'")
     @Test public void buildShellScriptAcrossDisconnect() throws Exception {
         story.addStep(new Statement() {
             @SuppressWarnings("SleepWhileInLoop")
@@ -443,13 +442,13 @@ public class WorkflowTest extends SingleJobTestBase {
                 WorkflowRun b1 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "one"))).waitForStart();
                 CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
                 while (watchDescriptor.getActiveWatches().isEmpty()) {
-                    assertTrue(JenkinsRule.getLog(b1), b1.isBuilding());
+                    assertTrue(b1.isBuilding());
                     waitForWorkflowToSuspend(e1);
                 }
                 WorkflowRun b2 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "two"))).waitForStart();
                 CpsFlowExecution e2 = (CpsFlowExecution) b2.getExecutionPromise().get();
                 while (watchDescriptor.getActiveWatches().size() == 1) {
-                    assertTrue(JenkinsRule.getLog(b2), b2.isBuilding());
+                    assertTrue(b2.isBuilding());
                     waitForWorkflowToSuspend(e2);
                 }
             }
@@ -505,7 +504,7 @@ public class WorkflowTest extends SingleJobTestBase {
 
                 // wait until the execution gets to the watch task
                 while (watchDescriptor.getActiveWatches().isEmpty()) {
-                    assertTrue(JenkinsRule.getLog(b), b.isBuilding());
+                    assertTrue(b.isBuilding());
                     waitForWorkflowToSuspend();
                 }
             }
@@ -541,12 +540,12 @@ public class WorkflowTest extends SingleJobTestBase {
                 ScriptApproval.get().preapproveAll();
                 startBuilding();
                 waitForWorkflowToSuspend();
-                assertTrue(JenkinsRule.getLog(b), b.isBuilding());
+                assertTrue(b.isBuilding());
                 Thread.sleep(1500); // TODO how else to ensure that WorkflowRun.waitForCompletion has called copyLogs? (it flushes logs when a step finishes but cannot tell when start() returns, and it cannot listen for LogAction being added or written)
                 story.j.assertLogContains("running as someone", b);
                 CheckAuth.finish(false);
                 waitForWorkflowToSuspend();
-                assertTrue(JenkinsRule.getLog(b), b.isBuilding());
+                assertTrue(b.isBuilding());
                 Thread.sleep(1500); // TODO
                 story.j.assertLogContains("still running as someone", b);
             }
@@ -668,7 +667,6 @@ public class WorkflowTest extends SingleJobTestBase {
                 rebuildContext(story.j);
                 while (b.isBuilding()) {
                     Thread.sleep(100);
-                    System.err.println(JenkinsRule.getLog(b));
                 }
                 assertBuildCompletedSuccessfully();
                 story.j.assertLogContains("OK ran", b);

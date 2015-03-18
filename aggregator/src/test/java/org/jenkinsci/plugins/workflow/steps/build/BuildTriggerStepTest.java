@@ -26,6 +26,8 @@ import org.jvnet.hudson.test.MockFolder;
 import java.util.Arrays;
 import java.util.List;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.jenkinsci.plugins.workflow.BuildWatcher;
+import org.junit.ClassRule;
 import org.jvnet.hudson.test.FailureBuilder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.SleepBuilder;
@@ -33,6 +35,7 @@ import org.jvnet.hudson.test.TestExtension;
 
 public class BuildTriggerStepTest {
     
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public JenkinsRule j = new JenkinsRule();
 
     @Issue("JENKINS-25851")

@@ -34,6 +34,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
@@ -44,8 +45,9 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
  * @author Kohsuke Kawaguchi
  */
 public abstract class SingleJobTestBase extends Assert {
-    @Rule
-    public RestartableJenkinsRule story = new RestartableJenkinsRule();
+
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Deprecated
     @Inject
@@ -80,24 +82,14 @@ public abstract class SingleJobTestBase extends Assert {
     }
 
     public void assertThatWorkflowIsSuspended(WorkflowRun b, CpsFlowExecution e) throws Exception {
-        try {
-            e.waitForSuspension();  // it should be in the suspended state
-        } catch (InterruptedException x) {
-            System.out.println(JenkinsRule.getLog(b));
-            throw x;
-        }
-        assert b.isBuilding() : JenkinsRule.getLog(b);
+        e.waitForSuspension();  // it should be in the suspended state
+        assert b.isBuilding();
     }
 
     public void waitForWorkflowToComplete() throws Exception {
-        try {
-            do {
-                waitForWorkflowToSuspend(e);
-            } while (!e.isComplete());
-        } catch (Exception x) {
-            System.out.println(JenkinsRule.getLog(b));
-            throw x;
-        }
+        do {
+            waitForWorkflowToSuspend(e);
+        } while (!e.isComplete());
     }
 
     public void waitForWorkflowToSuspend() throws Exception {
@@ -132,7 +124,7 @@ public abstract class SingleJobTestBase extends Assert {
     }
 
     public void assertBuildCompletedSuccessfully(WorkflowRun b) throws Exception {
-        assert !b.isBuilding(): JenkinsRule.getLog(b);
+        assert !b.isBuilding();
         story.j.assertBuildStatusSuccess(b);
     }
 
