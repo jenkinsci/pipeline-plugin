@@ -31,12 +31,8 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ReadWriteFileStepTest {
-
-	Logger LOG = LoggerFactory.getLogger(ReadWriteFileStepTest.class);
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
