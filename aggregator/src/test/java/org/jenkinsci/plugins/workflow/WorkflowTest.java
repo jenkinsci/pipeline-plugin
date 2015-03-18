@@ -327,10 +327,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 while (f2.isFile()) {
                     Thread.sleep(100);
                 }
-                while (b.isBuilding()) {
-                    Thread.sleep(100);
-                }
-                assertBuildCompletedSuccessfully();
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
                 story.j.assertLogContains("finished waiting", b);
                 story.j.assertLogContains("OK, done", b);
                 killJnlpProc();
@@ -380,10 +377,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 while (f2.isFile()) {
                     Thread.sleep(100);
                 }
-                while (b.isBuilding()) {
-                    Thread.sleep(100);
-                }
-                assertBuildCompletedSuccessfully();
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
                 story.j.assertLogContains("finished waiting", b);
                 story.j.assertLogContains("OK, done", b);
                 killJnlpProc();
@@ -541,13 +535,11 @@ public class WorkflowTest extends SingleJobTestBase {
                 startBuilding();
                 waitForWorkflowToSuspend();
                 assertTrue(b.isBuilding());
-                Thread.sleep(1500); // TODO how else to ensure that WorkflowRun.waitForCompletion has called copyLogs? (it flushes logs when a step finishes but cannot tell when start() returns, and it cannot listen for LogAction being added or written)
-                story.j.assertLogContains("running as someone", b);
+                JenkinsRuleExt.waitForMessage("running as someone", b);
                 CheckAuth.finish(false);
                 waitForWorkflowToSuspend();
                 assertTrue(b.isBuilding());
-                Thread.sleep(1500); // TODO
-                story.j.assertLogContains("still running as someone", b);
+                JenkinsRuleExt.waitForMessage("still running as someone", b);
             }
         });
         story.addStep(new Statement() {
@@ -555,13 +547,9 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertEquals(JenkinsRule.DummySecurityRealm.class, jenkins().getSecurityRealm().getClass());
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
-                Thread.sleep(1500); // TODO
-                story.j.assertLogContains("again running as someone", b);
+                JenkinsRuleExt.waitForMessage("again running as someone", b);
                 CheckAuth.finish(true);
-                waitForWorkflowToComplete();
-                Thread.sleep(1500); // TODO
-                assertBuildCompletedSuccessfully();
-                story.j.assertLogContains("finally running as someone", b);
+                story.j.assertLogContains("finally running as someone", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
             }
         });
     }
@@ -656,20 +644,14 @@ public class WorkflowTest extends SingleJobTestBase {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition("node('special') {echo 'OK ran'}"));
                 startBuilding();
-                while (!JenkinsRule.getLog(b).contains("Still waiting to schedule task")) {
-                    Thread.sleep(100);
-                }
+                JenkinsRuleExt.waitForMessage("Still waiting to schedule task", b);
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 story.j.createSlave("special", null);
                 rebuildContext(story.j);
-                while (b.isBuilding()) {
-                    Thread.sleep(100);
-                }
-                assertBuildCompletedSuccessfully();
-                story.j.assertLogContains("OK ran", b);
+                story.j.assertLogContains("OK ran", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
             }
         });
     }
