@@ -30,6 +30,7 @@ import hudson.Util;
 import hudson.model.Result;
 import java.util.ArrayList;
 import java.util.List;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -54,9 +55,7 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
                 SemaphoreStep.success("waitSimple/3", true);
                 SemaphoreStep.waitForStart("waitedSimple/1", b);
                 SemaphoreStep.success("waitedSimple/1", null);
-                waitForWorkflowToComplete();
-                assertBuildCompletedSuccessfully();
-                story.j.assertLogContains("Will try again after " + Util.getTimeSpanString(WaitForConditionStep.Execution.MIN_RECURRENCE_PERIOD), b);
+                story.j.assertLogContains("Will try again after " + Util.getTimeSpanString(WaitForConditionStep.Execution.MIN_RECURRENCE_PERIOD), story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
             }
         });
     }
@@ -72,6 +71,7 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
                 SemaphoreStep.waitForStart("waitFailure/2", b);
                 String message = "broken condition";
                 SemaphoreStep.failure("waitFailure/2", new AbortException(message));
+                // TODO the following fails (missing message) when run as part of whole suite, but not standalone: story.j.assertLogContains(message, story.j.assertBuildStatus(Result.FAILURE, JenkinsRuleExt.waitForCompletion(b)));
                 waitForWorkflowToComplete();
                 story.j.assertBuildStatus(Result.FAILURE, b);
                 story.j.assertLogContains(message, b);
@@ -102,9 +102,7 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
                 SemaphoreStep.waitForStart("waitCatchErrors/1", b);
                 jenkins().getWorkspaceFor(p).child("flag").write("", null);
                 SemaphoreStep.success("waitCatchErrors/1", null);
-                waitForWorkflowToComplete();
-                assertBuildCompletedSuccessfully();
-                story.j.assertLogContains("finished waiting", b);
+                story.j.assertLogContains("finished waiting", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
             }
         });
     }
@@ -127,9 +125,7 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
                 SemaphoreStep.success("waitRestartDuringBody/2", false);
                 SemaphoreStep.waitForStart("waitRestartDuringBody/3", b);
                 SemaphoreStep.success("waitRestartDuringBody/3", true);
-                waitForWorkflowToComplete();
-                assertBuildCompletedSuccessfully();
-                story.j.assertLogContains("finished waiting", b);
+                story.j.assertLogContains("finished waiting", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
             }
         });
     }
@@ -171,9 +167,7 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
                 SemaphoreStep.success("waitRestartDuringDelay/3", false);
                 SemaphoreStep.waitForStart("waitRestartDuringDelay/4", b);
                 SemaphoreStep.success("waitRestartDuringDelay/4", true);
-                waitForWorkflowToComplete();
-                assertBuildCompletedSuccessfully();
-                story.j.assertLogContains("finished waiting", b);
+                story.j.assertLogContains("finished waiting", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
             }
         });
     }
