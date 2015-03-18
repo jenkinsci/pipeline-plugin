@@ -85,6 +85,9 @@ public final class BuildWatcher extends ExternalResource {
     @Extension public static final class Listener extends RunListener<Run<?,?>> {
 
         @Override public void onStarted(Run<?,?> r, TaskListener listener) {
+            if (!active) {
+                return;
+            }
             RunningBuild build = new RunningBuild(r);
             RunningBuild orig = builds.put(r.getLogFile(), build);
             if (orig != null) {
@@ -93,11 +96,12 @@ public final class BuildWatcher extends ExternalResource {
         }
 
         @Override public void onFinalized(Run<?,?> r) {
+            if (!active) {
+                return;
+            }
             RunningBuild build = builds.remove(r.getLogFile());
             if (build != null) {
-                if (active) {
-                    build.copy();
-                }
+                build.copy();
             } else {
                 System.err.println(r + " was finalized but not started?!");
             }
