@@ -637,6 +637,7 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
+    @RandomlyFails("TODO sometimes two copies of the WorkflowRun are loaded; try again in 1.597 (JENKINS-22767)")
     @Issue("JENKINS-26513")
     @Test public void executorStepRestart() {
         story.addStep(new Statement() {
