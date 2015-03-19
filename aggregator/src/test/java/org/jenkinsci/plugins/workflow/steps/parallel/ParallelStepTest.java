@@ -27,7 +27,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  * Tests for {@link ParallelStep}.
@@ -278,7 +277,6 @@ public class ParallelStepTest extends SingleJobTestBase {
                 SemaphoreStep.waitForStart("suspendB/1", b);
                 SemaphoreStep.waitForStart("suspendC/1", b);
 
-                System.out.println(JenkinsRule.getLog(b));
                 assert !e.isComplete();
                 assert e.getCurrentHeads().size()==3;
                 assert b.isBuilding();

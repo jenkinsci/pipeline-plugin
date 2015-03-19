@@ -26,11 +26,14 @@ package org.jenkinsci.plugins.workflow.steps.build;
 
 import hudson.model.Result;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.jenkinsci.plugins.workflow.BuildWatcher;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
@@ -40,6 +43,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 @Issue("JENKINS-26834")
 public class RunWrapperTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule r = new RestartableJenkinsRule();
 
     @Test public void historyAndPickling() {
@@ -59,8 +63,7 @@ public class RunWrapperTest {
                 WorkflowRun b2 = p.scheduleBuild2(0).getStartCondition().get();
                 SemaphoreStep.success("basics/2", null);
                 SemaphoreStep.waitForStart("basics/3", b2);
-                Thread.sleep(1000); // TODO why is this necessary? the flush() in WorkflowRun.logNodeMessage apparently does not suffice
-                r.j.assertLogContains("number=2 result=null", b2);
+                JenkinsRuleExt.waitForMessage("number=2 result=null", b2);
                 r.j.assertLogNotContains("number=1", b2);
             }
         });
@@ -69,10 +72,7 @@ public class RunWrapperTest {
                 WorkflowJob p = r.j.jenkins.getItemByFullName("p", WorkflowJob.class);
                 WorkflowRun b2 = p.getBuildByNumber(2);
                 SemaphoreStep.success("basics/3", b2);
-                while (b2.isBuilding()) {
-                    Thread.sleep(100);
-                }
-                r.j.assertBuildStatusSuccess(b2);
+                r.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b2));
                 r.j.assertLogContains("number=1 result=SUCCESS", b2);
             }
         });

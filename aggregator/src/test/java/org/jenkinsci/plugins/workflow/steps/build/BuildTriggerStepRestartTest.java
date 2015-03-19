@@ -17,13 +17,16 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 import java.io.IOException;
 import java.util.Arrays;
+import org.jenkinsci.plugins.workflow.BuildWatcher;
+import org.junit.ClassRule;
 
 /**
  * @author Vivek Pandey
  */
 public class BuildTriggerStepRestartTest extends Assert {
-    @Rule
-    public RestartableJenkinsRule story = new RestartableJenkinsRule();
+
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Test
     public void restartBetweenJobs() throws IOException {
