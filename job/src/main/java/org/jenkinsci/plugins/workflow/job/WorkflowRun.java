@@ -511,21 +511,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 l.onChangeLogParsed(this, scm, listener, cls);
             }
         }
-        String node = null;
-        // TODO: switch to FilePath.toComputer in 1.571
-        Jenkins j = Jenkins.getInstance();
-        if (j != null) {
-            for (Computer c : j.getComputers()) {
-                if (workspace.getChannel() == c.getChannel()) {
-                    node = c.getName();
-                    break;
-                }
-            }
-        }
-        if (node == null) {
+        // TODO JENKINS-26096 prefer a variant returning only Computer.name even if offline
+        Computer computer = workspace.toComputer();
+        if (computer == null) {
             throw new IllegalStateException();
         }
-        checkouts.add(new SCMCheckout(scm, node, workspace.getRemote(), changelogFile, pollingBaseline));
+        checkouts.add(new SCMCheckout(scm, computer.getName(), workspace.getRemote(), changelogFile, pollingBaseline));
     }
 
     static final class SCMCheckout {
