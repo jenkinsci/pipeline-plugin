@@ -60,13 +60,7 @@ public final class RunWrapper implements Serializable {
      * The result is also not cached, since we want to stop allowing access to a build after it has been deleted.
      */
     public @CheckForNull Run<?,?> getRawBuild() {
-        try {
-            return Run.fromExternalizableId(externalizableId);
-        } catch (IllegalArgumentException x) {
-            // TODO 1.588+ fromExternalizableId will already return null when appropriate if the build has been deleted after restart
-            // (probably preferable to have a null var and produce an NPE somewhere than to break whole flow loading due to this normal condition)
-            return null;
-        }
+        return Run.fromExternalizableId(externalizableId);
     }
 
     private @Nonnull Run<?,?> build() throws AbortException {
