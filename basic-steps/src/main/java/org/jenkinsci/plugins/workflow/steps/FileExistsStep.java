@@ -65,7 +65,7 @@ public final class FileExistsStep extends AbstractStepImpl {
         @StepContextParameter private transient FilePath workspace;
 
         @Override protected Boolean run() throws Exception {
-        	return Boolean.valueOf(workspace.child(step.file).exists());
+        	return workspace.child(step.file).exists();
         }
 
         private static final long serialVersionUID = 1L;

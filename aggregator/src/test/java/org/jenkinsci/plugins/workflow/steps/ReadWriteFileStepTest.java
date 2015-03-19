@@ -28,6 +28,7 @@ import hudson.Functions;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -37,8 +38,8 @@ public class ReadWriteFileStepTest {
     @Rule public JenkinsRule r = new JenkinsRule();
 
     @Test public void basics() throws Exception {
-        final WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        final boolean win = Functions.isWindows();
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        boolean win = Functions.isWindows();
         p.setDefinition(new CpsFlowDefinition(
                 "node {\n" +
                 (win ? "  bat 'echo hello > f1'\n" : "  sh 'echo hello > f1'\n") +
@@ -51,32 +52,19 @@ public class ReadWriteFileStepTest {
     }
 
 	@Test
-	public void shouldTestFileExistsAndNotFindFile() throws Exception
+	public void shouldTestFileExistsStep() throws Exception
 	{
         final WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition(
                 "node {\n" +
-                "  def exists = fileExists('test.txt')  \n" +
-                "  echo \"FileExists: ${exists}\" \n" +
+                "  echo \"test.txt - FileExists: ${fileExists('test.txt')}\" \n" +
+                "  writeFile file: 'test2.txt', text:'content of file' \n" +
+                "  echo \"test2.txt - FileExists: ${fileExists('test2.txt')}\" \n" +
                 "}"));
 
-		r.assertLogContains("FileExists: false", p.scheduleBuild2(0).get());
-		r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+		WorkflowRun run = p.scheduleBuild2(0).get();
+		r.assertLogContains("test.txt - FileExists: false", run); 
+		r.assertLogContains("test2.txt - FileExists: true", run);
+		r.assertBuildStatusSuccess(run);
     }
-
-	@Test
-	public void shouldTestFileExistsAndFindFile() throws Exception
-	{
-		final WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-		p.setDefinition(new CpsFlowDefinition(
-				"node {\n" +
-				"  writeFile file: 'test2.txt', text:'content of file' \n" +
-				"  def exists = fileExists('test2.txt')  \n" +
-				"  echo \"FileExists: ${exists}\" \n" +
-				"}"));
-
-		r.assertLogContains("FileExists: true", p.scheduleBuild2(0).get());
-		r.assertBuildStatusSuccess(p.scheduleBuild2(0));
-	}
-
 }
