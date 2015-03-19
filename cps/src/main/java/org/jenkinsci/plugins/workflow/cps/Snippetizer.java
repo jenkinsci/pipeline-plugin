@@ -192,10 +192,7 @@ import org.kohsuke.stapler.StaplerResponse;
     public HttpResponse doGenerateSnippet(StaplerRequest req, @QueryParameter String json) throws Exception {
         // TODO is there not an easier way to do this?
         JSONObject jsonO = JSONObject.fromObject(json);
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
+        Jenkins j = Jenkins.getActiveInstance();
         Class<?> c = j.getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
         Descriptor<?> descriptor = j.getDescriptor(c.asSubclass(Step.class));
         Object o;

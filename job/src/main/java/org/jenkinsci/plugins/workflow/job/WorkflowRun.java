@@ -567,7 +567,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 } else {
                     Jenkins jenkins = Jenkins.getInstance();
                     if (jenkins == null) {
-                        throw new IOException("Jenkins is not running");
+                        throw new IOException("Jenkins is not running"); // do not use Jenkins.getActiveInstance() as that is an ISE
                     }
                     WorkflowJob j = jenkins.getItemByFullName(job, WorkflowJob.class);
                     if (j == null) {

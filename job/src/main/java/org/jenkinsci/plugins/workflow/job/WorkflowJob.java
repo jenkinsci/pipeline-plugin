@@ -265,11 +265,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     }
 
     @Override public int getQuietPeriod() {
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
-        return quietPeriod != null ? quietPeriod : j.getQuietPeriod();
+        return quietPeriod != null ? quietPeriod : Jenkins.getActiveInstance().getQuietPeriod();
     }
 
     @Restricted(DoNotUse.class) // for config-quietPeriod.jelly
@@ -372,11 +368,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     }
 
     @Override public TopLevelItemDescriptor getDescriptor() {
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
-        return (DescriptorImpl) j.getDescriptorOrDie(WorkflowJob.class);
+        return (DescriptorImpl) Jenkins.getActiveInstance().getDescriptorOrDie(WorkflowJob.class);
     }
 
     @Override public Map<TriggerDescriptor, Trigger<?>> getTriggers() {
