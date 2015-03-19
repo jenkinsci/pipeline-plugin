@@ -33,6 +33,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.Main;
 import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
 import hudson.model.Computer;
@@ -348,6 +349,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     @Override protected void onLoad() {
         super.onLoad();
+        if (completed != null) {
+            throw new IllegalStateException("double onLoad of " + this);
+        } else if (Main.isUnitTest) {
+            System.err.printf("loading %s @%h%n", this, this);
+        }
         if (execution != null) {
             execution.onLoad();
             execution.addListener(new GraphL());

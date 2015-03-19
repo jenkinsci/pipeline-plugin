@@ -28,6 +28,8 @@ import hudson.model.Result;
 import java.util.List;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
+import org.jenkinsci.plugins.workflow.BuildWatcher;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -36,6 +38,7 @@ import org.jenkinsci.plugins.workflow.support.steps.StageStepExecution;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
@@ -45,6 +48,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class StageTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Before public void clear() {
@@ -74,7 +78,7 @@ public class StageTest {
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
                 e1.waitForSuspension();
-                assertTrue(JenkinsRule.getLog(b1), b1.isBuilding());
+                assertTrue(b1.isBuilding());
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
                 CpsFlowExecution e2 = (CpsFlowExecution) b2.getExecutionPromise().get();
                 e2.waitForSuspension();
@@ -83,7 +87,6 @@ public class StageTest {
                 CpsFlowExecution e3 = (CpsFlowExecution) b3.getExecutionPromise().get();
                 e3.waitForSuspension();
                 assertTrue(b3.isBuilding());
-                try {
                     story.j.assertLogContains("in A", b1);
                     story.j.assertLogNotContains("in B", b1);
                     story.j.assertLogContains("in A", b2);
@@ -116,9 +119,7 @@ public class StageTest {
                     assertTrue(b1.isBuilding());
                     e2.waitForSuspension();
                     e3.waitForSuspension();
-                    Thread.sleep(1000); // TODO why is this necessary?
-                    assertFalse(b2.isBuilding());
-                    assertEquals(Result.NOT_BUILT, b2.getResult());
+                    story.j.assertBuildStatus(Result.NOT_BUILT, JenkinsRuleExt.waitForCompletion(b2));
                     InterruptedBuildAction iba = b2.getAction(InterruptedBuildAction.class);
                     assertNotNull(iba);
                     List<CauseOfInterruption> causes = iba.getCauses();
@@ -129,11 +130,6 @@ public class StageTest {
                     story.j.assertLogNotContains("done", b1);
                     story.j.assertLogNotContains("in B", b2);
                     story.j.assertLogNotContains("in B", b3);
-                } finally {
-                    System.out.println(JenkinsRule.getLog(b1));
-                    System.out.println(JenkinsRule.getLog(b2));
-                    System.out.println(JenkinsRule.getLog(b3));
-                }
             }
         });
         story.addStep(new Statement() {
@@ -142,7 +138,6 @@ public class StageTest {
                 WorkflowJob p = story.j.jenkins.getItemByFullName("demo", WorkflowJob.class);
                 WorkflowRun b1 = p.getBuildByNumber(1);
                 WorkflowRun b3 = p.getBuildByNumber(3);
-                try {
                     assertTrue(b1.isBuilding());
                     story.j.assertLogNotContains("done", b1);
                     CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
@@ -165,10 +160,6 @@ public class StageTest {
                     assertFalse(b3.isBuilding());
                     assertEquals(Result.SUCCESS, b3.getResult());
                     story.j.assertLogContains("done", b3);
-                } finally {
-                    System.out.println(JenkinsRule.getLog(b1));
-                    System.out.println(JenkinsRule.getLog(b3));
-                }
             }
         });
     }
@@ -191,24 +182,13 @@ public class StageTest {
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("serializability/1", b1);
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
-                while (!JenkinsRule.getLog(b2).contains("Waiting for builds [1]")) {
-                    // TODO similar to JENKINS-26399 though waiting for a particular message rather than completion
-                    Thread.sleep(100);
-                }
+                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b2);
                 WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
-                while (!JenkinsRule.getLog(b3).contains("Waiting for builds [1]")) {
-                    Thread.sleep(100);
-                }
+                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b3);
                 SemaphoreStep.success("serializability/1", null); // b1
-                while (b1.isBuilding()) {
-                    Thread.sleep(100);
-                }
-                story.j.assertBuildStatusSuccess(b1);
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b1));
                 SemaphoreStep.success("serializability/2", null); // b3
-                while (b3.isBuilding()) {
-                    Thread.sleep(100);
-                }
-                story.j.assertBuildStatusSuccess(b3);
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b3));
                 story.j.assertBuildStatus(Result.NOT_BUILT, b2);
                 story.j.assertLogContains("Canceled since #3 got here", b2);
                 story.j.assertLogContains("in finally", b2);
@@ -230,16 +210,12 @@ public class StageTest {
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("holdingAfterUnblockA/1", b1); // about to leave A
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
-                while (!JenkinsRule.getLog(b2).contains("Waiting for builds [1]")) {
-                    Thread.sleep(100);
-                }
+                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b2);
                 SemaphoreStep.success("holdingAfterUnblockA/1", null);
                 SemaphoreStep.waitForStart("holdingAfterUnblockB/1", b1); // now in B
                 SemaphoreStep.waitForStart("holdingAfterUnblockA/2", b2); // b2 unblocked, now in A
                 WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
-                while (!JenkinsRule.getLog(b3).contains("Waiting for builds [2]")) {
-                    Thread.sleep(100);
-                }
+                JenkinsRuleExt.waitForMessage("Waiting for builds [2]", b3);
             }
         });
     }
@@ -256,18 +232,12 @@ public class StageTest {
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("holdingAfterExitUnblock/1", b1); // about to leave
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
-                while (!JenkinsRule.getLog(b2).contains("Waiting for builds [1]")) {
-                    Thread.sleep(100);
-                }
+                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b2);
                 SemaphoreStep.success("holdingAfterExitUnblock/1", null);
-                while (b1.isBuilding()) {
-                    Thread.sleep(100);
-                }
+                JenkinsRuleExt.waitForCompletion(b1);
                 SemaphoreStep.waitForStart("holdingAfterExitUnblock/2", b2); // b2 unblocked
                 WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
-                while (!JenkinsRule.getLog(b3).contains("Waiting for builds [2]")) {
-                    Thread.sleep(100);
-                }
+                JenkinsRuleExt.waitForMessage("Waiting for builds [2]", b3);
             }
         });
     }

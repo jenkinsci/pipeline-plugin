@@ -5,7 +5,6 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
-import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -39,11 +38,8 @@ public class PersistenceFailureTest extends SingleJobTestBase {
                             throw x;
                     }
 
-                Result r = b.getResult();
-                String log = JenkinsRule.getLog(b);
-
-                assert r == Result.FAILURE: "Result is "+r+"\n"+ log;
-                assert log.contains("java.lang.RuntimeException: testing the forced persistence failure behaviour"): "Result is "+r+"\n"+ log;
+                story.j.assertBuildStatus(Result.FAILURE, b);
+                story.j.assertLogContains("java.lang.RuntimeException: testing the forced persistence failure behaviour", b);
             }
         });
         story.addStep(new Statement() {
@@ -51,8 +47,7 @@ public class PersistenceFailureTest extends SingleJobTestBase {
             public void evaluate() throws Throwable {
                 rebuildContext(story.j);
 
-                Result r = b.getResult();
-                assert r == Result.FAILURE: "Result is "+r+"\n"+JenkinsRule.getLog(b);
+                story.j.assertBuildStatus(Result.FAILURE, b);
             }
         });
     }

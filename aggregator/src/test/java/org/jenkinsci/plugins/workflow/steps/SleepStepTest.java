@@ -25,6 +25,8 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import java.util.List;
+import org.jenkinsci.plugins.workflow.BuildWatcher;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
@@ -33,6 +35,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
@@ -40,6 +43,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class SleepStepTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule r = new RestartableJenkinsRule();
 
     @Test public void sleepAndRestart() {
@@ -61,10 +65,7 @@ public class SleepStepTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = r.j.jenkins.getItemByFullName("p", WorkflowJob.class);
                 WorkflowRun b = p.getLastBuild();
-                while (b.isBuilding()) {
-                    Thread.sleep(100);
-                }
-                r.j.assertBuildStatusSuccess(b);
+                r.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
             }
         });
     }
