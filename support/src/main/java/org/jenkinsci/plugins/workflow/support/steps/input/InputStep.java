@@ -105,6 +105,7 @@ public class InputStep extends AbstractStepImpl implements Serializable {
         return message;
     }
 
+    @Deprecated
     public boolean canSubmit() {
         Authentication a = Jenkins.getAuthentication();
         return canSettle(a);
@@ -113,6 +114,7 @@ public class InputStep extends AbstractStepImpl implements Serializable {
     /**
      * Checks if the given user can settle this input.
      */
+    @Deprecated
     public boolean canSettle(Authentication a) {
         if (submitter==null || a.getName().equals(submitter))
             return true;

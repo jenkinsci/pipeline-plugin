@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import hudson.console.LineTransformationOutputStream;
+import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
 import org.jenkinsci.plugins.workflow.actions.TimingAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -31,6 +33,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.Main;
 import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
 import hudson.model.Computer;
@@ -50,6 +53,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -74,6 +78,7 @@ import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
+import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
@@ -243,16 +248,31 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 AnnotatedLargeText<? extends FlowNode> logText = la.getLogText();
                 try {
                     long old = entry.getValue();
-                    long revised = logText.writeRawLogTo(old, listener.getLogger());
-                    if (revised != old) {
-                        entry.setValue(revised);
-                        modified = true;
+                    OutputStream logger;
+
+                    String prefix = getLogPrefix(node);
+                    if (prefix != null) {
+                        logger = new LogLinePrefixOutputFilter(listener.getLogger(), "[" + prefix + "] ");
+                    } else {
+                        logger = listener.getLogger();
                     }
-                    if (logText.isComplete()) {
-                        logText.writeRawLogTo(entry.getValue(), listener.getLogger()); // defend against race condition?
-                        assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
-                        it.remove();
-                        modified = true;
+
+                    try {
+                        long revised = logText.writeRawLogTo(old, logger);
+                        if (revised != old) {
+                            entry.setValue(revised);
+                            modified = true;
+                        }
+                        if (logText.isComplete()) {
+                            logText.writeRawLogTo(entry.getValue(), logger); // defend against race condition?
+                            assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
+                            it.remove();
+                            modified = true;
+                        }
+                    } finally {
+                        if (prefix != null) {
+                            ((LogLinePrefixOutputFilter)logger).forceEol();
+                        }
                     }
                 } catch (IOException x) {
                     LOGGER.log(Level.WARNING, null, x);
@@ -270,6 +290,44 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             } catch (IOException x) {
                 LOGGER.log(Level.WARNING, null, x);
             }
+        }
+    }
+
+    private String getLogPrefix(FlowNode node) {
+        if (node instanceof BlockEndNode) {
+            return null;
+        }
+
+        ThreadNameAction threadNameAction = node.getAction(ThreadNameAction.class);
+
+        if (threadNameAction != null) {
+            return threadNameAction.getThreadName();
+        }
+
+        for (FlowNode parent : node.getParents()) {
+            String prefix = getLogPrefix(parent);
+            if (prefix != null) {
+                return prefix;
+            }
+        }
+
+        return null;
+    }
+
+    private static final class LogLinePrefixOutputFilter extends LineTransformationOutputStream {
+
+        private final PrintStream logger;
+        private final String prefix;
+
+        protected LogLinePrefixOutputFilter(PrintStream logger, String prefix) {
+            this.logger = logger;
+            this.prefix = prefix;
+        }
+
+        @Override
+        protected void eol(byte[] b, int len) throws IOException {
+            logger.append(prefix);
+            logger.write(b, 0, len);
         }
     }
     
@@ -291,6 +349,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     @Override protected void onLoad() {
         super.onLoad();
+        if (completed != null) {
+            throw new IllegalStateException("double onLoad of " + this);
+        } else if (Main.isUnitTest) {
+            System.err.printf("loading %s @%h%n", this, this);
+        }
         if (execution != null) {
             execution.onLoad();
             execution.addListener(new GraphL());
@@ -448,21 +511,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 l.onChangeLogParsed(this, scm, listener, cls);
             }
         }
-        String node = null;
-        // TODO: switch to FilePath.toComputer in 1.571
-        Jenkins j = Jenkins.getInstance();
-        if (j != null) {
-            for (Computer c : j.getComputers()) {
-                if (workspace.getChannel() == c.getChannel()) {
-                    node = c.getName();
-                    break;
-                }
-            }
-        }
-        if (node == null) {
+        // TODO JENKINS-26096 prefer a variant returning only Computer.name even if offline
+        Computer computer = workspace.toComputer();
+        if (computer == null) {
             throw new IllegalStateException();
         }
-        checkouts.add(new SCMCheckout(scm, node, workspace.getRemote(), changelogFile, pollingBaseline));
+        checkouts.add(new SCMCheckout(scm, computer.getName(), workspace.getRemote(), changelogFile, pollingBaseline));
     }
 
     static final class SCMCheckout {
@@ -504,7 +558,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 } else {
                     Jenkins jenkins = Jenkins.getInstance();
                     if (jenkins == null) {
-                        throw new IOException("Jenkins is not running");
+                        throw new IOException("Jenkins is not running"); // do not use Jenkins.getActiveInstance() as that is an ISE
                     }
                     WorkflowJob j = jenkins.getItemByFullName(job, WorkflowJob.class);
                     if (j == null) {
@@ -575,7 +629,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
             node.addAction(new TimingAction());
 
-            listener.getLogger().println("Running: " + node.getDisplayName());
+            logNodeMessage(node, "Running: " + node.getDisplayName());
             if (node instanceof FlowEndNode) {
                 finish(((FlowEndNode) node).getResult());
             } else {
@@ -586,6 +640,21 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 }
             }
         }
+    }
+
+    private void logNodeMessage(FlowNode node, String message) {
+        PrintStream logger = listener.getLogger();
+        String prefix = getLogPrefix(node);
+        if (prefix != null) {
+            logger.printf("[%s] %s%n", prefix, message);
+        } else {
+            logger.println(message);
+        }
+        // Flushing to keep logs printed in order as much as possible. The copyLogs method uses
+        // LargeText and possibly LogLinePrefixOutputFilter. Both of these buffer and flush, causing strange
+        // out of sequence writes to the underlying log stream (and => things being printed out of sequence)
+        // if we don't flush the logger here.
+        logger.flush();
     }
 
     static void alias() {

@@ -42,7 +42,6 @@ import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.Label;
 import hudson.model.Node;
-import hudson.model.PermalinkProjectAction;
 import hudson.model.Queue;
 import hudson.model.ResourceList;
 import hudson.model.RunMap;
@@ -73,7 +72,6 @@ import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
-import jenkins.model.ModelObjectWithChildren;
 import jenkins.model.ParameterizedJobMixIn;
 import jenkins.model.lazy.LazyBuildMixIn;
 import jenkins.triggers.SCMTriggerItem;
@@ -88,7 +86,7 @@ import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements BuildableItem, ModelObjectWithChildren, LazyBuildMixIn.LazyLoadingJob<WorkflowJob,WorkflowRun>, ParameterizedJobMixIn.ParameterizedJob, TopLevelItem, Queue.FlyweightTask, SCMTriggerItem {
+public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements BuildableItem, LazyBuildMixIn.LazyLoadingJob<WorkflowJob,WorkflowRun>, ParameterizedJobMixIn.ParameterizedJob, TopLevelItem, Queue.FlyweightTask, SCMTriggerItem {
 
     private FlowDefinition definition;
     private DescribableList<Trigger<?>,TriggerDescriptor> triggers = new DescribableList<Trigger<?>,TriggerDescriptor>(this);
@@ -265,11 +263,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     }
 
     @Override public int getQuietPeriod() {
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
-        return quietPeriod != null ? quietPeriod : j.getQuietPeriod();
+        return quietPeriod != null ? quietPeriod : Jenkins.getActiveInstance().getQuietPeriod();
     }
 
     @Restricted(DoNotUse.class) // for config-quietPeriod.jelly
@@ -328,7 +322,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return ACL.SYSTEM;
     }
 
-    /* TODO 1.592+: @Override */ public Authentication getDefaultAuthentication(Queue.Item item) {
+    @Override public Authentication getDefaultAuthentication(Queue.Item item) {
         return getDefaultAuthentication();
     }
 
@@ -356,27 +350,12 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return ResourceList.EMPTY;
     }
 
-    // TODO as of 1.577 implemented in Job, can delete override (and redundant implementation of ModelObjectWithChildren)
-    @Override public ContextMenu doChildrenContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
-        ContextMenu menu = new ContextMenu();
-        for (PermalinkProjectAction.Permalink p : getPermalinks()) {
-            if (p.resolve(this) != null) {
-                menu.add(p.getId(), p.getDisplayName());
-            }
-        }
-        return menu;
-    }
-
     @Override public String getPronoun() {
         return AlternativeUiTextProvider.get(PRONOUN, this, "Workflow");
     }
 
     @Override public TopLevelItemDescriptor getDescriptor() {
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
-        return (DescriptorImpl) j.getDescriptorOrDie(WorkflowJob.class);
+        return (DescriptorImpl) Jenkins.getActiveInstance().getDescriptorOrDie(WorkflowJob.class);
     }
 
     @Override public Map<TriggerDescriptor, Trigger<?>> getTriggers() {

@@ -28,7 +28,7 @@
     <f:textarea checkMethod="post"/>
   </f:entry>
   <f:entry field="sandbox">
-    <f:checkbox title="${%Use Groovy Sandbox}"/>
+    <f:checkbox title="${%Use Groovy Sandbox}" default="${!h.hasPermission(app.RUN_SCRIPTS)}" />
   </f:entry>
   <st:include it="${descriptor.snippetizer}" page="block.jelly"/>
 </j:jelly>

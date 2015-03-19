@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
 import hudson.Extension;
+import hudson.Util;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -35,7 +36,15 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public final class WorkspaceStep extends AbstractStepImpl {
 
-    @DataBoundConstructor public WorkspaceStep() {}
+    private final String dir;
+
+    @DataBoundConstructor public WorkspaceStep(String dir) {
+        this.dir = Util.fixEmptyAndTrim(dir);
+    }
+
+    public String getDir() {
+        return dir;
+    }
 
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
 

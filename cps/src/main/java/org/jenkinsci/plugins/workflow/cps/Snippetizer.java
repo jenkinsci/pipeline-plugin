@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import hudson.Extension;
 import hudson.Functions;
+import hudson.model.Descriptor;
 import hudson.model.RootAction;
 import java.io.IOException;
 import java.util.Collection;
@@ -64,7 +65,6 @@ import org.kohsuke.stapler.StaplerResponse;
                 StringBuilder b = new StringBuilder(d.getFunctionName());
                 Step step = (Step) o;
                 Map<String,Object> args = new TreeMap<String,Object>(d.defineArguments(step));
-                args.values().removeAll(Collections.singleton(null)); // do not write null values
                 boolean first = true;
                 boolean singleMap = args.size() == 1 && args.values().iterator().next() instanceof Map;
                 for (Map.Entry<String,Object> entry : args.entrySet()) {
@@ -192,14 +192,12 @@ import org.kohsuke.stapler.StaplerResponse;
     public HttpResponse doGenerateSnippet(StaplerRequest req, @QueryParameter String json) throws Exception {
         // TODO is there not an easier way to do this?
         JSONObject jsonO = JSONObject.fromObject(json);
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
+        Jenkins j = Jenkins.getActiveInstance();
         Class<?> c = j.getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
+        Descriptor<?> descriptor = j.getDescriptor(c.asSubclass(Step.class));
         Object o;
         try {
-            o = req.bindJSON(c, jsonO);
+            o = descriptor.newInstance(req, jsonO);
         } catch (RuntimeException x) { // e.g. IllegalArgumentException
             return HttpResponses.plainText(Functions.printThrowable(x));
         }

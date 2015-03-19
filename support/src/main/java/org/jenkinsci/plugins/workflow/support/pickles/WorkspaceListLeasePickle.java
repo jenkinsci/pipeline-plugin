@@ -41,7 +41,7 @@ public class WorkspaceListLeasePickle extends Pickle {
 
     private WorkspaceListLeasePickle(WorkspaceList.Lease lease) {
         // TODO see FilePathPickle:
-        slave = FilePathPickle.Listener.channelNames.get(lease.path.getChannel());
+        slave = FilePathPickle.Listener.getChannelName(lease.path.getChannel());
         if (slave == null) {
             throw new IllegalStateException("no known slave for " + lease.path);
         }

@@ -24,12 +24,36 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
+    <j:set var="jobFieldId" value="${h.generateId()}"/>
     <f:entry field="job" title="Project to Build">
-        <f:textbox/>
+        <f:textbox onblur="loadParams()" id="${jobFieldId}"/>
+    </f:entry>
+    <f:entry field="wait">
+        <f:checkbox default="true" title="Wait for completion"/>
+    </f:entry>
+    <f:entry field="propagate">
+        <f:checkbox default="true" title="Propagate errors"/>
+    </f:entry>
+    <f:entry field="quietPeriod" title="Quiet period">
+        <f:number clazz="number"/>
     </f:entry>
     <f:entry title="Parameters">
-        <!-- TODO JENKINS-26093 -->
-        <f:block><code>parameters</code> may be bound to a list of <code>ParameterValue</code>s.</f:block>
+        <div id="params"/>
     </f:entry>
+    <script>
+        function loadParams() {
+            var div = $$('params');
+            new Ajax.Request('${descriptor.descriptorUrl}/parameters?job=' + encodeURIComponent($$('${jobFieldId}').value) + '&amp;context=' + encodeURIComponent('${descriptor.context}'), {
+                method : 'get',
+                onSuccess : function(x) {
+                    div.innerHTML = x.responseText;
+                    Behaviour.applySubtree(div);
+                },
+                onFailure : function(x) {
+                    div.innerHTML = "<b>ERROR</b>: Failed to load parameter definitions: " + x.statusText;
+                }
+            });
+        }
+    </script>
 </j:jelly>

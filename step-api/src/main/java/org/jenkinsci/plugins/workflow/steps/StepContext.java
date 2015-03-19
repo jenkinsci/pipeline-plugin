@@ -83,7 +83,7 @@ public abstract class StepContext implements FutureCallback<Object>, Serializabl
      * May be called to break deadlocks during reloading.
      * @return true normally, false if we are still reloading the context, for example during unpickling
      */
-    public abstract boolean isReady() throws IOException, InterruptedException;
+    public abstract boolean isReady();
 
     /**
      * Requests that any state held by the {@link StepExecution} be saved to disk.

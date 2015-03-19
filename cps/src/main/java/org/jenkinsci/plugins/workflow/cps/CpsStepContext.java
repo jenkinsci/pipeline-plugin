@@ -31,6 +31,8 @@ import com.google.common.util.concurrent.SettableFuture;
 import groovy.lang.Closure;
 import hudson.model.Descriptor;
 import hudson.model.Result;
+import hudson.util.DaemonThreadFactory;
+import hudson.util.NamingThreadFactory;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepEndNode;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
@@ -57,8 +59,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.util.ContextResettingExecutorService;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -159,6 +164,12 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      */
     private transient volatile StepDescriptor stepDescriptor;
 
+    /**
+     * Cached value of {@link #getProgramPromise}.
+     * Never null once set (might be overwritten).
+     */
+    private transient volatile ListenableFuture<CpsThreadGroup> programPromise;
+
     @CpsVmThreadOnly
     CpsStepContext(StepDescriptor step, CpsThread thread, FlowExecutionOwner executionRef, FlowNode node, Closure body) {
         this.threadId = thread.id;
@@ -215,7 +226,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      *
      * This can block for the entire duration of the PREPARING state.
      */
-    @CheckForNull CpsThread getThreadSynchronously() throws InterruptedException, IOException {
+    private @CheckForNull CpsThread getThreadSynchronously() throws InterruptedException, IOException {
         try {
             CpsThreadGroup g = getProgramPromise().get();
             return getThread(g);
@@ -223,14 +234,29 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
             throw new IOException(e);
         }
     }
-    
-    private @Nonnull ListenableFuture<CpsThreadGroup> getProgramPromise() throws IOException {
-        ListenableFuture<CpsThreadGroup> pp = getFlowExecution().programPromise;
-        assert pp != null;
-        return pp;
+
+    private static final ExecutorService getProgramPromiseExecutorService = new ContextResettingExecutorService(Executors.newCachedThreadPool(new NamingThreadFactory(new DaemonThreadFactory(), "CpsStepContext.getProgramPromise")));
+    private @Nonnull ListenableFuture<CpsThreadGroup> getProgramPromise() {
+        if (programPromise == null) {
+            final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
+            // TODO is there some more convenient way of writing this using Futures.transform? FlowExecutionOwner.get should really return ListenableFuture<FlowExecution>
+            getProgramPromiseExecutorService.submit(new Runnable() {
+                @Override public void run() {
+                    try {
+                        ListenableFuture<CpsThreadGroup> pp = getFlowExecution().programPromise;
+                        assert pp != null;
+                        f.set(pp.get());
+                    } catch (Throwable x) { // from getFlowExecution() or get()
+                        f.setException(x);
+                    }
+                }
+            });
+            programPromise = f;
+        }
+        return programPromise;
     }
 
-    @Override public boolean isReady() throws IOException, InterruptedException {
+    @Override public boolean isReady() {
         return getProgramPromise().isDone();
     }
 

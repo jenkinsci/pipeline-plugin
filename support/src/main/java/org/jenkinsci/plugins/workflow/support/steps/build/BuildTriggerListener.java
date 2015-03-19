@@ -17,10 +17,10 @@ public class BuildTriggerListener extends RunListener<Run<?,?>>{
     @Override
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
         BuildTriggerAction action = run.getAction(BuildTriggerAction.class);
-        if(action != null) {
-            if(run.getResult() == Result.SUCCESS) {
-                action.getStepContext().onSuccess(run.getResult());
-            }else{
+        if (action != null) {
+            if (!action.isPropagate() || run.getResult() == Result.SUCCESS) {
+                action.getStepContext().onSuccess(new RunWrapper(run, false));
+            } else {
                 action.getStepContext().onFailure(new Exception(String.valueOf(run.getResult())));
             }
         }
