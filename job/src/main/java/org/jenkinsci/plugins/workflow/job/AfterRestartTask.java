@@ -27,10 +27,10 @@ package org.jenkinsci.plugins.workflow.job;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.Queue;
+import hudson.model.Queue.FlyweightTask;
 import hudson.model.ResourceList;
 import hudson.model.queue.AbstractQueueTask;
 import hudson.model.queue.CauseOfBlockage;
-import hudson.model.queue.SubTask;
 import java.io.IOException;
 import org.acegisecurity.Authentication;
 
@@ -105,34 +105,11 @@ class AfterRestartTask extends AbstractQueueTask implements Queue.FlyweightTask,
     }
 
     @Override public Queue.Executable createExecutable() throws IOException {
-        return new Body(run);
+        return run;
     }
 
     /* TODO 1.592+: @Override */ public Authentication getDefaultAuthentication(Queue.Item item) {
         return getDefaultAuthentication();
-    }
-
-    public final class Body implements Queue.Executable {
-
-        public final WorkflowRun run;
-
-        Body(WorkflowRun run) {
-            this.run = run;
-        }
-        
-        @Override public SubTask getParent() {
-            return AfterRestartTask.this;
-        }
-        
-        @Override public long getEstimatedDuration() {
-            // TODO probably needs to be something else
-            return AfterRestartTask.this.getEstimatedDuration();
-        }
-
-        @Override public void run() {
-            run.waitForCompletion();
-        }
-
     }
 
 }

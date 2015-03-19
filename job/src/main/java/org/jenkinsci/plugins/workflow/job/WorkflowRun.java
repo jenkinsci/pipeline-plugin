@@ -117,8 +117,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally; perhaps keep a List<WeakReference<ChangeLogSet<?>>>
     private transient List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
 
+    /** True when first started, false when running after a restart. */
+    private transient boolean firstTime;
+
     public WorkflowRun(WorkflowJob job) throws IOException {
         super(job);
+        firstTime = true;
         //System.err.printf("created %s @%h%n", this, this);
     }
 
@@ -153,6 +157,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
      * Actually executes the workflow.
      */
     @Override public void run() {
+        if (!firstTime) {
+            waitForCompletion();
+            return;
+        }
         // Some code here copied from execute(RunExecution), but subsequently modified quite a bit.
         try {
             onStartBuilding();
@@ -481,26 +489,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         } else {
             return HttpResponses.forwardToPreviousPage();
         }
-    }
-
-    @Override public Executor getExecutor() {
-        return getOneOffExecutor();
-    }
-
-    @Exported
-    @Override public Executor getOneOffExecutor() {
-        Jenkins j = Jenkins.getInstance();
-        if (j != null) {
-            for (Computer c : j.getComputers()) {
-                for (Executor e : c.getOneOffExecutors()) {
-                    Queue.Executable exec = e.getCurrentExecutable();
-                    if (exec == this || (exec instanceof AfterRestartTask.Body && ((AfterRestartTask.Body) exec).run == this)) {
-                        return e;
-                    }
-                }
-            }
-        }
-        return null;
     }
 
     private void onCheckout(SCM scm, FilePath workspace, @CheckForNull File changelogFile, @CheckForNull SCMRevisionState pollingBaseline) throws Exception {
