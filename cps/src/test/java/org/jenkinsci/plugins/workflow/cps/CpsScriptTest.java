@@ -12,9 +12,6 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 import org.jvnet.hudson.test.RandomlyFails;
 
-/**
- * @author Kohsuke Kawaguchi
- */
 public class CpsScriptTest extends AbstractCpsFlowTest {
     /**
      * Test the 'evaluate' method call.
@@ -54,7 +51,7 @@ public class CpsScriptTest extends AbstractCpsFlowTest {
     /**
      * The code getting evaluated must also get CPS transformation.
      */
-    @RandomlyFails("TODO future != null, perhaps because CpsThread.resume is intended to be @CpsVmThreadOnly (so assumes that the promise is just set is not cleared by runNextChunk) yet we are calling it from the test thread; extremely dubious test design, should probably be using SemaphoreTest to be more realistic")
+    @RandomlyFails("TODO future != null, perhaps because CpsThread.resume is intended to be @CpsVmThreadOnly (so assumes that the promise is just set is not cleared by runNextChunk) yet we are calling it from the test thread; extremely dubious test design, should probably be using SemaphoreStep to be more realistic")
     @Test
     public void evaluateShallBeCpsTransformed() throws Exception {
         CpsFlowDefinition flow = new CpsFlowDefinition("evaluate('1+com.cloudbees.groovy.cps.Continuable.suspend(2+3)')");
@@ -74,6 +71,17 @@ public class CpsScriptTest extends AbstractCpsFlowTest {
         exec.waitForSuspension();
 
         assertTrue(dumpError(), exec.isComplete());
+        assertEquals(dumpError(), Result.SUCCESS, exec.getResult());
+    }
+
+    /** Need to be careful that internal method names in {@link CpsScript} are not likely identifiers in user scripts. */
+    @Test public void methodNameClash() throws Exception {
+        CpsFlowDefinition flow = new CpsFlowDefinition("def build() {20}; def initialize() {10}; def env() {10}; def getShell() {2}; assert build() + initialize() + env() + shell == 42");
+        createExecution(flow);
+        exec.start();
+        while (!exec.isComplete()) {
+            exec.waitForSuspension();
+        }
         assertEquals(dumpError(), Result.SUCCESS, exec.getResult());
     }
 
