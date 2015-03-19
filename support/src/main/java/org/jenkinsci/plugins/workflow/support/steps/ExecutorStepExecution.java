@@ -16,6 +16,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.model.queue.CauseOfBlockage;
+import hudson.model.queue.Executables;
 import hudson.model.queue.SubTask;
 import hudson.remoting.ChannelClosedException;
 import hudson.remoting.RequestAbortedException;
@@ -468,18 +469,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
             @Restricted(DoNotUse.class) // for Jelly
             public @CheckForNull Executor getExecutor() {
-                Jenkins j = Jenkins.getInstance();
-                if (j == null) {
-                    return null;
-                }
-                for (Computer c : j.getComputers()) {
-                    for (Executor e : c.getExecutors()) {
-                        if (e.getCurrentExecutable() == this) {
-                            return e;
-                        }
-                    }
-                }
-                return null;
+                return Executables.getExecutor(this);
             }
 
             @Restricted(NoExternalUse.class) // for Jelly and toString
