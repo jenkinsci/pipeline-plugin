@@ -4,6 +4,8 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.5 (upcoming)
 
+* Avoid some possible name clashes with function names in scripts (`build` reported).
+
 ## 1.4 (Mar 16 2015)
 
 ### User changes
