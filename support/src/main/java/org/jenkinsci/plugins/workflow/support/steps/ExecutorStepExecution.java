@@ -302,7 +302,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             return ACL.SYSTEM; // TODO should pick up credentials from configuring user or something
         }
 
-        /* TODO 1.592+: @Override */ public Authentication getDefaultAuthentication(Queue.Item item) {
+        @Override public Authentication getDefaultAuthentication(Queue.Item item) {
             return getDefaultAuthentication();
         }
 

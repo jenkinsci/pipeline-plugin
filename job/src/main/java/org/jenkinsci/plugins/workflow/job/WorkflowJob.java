@@ -324,7 +324,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return ACL.SYSTEM;
     }
 
-    /* TODO 1.592+: @Override */ public Authentication getDefaultAuthentication(Queue.Item item) {
+    @Override public Authentication getDefaultAuthentication(Queue.Item item) {
         return getDefaultAuthentication();
     }
 
