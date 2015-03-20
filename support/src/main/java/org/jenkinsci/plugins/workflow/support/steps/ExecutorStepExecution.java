@@ -51,6 +51,7 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import static java.util.logging.Level.*;
+import jenkins.model.queue.Executable2;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -364,7 +365,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         /**
          * Occupies {@link Executor} while workflow uses this slave.
          */
-        private final class PlaceholderExecutable implements ContinuableExecutable {
+        private final class PlaceholderExecutable implements ContinuableExecutable, Executable2 {
 
             private static final String COOKIE_VAR = "JENKINS_SERVER_COOKIE";
 
@@ -423,7 +424,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                             while (runningTasks.containsKey(cookie)) {
                                 LOGGER.log(FINE, "waiting on {0}", cookie);
                                 try {
-                                    runningTasks.wait();
+                                    runningTasks.wait(); // TODO rather throw AsynchronousExecution
                                 } catch (InterruptedException x) {
                                     if (Jenkins.getInstance() != null) {
                                         LOGGER.log(FINE, "interrupted {0} as by Executor.doStop", cookie);
