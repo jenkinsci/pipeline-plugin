@@ -71,7 +71,7 @@ class CpsGroovyShell extends GroovyShell {
             CpsScript cs = (CpsScript) script;
             cs.execution = execution;
             try {
-                cs.initialize();
+                cs.$initialize();
             } catch (IOException e) {
                 // TODO: write a library to let me throw this
                 throw new RuntimeException(e);

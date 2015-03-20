@@ -319,7 +319,7 @@ public class CpsFlowExecution extends FlowExecution {
     public void start() throws IOException {
         final CpsScript s = parseScript();
         scriptClass = s.getClass();
-        s.initialize();
+        s.$initialize();
 
         final FlowHead h = new FlowHead(this);
         synchronized (this) {

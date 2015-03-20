@@ -5,6 +5,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 ## 1.5 (upcoming)
 
 * Now based on Jenkins core 1.596.1.
+* Avoid some possible name clashes with function names in scripts (`build` reported).
 
 ## 1.4 (Mar 16 2015)
 
