@@ -40,10 +40,6 @@ public abstract class AbstractStepImpl extends Step {
      * Creates an {@link Injector} that performs injection to {@link Inject} and {@link StepContextParameter}.
      */
     protected static Injector prepareInjector(final StepContext context, @Nullable final Step step) {
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
-        return j.getInjector().createChildInjector(new ContextParameterModule(step,context));
+        return Jenkins.getActiveInstance().getInjector().createChildInjector(new ContextParameterModule(step,context));
     }
 }

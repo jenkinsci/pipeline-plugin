@@ -2,7 +2,7 @@ This document is intended for new users of the Workflow feature to learn how to 
 
 # Getting started
 
-You need to be running Jenkins 1.580.1 or later.
+You need to be running Jenkins 1.580.1 or later (1.596.1 or later for more recent features).
 If you have not already done so, make sure Workflow is installed: go to the Plugin Manager and install _Workflow: Aggregator_ and restart Jenkins.
 Also make sure the _Git_ and _JUnit_ plugins are installed and up to date.
 

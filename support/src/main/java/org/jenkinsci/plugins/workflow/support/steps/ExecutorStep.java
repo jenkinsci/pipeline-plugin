@@ -30,11 +30,13 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
+import hudson.model.AbstractProject;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Label;
 import hudson.model.Node;
+import hudson.util.FormValidation;
 import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -86,6 +88,7 @@ public final class ExecutorStep extends AbstractStepImpl {
             return true;
         }
 
+        // TODO copied from AbstractProjectDescriptor
         public AutoCompletionCandidates doAutoCompleteLabel(@QueryParameter String value) {
             AutoCompletionCandidates c = new AutoCompletionCandidates();
             Jenkins j = Jenkins.getInstance();
@@ -98,7 +101,10 @@ public final class ExecutorStep extends AbstractStepImpl {
             }
             return c;
         }
-        // proper doCheckValue also requires API requested above
+
+        public FormValidation doCheckLabel(@QueryParameter String value) {
+            return AbstractProject.AbstractProjectDescriptor.validateLabelExpression(value, /* LabelValidator does not support Job */null);
+        }
 
         @SuppressWarnings("unchecked")
         @Override

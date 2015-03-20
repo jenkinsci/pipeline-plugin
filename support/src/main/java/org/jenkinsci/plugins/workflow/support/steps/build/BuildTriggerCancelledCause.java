@@ -9,7 +9,7 @@ import jenkins.model.CauseOfInterruption;
  * TODO: real summary.jelly
  * @author Kohsuke Kawaguchi
  */
-public class BuildTriggerCancelledCause extends CauseOfInterruption implements Serializable {
+public class BuildTriggerCancelledCause extends CauseOfInterruption {
 
     private static final long serialVersionUID = 1;
 

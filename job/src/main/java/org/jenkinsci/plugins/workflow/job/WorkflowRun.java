@@ -117,8 +117,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally; perhaps keep a List<WeakReference<ChangeLogSet<?>>>
     private transient List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
 
+    /** True when first started, false when running after a restart. */
+    private transient boolean firstTime;
+
     public WorkflowRun(WorkflowJob job) throws IOException {
         super(job);
+        firstTime = true;
         //System.err.printf("created %s @%h%n", this, this);
     }
 
@@ -153,6 +157,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
      * Actually executes the workflow.
      */
     @Override public void run() {
+        if (!firstTime) {
+            waitForCompletion();
+            return;
+        }
         // Some code here copied from execute(RunExecution), but subsequently modified quite a bit.
         try {
             onStartBuilding();
@@ -483,26 +491,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     }
 
-    @Override public Executor getExecutor() {
-        return getOneOffExecutor();
-    }
-
-    @Exported
-    @Override public Executor getOneOffExecutor() {
-        Jenkins j = Jenkins.getInstance();
-        if (j != null) {
-            for (Computer c : j.getComputers()) {
-                for (Executor e : c.getOneOffExecutors()) {
-                    Queue.Executable exec = e.getCurrentExecutable();
-                    if (exec == this || (exec instanceof AfterRestartTask.Body && ((AfterRestartTask.Body) exec).run == this)) {
-                        return e;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
     private void onCheckout(SCM scm, FilePath workspace, @CheckForNull File changelogFile, @CheckForNull SCMRevisionState pollingBaseline) throws Exception {
         if (changelogFile != null && changelogFile.isFile()) {
             ChangeLogSet<?> cls = scm.createChangeLogParser().parse(this, scm.getEffectiveBrowser(), changelogFile);
@@ -511,21 +499,12 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 l.onChangeLogParsed(this, scm, listener, cls);
             }
         }
-        String node = null;
-        // TODO: switch to FilePath.toComputer in 1.571
-        Jenkins j = Jenkins.getInstance();
-        if (j != null) {
-            for (Computer c : j.getComputers()) {
-                if (workspace.getChannel() == c.getChannel()) {
-                    node = c.getName();
-                    break;
-                }
-            }
-        }
-        if (node == null) {
+        // TODO JENKINS-26096 prefer a variant returning only Computer.name even if offline
+        Computer computer = workspace.toComputer();
+        if (computer == null) {
             throw new IllegalStateException();
         }
-        checkouts.add(new SCMCheckout(scm, node, workspace.getRemote(), changelogFile, pollingBaseline));
+        checkouts.add(new SCMCheckout(scm, computer.getName(), workspace.getRemote(), changelogFile, pollingBaseline));
     }
 
     static final class SCMCheckout {
@@ -567,7 +546,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 } else {
                     Jenkins jenkins = Jenkins.getInstance();
                     if (jenkins == null) {
-                        throw new IOException("Jenkins is not running");
+                        throw new IOException("Jenkins is not running"); // do not use Jenkins.getActiveInstance() as that is an ISE
                     }
                     WorkflowJob j = jenkins.getItemByFullName(job, WorkflowJob.class);
                     if (j == null) {

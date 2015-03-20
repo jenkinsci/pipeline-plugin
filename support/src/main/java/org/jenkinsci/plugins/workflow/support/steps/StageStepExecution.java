@@ -69,7 +69,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     private static XmlFile getConfigFile() throws IOException {
         Jenkins j = Jenkins.getInstance();
         if (j == null) {
-            throw new IOException("Jenkins is not running");
+            throw new IOException("Jenkins is not running"); // do not use Jenkins.getActiveInstance() as that is an ISE
         }
         return new XmlFile(new File(j.getRootDir(), StageStep.class.getName() + ".xml"));
     }
@@ -239,7 +239,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     /**
      * Records that a flow was canceled while waiting in a stage step because a newer flow entered that stage instead.
      */
-    public static final class CanceledCause extends CauseOfInterruption implements Serializable {
+    public static final class CanceledCause extends CauseOfInterruption {
 
         private static final long serialVersionUID = 1;
 

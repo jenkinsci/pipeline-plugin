@@ -85,10 +85,7 @@ public class CpsScmFlowDefinition extends FlowDefinition {
             throw new IOException("can only check out SCM into a Run");
         }
         Run<?,?> build = (Run<?,?>) _build;
-        Node node = Jenkins.getInstance(); // TODO offer to select a slave based on a configured Label
-        if (node == null) {
-            throw new IOException("Jenkins is not running");
-        }
+        Node node = Jenkins.getActiveInstance(); // TODO offer to select a slave based on a configured Label
         if (build.getParent() instanceof TopLevelItem) {
             FilePath baseWorkspace = node.getWorkspaceFor((TopLevelItem) build.getParent());
             if (baseWorkspace == null) {
