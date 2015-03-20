@@ -36,7 +36,7 @@ Read the [tutorial](TUTORIAL.md) to get started writing workflows.
 # Installation
 
 Releases are available on the Jenkins update center.
-You need to be running a sufficiently recent Jenkins release, currently an LTS in the 1.580.x line or newer, or a newer weekly release.
+You need to be running a sufficiently recent Jenkins release, currently an LTS in the 1.596.x line or newer, or a newer weekly release.
 See the [changelog](CHANGES.md) for news.
 
 For OSS Jenkins users, install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).

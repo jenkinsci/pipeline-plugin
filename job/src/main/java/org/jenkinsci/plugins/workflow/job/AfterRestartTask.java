@@ -108,7 +108,7 @@ class AfterRestartTask extends AbstractQueueTask implements Queue.FlyweightTask,
         return new Body(run);
     }
 
-    /* TODO 1.592+: @Override */ public Authentication getDefaultAuthentication(Queue.Item item) {
+    @Override public Authentication getDefaultAuthentication(Queue.Item item) {
         return getDefaultAuthentication();
     }
 

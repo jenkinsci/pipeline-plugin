@@ -21,20 +21,12 @@ public class WorkflowLibRepository extends FileBackedHttpGitRepository implement
     }
 
     private static File workspace() {
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
-        return new File(j.root, "workflow-libs");
+        return new File(Jenkins.getActiveInstance().root, "workflow-libs");
     }
 
     @Override
     protected void checkPushPermission() {
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
-        j.checkPermission(Jenkins.RUN_SCRIPTS);
+        Jenkins.getActiveInstance().checkPermission(Jenkins.RUN_SCRIPTS);
     }
 
     public String getIconFileName() {

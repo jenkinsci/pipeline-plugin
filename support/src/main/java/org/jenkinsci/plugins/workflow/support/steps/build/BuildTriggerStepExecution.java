@@ -40,11 +40,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
     public boolean start() throws Exception {
         String job = step.getJob();
         listener.getLogger().println("Starting building project: " + job);
-        Jenkins jenkins = Jenkins.getInstance();
-        if (jenkins == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
-        final ParameterizedJobMixIn.ParameterizedJob project = jenkins.getItem(job, invokingRun.getParent(), ParameterizedJobMixIn.ParameterizedJob.class);
+        final ParameterizedJobMixIn.ParameterizedJob project = Jenkins.getActiveInstance().getItem(job, invokingRun.getParent(), ParameterizedJobMixIn.ParameterizedJob.class);
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
         }
