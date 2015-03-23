@@ -41,6 +41,7 @@ import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
+import hudson.model.RunMap;
 import hudson.model.StreamBuildListener;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
@@ -54,6 +55,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -346,8 +348,42 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements E
     
     private static final Map<String,WorkflowRun> LOADING_RUNS = new HashMap<String,WorkflowRun>();
 
+    /**
+     * Same as {@link Run#getId} except it works before the run has been loaded from disk.
+     * TODO JENKINS-27531 this logic should be handled directly in Run.getId() instead.
+     */
+    private static String getId(WorkflowRun r) {
+        String id = r.getId();
+        Class<?> runIdMigratorC;
+        try {
+            runIdMigratorC = Class.forName("jenkins.model.RunIdMigrator");
+        } catch (ClassNotFoundException x) {
+            // 1.596 or earlier, so the ID is fine.
+            return id;
+        }
+        try {
+            RunMap<WorkflowRun> runMap = r.getParent()._getRuns();
+            Field runIdMigratorF = RunMap.class.getField("runIdMigrator");
+            Object runIdMigratorO = runIdMigratorF.get(runMap);
+            Field idToNumberF = runIdMigratorC.getDeclaredField("idToNumber");
+            idToNumberF.setAccessible(true);
+            Map<String,Integer> idToNumberO = (Map<String,Integer>) idToNumberF.get(runIdMigratorO);
+            int n = r.getNumber();
+            for (Map.Entry<String,Integer> entry : idToNumberO.entrySet()) {
+                if (entry.getValue().equals(n)) {
+                    id = entry.getKey();
+                    LOGGER.log(Level.FINE, "recovered legacy ID {0} for {1}", new Object[] {id, r});
+                    return id;
+                }
+            }
+        } catch (Exception x) {
+            LOGGER.log(Level.WARNING, null, x);
+        }
+        return id;
+    }
+
     private String key() {
-        return getParent().getFullName() + '/' + getId();
+        return getParent().getFullName() + '/' + getId(this);
     }
 
     /** Hack to allow {@link #execution} to use an {@link Owner} referring to this run, even when it has not yet been loaded. */
@@ -545,7 +581,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements E
                 synchronized (LOADING_RUNS) {
                     candidate = LOADING_RUNS.get(key());
                 }
-                if (candidate != null && candidate.getParent().getFullName().equals(job) && candidate.getId().equals(id)) {
+                if (candidate != null && candidate.getParent().getFullName().equals(job) && getId(candidate).equals(id)) {
                     run = candidate;
                 } else {
                     Jenkins jenkins = Jenkins.getInstance();
