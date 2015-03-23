@@ -450,7 +450,10 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                     assert runningTask.launcher == null;
                     runningTask.launcher = launcher;
                     runningTask.execution = new AsynchronousExecution() {
-                        @Override public void interrupt() {
+                        @Override public void interrupt(boolean forShutdown) {
+                            if (forShutdown) {
+                                return;
+                            }
                             LOGGER.log(FINE, "interrupted {0}", cookie);
                             // TODO save the BodyExecution somehow and call .cancel() here; currently you need to Executor.doStop the WorkflowRun as a whole, which is inconvenient
                             getExecutor().recordCauseOfInterruption(r, listener);

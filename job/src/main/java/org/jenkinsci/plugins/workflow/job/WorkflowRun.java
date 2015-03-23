@@ -201,7 +201,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements E
 
     private AsynchronousExecution sleep() {
         final AsynchronousExecution asynchronousExecution = new AsynchronousExecution() {
-            @Override public void interrupt() {
+            @Override public void interrupt(boolean forShutdown) {
+                if (forShutdown) {
+                    return;
+                }
                 try {
                     execution.interrupt(Result.ABORTED);
                 } catch (Exception x) {
