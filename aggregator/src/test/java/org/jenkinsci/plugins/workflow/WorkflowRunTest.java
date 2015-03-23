@@ -55,6 +55,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.recipes.LocalData;
 
 public class WorkflowRunTest {
 
@@ -67,11 +68,11 @@ public class WorkflowRunTest {
 
     @Before
     public void setUp() throws Exception {
-        p = r.jenkins.createProject(WorkflowJob.class, "p");
         r.jenkins.getInjector().injectMembers(this);
     }
 
     @Test public void basics() throws Exception {
+        p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("println('hello')"));
         WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertFalse(b1.isBuilding());
@@ -85,6 +86,7 @@ public class WorkflowRunTest {
     }
 
     @Test public void parameters() throws Exception {
+        p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("node {sh('echo param=' + PARAM)}",true));
         p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("PARAM", null)));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("PARAM", "value"))));
@@ -99,7 +101,7 @@ public class WorkflowRunTest {
         // marker file I use for synchronization
         FilePath test = new FilePath(r.jenkins.root).child("touch");
 
-
+        p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition(
             "println('hello')\n"+
             "watch(new File('"+test.getRemote()+"'))\n"+
@@ -169,6 +171,7 @@ public class WorkflowRunTest {
             gmas.add(p, "devel");
         }
         r.jenkins.setAuthorizationStrategy(gmas);
+        p = r.jenkins.createProject(WorkflowJob.class, "p");
         final String groovy = "println 'hello'";
         ACL.impersonate(User.get("devel").impersonate(), new Runnable() {
             @Override public void run() {
@@ -194,7 +197,19 @@ public class WorkflowRunTest {
     @Test @Issue("JENKINS-25630")
     public void contextInjectionOfSubParameters() throws Exception {
         // see SubtypeInjectingStep
+        p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("node('master') { injectSubtypesAsContext() }"));
         r.assertBuildStatusSuccess(p.scheduleBuild2(0));
     }
+
+    @Issue("JENKINS-27531")
+    @LocalData
+    @Test public void loadMigratedBuildRecord() throws Exception {
+        WorkflowJob p = r.jenkins.getItemByFullName("p", WorkflowJob.class);
+        assertNotNull(p);
+        WorkflowRun b = p.getLastBuild();
+        assertNotNull(b);
+        r.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+    }
+
 }
