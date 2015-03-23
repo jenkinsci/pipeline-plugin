@@ -204,8 +204,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements E
             @Override public void interrupt() {
                 try {
                     execution.interrupt(Result.ABORTED);
-                } catch (Exception x2) {
-                    LOGGER.log(Level.WARNING, null, x2);
+                } catch (Exception x) {
+                    LOGGER.log(Level.WARNING, null, x);
                 }
                 getExecutor().recordCauseOfInterruption(WorkflowRun.this, listener);
             }
