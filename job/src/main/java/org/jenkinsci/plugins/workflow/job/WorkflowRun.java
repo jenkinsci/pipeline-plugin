@@ -217,6 +217,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 // (and make it stop scheduling things when Jenkins.isQuietingDown())
                 return false;
             }
+            @Override public boolean displayCell() {
+                return blocksRestart();
+            }
         };
         final AtomicReference<ScheduledFuture<?>> copyLogsTask = new AtomicReference<ScheduledFuture<?>>();
         copyLogsTask.set(Timer.get().scheduleAtFixedRate(new Runnable() {

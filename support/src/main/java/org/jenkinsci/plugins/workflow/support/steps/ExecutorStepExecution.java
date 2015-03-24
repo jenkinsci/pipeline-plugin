@@ -467,6 +467,9 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         @Override public boolean blocksRestart() {
                             return false;
                         }
+                        @Override public boolean displayCell() {
+                            return true;
+                        }
                     };
                     throw runningTask.execution;
                 }
