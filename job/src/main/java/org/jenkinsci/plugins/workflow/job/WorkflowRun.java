@@ -214,9 +214,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 getExecutor().recordCauseOfInterruption(WorkflowRun.this, listener);
             }
             @Override public boolean blocksRestart() {
-                // TODO check whether the CPS VM thread is active
-                // (and make it stop scheduling things when Jenkins.isQuietingDown())
-                return false;
+                return execution.blocksRestart();
             }
             @Override public boolean displayCell() {
                 return blocksRestart();

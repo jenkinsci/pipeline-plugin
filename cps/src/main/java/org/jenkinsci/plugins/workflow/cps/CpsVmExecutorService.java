@@ -55,10 +55,12 @@ class CpsVmExecutorService extends InterceptingExecutorService {
     private void setUp() {
         ACL.impersonate(cpsThreadGroup.getExecution().getAuthentication());
         CURRENT.set(cpsThreadGroup);
+        cpsThreadGroup.busy = true;
     }
 
     private void tearDown() {
         CURRENT.set(null);
+        cpsThreadGroup.busy = false;
     }
 
     static ThreadLocal<CpsThreadGroup> CURRENT = new ThreadLocal<CpsThreadGroup>();
