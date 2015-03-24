@@ -1,4 +1,4 @@
-FROM dockerfile/java
+FROM java:7
 RUN curl -o /tmp/maven.tgz http://mirror.cogentco.com/pub/apache/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
 RUN cd /usr/local; tar xvzf /tmp/maven.tgz
 RUN mkdir -p /var/lib/jenkins/plugins /var/lib/jenkins/jobs/cd
