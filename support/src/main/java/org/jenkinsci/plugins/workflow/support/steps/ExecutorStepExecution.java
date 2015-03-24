@@ -52,6 +52,8 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import static java.util.logging.Level.*;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import jenkins.model.queue.Executable2;
 
 public class ExecutorStepExecution extends AbstractStepExecutionImpl {
@@ -131,9 +133,11 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
     /** Transient handle of a running executor task. */
     private static final class RunningTask {
-        final StepContext context;
-        Executable2.AsynchronousExecution execution;
-        Launcher launcher;
+        final @Nonnull StepContext context;
+        /** null until placeholder executable runs */
+        @Nullable Executable2.AsynchronousExecution execution;
+        /** null until placeholder executable runs */
+        @Nullable Launcher launcher;
         RunningTask(StepContext context) {
             this.context = context;
         }
@@ -329,7 +333,9 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 RunningTask runningTask = runningTasks.remove(cookie);
                 if (runningTask == null) {
                     LOGGER.log(FINE, "no running task corresponds to {0}", cookie);
+                    return null;
                 }
+                assert runningTask.execution != null && runningTask.launcher != null;
                 runningTask.execution.completed(null);
                 try {
                     runningTask.launcher.kill(Collections.singletonMap(COOKIE_VAR, cookie));
@@ -456,7 +462,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                             }
                             LOGGER.log(FINE, "interrupted {0}", cookie);
                             // TODO save the BodyExecution somehow and call .cancel() here; currently you need to Executor.doStop the WorkflowRun as a whole, which is inconvenient
-                            getExecutor().recordCauseOfInterruption(r, listener);
+                            super.getExecutor().recordCauseOfInterruption(r, listener);
                         }
                     };
                     throw runningTask.execution;
