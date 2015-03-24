@@ -305,7 +305,9 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         }
 
         @Override public long getEstimatedDuration() {
-            return -1;
+            Run<?,?> r = run();
+            // Not accurate if there are multiple slaves in one build, but better than nothing:
+            return r != null ? r.getEstimatedDuration() : -1;
         }
 
         @Override public ResourceList getResourceList() {
@@ -479,7 +481,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             }
 
             @Override public long getEstimatedDuration() {
-                return -1;
+                return getParent().getEstimatedDuration();
             }
 
             @Override public boolean willContinue() {
