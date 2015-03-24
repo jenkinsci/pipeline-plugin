@@ -145,7 +145,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
     private static final String COOKIE_VAR = "JENKINS_SERVER_COOKIE";
 
-    private static final class PlaceholderTask implements ContinuedTask, Serializable {
+    public static final class PlaceholderTask implements ContinuedTask, Serializable {
 
         /** keys are {@link #cookie}s */
         private static final Map<String,RunningTask> runningTasks = new HashMap<String,RunningTask>();
@@ -271,8 +271,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             return ac != null && ac.hasPermission(Item.CANCEL);
         }
 
-        private @CheckForNull
-        Run<?,?> run() {
+        public @CheckForNull Run<?,?> run() {
             try {
                 if (!context.isReady()) {
                     return null;
