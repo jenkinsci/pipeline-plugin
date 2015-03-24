@@ -33,6 +33,8 @@ import org.jvnet.hudson.test.JenkinsRule;
  */
 public class JenkinsRuleExt {
 
+    // TODO use standard version 1.607+
+
     /**
      * Waits for a build to complete.
      * @return the same build, once done
