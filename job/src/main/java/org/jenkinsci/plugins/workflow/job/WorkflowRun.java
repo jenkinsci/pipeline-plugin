@@ -78,7 +78,7 @@ import javax.annotation.concurrent.GuardedBy;
 import jenkins.model.Jenkins;
 import jenkins.model.lazy.BuildReference;
 import jenkins.model.lazy.LazyBuildMixIn;
-import jenkins.model.queue.Executable2;
+import jenkins.model.queue.AsynchronousExecution;
 import jenkins.util.Timer;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
@@ -96,7 +96,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
 @edu.umd.cs.findbugs.annotations.SuppressWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER") // completed is an unusual usage
-public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Executable2, LazyBuildMixIn.LazyLoadingRun<WorkflowJob,WorkflowRun> {
+public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Queue.Executable, LazyBuildMixIn.LazyLoadingRun<WorkflowJob,WorkflowRun> {
 
     private static final Logger LOGGER = Logger.getLogger(WorkflowRun.class.getName());
 
@@ -211,6 +211,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements E
                     LOGGER.log(Level.WARNING, null, x);
                 }
                 getExecutor().recordCauseOfInterruption(WorkflowRun.this, listener);
+            }
+            @Override public boolean blocksRestart() {
+                // TODO check whether the CPS VM thread is active
+                // (and make it stop scheduling things when Jenkins.isQuietingDown())
+                return false;
             }
         };
         final AtomicReference<ScheduledFuture<?>> copyLogsTask = new AtomicReference<ScheduledFuture<?>>();

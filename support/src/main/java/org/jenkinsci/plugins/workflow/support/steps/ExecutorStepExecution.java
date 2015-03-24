@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
+import jenkins.model.queue.AsynchronousExecution;
 import jenkins.util.Timer;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
@@ -54,7 +55,6 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import static java.util.logging.Level.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jenkins.model.queue.Executable2;
 
 public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
@@ -135,7 +135,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
     private static final class RunningTask {
         final @Nonnull StepContext context;
         /** null until placeholder executable runs */
-        @Nullable Executable2.AsynchronousExecution execution;
+        @Nullable AsynchronousExecution execution;
         /** null until placeholder executable runs */
         @Nullable Launcher launcher;
         RunningTask(StepContext context) {
@@ -389,7 +389,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         /**
          * Occupies {@link Executor} while workflow uses this slave.
          */
-        private final class PlaceholderExecutable implements ContinuableExecutable, Executable2 {
+        private final class PlaceholderExecutable implements ContinuableExecutable {
 
             @Override public void run() {
                 final TaskListener listener;
@@ -463,6 +463,9 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                             LOGGER.log(FINE, "interrupted {0}", cookie);
                             // TODO save the BodyExecution somehow and call .cancel() here; currently you need to Executor.doStop the WorkflowRun as a whole, which is inconvenient
                             super.getExecutor().recordCauseOfInterruption(r, listener);
+                        }
+                        @Override public boolean blocksRestart() {
+                            return false;
                         }
                     };
                     throw runningTask.execution;
