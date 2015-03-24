@@ -195,6 +195,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
             setResult(Result.FAILURE);
             executionPromise.setException(x);
+            return;
         }
         throw sleep();
     }
