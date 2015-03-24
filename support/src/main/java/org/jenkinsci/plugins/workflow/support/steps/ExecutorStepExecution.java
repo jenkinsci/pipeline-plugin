@@ -463,7 +463,13 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                             }
                             LOGGER.log(FINE, "interrupted {0}", cookie);
                             // TODO save the BodyExecution somehow and call .cancel() here; currently you need to Executor.doStop the WorkflowRun as a whole, which is inconvenient
-                            super.getExecutor().recordCauseOfInterruption(r, listener);
+                            // In the meantime, at least interrupt the build as a whole:
+                            Executor masterExecutor = r.getExecutor();
+                            if (masterExecutor != null) {
+                                masterExecutor.interrupt();
+                            } else { // ?
+                                super.getExecutor().recordCauseOfInterruption(r, listener);
+                            }
                         }
                         @Override public boolean blocksRestart() {
                             return false;
