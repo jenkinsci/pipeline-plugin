@@ -99,23 +99,23 @@
         </dependencies>
     </dependencyManagement>
     <dependencies>
-        <dependency> <!-- TODO Executable-JENKINS-25938 branch @ 09f7a2d3d120d77497da1e566a6719ec6feac7ee -->
+        <dependency> <!-- TODO Executable-JENKINS-25938 branch @ b106ae347f2c7ac1db6d3bea516263b43d76815e -->
             <groupId>org.jenkins-ci.main</groupId>
             <artifactId>jenkins-core</artifactId>
-            <version>1.607-20150324.102051-1</version>
+            <version>1.607-20150324.130603-2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
             <artifactId>jenkins-war</artifactId>
-            <version>1.607-20150324.102120-1</version>
+            <version>1.607-20150324.130628-2</version>
             <type>war</type>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
             <artifactId>jenkins-war</artifactId>
-            <version>1.607-20150324.102120-1</version>
+            <version>1.607-20150324.130628-2</version>
             <classifier>war-for-test</classifier>
             <scope>test</scope>
         </dependency>
