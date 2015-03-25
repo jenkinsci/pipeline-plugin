@@ -51,6 +51,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.*;
@@ -369,7 +370,12 @@ public final class CpsThreadGroup implements Serializable {
         // as that's the ony more likely to have caused the problem.
         // TODO: when we start tracking which thread is just waiting for the body, then
         // that information would help. or maybe we should just remember the thread that has run the last time
-        threads.lastEntry().getValue().resume(new Outcome(null,t));
+        Map.Entry<Integer,CpsThread> lastEntry = threads.lastEntry();
+        if (lastEntry != null) {
+            lastEntry.getValue().resume(new Outcome(null,t));
+        } else {
+            LOGGER.log(Level.WARNING, "encountered error but could pass it to the flow", t);
+        }
     }
 
     private static final Logger LOGGER = Logger.getLogger(CpsThreadGroup.class.getName());

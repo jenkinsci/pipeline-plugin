@@ -74,7 +74,7 @@ final class CpsBodySubContext extends DefaultStepContext {
     }
 
     @Override
-    public boolean isReady() throws IOException, InterruptedException {
+    public boolean isReady() {
         return base.isReady();
     }
 

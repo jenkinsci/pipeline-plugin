@@ -26,10 +26,13 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Executor;
 import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nonnull;
 import jenkins.model.CauseOfInterruption;
+import jenkins.model.InterruptedBuildAction;
 
 /**
  * Special exception that can be thrown out of {@link StepContext#onFailure} to indicate that the flow was aborted from the inside.
@@ -59,6 +62,18 @@ public final class FlowInterruptedException extends InterruptedException {
 
     public @Nonnull List<CauseOfInterruption> getCauses() {
         return causes;
+    }
+
+    /**
+     * If a build catches this exception, it should use this method to report it.
+     * @param run
+     * @param listener
+     */
+    public void handle(Run<?,?> run, TaskListener listener) {
+        run.addAction(new InterruptedBuildAction(causes));
+        for (CauseOfInterruption cause : causes) {
+            cause.print(listener);
+        }
     }
 
 }

@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
 import com.cloudbees.groovy.cps.SerializableScript;
 import groovy.lang.GroovyShell;
 import hudson.EnvVars;
@@ -31,15 +32,16 @@ import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
 import hudson.model.Run;
-import org.codehaus.groovy.control.CompilationFailedException;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
-import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
-
 import java.io.File;
 import java.io.IOException;
-
+import javax.annotation.CheckForNull;
+import org.codehaus.groovy.control.CompilationFailedException;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.codehaus.groovy.runtime.DefaultGroovyStaticMethods;
+import org.codehaus.groovy.runtime.InvokerInvocationException;
+import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 
 /**
  * The script of a workflow.
@@ -49,6 +51,8 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
 public abstract class CpsScript extends SerializableScript {
 
     private static final String STEPS_VAR = "steps";
+    static final String PROP_ENV = "env";
+    static final String PROP_BUILD = "currentBuild";
 
     transient CpsFlowExecution execution;
 
@@ -60,18 +64,16 @@ public abstract class CpsScript extends SerializableScript {
         CpsThread c = CpsThread.current();
         if (c!=null) {
             execution = c.getExecution();
-            initialize();
+            $initialize();
         }
     }
 
     @SuppressWarnings("unchecked") // Binding
-    void initialize() throws IOException {
-        FlowExecutionOwner owner = execution.getOwner();
-        getBinding().setVariable(STEPS_VAR, new DSL(owner));
-        Queue.Executable qe = owner.getExecutable();
-        if (qe instanceof Run) {
+    final void $initialize() throws IOException {
+        getBinding().setVariable(STEPS_VAR, new DSL(execution.getOwner()));
+        Run<?,?> run = $build();
+        if (run != null) {
             EnvVars paramEnv = new EnvVars();
-            Run<?,?> run = (Run) qe;
             ParametersAction a = run.getAction(ParametersAction.class);
             if (a != null) {
                 for (ParameterValue v : a) {
@@ -100,18 +102,32 @@ public abstract class CpsScript extends SerializableScript {
 
     @Override
     public Object getProperty(String property) {
-        if (property.equals("env")) {
-            return env();
+        if (property.equals(PROP_ENV)) {
+            return $env();
+        } else if (property.equals(PROP_BUILD)) {
+            try {
+                return new RunWrapper($build(), true);
+            } catch (IOException x) {
+                throw new InvokerInvocationException(x);
+            }
         }
         return super.getProperty(property);
     }
 
-    private EnvActionImpl env() {
+    private @CheckForNull Run<?,?> $build() throws IOException {
         FlowExecutionOwner owner = execution.getOwner();
+        Queue.Executable qe = owner.getExecutable();
+        if (qe instanceof Run) {
+            return (Run) qe;
+        } else {
+            return null;
+        }
+    }
+
+    private EnvActionImpl $env() {
         try {
-            Queue.Executable qe = owner.getExecutable();
-            if (qe instanceof Run) {
-                Run<?,?> run = (Run) qe;
+            Run<?,?> run = $build();
+            if (run != null) {
                 EnvActionImpl action = run.getAction(EnvActionImpl.class);
                 if (action == null) {
                     action = new EnvActionImpl();
@@ -131,24 +147,24 @@ public abstract class CpsScript extends SerializableScript {
     @Override
     public Object evaluate(String script) throws CompilationFailedException {
         // this might throw the magic CpsCallableInvocation to execute the script asynchronously
-        return getShell().evaluate(script);
+        return $getShell().evaluate(script);
     }
 
     @Override
     public Object evaluate(File file) throws CompilationFailedException, IOException {
-        return getShell().evaluate(file);
+        return $getShell().evaluate(file);
     }
 
     @Override
     public void run(File file, String[] arguments) throws CompilationFailedException, IOException {
-        getShell().run(file,arguments);
+        $getShell().run(file,arguments);
     }
 
     /**
      * Obtains the Groovy compiler to be used for compiling user script
      * in the CPS-transformed and sandboxed manner.
      */
-    private GroovyShell getShell() {
+    private GroovyShell $getShell() {
         return CpsThreadGroup.current().getExecution().getShell();
     }
 
@@ -182,6 +198,11 @@ public abstract class CpsScript extends SerializableScript {
     @Override
     public void printf(String format, Object[] values) {
         print(DefaultGroovyMethods.sprintf(this/*not actually used*/, format, values));
+    }
+
+    /** Effectively overrides {@link DefaultGroovyStaticMethods#sleep(Object, long)} so that {@code SleepStep} works even in the bare form {@code sleep 5}. */
+    public Object sleep(long arg) {
+        return invokeMethod("sleep", arg);
     }
 
     private static final long serialVersionUID = 1L;

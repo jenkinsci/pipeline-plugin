@@ -27,7 +27,11 @@ package org.jenkinsci.plugins.workflow.structs;
 import hudson.Extension;
 import hudson.Main;
 import hudson.model.AbstractDescribableImpl;
+import hudson.model.BooleanParameterValue;
 import hudson.model.Descriptor;
+import hudson.model.ParameterValue;
+import hudson.plugins.git.GitSCM;
+import hudson.plugins.git.extensions.impl.CleanBeforeCheckout;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,9 +44,11 @@ import org.codehaus.groovy.runtime.GStringImpl;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+@SuppressWarnings("unchecked") // generic array construction
 public class DescribableHelperTest {
 
     @BeforeClass public static void isUnitTest() {
@@ -58,7 +64,7 @@ public class DescribableHelperTest {
     }
 
     @Test public void uninstantiate() throws Exception {
-        assertEquals("{flag=true, shorty=0, text=stuff}", DescribableHelper.uninstantiate(new C("stuff", true)).toString());
+        assertEquals("{flag=true, text=stuff}", DescribableHelper.uninstantiate(new C("stuff", true)).toString());
         I i = new I("stuff");
         i.setFlag(true);
         i.text = "more";
@@ -120,7 +126,6 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void findSubtypes() throws Exception {
         assertEquals(new HashSet<Class<?>>(Arrays.asList(Impl1.class, Impl2.class)), DescribableHelper.findSubtypes(Base.class));
         assertEquals(Collections.singleton(Impl1.class), DescribableHelper.findSubtypes(Marker.class));
@@ -139,7 +144,7 @@ public class DescribableHelperTest {
     @Test public void nestedStructs() throws Exception {
         roundTrip(UsesBase.class, map("base", map("$class", "Impl1", "text", "hello")));
         roundTrip(UsesBase.class, map("base", map("$class", "Impl2", "flag", true)));
-        roundTrip(UsesImpl2.class, map("impl2", map("flag", false)));
+        roundTrip(UsesImpl2.class, map("impl2", map()));
     }
 
     public static class UsesBase {
@@ -267,9 +272,8 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structArrayHomo() throws Exception {
-        roundTrip(UsesStructArrayHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructArrayHomo[Impl2[false], Impl2[true]]");
+        roundTrip(UsesStructArrayHomo.class, map("impls", Arrays.asList(map(), map("flag", true))), "UsesStructArrayHomo[Impl2[false], Impl2[true]]");
     }
 
     public static final class UsesStructArrayHomo {
@@ -285,9 +289,8 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structListHomo() throws Exception {
-        roundTrip(UsesStructListHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructListHomo[Impl2[false], Impl2[true]]");
+        roundTrip(UsesStructListHomo.class, map("impls", Arrays.asList(map(), map("flag", true))), "UsesStructListHomo[Impl2[false], Impl2[true]]");
     }
 
     public static final class UsesStructListHomo {
@@ -303,9 +306,8 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structCollectionHomo() throws Exception {
-        roundTrip(UsesStructCollectionHomo.class, map("impls", Arrays.asList(map("flag", false), map("flag", true))), "UsesStructCollectionHomo[Impl2[false], Impl2[true]]");
+        roundTrip(UsesStructCollectionHomo.class, map("impls", Arrays.asList(map(), map("flag", true))), "UsesStructCollectionHomo[Impl2[false], Impl2[true]]");
     }
 
     public static final class UsesStructCollectionHomo {
@@ -321,7 +323,6 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structArrayHetero() throws Exception {
         roundTrip(UsesStructArrayHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructArrayHetero[Impl1[hello], Impl2[true]]");
     }
@@ -339,7 +340,6 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structListHetero() throws Exception {
         roundTrip(UsesStructListHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructListHetero[Impl1[hello], Impl2[true]]");
     }
@@ -357,7 +357,6 @@ public class DescribableHelperTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Test public void structCollectionHetero() throws Exception {
         roundTrip(UsesStructCollectionHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructCollectionHetero[Impl1[hello], Impl2[true]]");
     }
@@ -373,6 +372,106 @@ public class DescribableHelperTest {
         @Override public String toString() {
             return "UsesStructCollectionHetero" + bases;
         }
+    }
+
+    @Test public void defaultValuesStructCollectionCommon() throws Exception {
+        roundTrip(DefaultStructCollection.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "special"))), "DefaultStructCollection[Impl1[special]]");
+    }
+
+    @Test public void defaultValuesStructCollectionEmpty() throws Exception {
+        roundTrip(DefaultStructCollection.class, map("bases", Collections.emptyList()), "DefaultStructCollection[]");
+    }
+
+    @Issue("JENKINS-25779")
+    @Test public void defaultValuesStructCollection() throws Exception {
+        roundTrip(DefaultStructCollection.class, map(), "DefaultStructCollection[Impl1[default]]");
+    }
+
+    @Issue("JENKINS-25779")
+    @Test public void defaultValuesNestedStruct() throws Exception {
+        roundTrip(DefaultStructCollection.class, map("bases", Arrays.asList(map("$class", "Impl2"), map("$class", "Impl2", "flag", true))), "DefaultStructCollection[Impl2[false], Impl2[true]]");
+    }
+
+    @Issue("JENKINS-25779")
+    @Test public void defaultValuesNullSetter() throws Exception {
+        roundTrip(DefaultStructCollection.class, map("bases", null), "DefaultStructCollectionnull");
+    }
+
+    public static final class DefaultStructCollection {
+        private Collection<Base> bases = Arrays.<Base>asList(new Impl1("default"));
+        @DataBoundConstructor public DefaultStructCollection() {}
+        public Collection<Base> getBases() {return bases;}
+        @DataBoundSetter public void setBases(Collection<Base> bases) {this.bases = bases;}
+        @Override public String toString() {return "DefaultStructCollection" + bases;}
+    }
+
+    @Test public void defaultValuesStructArrayCommon() throws Exception {
+        roundTrip(DefaultStructArray.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "special")), "stuff", "val"), "DefaultStructArray[Impl1[special]];stuff=val");
+    }
+
+    @Issue("JENKINS-25779")
+    @Test public void defaultValuesStructArray() throws Exception {
+        roundTrip(DefaultStructArray.class, map("stuff", "val"), "DefaultStructArray[Impl1[default], Impl2[true]];stuff=val");
+    }
+
+    @Issue("JENKINS-25779")
+    @Test public void defaultValuesNullConstructorParameter() throws Exception {
+        roundTrip(DefaultStructArray.class, map(), "DefaultStructArray[Impl1[default], Impl2[true]];stuff=null");
+    }
+
+    public static final class DefaultStructArray {
+        private final String stuff;
+        private Base[] bases;
+        @DataBoundConstructor public DefaultStructArray(String stuff) {
+            this.stuff = stuff;
+            Impl2 impl2 = new Impl2();
+            impl2.setFlag(true);
+            bases = new Base[] {new Impl1("default"), impl2};
+        }
+        public Base[] getBases() {return bases;}
+        @DataBoundSetter public void setBases(Base[] bases) {this.bases = bases;}
+        public String getStuff() {return stuff;}
+        @Override public String toString() {return "DefaultStructArray" + Arrays.toString(bases) + ";stuff=" + stuff;}
+    }
+
+    @Issue("JENKINS-26093")
+    @Test public void parameterValues() throws Exception {
+        assertTrue(DescribableHelper.findSubtypes(ParameterValue.class).contains(BooleanParameterValue.class)); //  do not want to enumerate ListSubversionTagsParameterValue etc.
+        // Omitting RunParameterValue since it is not friendly for a unit test.
+        // JobParameterDefinition is not registered as an extension, so not supporting FileParameterValue.
+        // FileParameterValue is unsupportable as an input to a WorkflowJob since it requires createBuildWrapper to work;
+        // as an argument to BuildTriggerStep it could perhaps work, but we would need to provide a custom FileItem implementation.
+        // PasswordParameterValue requires Secret.fromString and thus JenkinsRule.
+        // For others: https://github.com/search?type=Code&q=user%3Ajenkinsci+user%3Acloudbees+%22extends+ParameterDefinition%22
+        roundTrip(TakesParams.class, map("parameters", Arrays.asList(
+                map("$class", "BooleanParameterValue", "name", "flag", "value", true),
+                map("$class", "StringParameterValue", "name", "n", "value", "stuff"),
+                map("$class", "TextParameterValue", "name", "text", "value", "here\nthere"))),
+            "TakesParams;BooleanParameterValue:flag=true;StringParameterValue:n=stuff;TextParameterValue:text=here\nthere");
+    }
+    public static final class TakesParams {
+        public final List<ParameterValue> parameters;
+        @DataBoundConstructor public TakesParams(List<ParameterValue> parameters) {
+            this.parameters = parameters;
+        }
+        @Override public String toString() {
+            StringBuilder b = new StringBuilder("TakesParams");
+            for (ParameterValue v : parameters) {
+                b.append(';').append(v.getClass().getSimpleName()).append(':').append(v.getShortDescription());
+            }
+            return b.toString();
+        }
+    }
+
+    @Issue("JENKINS-26619")
+    @Test public void getterDescribableList() throws Exception {
+        roundTrip(GitSCM.class, map(
+            "extensions", Arrays.asList(map("$class", CleanBeforeCheckout.class.getSimpleName())),
+            // Default values for these things do not work because GitSCM fails to use @DataBoundSetter:
+            "branches", Arrays.asList(map("name", "*/master")),
+            "doGenerateSubmoduleConfigurations", false,
+            "submoduleCfg", Collections.emptyList(),
+            "userRemoteConfigs", Collections.emptyList()));
     }
 
     private static Map<String,Object> map(Object... keysAndValues) {

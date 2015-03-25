@@ -24,14 +24,14 @@
   ~ THE SOFTWARE.
   -->
 
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:p="/lib/hudson/project">
     <l:side-panel>
         <l:tasks>
             <j:set var="buildUrl" value="${h.decompose(request)}"/>
             <l:task icon="images/24x24/up.png" href="${it.upUrl}" title="${%Back to Project}" contextMenu="false"/>
             <l:task icon="images/24x24/search.png" href="${buildUrl.baseUrl}/" title="${%Status}" contextMenu="false"/>
             <l:task icon="images/24x24/notepad.png" href="${buildUrl.baseUrl}/changes" title="${%Changes}"/>
-            <l:task icon="images/24x24/terminal.png" href="${buildUrl.baseUrl}/console" title="${%Console Output}"/> <!-- TODO 1.570: <p:console-link/> -->
+            <p:console-link/>
             <l:task icon="images/24x24/notepad.png" href="${buildUrl.baseUrl}/configure" title="${h.hasPermission(it,it.UPDATE)?'%Edit Build Information':'%View Build Information'}"/>
             <st:include page="delete.jelly"/>
             <st:include page="actions.jelly"/>

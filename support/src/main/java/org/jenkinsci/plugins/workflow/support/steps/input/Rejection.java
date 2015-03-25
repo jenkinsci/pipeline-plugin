@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.support.steps.input;
 
 import hudson.model.User;
+import java.io.Serializable;
 import javax.annotation.CheckForNull;
 import jenkins.model.CauseOfInterruption;
 import org.kohsuke.stapler.export.Exported;
@@ -9,6 +10,8 @@ import org.kohsuke.stapler.export.Exported;
  * Indicates that the input step was rejected by the user.
  */
 public final class Rejection extends CauseOfInterruption {
+
+    private static final long serialVersionUID = 1;
 
     private final @CheckForNull String userName;
     private final long timestamp;

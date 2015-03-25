@@ -56,7 +56,7 @@ import static java.util.logging.Level.*;
  */
 public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
-    @Inject private transient ExecutorStep step;
+    @Inject(optional=true) private transient ExecutorStep step;
     @StepContextParameter private transient TaskListener listener;
     // Here just for requiredContext; could perhaps be passed to the PlaceholderTask constructor:
     @StepContextParameter private transient Run<?,?> run;
@@ -302,7 +302,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             return ACL.SYSTEM; // TODO should pick up credentials from configuring user or something
         }
 
-        /* TODO 1.592+: @Override */ public Authentication getDefaultAuthentication(Queue.Item item) {
+        @Override public Authentication getDefaultAuthentication(Queue.Item item) {
             return getDefaultAuthentication();
         }
 

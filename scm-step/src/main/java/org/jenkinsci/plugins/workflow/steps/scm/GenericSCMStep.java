@@ -64,6 +64,7 @@ public final class GenericSCMStep extends SCMStep {
         }
 
         public Collection<? extends SCMDescriptor<?>> getApplicableDescriptors(@CheckForNull Job<?,?> job) {
+            // TODO could probably be simplified to SCM._for
             List<SCMDescriptor<?>> r = new ArrayList<SCMDescriptor<?>>();
             for (SCMDescriptor<?> d : SCM.all()) {
                 if (job == null || d.isApplicable(job)) {

@@ -14,6 +14,7 @@ import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.model.queue.QueueTaskFuture;
 import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.Jenkins;
@@ -39,28 +40,38 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
     public boolean start() throws Exception {
         String job = step.getJob();
         listener.getLogger().println("Starting building project: " + job);
-        Jenkins jenkins = Jenkins.getInstance();
-        if (jenkins == null) {
-            throw new IllegalStateException("Jenkins is not running");
-        }
-        final ParameterizedJobMixIn.ParameterizedJob project = jenkins.getItem(job, invokingRun.getParent(), ParameterizedJobMixIn.ParameterizedJob.class);
+        final ParameterizedJobMixIn.ParameterizedJob project = Jenkins.getActiveInstance().getItem(job, invokingRun.getParent(), ParameterizedJobMixIn.ParameterizedJob.class);
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
         }
         node.addAction(new LabelAction(Messages.BuildTriggerStepExecution_building_(project.getFullDisplayName())));
         List<Action> actions = new ArrayList<Action>();
-        actions.add(new BuildTriggerAction(getContext()));
+        if (step.getWait()) {
+            actions.add(new BuildTriggerAction(getContext(), step.isPropagate()));
+        }
         actions.add(new CauseAction(new Cause.UpstreamCause(invokingRun)));
         List<ParameterValue> parameters = step.getParameters();
         if (parameters != null) {
             actions.add(new ParametersAction(parameters));
         }
-        new ParameterizedJobMixIn() {
+        Integer quietPeriod = step.getQuietPeriod();
+        if (quietPeriod == null) {
+            quietPeriod = project.getQuietPeriod();
+        }
+        QueueTaskFuture<?> f = new ParameterizedJobMixIn() {
             @Override protected Job asJob() {
                 return (Job) project;
             }
-        }.scheduleBuild2(project.getQuietPeriod(), actions.toArray(new Action[actions.size()]));
-        return false;
+        }.scheduleBuild2(quietPeriod, actions.toArray(new Action[actions.size()]));
+        if (f == null) {
+            throw new AbortException("Failed to trigger build of " + project.getFullName());
+        }
+        if (step.getWait()) {
+            return false;
+        } else {
+            getContext().onSuccess(null);
+            return true;
+        }
     }
 
     @Override

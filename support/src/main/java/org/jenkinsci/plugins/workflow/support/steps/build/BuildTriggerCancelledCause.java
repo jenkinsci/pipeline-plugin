@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.support.steps.build;
 
+import java.io.Serializable;
 import jenkins.model.CauseOfInterruption;
 
 /**
@@ -9,6 +10,9 @@ import jenkins.model.CauseOfInterruption;
  * @author Kohsuke Kawaguchi
  */
 public class BuildTriggerCancelledCause extends CauseOfInterruption {
+
+    private static final long serialVersionUID = 1;
+
     private final Throwable cause;
     // TODO: capture ModelObject (such as WorkflowRun) that caused this cancellation
 

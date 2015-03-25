@@ -28,6 +28,8 @@ import hudson.Extension;
 import com.google.common.primitives.Primitives;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.model.ParameterDefinition;
+import hudson.model.ParameterValue;
 import java.beans.Introspector;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -38,18 +40,24 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import net.java.sezpoz.Index;
 import net.java.sezpoz.IndexItem;
+import org.apache.commons.lang.ObjectUtils;
 import org.codehaus.groovy.reflection.ReflectionCache;
 import org.kohsuke.stapler.ClassDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -61,6 +69,8 @@ import org.kohsuke.stapler.NoStaplerConstructorException;
  * Ultimately should live in Jenkins core (or Stapler).
  */
 public class DescribableHelper {
+
+    private static final Logger LOG = Logger.getLogger(DescribableHelper.class.getName());
 
     /**
      * Creates an instance of a class via {@link DataBoundConstructor} and {@link DataBoundSetter}.
@@ -103,20 +113,63 @@ public class DescribableHelper {
         for (String name : names) {
             inspect(r, o, clazz, name);
         }
+        r.values().removeAll(Collections.singleton(null));
+        Map<String,Object> constructorOnlyDataBoundProps = new TreeMap<String,Object>(r);
+        List<String> dataBoundSetters = new ArrayList<String>();
         for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {
                 if (f.isAnnotationPresent(DataBoundSetter.class)) {
-                    inspect(r, o, clazz, f.getName());
+                    String field = f.getName();
+                    dataBoundSetters.add(field);
+                    inspect(r, o, clazz, field);
                 }
             }
             for (Method m : c.getDeclaredMethods()) {
                 if (m.isAnnotationPresent(DataBoundSetter.class) && m.getName().startsWith("set")) {
-                    inspect(r, o, clazz, Introspector.decapitalize(m.getName().substring(3)));
+                    String field = Introspector.decapitalize(m.getName().substring(3));
+                    dataBoundSetters.add(field);
+                    inspect(r, o, clazz, field);
                 }
             }
         }
-        r.values().removeAll(Collections.singleton(null));
+        clearDefaultSetters(clazz, r, constructorOnlyDataBoundProps, dataBoundSetters);
         return r;
+    }
+
+    /**
+     * Removes configuration of any properties based on {@link DataBoundSetter} which appear unmodified from the default.
+     * @param clazz the class of {@code o}
+     * @param allDataBoundProps all its properties, including those from its {@link DataBoundConstructor} as well as any {@link DataBoundSetter}s; some of the latter might be deleted
+     * @param constructorOnlyDataBoundProps properties from {@link DataBoundConstructor} only
+     * @param dataBoundSetters a list of property names marked with {@link DataBoundSetter}
+     */
+    private static void clearDefaultSetters(Class<?> clazz, Map<String,Object> allDataBoundProps, Map<String,Object> constructorOnlyDataBoundProps, Collection<String> dataBoundSetters) {
+        if (dataBoundSetters.isEmpty()) {
+            return;
+        }
+        Object control;
+        try {
+            control = instantiate(clazz, constructorOnlyDataBoundProps);
+        } catch (Exception x) {
+            LOG.log(Level.WARNING, "Cannot create control version of " + clazz + " using " + constructorOnlyDataBoundProps, x);
+            return;
+        }
+        Map<String,Object> fromControl = new HashMap<String,Object>(constructorOnlyDataBoundProps);
+        Iterator<String> fields = dataBoundSetters.iterator();
+        while (fields.hasNext()) {
+            String field = fields.next();
+            try {
+                inspect(fromControl, control, clazz, field);
+            } catch (RuntimeException x) {
+                LOG.log(Level.WARNING, "Failed to check property " + field + " of " + clazz + " on " + control, x);
+                fields.remove();
+            }
+        }
+        for (String field : dataBoundSetters) {
+            if (ObjectUtils.equals(allDataBoundProps.get(field), fromControl.get(field))) {
+                allDataBoundProps.remove(field);
+            }
+        }
     }
 
     private static final String CLAZZ = "$class";
@@ -191,15 +244,16 @@ public class DescribableHelper {
             Class<?> componentType = ((Class) type).getComponentType();
             List<Object> list = mapList(context, componentType, (List) o);
             return list.toArray((Object[]) Array.newInstance(componentType, list.size()));
-        } else if (o instanceof List && isList(type)) {
+        } else if (o instanceof List && acceptsList(type)) {
             return mapList(context, ((ParameterizedType) type).getActualTypeArguments()[0], (List) o);
         } else {
             throw new ClassCastException(context + " expects " + type + " but received " + o.getClass());
         }
     }
 
+    /** Whether this type is generic of {@link List} or a supertype thereof (such as {@link Collection}). */
     @SuppressWarnings("unchecked")
-    private static boolean isList(Type type) {
+    private static boolean acceptsList(Type type) {
         return type instanceof ParameterizedType && ((ParameterizedType) type).getRawType() instanceof Class && ((Class) ((ParameterizedType) type).getRawType()).isAssignableFrom(List.class);
     }
 
@@ -263,6 +317,19 @@ public class DescribableHelper {
     private static void inspect(Map<String, Object> r, Object o, Class<?> clazz, String field) {
         AtomicReference<Type> type = new AtomicReference<Type>();
         Object value = inspect(o, clazz, field, type);
+        try {
+            String[] names = new ClassDescriptor(clazz).loadConstructorParamNames();
+            int idx = Arrays.asList(names).indexOf(field);
+            if (idx >= 0) {
+                Type ctorType = findConstructor(clazz, names.length).getGenericParameterTypes()[idx];
+                if (!type.get().equals(ctorType)) {
+                    LOG.log(Level.WARNING, "For {0}.{1}, preferring constructor type {2} to differing getter type {3}", new Object[] {clazz.getName(), field, ctorType, type});
+                    type.set(ctorType);
+                }
+            }
+        } catch (IllegalArgumentException x) {
+            // From loadConstructorParamNames or findConstructor; ignore
+        }
         r.put(field, uncoerce(value, type.get()));
     }
 
@@ -280,7 +347,7 @@ public class DescribableHelper {
                 list.add(uncoerce(elt, array.getClass().getComponentType()));
             }
             return list;
-        } else if (o instanceof List && isList(type)) {
+        } else if (o instanceof List && acceptsList(type)) {
             List<Object> list = new ArrayList<Object>();
             for (Object elt : (List<?>) o) {
                 list.add(uncoerce(elt, ((ParameterizedType) type).getActualTypeArguments()[0]));
@@ -296,6 +363,9 @@ public class DescribableHelper {
                 return nested;
             } catch (UnsupportedOperationException x) {
                 // then leave it raw
+                if (!(x.getCause() instanceof NoStaplerConstructorException)) {
+                    LOG.log(Level.WARNING, "failed to uncoerce " + o, x);
+                }
             }
         }
         return o;
@@ -335,6 +405,21 @@ public class DescribableHelper {
         for (Descriptor<?> d : getDescriptorList()) {
             if (supertype.isAssignableFrom(d.clazz)) {
                 clazzes.add(d.clazz.asSubclass(supertype));
+            }
+        }
+        if (supertype == ParameterValue.class) { // TODO JENKINS-26093 hack, pending core change
+            for (Class<? extends ParameterDefinition> d : findSubtypes(ParameterDefinition.class)) {
+                String name = d.getName();
+                if (name.endsWith("Definition")) {
+                    try {
+                        Class<?> c = d.getClassLoader().loadClass(name.replaceFirst("Definition$", "Value"));
+                        if (supertype.isAssignableFrom(c)) {
+                            clazzes.add(c.asSubclass(supertype));
+                        }
+                    } catch (ClassNotFoundException x) {
+                        // ignore
+                    }
+                }
             }
         }
         return clazzes;

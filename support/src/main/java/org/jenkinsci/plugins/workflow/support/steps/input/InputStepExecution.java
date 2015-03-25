@@ -6,6 +6,7 @@ import hudson.Util;
 import hudson.console.HyperlinkNote;
 import hudson.model.Failure;
 import hudson.model.FileParameterValue;
+import hudson.model.Job;
 import hudson.model.ModelObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
@@ -14,8 +15,11 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.User;
 import hudson.util.HttpResponses;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.acegisecurity.Authentication;
+import org.acegisecurity.GrantedAuthority;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.support.actions.PauseAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -137,7 +141,11 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
     @RequirePOST
     public HttpResponse doProceed(StaplerRequest request) throws IOException, ServletException, InterruptedException {
         preSubmissionCheck();
-
+        User user = User.current();
+        if (user!=null){
+            run.addAction(new ApproverAction(user.getId()));
+            listener.getLogger().println("Approved by " + hudson.console.ModelHyperlinkNote.encodeTo(user));
+        }
         Object v = parseValue(request);
         return proceed(v);
     }
@@ -166,7 +174,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
      */
     @RequirePOST
     public HttpResponse doAbort() throws IOException, ServletException {
-        preSubmissionCheck();
+        preAbortCheck();
 
         FlowInterruptedException e = new FlowInterruptedException(Result.ABORTED, new Rejection(User.current()));
         outcome = new Outcome(null,e);
@@ -180,12 +188,23 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
     }
 
     /**
+     * Check if the current user can abort/cancel the run from the input.
+     */
+    private void preAbortCheck() {
+        if (isSettled()) {
+            throw new Failure("This input has been already given");
+        } if (!canCancel() && !canSubmit()) {
+            throw new Failure("You need to be '"+ input.getSubmitter() +"' (or have Job CANCEL permissions) to cancel this.");
+        }
+    }
+
+    /**
      * Check if the current user can submit the input.
      */
     private void preSubmissionCheck() {
         if (isSettled())
             throw new Failure("This input has been already given");
-        if (!input.canSubmit()) {
+        if (!canSubmit()) {
             throw new Failure("You need to be "+ input.getSubmitter() +" to submit this");
         }
     }
@@ -197,6 +216,31 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
         } finally {
             PauseAction.endCurrentPause(node);
         }
+    }
+
+    private boolean canCancel() {
+        return getRun().getParent().hasPermission(Job.CANCEL);
+    }
+
+    private boolean canSubmit() {
+        Authentication a = Jenkins.getAuthentication();
+        return canSettle(a);
+    }
+
+    /**
+     * Checks if the given user can settle this input.
+     */
+    private boolean canSettle(Authentication a) {
+        String submitter = input.getSubmitter();
+        if (submitter==null || a.getName().equals(submitter)) {
+            return true;
+        }
+        for (GrantedAuthority ga : a.getAuthorities()) {
+            if (ga.getAuthority().equals(submitter)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

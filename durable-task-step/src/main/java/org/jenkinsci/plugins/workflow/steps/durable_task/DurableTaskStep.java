@@ -88,11 +88,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
         private String remote;
 
         @Override public boolean start() throws Exception {
-            Jenkins j = Jenkins.getInstance();
-            if (j == null) {
-                throw new IllegalStateException("Jenkins is not running");
-            }
-            for (Computer c : j.getComputers()) {
+            for (Computer c : Jenkins.getActiveInstance().getComputers()) {
                 if (c.getChannel() == ws.getChannel()) {
                     node = c.getName();
                     break;

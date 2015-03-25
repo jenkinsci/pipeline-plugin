@@ -31,10 +31,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * {@link Action} that can be passed to {@link CpsFlowDefinition#create(FlowExecutionOwner, List)}
- * that can take over the instantiation of {@link CpsFlowExecution}.
- *
- * @author Kohsuke Kawaguchi
+ * @deprecated Use {@link CpsFlowFactoryAction2} instead.
  */
 public interface CpsFlowFactoryAction extends Action {
     CpsFlowExecution create(CpsFlowDefinition def, FlowExecutionOwner owner, List<? extends Action> actions) throws IOException;

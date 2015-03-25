@@ -5,7 +5,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -85,7 +84,7 @@ public abstract class StepExecution implements Serializable {
      *      Contextual information that lets the step know what resulted in stopping an executing step,
      *      passed in the hope that this will assist diagnostics.
      */
-    public abstract void stop(@Nullable Throwable cause) throws Exception;
+    public abstract void stop(@Nonnull Throwable cause) throws Exception;
 
     /**
      * Called when {@link StepExecution} is brought back into memory after restart.
