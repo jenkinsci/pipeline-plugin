@@ -32,7 +32,6 @@ import hudson.model.Executor;
 import hudson.model.Node;
 import hudson.model.OneOffExecutor;
 import hudson.model.Queue;
-import hudson.model.queue.Executables;
 import hudson.model.queue.SubTask;
 
 import java.util.concurrent.Future;
@@ -79,7 +78,7 @@ public class ExecutorPickle extends Pickle {
                 }
 
                 Queue.Executable exec = future.get();
-                Executor e = Executables.getExecutor(exec);
+                Executor e = Executor.of(exec);
                 if (e != null) {
                     return e;
                 }

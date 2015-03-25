@@ -16,7 +16,6 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.model.queue.CauseOfBlockage;
-import hudson.model.queue.Executables;
 import hudson.model.queue.SubTask;
 import hudson.remoting.ChannelClosedException;
 import hudson.remoting.RequestAbortedException;
@@ -113,7 +112,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         Jenkins j = Jenkins.getInstance();
         if (j != null) {
             // if we are already running, kill the ongoing activities, which releases PlaceholderExecutable from its sleep loop
-            // Similar to Run.getExecutor (and proposed Executables.getExecutor), but distinct since we do not have the Executable yet:
+            // Similar to Executor.of, but distinct since we do not have the Executable yet:
             COMPUTERS: for (Computer c : j.getComputers()) {
                 for (Executor e : c.getExecutors()) {
                     Queue.Executable exec = e.getCurrentExecutable();
@@ -498,7 +497,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
             @Restricted(DoNotUse.class) // for Jelly
             public @CheckForNull Executor getExecutor() {
-                return Executables.getExecutor(this);
+                return Executor.of(this);
             }
 
             @Restricted(NoExternalUse.class) // for Jelly and toString
