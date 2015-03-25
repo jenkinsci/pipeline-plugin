@@ -158,7 +158,7 @@ public class BuildTriggerStepTest {
         WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
         us.setDefinition(new CpsFlowDefinition("parallel ds1: {build 'ds1'}, ds23: {parallel ds2: {build 'ds2'}, ds3: {build 'ds3'}}", true));
         j.jenkins.setNumExecutors(3);
-        j.jenkins.setNodes(j.jenkins.getNodes()); // TODO this seems to be the only way to trigger a call to updateComputerList
+        j.jenkins.setNodes(j.jenkins.getNodes()); // TODO https://github.com/jenkinsci/jenkins/pull/1596 renders this workaround unnecessary
         WorkflowRun usb = us.scheduleBuild2(0).getStartCondition().get();
         assertEquals(1, usb.getNumber());
         FreeStyleBuild ds1b, ds2b, ds3b;
