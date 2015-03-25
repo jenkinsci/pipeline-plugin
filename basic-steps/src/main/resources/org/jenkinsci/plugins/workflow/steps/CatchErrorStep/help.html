@@ -1,0 +1,32 @@
+<div>
+    <p>
+    If the body throws an exception, mark the build as a failure, but nonetheless
+    continue to execute the workflow from the statement next to the 'catchError' step.
+    This is useful if you want to find as many errors as you can before terminating
+    the workflow. See the following example:
+
+<pre>
+catchError {
+    sh 'false'  // this step will fail
+    
+    echo 'this step will not run'
+}
+echo 'but this step will run after sh fails'
+...
+// and the workflow fails at this point after normally completing the program
+</pre>
+    
+    <p>
+    If you want to ignore a failure, use the try/catch block instead:
+
+<pre>
+try {
+    sh 'false'  // this step will fail
+
+    echo 'this step will not run'
+} catch(_) {}
+echo 'but this step will run after sh fails'
+...
+// and the workflow as a whole would succeed
+</pre>
+</div>
