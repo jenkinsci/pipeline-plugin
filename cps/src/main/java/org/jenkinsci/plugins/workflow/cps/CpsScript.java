@@ -64,14 +64,14 @@ public abstract class CpsScript extends SerializableScript {
         CpsThread c = CpsThread.current();
         if (c!=null) {
             execution = c.getExecution();
-            initialize();
+            $initialize();
         }
     }
 
     @SuppressWarnings("unchecked") // Binding
-    void initialize() throws IOException {
+    final void $initialize() throws IOException {
         getBinding().setVariable(STEPS_VAR, new DSL(execution.getOwner()));
-        Run<?,?> run = build();
+        Run<?,?> run = $build();
         if (run != null) {
             EnvVars paramEnv = new EnvVars();
             ParametersAction a = run.getAction(ParametersAction.class);
@@ -103,10 +103,10 @@ public abstract class CpsScript extends SerializableScript {
     @Override
     public Object getProperty(String property) {
         if (property.equals(PROP_ENV)) {
-            return env();
+            return $env();
         } else if (property.equals(PROP_BUILD)) {
             try {
-                return new RunWrapper(build(), true);
+                return new RunWrapper($build(), true);
             } catch (IOException x) {
                 throw new InvokerInvocationException(x);
             }
@@ -114,7 +114,7 @@ public abstract class CpsScript extends SerializableScript {
         return super.getProperty(property);
     }
 
-    private @CheckForNull Run<?,?> build() throws IOException {
+    private @CheckForNull Run<?,?> $build() throws IOException {
         FlowExecutionOwner owner = execution.getOwner();
         Queue.Executable qe = owner.getExecutable();
         if (qe instanceof Run) {
@@ -124,9 +124,9 @@ public abstract class CpsScript extends SerializableScript {
         }
     }
 
-    private EnvActionImpl env() {
+    private EnvActionImpl $env() {
         try {
-            Run<?,?> run = build();
+            Run<?,?> run = $build();
             if (run != null) {
                 EnvActionImpl action = run.getAction(EnvActionImpl.class);
                 if (action == null) {
@@ -147,24 +147,24 @@ public abstract class CpsScript extends SerializableScript {
     @Override
     public Object evaluate(String script) throws CompilationFailedException {
         // this might throw the magic CpsCallableInvocation to execute the script asynchronously
-        return getShell().evaluate(script);
+        return $getShell().evaluate(script);
     }
 
     @Override
     public Object evaluate(File file) throws CompilationFailedException, IOException {
-        return getShell().evaluate(file);
+        return $getShell().evaluate(file);
     }
 
     @Override
     public void run(File file, String[] arguments) throws CompilationFailedException, IOException {
-        getShell().run(file,arguments);
+        $getShell().run(file,arguments);
     }
 
     /**
      * Obtains the Groovy compiler to be used for compiling user script
      * in the CPS-transformed and sandboxed manner.
      */
-    private GroovyShell getShell() {
+    private GroovyShell $getShell() {
         return CpsThreadGroup.current().getExecution().getShell();
     }
 

@@ -41,6 +41,8 @@ import org.junit.rules.ExternalResource;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
+// TODO use standard version 1.607+
+
 /**
  * Echoes build output to standard error as it arrives.
  * Usage: <pre>{@code @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();}</pre>

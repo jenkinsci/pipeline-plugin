@@ -90,7 +90,7 @@ public final class GitStep extends SCMStep {
     }
 
     @DataBoundSetter public void setCredentialsId(String credentialsId) {
-        this.credentialsId = credentialsId;
+        this.credentialsId = Util.fixEmpty(credentialsId);
     }
 
     @Override public SCM createSCM() {
