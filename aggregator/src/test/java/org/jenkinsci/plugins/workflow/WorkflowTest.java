@@ -47,8 +47,10 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
@@ -604,10 +606,13 @@ public class WorkflowTest extends SingleJobTestBase {
     @Test public void env() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                JenkinsRuleExt.createSpecialEnvSlave(story.j, "slave", null, Collections.<String,String>singletonMap("BUILD_TAG", null));
+                Map<String,String> slaveEnv = new HashMap<String,String>();
+                slaveEnv.put("BUILD_TAG", null);
+                slaveEnv.put("PERMACHINE", "set");
+                JenkinsRuleExt.createSpecialEnvSlave(story.j, "slave", null, slaveEnv);
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition("node('slave') {\n"
-                        + "  sh 'echo tag=$BUILD_TAG'\n"
+                        + "  sh 'echo tag=$BUILD_TAG PERMACHINE=$PERMACHINE'\n"
                         + "  env.BUILD_TAG='custom'\n"
                         + "  sh 'echo tag2=$BUILD_TAG'\n"
                         + "  env.STUFF='more'\n"
@@ -626,7 +631,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertThatWorkflowIsSuspended();
                 SemaphoreStep.success("env/1", null);
                 story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
-                story.j.assertLogContains("tag=jenkins-demo-1", b);
+                story.j.assertLogContains("tag=jenkins-demo-1 PERMACHINE=set", b);
                 story.j.assertLogContains("tag2=custom", b);
                 story.j.assertLogContains("tag3=custom2 stuff=more", b);
                 EnvironmentAction a = b.getAction(EnvironmentAction.class);
