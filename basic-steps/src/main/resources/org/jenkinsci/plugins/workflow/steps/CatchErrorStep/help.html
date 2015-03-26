@@ -26,6 +26,21 @@ node {
     step([$class: 'Mailer', recipients: 'admin@somewhere'])
 }
 </pre>
-    <p>For all other cases, use plain <code>try</code>-<code>catch</code>(-<code>finally</code>) blocks.
-    See <a href="https://github.com/jenkinsci/workflow-plugin/blob/master/basic-steps/CORE-STEPS.md#interacting-with-build-status" target="_blank">this document</a> for background.
+    <p>For all other cases, use plain <code>try</code>-<code>catch</code>(-<code>finally</code>) blocks:
+<p><pre>
+node {
+    sh './set-up.sh'
+    try {
+        sh 'might fail'
+        echo 'Succeeded!'
+    } catch (err) {
+        echo "Failed: ${err}"
+    } finally {
+        sh './tear-down.sh'
+    }
+    echo 'Printed whether above succeeded or failed.'
+}
+// …and the workflow as a whole succeeds
+</pre>
+    <p>See <a href="https://github.com/jenkinsci/workflow-plugin/blob/master/basic-steps/CORE-STEPS.md#interacting-with-build-status" target="_blank">this document</a> for background.
 </div>
