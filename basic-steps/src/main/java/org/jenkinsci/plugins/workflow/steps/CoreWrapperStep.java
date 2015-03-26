@@ -78,7 +78,7 @@ public class CoreWrapperStep extends AbstractStepImpl {
             Map<String,String> overrides = c.getEnv();
             if (!overrides.isEmpty()) {
                 EnvVars overridden = new EnvVars(env);
-                overridden.overrideAll(overrides);
+                overridden.overrideExpandingAll(overrides);
                 bodyInvoker.withContext(overridden);
             }
             SimpleBuildWrapper.Disposer disposer = c.getDisposer();

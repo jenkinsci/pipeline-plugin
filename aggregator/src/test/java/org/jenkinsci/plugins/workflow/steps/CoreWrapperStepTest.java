@@ -31,14 +31,18 @@ import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
-import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import jenkins.tasks.SimpleBuildWrapper;
+import org.jenkinsci.plugins.workflow.BuildWatcher;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
@@ -48,28 +52,29 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class CoreWrapperStepTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Test public void useWrapper() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
+                Map<String,String> slaveEnv = new HashMap<String,String>();
+                slaveEnv.put("PATH", "/usr/bin:/bin");
+                slaveEnv.put("HOME", "/home/jenkins");
+                JenkinsRuleExt.createSpecialEnvSlave(story.j, "slave", "", slaveEnv);
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
-                p.setDefinition(new CpsFlowDefinition("node {wrap([$class: 'MockWrapper']) {semaphore 'restarting'; echo \"groovy PATH=${env.PATH}\"; sh 'echo shell PATH=$PATH'}}"));
+                p.setDefinition(new CpsFlowDefinition("node('slave') {wrap([$class: 'MockWrapper']) {semaphore 'restarting'; echo \"groovy PATH=${env.PATH}\"; sh 'echo shell PATH=$PATH'}}"));
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
                 SemaphoreStep.waitForStart("restarting/1", b);
             }
         });
         story.addStep(new Statement() {
-            @SuppressWarnings("SleepWhileInLoop")
             @Override public void evaluate() throws Throwable {
                 SemaphoreStep.success("restarting/1", null);
                 WorkflowJob p = story.j.jenkins.getItemByFullName("p", WorkflowJob.class);
                 WorkflowRun b = p.getLastBuild();
-                while (b.isBuilding()) { // TODO JENKINS-26399
-                    Thread.sleep(100);
-                }
-                story.j.assertBuildStatusSuccess(b);
-                String expected = story.j.jenkins.getWorkspaceFor(p).child("bin").getRemote() + File.pathSeparatorChar;
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                String expected = "/home/jenkins/extra/bin:/usr/bin:/bin";
                 story.j.assertLogContains("groovy PATH=" + expected, b);
                 story.j.assertLogContains("shell PATH=" + expected, b);
                 story.j.assertLogContains("ran DisposerImpl", b);
@@ -81,7 +86,8 @@ public class CoreWrapperStepTest {
         @DataBoundConstructor public MockWrapper() {}
         @Override public void setUp(Context context, Run<?,?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
             assertNotNull(initialEnvironment.toString(), initialEnvironment.get("PATH"));
-            context.env("PATH+STUFF", workspace.child("bin").getRemote());
+            context.env("EXTRA", "${HOME}/extra");
+            context.env("PATH+EXTRA", "${EXTRA}/bin");
             context.setDisposer(new DisposerImpl());
         }
         private static final class DisposerImpl extends Disposer {
@@ -100,6 +106,5 @@ public class CoreWrapperStepTest {
         }
 
     }
-
 
 }
