@@ -604,8 +604,9 @@ public class WorkflowTest extends SingleJobTestBase {
     @Test public void env() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
+                JenkinsRuleExt.createSpecialEnvSlave(story.j, "slave", null, Collections.<String,String>singletonMap("BUILD_TAG", null));
                 p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("node {\n"
+                p.setDefinition(new CpsFlowDefinition("node('slave') {\n"
                         + "  sh 'echo tag=$BUILD_TAG'\n"
                         + "  env.BUILD_TAG='custom'\n"
                         + "  sh 'echo tag2=$BUILD_TAG'\n"
