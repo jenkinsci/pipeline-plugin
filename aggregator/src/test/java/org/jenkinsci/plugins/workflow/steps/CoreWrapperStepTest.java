@@ -78,6 +78,7 @@ public class CoreWrapperStepTest {
                 story.j.assertLogContains("groovy PATH=" + expected, b);
                 story.j.assertLogContains("shell PATH=" + expected, b);
                 story.j.assertLogContains("ran DisposerImpl", b);
+                story.j.assertLogNotContains("CoreWrapperStep", b);
             }
         });
     }
