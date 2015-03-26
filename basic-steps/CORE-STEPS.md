@@ -58,7 +58,7 @@ node {
 ```
 
 though this would not automatically adjust the message according to the status of _previous_ builds as the standard mail notifier does.
-That would be possible only via [JENKINS-26834](https://issues.jenkins-ci.org/browse/JENKINS-26834).
+For that, check if `currentBuild.previousBuild` exists, what its `.result` is, etc.
 
 # Adding support from plugins
 
