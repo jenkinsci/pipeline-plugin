@@ -53,6 +53,8 @@ public class EnvStep extends AbstractStepImpl {
     }
     
     public static class Execution extends AbstractStepExecutionImpl {
+
+        private static final long serialVersionUID = 1;
         
         @Inject(optional=true) private transient EnvStep step;
         
@@ -71,6 +73,7 @@ public class EnvStep extends AbstractStepImpl {
     }
     
     private static final class ExpanderImpl extends EnvironmentExpander {
+        private static final long serialVersionUID = 1;
         private final Map<String,String> overrides;
         private ExpanderImpl(String overrides) {
             this.overrides = new HashMap<String,String>();
