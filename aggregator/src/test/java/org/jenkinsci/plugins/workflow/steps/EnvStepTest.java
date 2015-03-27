@@ -41,7 +41,26 @@ public class EnvStepTest {
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
-    // TODO test overriding of variables defined above, or in build, or in node
+    @Test public void overriding() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                    "env.CUSTOM = 'initial'\n" +
+                    "node {\n" +
+                    "  withEnv('CUSTOM=override\\nBUILD_TAG=custom\\nNOVEL=val') {\n" +
+                    "    sh 'echo inside CUSTOM=$CUSTOM BUILD_TAG=$BUILD_TAG NOVEL=$NOVEL:'\n" +
+                    "  }\n" +
+                    "  sh 'echo outside CUSTOM=$CUSTOM BUILD_TAG=$BUILD_TAG NOVEL=$NOVEL:'\n" +
+                    "}"));
+                WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                story.j.assertLogContains("inside CUSTOM=override BUILD_TAG=custom NOVEL=val:", b);
+                story.j.assertLogContains("outside CUSTOM=initial BUILD_TAG=jenkins-p-1 NOVEL=:", b);
+            }
+        });
+    }
+
+    // TODO test parallel execution
 
     @Test public void restarting() {
         story.addStep(new Statement() {
