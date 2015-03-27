@@ -50,7 +50,7 @@ public final class CatchErrorStep extends AbstractStepImpl {
         }
 
         @Override public String getDisplayName() {
-            return "Catch Error and Continue";
+            return "Catch error and set build result";
         }
 
         @Override public boolean takesImplicitBlockArgument() {

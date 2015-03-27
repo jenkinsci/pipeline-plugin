@@ -36,6 +36,7 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.RunAction2;
+import org.jenkinsci.plugins.workflow.steps.EnvironmentExpander;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
@@ -77,7 +78,12 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
                     return val;
                 }
             }
-            return getEnvironment().get(propertyName);
+            EnvVars environment = getEnvironment();
+            EnvironmentExpander expander = CpsThread.current().getContextVariable(EnvironmentExpander.class);
+            if (expander != null) {
+                expander.expand(environment);
+            }
+            return environment.get(propertyName);
         } catch (Exception x) {
             LOGGER.log(Level.WARNING, null, x);
             return null;

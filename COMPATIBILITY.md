@@ -46,6 +46,7 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `MsBuildBuilder` (`msbuild`): [JENKINS-26948](https://issues.jenkins-ci.org/browse/JENKINS-26948)
 - [ ] `HipChatNotifier` (`hipchat`): [JENKINS-27202](https://issues.jenkins-ci.org/browse/JENKINS-27202)
 - [ ] `LogParserPublisher` (`log-parser`): [JENKINS-27208](https://issues.jenkins-ci.org/browse/JENKINS-27208)
+- [ ] `SlackNotifier` (`slack`): [JENKINS-27652](https://issues.jenkins-ci.org/browse/JENKINS-27652)
 
 ## Build wrappers
 
