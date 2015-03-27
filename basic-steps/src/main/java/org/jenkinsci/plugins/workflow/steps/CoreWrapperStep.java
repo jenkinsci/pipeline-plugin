@@ -32,8 +32,10 @@ import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
@@ -72,9 +74,7 @@ public class CoreWrapperStep extends AbstractStepImpl {
             BodyInvoker bodyInvoker = getContext().newBodyInvoker();
             Map<String,String> overrides = c.getEnv();
             if (!overrides.isEmpty()) {
-                EnvVars overridden = new EnvVars(env);
-                overridden.overrideExpandingAll(overrides);
-                bodyInvoker.withContext(overridden);
+                bodyInvoker.withContext(new ExpanderImpl(overrides));
             }
             SimpleBuildWrapper.Disposer disposer = c.getDisposer();
             bodyInvoker.withCallback(disposer != null ? new Callback(disposer) : BodyExecutionCallback.wrap(getContext())).start();
@@ -85,6 +85,17 @@ public class CoreWrapperStep extends AbstractStepImpl {
             // should be no need to do anything special (but verify in JENKINS-26148)
         }
 
+    }
+
+    private static final class ExpanderImpl extends EnvironmentExpander {
+        private static final long serialVersionUID = 1;
+        private final Map<String,String> overrides;
+        ExpanderImpl(Map<String,String> overrides) {
+            this.overrides = /* ensure serializability*/ new HashMap<String,String>(overrides);
+        }
+        @Override public void expand(EnvVars env) throws IOException, InterruptedException {
+            env.overrideExpandingAll(overrides);
+        }
     }
 
     private static final class Callback extends BodyExecutionCallback {
