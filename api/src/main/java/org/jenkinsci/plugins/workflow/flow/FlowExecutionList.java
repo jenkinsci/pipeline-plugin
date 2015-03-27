@@ -8,6 +8,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import hudson.Extension;
 import hudson.XmlFile;
+import hudson.init.Terminator;
 import hudson.model.listeners.ItemListener;
 import hudson.remoting.SingleLaneExecutorService;
 import hudson.util.CopyOnWriteList;
@@ -22,11 +23,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.*;
 import javax.annotation.CheckForNull;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 
 /**
  * Tracks the running {@link FlowExecution}s so that it can be enumerated.
@@ -131,6 +135,7 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
     }
     private void save(List<FlowExecutionOwner> copy) {
         XmlFile cf = configFile();
+        LOGGER.log(FINE, "saving {0} to {1}", new Object[] {copy, cf});
         if (cf == null) {
             return; // oh well
         }
@@ -217,6 +222,14 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
 
             return Futures.allAsList(all);
         }
+    }
+
+    @Restricted(DoNotUse.class)
+    @Terminator public static void saveAll() throws InterruptedException {
+        LOGGER.fine("ensuring all executions are saved");
+        SingleLaneExecutorService executor = get().executor;
+        executor.shutdown();
+        executor.awaitTermination(1, TimeUnit.MINUTES);
     }
 
 }
