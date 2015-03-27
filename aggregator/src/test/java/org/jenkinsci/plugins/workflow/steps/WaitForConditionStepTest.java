@@ -45,16 +45,16 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("waitUntil {semaphore 'waitSimple'}; semaphore 'waitedSimple'"));
+                p.setDefinition(new CpsFlowDefinition("waitUntil {semaphore 'wait'}; semaphore 'waited'"));
                 startBuilding();
-                SemaphoreStep.waitForStart("waitSimple/1", b);
-                SemaphoreStep.success("waitSimple/1", false);
-                SemaphoreStep.waitForStart("waitSimple/2", b);
-                SemaphoreStep.success("waitSimple/2", false);
-                SemaphoreStep.waitForStart("waitSimple/3", b);
-                SemaphoreStep.success("waitSimple/3", true);
-                SemaphoreStep.waitForStart("waitedSimple/1", b);
-                SemaphoreStep.success("waitedSimple/1", null);
+                SemaphoreStep.waitForStart("wait/1", b);
+                SemaphoreStep.success("wait/1", false);
+                SemaphoreStep.waitForStart("wait/2", b);
+                SemaphoreStep.success("wait/2", false);
+                SemaphoreStep.waitForStart("wait/3", b);
+                SemaphoreStep.success("wait/3", true);
+                SemaphoreStep.waitForStart("waited/1", b);
+                SemaphoreStep.success("waited/1", null);
                 story.j.assertLogContains("Will try again after " + Util.getTimeSpanString(WaitForConditionStep.Execution.MIN_RECURRENCE_PERIOD), story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
             }
         });
@@ -64,13 +64,13 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("waitUntil {semaphore 'waitFailure'}"));
+                p.setDefinition(new CpsFlowDefinition("waitUntil {semaphore 'wait'}"));
                 startBuilding();
-                SemaphoreStep.waitForStart("waitFailure/1", b);
-                SemaphoreStep.success("waitFailure/1", false);
-                SemaphoreStep.waitForStart("waitFailure/2", b);
+                SemaphoreStep.waitForStart("wait/1", b);
+                SemaphoreStep.success("wait/1", false);
+                SemaphoreStep.waitForStart("wait/2", b);
                 String message = "broken condition";
-                SemaphoreStep.failure("waitFailure/2", new AbortException(message));
+                SemaphoreStep.failure("wait/2", new AbortException(message));
                 // TODO the following fails (missing message) when run as part of whole suite, but not standalone: story.j.assertLogContains(message, story.j.assertBuildStatus(Result.FAILURE, JenkinsRuleExt.waitForCompletion(b)));
                 waitForWorkflowToComplete();
                 story.j.assertBuildStatus(Result.FAILURE, b);
@@ -92,16 +92,16 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
                     // Note that catching a specific type verifies JENKINS-26164:
                     "    } catch (FileNotFoundException x) {\n" +
                     "      // x.printStackTrace()\n" +
-                    "      semaphore 'waitCatchErrors'\n" +
+                    "      semaphore 'wait'\n" +
                     "      false\n" +
                     "    }\n" +
                     "  }\n" +
                     "}\n" +
                     "echo 'finished waiting'"));
                 startBuilding();
-                SemaphoreStep.waitForStart("waitCatchErrors/1", b);
+                SemaphoreStep.waitForStart("wait/1", b);
                 jenkins().getWorkspaceFor(p).child("flag").write("", null);
-                SemaphoreStep.success("waitCatchErrors/1", null);
+                SemaphoreStep.success("wait/1", null);
                 story.j.assertLogContains("finished waiting", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
             }
         });
@@ -111,20 +111,20 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("waitUntil {semaphore 'waitRestartDuringBody'}; echo 'finished waiting'"));
+                p.setDefinition(new CpsFlowDefinition("waitUntil {semaphore 'wait'}; echo 'finished waiting'"));
                 startBuilding();
-                SemaphoreStep.waitForStart("waitRestartDuringBody/1", b);
-                SemaphoreStep.success("waitRestartDuringBody/1", false);
-                SemaphoreStep.waitForStart("waitRestartDuringBody/2", b);
+                SemaphoreStep.waitForStart("wait/1", b);
+                SemaphoreStep.success("wait/1", false);
+                SemaphoreStep.waitForStart("wait/2", b);
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
-                SemaphoreStep.success("waitRestartDuringBody/2", false);
-                SemaphoreStep.waitForStart("waitRestartDuringBody/3", b);
-                SemaphoreStep.success("waitRestartDuringBody/3", true);
+                SemaphoreStep.success("wait/2", false);
+                SemaphoreStep.waitForStart("wait/3", b);
+                SemaphoreStep.success("wait/3", true);
                 story.j.assertLogContains("finished waiting", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
             }
         });
@@ -136,9 +136,9 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
             @SuppressWarnings("SleepWhileInLoop")
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("waitUntil {semaphore 'waitRestartDuringDelay'}; echo 'finished waiting'"));
+                p.setDefinition(new CpsFlowDefinition("waitUntil {semaphore 'wait'}; echo 'finished waiting'"));
                 startBuilding();
-                SemaphoreStep.waitForStart("waitRestartDuringDelay/1", b);
+                SemaphoreStep.waitForStart("wait/1", b);
                 final List<WaitForConditionStep.Execution> executions = new ArrayList<WaitForConditionStep.Execution>();
                 StepExecution.applyAll(WaitForConditionStep.Execution.class, new Function<WaitForConditionStep.Execution, Void>() {
                     @Override public Void apply(WaitForConditionStep.Execution execution) {
@@ -147,11 +147,11 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
                     }
                 }).get();
                 assertEquals(1, executions.size());
-                SemaphoreStep.success("waitRestartDuringDelay/1", false);
-                SemaphoreStep.waitForStart("waitRestartDuringDelay/2", b);
+                SemaphoreStep.success("wait/1", false);
+                SemaphoreStep.waitForStart("wait/2", b);
                 final long LONG_TIME = Long.MAX_VALUE / /* > RECURRENCE_PERIOD_BACKOFF */ 10;
                 executions.get(0).recurrencePeriod = LONG_TIME;
-                SemaphoreStep.success("waitRestartDuringDelay/2", false);
+                SemaphoreStep.success("wait/2", false);
                 while (executions.get(0).recurrencePeriod == LONG_TIME) {
                     Thread.sleep(100);
                 }
@@ -163,10 +163,10 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
-                SemaphoreStep.waitForStart("waitRestartDuringDelay/3", b);
-                SemaphoreStep.success("waitRestartDuringDelay/3", false);
-                SemaphoreStep.waitForStart("waitRestartDuringDelay/4", b);
-                SemaphoreStep.success("waitRestartDuringDelay/4", true);
+                SemaphoreStep.waitForStart("wait/3", b);
+                SemaphoreStep.success("wait/3", false);
+                SemaphoreStep.waitForStart("wait/4", b);
+                SemaphoreStep.success("wait/4", true);
                 story.j.assertLogContains("finished waiting", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
             }
         });
