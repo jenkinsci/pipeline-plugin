@@ -71,15 +71,19 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
 
     @Override public Object getProperty(String propertyName) {
         try {
+            EnvironmentExpander expander = CpsThread.current().getContextVariable(EnvironmentExpander.class);
             EnvVars overridden = CpsThread.current().getContextVariable(EnvVars.class);
             if (overridden != null) {
+                if (expander != null) {
+                    overridden = new EnvVars(overridden);
+                    expander.expand(overridden);
+                }
                 String val = overridden.get(propertyName);
                 if (val != null) {
                     return val;
                 }
             }
             EnvVars environment = getEnvironment();
-            EnvironmentExpander expander = CpsThread.current().getContextVariable(EnvironmentExpander.class);
             if (expander != null) {
                 expander.expand(environment);
             }
