@@ -30,17 +30,20 @@ import hudson.tasks.i18n.Messages;
 import hudson.tasks.junit.TestResultAction;
 import java.util.List;
 import javax.mail.internet.InternetAddress;
+import org.jenkinsci.plugins.workflow.BuildWatcher;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.mock_javamail.Mailbox;
 
 public class CoreStepTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public JenkinsRule r = new JenkinsRule();
 
     @Test public void artifactArchiver() throws Exception {
@@ -102,7 +105,7 @@ public class CoreStepTest {
         Mailbox inbox = Mailbox.get(new InternetAddress(recipient));
         inbox.clear();
         WorkflowRun b = r.assertBuildStatus(Result.UNSTABLE, p.scheduleBuild2(0).get());
-        assertEquals(JenkinsRule.getLog(b), 1, inbox.size());
+        assertEquals(1, inbox.size());
         assertEquals(/* MailSender.createUnstableMail/getSubject */Messages.MailSender_UnstableMail_Subject() + " " + b.getFullDisplayName(), inbox.get(0).getSubject());
         p.setDefinition(new CpsFlowDefinition(
                   "node {\n"
@@ -111,7 +114,7 @@ public class CoreStepTest {
                 + "}"));
         inbox.clear();
         b = r.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
-        assertEquals(JenkinsRule.getLog(b), 1, inbox.size());
+        assertEquals(1, inbox.size());
         assertEquals(Messages.MailSender_FailureMail_Subject() + " " + b.getFullDisplayName(), inbox.get(0).getSubject());
         p.setDefinition(new CpsFlowDefinition(
                   "node {\n"
@@ -120,7 +123,16 @@ public class CoreStepTest {
                 + "}"));
         inbox.clear();
         b = r.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
-        assertEquals(JenkinsRule.getLog(b), 0, inbox.size());
+        assertEquals(0, inbox.size());
+        p.setDefinition(new CpsFlowDefinition(
+                  "node {\n"
+                + "    try {error 'oops'} catch (e) {echo \"caught ${e}\"; currentBuild.result = 'FAILURE'}\n"
+                + "    step([$class: 'Mailer', recipients: '" + recipient + "'])\n"
+                + "}"));
+        inbox.clear();
+        b = r.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
+        assertEquals(1, inbox.size());
+        assertEquals(Messages.MailSender_FailureMail_Subject() + " " + b.getFullDisplayName(), inbox.get(0).getSubject());
     }
 
 }

@@ -35,20 +35,8 @@ Post-build actions (also known as _publishers_) are divided into two classes:
 
 When a recorder is run from a flow, it might set the build’s status (for example to unstable), but otherwise is likely to work intuitively.
 Running a notifier is trickier since normally a flow in progress has no status yet, unlike a freestyle project whose status is determined before the notifier is called.
-To help interoperate better with these, you can use the `catchError` step:
-
-```groovy
-node {
-    catchError {
-        sh 'might fail'
-    }
-    step([$class: 'Mailer', recipients: 'admin@somewhere'])
-}
-```
-
-If its body fails, the flow build’s status will be set to failed, so that subsequent notifier steps will see that this build is failed.
-In the case of the mail sender, this means that it will send mail.
-(It may also send mail if this build _succeeded_ but previous ones failed, and so on.)
+To help interoperate better with these, you can use the `catchError` step, or manually set a build status using `currentBuild.result`.
+See the help for the `catchError` step for examples.
 
 ## Plain catch blocks
 
@@ -70,7 +58,7 @@ node {
 ```
 
 though this would not automatically adjust the message according to the status of _previous_ builds as the standard mail notifier does.
-That would be possible only via [JENKINS-26834](https://issues.jenkins-ci.org/browse/JENKINS-26834).
+For that, check if `currentBuild.previousBuild` exists, what its `.result` is, etc.
 
 # Adding support from plugins
 
