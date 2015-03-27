@@ -27,7 +27,6 @@ package org.jenkinsci.plugins.workflow.support;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.model.Computer;
-import hudson.model.EnvironmentContributor;
 import hudson.model.Job;
 import hudson.model.Node;
 import hudson.model.Run;
@@ -40,11 +39,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import jenkins.model.CoreEnvironmentContributor;
-import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.EnvironmentExpander;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl;
@@ -69,9 +67,15 @@ public abstract class DefaultStepContext extends StepContext {
             Run<?,?> run = get(Run.class);
             EnvironmentAction a = run.getAction(EnvironmentAction.class);
             EnvVars env = a != null ? a.getEnvironment() : run.getEnvironment(get(TaskListener.class));
-            if (value != null) {
+            EnvironmentExpander expander = get(EnvironmentExpander.class);
+            if (value != null || expander != null) {
                 env = new EnvVars(env);
+            }
+            if (value != null) {
                 env.putAll((EnvVars) value); // context overrides take precedence over user settings
+            }
+            if (expander != null) {
+                expander.expand(env);
             }
             return key.cast(env);
         } else if (value != null) {
