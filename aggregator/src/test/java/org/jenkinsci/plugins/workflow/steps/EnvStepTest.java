@@ -60,7 +60,27 @@ public class EnvStepTest {
         });
     }
 
-    // TODO test parallel execution
+    @Test public void parallel() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                    "parallel a: {\n" +
+                    "  node {withEnv('TOOL=aloc') {semaphore 'a'; sh 'echo TOOL=$TOOL'}}\n" +
+                    "}, b: {\n" +
+                    "  node {withEnv('TOOL=bloc') {semaphore 'b'; sh 'echo TOOL=$TOOL'}}\n" +
+                    "}"));
+                WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
+                SemaphoreStep.waitForStart("a/1", b);
+                SemaphoreStep.waitForStart("b/1", b);
+                SemaphoreStep.success("a/1", null);
+                SemaphoreStep.success("b/1", null);
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertLogContains("[a] TOOL=aloc", b);
+                story.j.assertLogContains("[b] TOOL=bloc", b);
+            }
+        });
+    }
 
     @Test public void restarting() {
         story.addStep(new Statement() {
