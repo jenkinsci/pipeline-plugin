@@ -1,0 +1,37 @@
+<div>
+Sets one or more environment variables within a block.
+This is a more robust way of setting variables than setting values of <code>env.NAME</code>.
+<p>A set of environment variables are made available to all Jenkins Job types, including Workflow Jobs.
+The following is a general list of variables (by name) that are available to all Job types. See the notes
+below the list for Workflow specific details.
+
+<p>
+    <iframe src="${rootURL}/env-vars.html" width="100%"></iframe>
+</p>
+
+The following variables are currently unavailable inside a workflow script:
+<ul>
+    <li>EXECUTOR_NUMBER</li>
+    <li>NODE_NAME</li>
+    <li>NODE_LABELS</li>
+    <li>WORKSPACE</li>
+</ul>
+
+<h4>Using Environment Variables</h4>
+
+Environment variables are injected into scripts through a variable named "<strong>env</strong>". This variable,
+like any other variable, can be used in the general flow of the script, or in variable substitutions e.g. when
+constructing email content when using the <code>mail</code> step:
+
+<p/>
+<pre>
+    mail (to: 'devops@acme.com',
+        subject: "Job '${env.JOB_NAME}' (${env.BUILD_NUMBER}) is waiting for input",
+        body: "Please go to ${env.BUILD_URL} and verify the build");
+</pre>
+
+<p/>
+For more on environment variables,
+<a href="https://github.com/jenkinsci/workflow-plugin/blob/master/TUTORIAL.md#managing-the-environment" target="_blank">see
+here</a>.
+</div>

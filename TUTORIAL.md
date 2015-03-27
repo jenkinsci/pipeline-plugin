@@ -563,6 +563,7 @@ env.PATH = "${mvnHome}/bin:${env.PATH}"
 ```
 
 since environment variable overrides are currently limited to being global to a workflow run, not local to the current thread (and thus slave).
+You could however use the `withEnv` step (TODO details).
 
 You may also have noticed that we are running `JUnitResultArchiver` several times, something that is not possible in a freestyle project.
 The test results recorded in the build are cumulative.
