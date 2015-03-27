@@ -121,8 +121,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertFalse(jenkins().toComputer().isIdle());
                 FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
                 watchDescriptor.watchUpdate();
-                waitForWorkflowToComplete();
-                assertBuildCompletedSuccessfully();
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
             }
         });
     }
@@ -624,8 +623,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
                 SemaphoreStep.success("env/1", null);
-                waitForWorkflowToComplete();
-                assertBuildCompletedSuccessfully();
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
                 story.j.assertLogContains("tag=jenkins-demo-1", b);
                 story.j.assertLogContains("tag2=custom", b);
                 story.j.assertLogContains("tag3=custom2 stuff=more", b);
