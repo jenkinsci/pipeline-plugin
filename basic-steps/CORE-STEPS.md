@@ -74,7 +74,21 @@ That would be possible only via [JENKINS-26834](https://issues.jenkins-ci.org/br
 
 # Build wrappers
 
-TODO discuss the `wrap` step
+The `wrap` step may be used to run a build wrapper defined originally for freestyle projects.
+In a workflow, any block of code (inside `node`) may be wrapped in this way, not necessarily the whole build.
+
+For example, the Xvnc plugin allows a headless build server to run GUI tests by allocating an in-memory-only X11 display.
+To use this plugin from a workflow, assuming a version with the appropriate update:
+
+```groovy
+node('linux') {
+  wrap([$class: 'Xvnc', useXauthority: true]) {
+    // here $DISPLAY is set to :11 or similar, and $XAUTHORITY too
+    sh 'make selenium-tests' // or whatever
+  }
+  // now the display is torn down and the environment variables gone
+}
+```
 
 # Adding support from plugins
 
@@ -82,4 +96,4 @@ As a plugin author, to add support for use of your build step from a workflow, d
 Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
 Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](../scm-step/README.md#constructor-vs-setters)).
 
-TODO discuss `SimpleBuildWrapper`
+To add support for a build wrapper, depend on Jenkins 1.599+, and implement `SimpleBuildWrapper`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildWrapper.html).
