@@ -82,7 +82,6 @@ public class CoreWrapperStepTest {
             }
         });
     }
-
     public static class MockWrapper extends SimpleBuildWrapper {
         @DataBoundConstructor public MockWrapper() {}
         @Override public void setUp(Context context, Run<?,?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
@@ -97,7 +96,7 @@ public class CoreWrapperStepTest {
                 listener.getLogger().println("ran DisposerImpl");
             }
         }
-        @TestExtension public static class DescriptorImpl extends BuildWrapperDescriptor {
+        @TestExtension("useWrapper") public static class DescriptorImpl extends BuildWrapperDescriptor {
             @Override public String getDisplayName() {
                 return "MockWrapper";
             }
@@ -105,7 +104,53 @@ public class CoreWrapperStepTest {
                 return true;
             }
         }
+    }
 
+    @Test public void envStickiness() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                    "def show(which) {\n" +
+                    "  echo \"groovy ${which} ${env.TESTVAR}\"\n" +
+                    "  sh \"echo shell ${which} \\$TESTVAR\"\n" +
+                    "}\n" +
+                    "env.TESTVAR = 'initial'\n" +
+                    "node {\n" +
+                    "  wrap([$class: 'OneVarWrapper']) {\n" +
+                    "    show 'before'\n" +
+                    "    env.TESTVAR = 'edited'\n" +
+                    "    show 'after'\n" +
+                    "  }\n" +
+                    "  show 'outside'\n" +
+                    "}"));
+                WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                story.j.assertLogContains("received initial", b);
+                story.j.assertLogContains("groovy before wrapped", b);
+                story.j.assertLogContains("shell before wrapped", b);
+                // Any custom values set via EnvActionImpl.setProperty will be “frozen” for the duration of the CoreWrapperStep,
+                // because they are always overridden by contextual values.
+                story.j.assertLogContains("groovy after wrapped", b);
+                story.j.assertLogContains("shell after wrapped", b);
+                story.j.assertLogContains("groovy outside edited", b);
+                story.j.assertLogContains("shell outside edited", b);
+            }
+        });
+    }
+    public static class OneVarWrapper extends SimpleBuildWrapper {
+        @DataBoundConstructor public OneVarWrapper() {}
+        @Override public void setUp(Context context, Run<?,?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
+            listener.getLogger().println("received " + initialEnvironment.get("TESTVAR"));
+            context.env("TESTVAR", "wrapped");
+        }
+        @TestExtension("envStickiness") public static class DescriptorImpl extends BuildWrapperDescriptor {
+            @Override public String getDisplayName() {
+                return "OneVarWrapper";
+            }
+            @Override public boolean isApplicable(AbstractProject<?,?> item) {
+                return true;
+            }
+        }
     }
 
 }

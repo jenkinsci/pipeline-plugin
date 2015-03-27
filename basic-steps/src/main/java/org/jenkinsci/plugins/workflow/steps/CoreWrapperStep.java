@@ -64,11 +64,6 @@ public class CoreWrapperStep extends AbstractStepImpl {
         @StepContextParameter private transient FilePath workspace;
         @StepContextParameter private transient Launcher launcher;
         @StepContextParameter private transient TaskListener listener;
-        // TODO ideally we would like to just create a fresh EnvVars with only our own bindings.
-        // But DefaultStepContext has no notion of merging multiple EnvVars instances across nested scopes.
-        // So we need to pick up the bindings created by ExecutorStepExecution and append to them.
-        // This has the unfortunate effect of “freezing” any custom values set via EnvActionImpl.setProperty for the duration of this step,
-        // because these will also be present in the inherited EnvVars.
         @StepContextParameter private transient EnvVars env;
 
         @Override public boolean start() throws Exception {
