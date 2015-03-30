@@ -47,15 +47,16 @@ public class EnvStepTest {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
                     "env.CUSTOM = 'initial'\n" +
+                    "env.FOOPATH = '/opt/foos'\n" +
                     "node {\n" +
-                    "  withEnv(['CUSTOM=override', 'NOVEL=val', 'BUILD_TAG=custom', 'BUILD_NUMBER=']) {\n" +
-                    "    sh 'echo inside CUSTOM=$CUSTOM NOVEL=$NOVEL BUILD_TAG=$BUILD_TAG BUILD_NUMBER=$BUILD_NUMBER:'\n" +
+                    "  withEnv(['CUSTOM=override', 'NOVEL=val', 'BUILD_TAG=custom', 'BUILD_NUMBER=', 'FOOPATH+BALL=/opt/ball']) {\n" +
+                    "    sh 'echo inside CUSTOM=$CUSTOM NOVEL=$NOVEL BUILD_TAG=$BUILD_TAG BUILD_NUMBER=$BUILD_NUMBER FOOPATH=$FOOPATH:'\n" +
                     "    echo \"groovy BUILD_NUMBER=${env.BUILD_NUMBER}\"\n" +
                     "  }\n" +
                     "  sh 'echo outside CUSTOM=$CUSTOM NOVEL=$NOVEL:'\n" +
                     "}"));
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-                story.j.assertLogContains("inside CUSTOM=override NOVEL=val BUILD_TAG=custom BUILD_NUMBER=:", b);
+                story.j.assertLogContains("inside CUSTOM=override NOVEL=val BUILD_TAG=custom BUILD_NUMBER= FOOPATH=/opt/ball:/opt/foos:", b);
                 story.j.assertLogContains("groovy BUILD_NUMBER=null", b);
                 story.j.assertLogContains("outside CUSTOM=initial NOVEL=:", b);
             }
