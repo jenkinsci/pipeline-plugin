@@ -24,17 +24,14 @@
 
 package org.jenkinsci.plugins.workflow.test.steps;
 
-import com.google.common.base.Function;
 import com.google.inject.Inject;
 import hudson.Extension;
 import hudson.model.Run;
+import java.io.File;
 import java.io.IOException;
-
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
-
-import org.jenkinsci.plugins.workflow.steps.StepContext;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.CheckForNull;
@@ -43,7 +40,7 @@ import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -53,26 +50,42 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public final class SemaphoreStep extends AbstractStepImpl implements Serializable {
 
-    private static final Map<String,Integer> iota = new HashMap<String,Integer>();
-    /** map from {@link #k} to serial form of {@link StepContext}; TODO use {@link StepExecution#applyAll(Class, Function)} instead */
-    private static final Map<String,String> contexts = new HashMap<String,String>();
-    private static final Map<String,Object> returnValues = new HashMap<String,Object>();
-    private static final Map<String,Throwable> errors = new HashMap<String,Throwable>();
-    private static final Set<String> started = new HashSet<String>();
+    /** State of semaphore steps within one Jenkins home and thus (possibly restarting) test. */
+    private static final class State {
+        private static final Map<File,State> states = new HashMap<File,State>();
+        static synchronized State get() {
+            File home = Jenkins.getActiveInstance().getRootDir();
+            State state = states.get(home);
+            if (state == null) {
+                state = new State();
+                states.put(home, state);
+            }
+            return state;
+        }
+        private State() {}
+        private final Map<String,Integer> iota = new HashMap<String,Integer>();
+        synchronized int allocateNumber(String id) {
+            Integer old = iota.get(id);
+            if (old == null) {
+                old = 0;
+            }
+            int number = old + 1;
+            iota.put(id, number);
+            return number;
+        }
+        /** map from {@link #k} to serial form of {@link StepContext} */
+        final Map<String,String> contexts = new HashMap<String,String>();
+        final Map<String,Object> returnValues = new HashMap<String,Object>();
+        final Map<String,Throwable> errors = new HashMap<String,Throwable>();
+        final Set<String> started = new HashSet<String>();
+    }
 
     private final String id;
     private final int number;
 
     @DataBoundConstructor public SemaphoreStep(String id) {
         this.id = id;
-        synchronized (iota) {
-            Integer old = iota.get(id);
-            if (old == null) {
-                old = 0;
-            }
-            number = old + 1;
-            iota.put(id, number);
-        }
+        number = State.get().allocateNumber(id);
     }
 
     public String getId() {
@@ -89,12 +102,13 @@ public final class SemaphoreStep extends AbstractStepImpl implements Serializabl
     }
 
     public static void success(String k, Object returnValue) {
-        if (contexts.containsKey(k)) {
+        State s = State.get();
+        if (s.contexts.containsKey(k)) {
             System.err.println("Unblocking " + k + " as success");
-            getContext(k).onSuccess(returnValue);
+            getContext(s, k).onSuccess(returnValue);
         } else {
             System.err.println("Planning to unblock " + k + " as success");
-            returnValues.put(k, returnValue);
+            s.returnValues.put(k, returnValue);
         }
     }
 
@@ -104,30 +118,32 @@ public final class SemaphoreStep extends AbstractStepImpl implements Serializabl
     }
 
     public static void failure(String k, Throwable error) {
-        if (contexts.containsKey(k)) {
+        State s = State.get();
+        if (s.contexts.containsKey(k)) {
             System.err.println("Unblocking " + k + " as failure");
-            getContext(k).onFailure(error);
+            getContext(s, k).onFailure(error);
         } else {
             System.err.println("Planning to unblock " + k + " as failure");
-            errors.put(k, error);
+            s.errors.put(k, error);
         }
     }
     
     public StepContext getContext() {
-        return getContext(k());
+        return getContext(State.get(), k());
     }
 
-    private static StepContext getContext(String k) {
-        return (StepContext) Jenkins.XSTREAM.fromXML(contexts.get(k));
+    private static StepContext getContext(State s, String k) {
+        return (StepContext) Jenkins.XSTREAM.fromXML(s.contexts.get(k));
     }
 
-    public static void waitForStart(@Nonnull String k, @CheckForNull Run b) throws IOException, InterruptedException {
-        synchronized (started) {
-            while (!started.contains(k)) {
+    public static void waitForStart(@Nonnull String k, @CheckForNull Run<?,?> b) throws IOException, InterruptedException {
+        State s = State.get();
+        synchronized (s) {
+            while (!s.started.contains(k)) {
                 if (b != null && !b.isBuilding()) {
                     throw new AssertionError(JenkinsRule.getLog(b));
                 }
-                started.wait(1000);
+                s.wait(1000);
             }
         }
     }
@@ -137,28 +153,30 @@ public final class SemaphoreStep extends AbstractStepImpl implements Serializabl
         @Inject(optional=true) private SemaphoreStep step;
 
         @Override public boolean start() throws Exception {
+            State s = State.get();
             String k = step.k();
             boolean sync = true;
-            if (returnValues.containsKey(k)) {
+            if (s.returnValues.containsKey(k)) {
                 System.err.println("Immediately running " + k);
-                getContext().onSuccess(returnValues.get(k));
-            } else if (errors.containsKey(k)) {
+                getContext().onSuccess(s.returnValues.get(k));
+            } else if (s.errors.containsKey(k)) {
                 System.err.println("Immediately failing " + k);
-                getContext().onFailure(errors.get(k));
+                getContext().onFailure(s.errors.get(k));
             } else {
                 System.err.println("Blocking " + k);
-                contexts.put(k, Jenkins.XSTREAM.toXML(getContext()));
+                s.contexts.put(k, Jenkins.XSTREAM.toXML(getContext()));
                 sync = false;
             }
-            synchronized (started) {
-                started.add(k);
-                started.notifyAll();
+            synchronized (s) {
+                s.started.add(k);
+                s.notifyAll();
             }
             return sync;
         }
 
         @Override public void stop(Throwable cause) {
-            contexts.remove(step.k());
+            State s = State.get();
+            s.contexts.remove(step.k());
             getContext().onFailure(cause);
         }
 
