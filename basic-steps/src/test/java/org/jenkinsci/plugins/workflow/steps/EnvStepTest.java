@@ -24,6 +24,9 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Rule;
@@ -33,11 +36,13 @@ public class EnvStepTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
-    // Uninteresting now, but would be if overrides were of a non-String type.
     @Test public void configRoundTrip() throws Exception {
-        assertEquals("", new StepConfigTester(r).configRoundTrip(new EnvStep("")).getOverrides());
-        assertEquals("VAR1=val1", new StepConfigTester(r).configRoundTrip(new EnvStep("VAR1=val1")).getOverrides());
-        assertEquals("VAR1=val1\nVAR2=val2", new StepConfigTester(r).configRoundTrip(new EnvStep("VAR1=val1\nVAR2=val2")).getOverrides());
+        configRoundTrip(Collections.<String>emptyList());
+        configRoundTrip(Collections.singletonList("VAR1=val1"));
+        configRoundTrip(Arrays.asList("VAR1=val1", "VAR2=val2"));
+    }
+    private void configRoundTrip(List<String> overrides) throws Exception {
+        assertEquals(overrides, new StepConfigTester(r).configRoundTrip(new EnvStep(overrides)).getOverrides());
     }
 
 }

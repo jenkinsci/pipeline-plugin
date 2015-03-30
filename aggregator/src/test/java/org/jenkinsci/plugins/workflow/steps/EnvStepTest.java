@@ -48,7 +48,7 @@ public class EnvStepTest {
                 p.setDefinition(new CpsFlowDefinition(
                     "env.CUSTOM = 'initial'\n" +
                     "node {\n" +
-                    "  withEnv('CUSTOM=override\\nNOVEL=val') {\n" +
+                    "  withEnv(['CUSTOM=override', 'NOVEL=val']) {\n" +
                     "    sh 'echo inside CUSTOM=$CUSTOM NOVEL=$NOVEL:'\n" +
                     "  }\n" +
                     "  sh 'echo outside CUSTOM=$CUSTOM NOVEL=$NOVEL:'\n" +
@@ -66,9 +66,9 @@ public class EnvStepTest {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
                     "parallel a: {\n" +
-                    "  node {withEnv('TOOL=aloc') {semaphore 'a'; sh 'echo TOOL=$TOOL'}}\n" +
+                    "  node {withEnv(['TOOL=aloc']) {semaphore 'a'; sh 'echo TOOL=$TOOL'}}\n" +
                     "}, b: {\n" +
-                    "  node {withEnv('TOOL=bloc') {semaphore 'b'; sh 'echo TOOL=$TOOL'}}\n" +
+                    "  node {withEnv(['TOOL=bloc']) {semaphore 'b'; sh 'echo TOOL=$TOOL'}}\n" +
                     "}"));
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
                 SemaphoreStep.waitForStart("a/1", b);
@@ -92,7 +92,7 @@ public class EnvStepTest {
                     "  sh \"echo shell ${which} \\$TESTVAR:\"\n" +
                     "}\n" +
                     "node {\n" +
-                    "  withEnv('TESTVAR=val') {\n" +
+                    "  withEnv(['TESTVAR=val']) {\n" +
                     "    show 'before'\n" +
                     "    semaphore 'restarting'\n" +
                     "    show 'after'\n" +
