@@ -47,15 +47,19 @@ public class EnvStepTest {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
                     "env.CUSTOM = 'initial'\n" +
+                    "env.FOOPATH = '/opt/foos'\n" +
+                    "env.NULLED = 'outside'\n" +
                     "node {\n" +
-                    "  withEnv('CUSTOM=override\\nNOVEL=val') {\n" +
-                    "    sh 'echo inside CUSTOM=$CUSTOM NOVEL=$NOVEL:'\n" +
+                    "  withEnv(['CUSTOM=override', 'NOVEL=val', 'BUILD_TAG=custom', 'NULLED=', 'FOOPATH+BALL=/opt/ball']) {\n" +
+                    "    sh 'echo inside CUSTOM=$CUSTOM NOVEL=$NOVEL BUILD_TAG=$BUILD_TAG NULLED=$NULLED FOOPATH=$FOOPATH:'\n" +
+                    "    echo \"groovy NULLED=${env.NULLED}\"\n" +
                     "  }\n" +
-                    "  sh 'echo outside CUSTOM=$CUSTOM NOVEL=$NOVEL:'\n" +
+                    "  sh 'echo outside CUSTOM=$CUSTOM NOVEL=$NOVEL NULLED=outside:'\n" +
                     "}"));
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-                story.j.assertLogContains("inside CUSTOM=override NOVEL=val:", b);
-                story.j.assertLogContains("outside CUSTOM=initial NOVEL=:", b);
+                story.j.assertLogContains("inside CUSTOM=override NOVEL=val BUILD_TAG=custom NULLED= FOOPATH=/opt/ball:/opt/foos:", b);
+                story.j.assertLogContains("groovy NULLED=null", b);
+                story.j.assertLogContains("outside CUSTOM=initial NOVEL= NULLED=outside:", b);
             }
         });
     }
@@ -66,9 +70,9 @@ public class EnvStepTest {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
                     "parallel a: {\n" +
-                    "  node {withEnv('TOOL=aloc') {semaphore 'a'; sh 'echo TOOL=$TOOL'}}\n" +
+                    "  node {withEnv(['TOOL=aloc']) {semaphore 'a'; sh 'echo TOOL=$TOOL'}}\n" +
                     "}, b: {\n" +
-                    "  node {withEnv('TOOL=bloc') {semaphore 'b'; sh 'echo TOOL=$TOOL'}}\n" +
+                    "  node {withEnv(['TOOL=bloc']) {semaphore 'b'; sh 'echo TOOL=$TOOL'}}\n" +
                     "}"));
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
                 SemaphoreStep.waitForStart("a/1", b);
@@ -92,7 +96,7 @@ public class EnvStepTest {
                     "  sh \"echo shell ${which} \\$TESTVAR:\"\n" +
                     "}\n" +
                     "node {\n" +
-                    "  withEnv('TESTVAR=val') {\n" +
+                    "  withEnv(['TESTVAR=val']) {\n" +
                     "    show 'before'\n" +
                     "    semaphore 'restarting'\n" +
                     "    show 'after'\n" +

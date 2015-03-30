@@ -28,27 +28,32 @@ import com.google.inject.Inject;
 import hudson.EnvVars;
 import hudson.Extension;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 public class EnvStep extends AbstractStepImpl {
 
     /**
      * Environment variable overrides.
-     * The format is <pre>{@code VAR1=val1
-     * VAR2=val2}</pre> (pairs separated by newlines).
-     * Logically this should be a {@code Map<String,String>} but there is no standard control for that.
-     * Ditto for {@code List<String>} or {@code String[]}.
-     * Cf. JENKINS-26143 regarding ChoiceParameterDefinition.
+     * The format is {@code VAR=val}.
      */
-    private final String overrides;
+    private final List<String> overrides;
 
-    @DataBoundConstructor public EnvStep(String overrides) {
-        this.overrides = overrides;
+    @DataBoundConstructor public EnvStep(List<String> overrides) {
+        for (String pair : overrides) {
+            if (pair.indexOf('=') == -1) {
+                throw new IllegalArgumentException(pair);
+            }
+        }
+        this.overrides = new ArrayList<String>(overrides);
     }
     
-    public String getOverrides() {
+    public List<String> getOverrides() {
         return overrides;
     }
     
@@ -75,17 +80,12 @@ public class EnvStep extends AbstractStepImpl {
     private static final class ExpanderImpl extends EnvironmentExpander {
         private static final long serialVersionUID = 1;
         private final Map<String,String> overrides;
-        private ExpanderImpl(String overrides) {
+        private ExpanderImpl(List<String> overrides) {
             this.overrides = new HashMap<String,String>();
-            for (String line : overrides.split("\r?\n")) {
-                line = line.trim();
-                if (!line.isEmpty()) {
-                    int split = line.indexOf('=');
-                    if (split == -1) {
-                        continue; // ?
-                    }
-                    this.overrides.put(line.substring(0, split), line.substring(split + 1));
-                }
+            for (String pair : overrides) {
+                int split = pair.indexOf('=');
+                assert split != -1;
+                this.overrides.put(pair.substring(0, split), pair.substring(split + 1));
             }
         }
         @Override public void expand(EnvVars env) throws IOException, InterruptedException {
@@ -109,6 +109,18 @@ public class EnvStep extends AbstractStepImpl {
 
         @Override public boolean takesImplicitBlockArgument() {
             return true;
+        }
+
+        @Override public Step newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            String overridesS = formData.getString("overrides");
+            List<String> overrides = new ArrayList<String>();
+            for (String line : overridesS.split("\r?\n")) {
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    overrides.add(line);
+                }
+            }
+            return new EnvStep(overrides);
         }
 
     }
