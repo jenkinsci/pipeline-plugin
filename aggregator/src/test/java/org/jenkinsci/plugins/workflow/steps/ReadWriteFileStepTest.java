@@ -25,8 +25,10 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Functions;
+
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -49,4 +51,20 @@ public class ReadWriteFileStepTest {
         r.assertLogContains("HELLO", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
 
+	@Test
+	public void shouldTestFileExistsStep() throws Exception
+	{
+        final WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition(
+                "node {\n" +
+                "  echo \"test.txt - FileExists: ${fileExists('test.txt')}\" \n" +
+                "  writeFile file: 'test2.txt', text:'content of file' \n" +
+                "  echo \"test2.txt - FileExists: ${fileExists('test2.txt')}\" \n" +
+                "}"));
+
+		WorkflowRun run = p.scheduleBuild2(0).get();
+		r.assertLogContains("test.txt - FileExists: false", run); 
+		r.assertLogContains("test2.txt - FileExists: true", run);
+		r.assertBuildStatusSuccess(run);
+    }
 }
