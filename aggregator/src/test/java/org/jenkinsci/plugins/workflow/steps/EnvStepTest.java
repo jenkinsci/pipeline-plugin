@@ -48,13 +48,13 @@ public class EnvStepTest {
                 p.setDefinition(new CpsFlowDefinition(
                     "env.CUSTOM = 'initial'\n" +
                     "node {\n" +
-                    "  withEnv(['CUSTOM=override', 'NOVEL=val']) {\n" +
-                    "    sh 'echo inside CUSTOM=$CUSTOM NOVEL=$NOVEL:'\n" +
+                    "  withEnv(['CUSTOM=override', 'NOVEL=val', 'BUILD_TAG=custom']) {\n" +
+                    "    sh 'echo inside CUSTOM=$CUSTOM NOVEL=$NOVEL BUILD_TAG=$BUILD_TAG:'\n" +
                     "  }\n" +
                     "  sh 'echo outside CUSTOM=$CUSTOM NOVEL=$NOVEL:'\n" +
                     "}"));
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-                story.j.assertLogContains("inside CUSTOM=override NOVEL=val:", b);
+                story.j.assertLogContains("inside CUSTOM=override NOVEL=val BUILD_TAG=custom:", b);
                 story.j.assertLogContains("outside CUSTOM=initial NOVEL=:", b);
             }
         });
