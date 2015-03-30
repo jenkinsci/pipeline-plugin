@@ -48,17 +48,18 @@ public class EnvStepTest {
                 p.setDefinition(new CpsFlowDefinition(
                     "env.CUSTOM = 'initial'\n" +
                     "env.FOOPATH = '/opt/foos'\n" +
+                    "env.NULLED = 'outside'\n" +
                     "node {\n" +
-                    "  withEnv(['CUSTOM=override', 'NOVEL=val', 'BUILD_TAG=custom', 'BUILD_NUMBER=', 'FOOPATH+BALL=/opt/ball']) {\n" +
-                    "    sh 'echo inside CUSTOM=$CUSTOM NOVEL=$NOVEL BUILD_TAG=$BUILD_TAG BUILD_NUMBER=$BUILD_NUMBER FOOPATH=$FOOPATH:'\n" +
-                    "    echo \"groovy BUILD_NUMBER=${env.BUILD_NUMBER}\"\n" +
+                    "  withEnv(['CUSTOM=override', 'NOVEL=val', 'BUILD_TAG=custom', 'NULLED=', 'FOOPATH+BALL=/opt/ball']) {\n" +
+                    "    sh 'echo inside CUSTOM=$CUSTOM NOVEL=$NOVEL BUILD_TAG=$BUILD_TAG NULLED=$NULLED FOOPATH=$FOOPATH:'\n" +
+                    "    echo \"groovy NULLED=${env.NULLED}\"\n" +
                     "  }\n" +
-                    "  sh 'echo outside CUSTOM=$CUSTOM NOVEL=$NOVEL:'\n" +
+                    "  sh 'echo outside CUSTOM=$CUSTOM NOVEL=$NOVEL NULLED=outside:'\n" +
                     "}"));
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
-                story.j.assertLogContains("inside CUSTOM=override NOVEL=val BUILD_TAG=custom BUILD_NUMBER= FOOPATH=/opt/ball:/opt/foos:", b);
-                story.j.assertLogContains("groovy BUILD_NUMBER=null", b);
-                story.j.assertLogContains("outside CUSTOM=initial NOVEL=:", b);
+                story.j.assertLogContains("inside CUSTOM=override NOVEL=val BUILD_TAG=custom NULLED= FOOPATH=/opt/ball:/opt/foos:", b);
+                story.j.assertLogContains("groovy NULLED=null", b);
+                story.j.assertLogContains("outside CUSTOM=initial NOVEL= NULLED=outside:", b);
             }
         });
     }
