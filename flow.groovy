@@ -28,7 +28,7 @@ try {
 }
 stage name: 'Production', concurrency: 1
 node('master') {
-    sh 'curl -I http://localhost:8080/staging/'
+    sh 'wget -O - -S http://localhost:8080/staging/'
     unarchive mapping: ['target/x.war' : 'x.war']
     deploy 'x.war', 'production'
     echo 'Deployed to http://localhost:8080/production/'
