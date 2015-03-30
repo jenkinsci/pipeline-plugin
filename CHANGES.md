@@ -7,6 +7,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 * Now based on Jenkins core 1.596.1.
 * Avoid some possible name clashes with function names in scripts (`build` reported).
 * [JENKINS-27531](https://issues.jenkins-ci.org/browse/JENKINS-27531): startup error in 1.597+ loading build records migrated from before 1.597.
+* [JENKINS-27474](https://issues.jenkins-ci.org/browse/JENKINS-27474): `fileExists` step.
 
 ## 1.4 (Mar 16 2015)
 
