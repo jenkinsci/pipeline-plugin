@@ -46,6 +46,7 @@ public abstract class BodyInvoker {
      * <dl>
      * <dt>{@link EnvVars}<dd>use {@link EnvironmentExpander} instead
      * <dt>{@link EnvironmentExpander}<dd>use {@link EnvironmentExpander#merge}
+     * <dt>{@link ConsoleLogFilter}<dd>merge two instances if present; your implementation should expect {@code null} for the {@code build} parameter, and be {@link Serializable}
      * </dl>
      * @see StepContext#get(Class)
      *

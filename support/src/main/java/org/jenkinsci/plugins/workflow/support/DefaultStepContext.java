@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.support;
 
 import hudson.EnvVars;
 import hudson.Launcher;
+import hudson.console.ConsoleLogFilter;
 import hudson.model.Computer;
 import hudson.model.Job;
 import hudson.model.Node;
@@ -34,6 +35,7 @@ import hudson.model.TaskListener;
 import hudson.util.StreamTaskListener;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -88,8 +90,12 @@ public abstract class DefaultStepContext extends StepContext {
                     la = new LogActionImpl(getNode(), Charset.defaultCharset());
                     getNode().addAction(la);
                 }
-
-                listener = new StreamTaskListener(new FileOutputStream(la.getLogFile(), true));
+                ConsoleLogFilter filter = get(ConsoleLogFilter.class);
+                OutputStream os = new FileOutputStream(la.getLogFile(), true);
+                if (filter != null) {
+                    os = filter.decorateLogger(null, os);
+                }
+                listener = new StreamTaskListener(os);
                 getExecution().addListener(new GraphListener() {
                     @Override public void onNewHead(FlowNode node) {
                         try {
