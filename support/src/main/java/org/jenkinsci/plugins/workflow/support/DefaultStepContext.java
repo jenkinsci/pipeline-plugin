@@ -63,6 +63,7 @@ public abstract class DefaultStepContext extends StepContext {
      * Uses {@link #doGet} but automatically translates certain kinds of objects into others.
      * <p>{@inheritDoc}
      */
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings("OBL_UNSATISFIED_OBLIGATION_EXCEPTION_EDGE") // stream closed later
     @Override public final <T> T get(Class<T> key) throws IOException, InterruptedException {
         T value = doGet(key);
         if (key == EnvVars.class) {
