@@ -24,6 +24,8 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.common.util.concurrent.FutureCallback;
+import hudson.EnvVars;
+import hudson.console.ConsoleLogFilter;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -39,7 +41,12 @@ public abstract class BodyInvoker {
     /**
      * Overrides to the context values that are in effect while evaluating the body.
      * Only allowed values are instances of the predefined types.
-     *
+     * <p>Note that for only one instance of a given class can be in context at a time.
+     * Thus for certain types, an invoker will generally need to look up any instance in its own enclosing context amd create a proxy/merge:
+     * <dl>
+     * <dt>{@link EnvVars}<dd>use {@link EnvironmentExpander} instead
+     * <dt>{@link EnvironmentExpander}<dd>use {@link EnvironmentExpander#merge}
+     * </dl>
      * @see StepContext#get(Class)
      *
      * @return this object

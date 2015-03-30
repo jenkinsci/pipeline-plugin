@@ -211,16 +211,26 @@ node {
 }
 ```
 
-(Note: you cannot run the above script in the Groovy sandbox until Workflow 1.1 or later.)
-
 Properties of this variable will be environment variables on the current node.
 You can also override certain environment variables, and the overrides will be seen by subsequent `sh` steps (or anything else that pays attention to environment variables).
 This is convenient because now we can run `mvn` without a fully-qualified path.
 
-We will not use this style again, for reasons that will be explained later in more complex examples.
+Setting a variable like `PATH` in this way is of course only safe if you are using a single slave for this build, so we will not do so below.
+As an alternative you can use the `withEnv` step to set a variable within a scope:
+
+```groovy
+node {
+  git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
+  withEnv(["PATH+MAVEN=${tool 'M3'}/bin"]) {
+    sh 'mvn -B verify'
+  }
+}
+```
 
 Some environment variables are defined by Jenkins by default, as for freestyle builds.
 For example, `env.BUILD_TAG` can be used to get a tag like `jenkins-projname-1` from Groovy code, or `$BUILD_TAG` can be used from a `sh` script.
+
+See the help in the _Snippet Generator_ for the `withEnv` step for more details on this topic.
 
 ## Build parameters
 
@@ -563,6 +573,7 @@ env.PATH = "${mvnHome}/bin:${env.PATH}"
 ```
 
 since environment variable overrides are currently limited to being global to a workflow run, not local to the current thread (and thus slave).
+You could however use the `withEnv` step as noted above.
 
 You may also have noticed that we are running `JUnitResultArchiver` several times, something that is not possible in a freestyle project.
 The test results recorded in the build are cumulative.

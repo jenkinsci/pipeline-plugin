@@ -4,6 +4,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.5 (upcoming)
 
+* [JENKINS-26128](https://issues.jenkins-ci.org/browse/JENKINS-26128) Added `withEnv` step.
 * Now based on Jenkins core 1.596.1.
 * Avoid some possible name clashes with function names in scripts (`build` reported).
 * [JENKINS-27531](https://issues.jenkins-ci.org/browse/JENKINS-27531): startup error in 1.597+ loading build records migrated from before 1.597.

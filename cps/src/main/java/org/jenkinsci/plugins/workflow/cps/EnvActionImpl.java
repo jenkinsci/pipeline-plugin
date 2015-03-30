@@ -36,6 +36,7 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.RunAction2;
+import org.jenkinsci.plugins.workflow.steps.EnvironmentExpander;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
@@ -70,14 +71,23 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
 
     @Override public Object getProperty(String propertyName) {
         try {
+            EnvironmentExpander expander = CpsThread.current().getContextVariable(EnvironmentExpander.class);
             EnvVars overridden = CpsThread.current().getContextVariable(EnvVars.class);
             if (overridden != null) {
+                if (expander != null) {
+                    overridden = new EnvVars(overridden);
+                    expander.expand(overridden);
+                }
                 String val = overridden.get(propertyName);
                 if (val != null) {
                     return val;
                 }
             }
-            return getEnvironment().get(propertyName);
+            EnvVars environment = getEnvironment();
+            if (expander != null) {
+                expander.expand(environment);
+            }
+            return environment.get(propertyName);
         } catch (Exception x) {
             LOGGER.log(Level.WARNING, null, x);
             return null;
