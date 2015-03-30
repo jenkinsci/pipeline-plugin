@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.EnvVars;
 import hudson.FilePath;
+import hudson.Functions;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
@@ -42,6 +43,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,12 +60,13 @@ public class CoreWrapperStepTest {
     @Test public void useWrapper() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
+                Assume.assumeFalse(Functions.isWindows()); // TODO create Windows equivalent
                 Map<String,String> slaveEnv = new HashMap<String,String>();
                 slaveEnv.put("PATH", "/usr/bin:/bin");
                 slaveEnv.put("HOME", "/home/jenkins");
                 JenkinsRuleExt.createSpecialEnvSlave(story.j, "slave", "", slaveEnv);
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
-                p.setDefinition(new CpsFlowDefinition("node('slave') {wrap([$class: 'MockWrapper']) {semaphore 'restarting'; echo \"groovy PATH=${env.PATH}\"; sh 'echo shell PATH=$PATH'}}"));
+                p.setDefinition(new CpsFlowDefinition("node('slave') {wrap([$class: 'MockWrapper']) {semaphore 'restarting'; echo \"groovy PATH=${env.PATH}:\"; sh 'echo shell PATH=$PATH:'}}"));
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
                 SemaphoreStep.waitForStart("restarting/1", b);
             }
@@ -75,8 +78,8 @@ public class CoreWrapperStepTest {
                 WorkflowRun b = p.getLastBuild();
                 story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
                 String expected = "/home/jenkins/extra/bin:/usr/bin:/bin";
-                story.j.assertLogContains("groovy PATH=" + expected, b);
-                story.j.assertLogContains("shell PATH=" + expected, b);
+                story.j.assertLogContains("groovy PATH=" + expected + ":", b);
+                story.j.assertLogContains("shell PATH=" + expected + ":", b);
                 story.j.assertLogContains("ran DisposerImpl", b);
                 story.j.assertLogNotContains("CoreWrapperStep", b);
             }
@@ -109,6 +112,7 @@ public class CoreWrapperStepTest {
     @Test public void envStickiness() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
+                Assume.assumeFalse(Functions.isWindows()); // TODO create Windows equivalent
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
                     "def show(which) {\n" +
