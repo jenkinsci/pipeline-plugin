@@ -74,7 +74,7 @@ public class CoreWrapperStep extends AbstractStepImpl {
             BodyInvoker bodyInvoker = getContext().newBodyInvoker();
             Map<String,String> overrides = c.getEnv();
             if (!overrides.isEmpty()) {
-                bodyInvoker.withContext(new ExpanderImpl(overrides));
+                bodyInvoker.withContext(EnvironmentExpander.merge(getContext().get(EnvironmentExpander.class), new ExpanderImpl(overrides)));
             }
             SimpleBuildWrapper.Disposer disposer = c.getDisposer();
             bodyInvoker.withCallback(disposer != null ? new Callback(disposer) : BodyExecutionCallback.wrap(getContext())).start();
