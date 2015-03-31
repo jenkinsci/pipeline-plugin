@@ -26,10 +26,16 @@ package org.jenkinsci.plugins.workflow.steps;
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.EnvVars;
 import hudson.console.ConsoleLogFilter;
+import hudson.model.AbstractBuild;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 /**
  * Builder pattern for controlling how to execute a body block of a {@link Step}.
@@ -46,6 +52,7 @@ public abstract class BodyInvoker {
      * <dl>
      * <dt>{@link EnvVars}<dd>use {@link EnvironmentExpander} instead
      * <dt>{@link EnvironmentExpander}<dd>use {@link EnvironmentExpander#merge}
+     * <dt>{@link ConsoleLogFilter}<dd>use {@link #mergeConsoleLogFilters}
      * </dl>
      * @see StepContext#get(Class)
      *
@@ -97,4 +104,31 @@ public abstract class BodyInvoker {
      * configured on this object via other methods.
      */
     public abstract BodyExecution start();
+
+    /**
+     * Merge two console log filters so that both are applied.
+     * @param original the original filter in {@link StepContext#get}, if any
+     * @param subsequent your implementation; should expect {@code null} for the {@code build} parameter, and be {@link Serializable}
+     * @return a merge of the two, or just yours if there was no original
+     * @see #withContext
+     */
+    public static ConsoleLogFilter mergeConsoleLogFilters(@CheckForNull ConsoleLogFilter original, @Nonnull ConsoleLogFilter subsequent) {
+        if (original == null) {
+            return subsequent;
+        }
+        return new MergedFilter(original, subsequent);
+    }
+    private static final class MergedFilter extends ConsoleLogFilter implements Serializable {
+        private static final long serialVersionUID = 1;
+        private final ConsoleLogFilter original, subsequent;
+        MergedFilter(ConsoleLogFilter original, ConsoleLogFilter subsequent) {
+            this.original = original;
+            this.subsequent = subsequent;
+        }
+        @SuppressWarnings("rawtypes") // not my fault
+        @Override public OutputStream decorateLogger(AbstractBuild _ignore, OutputStream logger) throws IOException, InterruptedException {
+            return subsequent.decorateLogger(_ignore, original.decorateLogger(_ignore, logger));
+        }
+    }
+
 }
