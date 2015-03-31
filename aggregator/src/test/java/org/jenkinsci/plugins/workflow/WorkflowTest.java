@@ -86,7 +86,6 @@ import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockQueueItemAuthenticator;
-import org.jvnet.hudson.test.RandomlyFails;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -131,7 +130,6 @@ public class WorkflowTest extends SingleJobTestBase {
     /**
      * Workflow captures a stateful object, and we verify that it survives the restart
      */
-    @RandomlyFails("TODO observed !e.complete")
     @Test public void persistEphemeralObject() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -168,7 +166,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 watchDescriptor.watchUpdate();
 
                 e.waitForSuspension();
-                assertTrue(e.isComplete());
+                assertTrue(e.isComplete()); // TODO sometimes fails
 
                 assertBuildCompletedSuccessfully();
             }
@@ -181,7 +179,6 @@ public class WorkflowTest extends SingleJobTestBase {
      * This ensures that the context variable overrides are working as expected, and
      * that they are persisted and resurrected.
      */
-    @RandomlyFails("TODO assertBuildCompletedSuccessfully sometimes fails even though Allocate node : End has been printed")
     @Test public void buildShellScriptOnSlave() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -222,7 +219,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     e.waitForSuspension();
                 }
 
-                assertBuildCompletedSuccessfully();
+                assertBuildCompletedSuccessfully(); // TODO sometimes fails even though Allocate node : End has been printed
 
                 story.j.assertLogContains("before=demo", b);
                 story.j.assertLogContains("ONSLAVE=true", b);
@@ -284,7 +281,6 @@ public class WorkflowTest extends SingleJobTestBase {
         }
     }
 
-    @RandomlyFails("TODO isBuilding assertion after restart occasionally fails; log ends with: ‘Running: Allocate node : Body : Start’ (no shell step in sight)")
     @Test public void buildShellScriptAcrossRestart() throws Exception {
         story.addStep(new Statement() {
             @SuppressWarnings("SleepWhileInLoop")
@@ -319,7 +315,7 @@ public class WorkflowTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
-                assertTrue(b.isBuilding());
+                assertTrue(b.isBuilding()); // TODO occasionally fails; log ends with: ‘Running: Allocate node : Body : Start’ (no shell step in sight)
                 startJnlpProc(); // Have to relaunch JNLP agent, since the Jenkins port has changed, and we cannot force JenkinsRule to reuse the same port as before.
                 File f1 = new File(story.j.jenkins.getRootDir(), "f1");
                 File f2 = new File(story.j.jenkins.getRootDir(), "f2");
@@ -336,7 +332,6 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
-    @RandomlyFails("never printed 'finished waiting'")
     @Test public void buildShellScriptAcrossDisconnect() throws Exception {
         story.addStep(new Statement() {
             @SuppressWarnings("SleepWhileInLoop")
@@ -379,7 +374,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     Thread.sleep(100);
                 }
                 story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
-                story.j.assertLogContains("finished waiting", b);
+                story.j.assertLogContains("finished waiting", b); // TODO sometimes missing
                 story.j.assertLogContains("OK, done", b);
                 killJnlpProc();
             }
@@ -414,7 +409,6 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
-    @RandomlyFails("TODO often basename is run but echo is not, or output lost; once got ‘InvalidClassException: cannot bind non-proxy descriptor to a proxy class’ inside BourneShellScript.doLaunch")
     @Test public void acquireWorkspace() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -462,6 +456,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 story.j.waitUntilNoActivity();
                 assertBuildCompletedSuccessfully(b1);
                 assertBuildCompletedSuccessfully(b2);
+                // TODO sometimes basename is run but echo is not, or output lost; once got ‘InvalidClassException: cannot bind non-proxy descriptor to a proxy class’ inside BourneShellScript.doLaunch
                 story.j.assertLogContains("default=demo", b1);
                 story.j.assertLogContains("before=demo@2", b1);
                 story.j.assertLogContains("after=demo@2", b1);
@@ -523,7 +518,6 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
-    @RandomlyFails("TODO does not pass reliably on CI; perhaps need different semaphores")
     @Test public void authentication() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -641,7 +635,6 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
-    @RandomlyFails("TODO JENKINS-27532 sometimes two copies of the WorkflowRun are loaded")
     @Issue("JENKINS-26513")
     @Test public void executorStepRestart() {
         story.addStep(new Statement() {
@@ -656,6 +649,7 @@ public class WorkflowTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 story.j.createSlave("special", null);
                 rebuildContext(story.j);
+                // TODO JENKINS-27532 sometimes two copies of the WorkflowRun are loaded
                 story.j.assertLogContains("OK ran", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
             }
         });
