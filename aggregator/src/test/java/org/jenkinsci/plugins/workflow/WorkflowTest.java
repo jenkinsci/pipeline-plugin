@@ -78,7 +78,6 @@ import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.AfterClass;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -238,7 +237,6 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
-    @Ignore("TODO breaks because flows resumed too early and Jenkins.instance == null")
     @Test public void buildShellScriptOnSlaveWithDifferentResumePoint() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
