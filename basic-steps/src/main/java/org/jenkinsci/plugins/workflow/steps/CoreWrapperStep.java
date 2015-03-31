@@ -29,6 +29,7 @@ import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.console.ConsoleLogFilter;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
@@ -75,6 +76,10 @@ public class CoreWrapperStep extends AbstractStepImpl {
             Map<String,String> overrides = c.getEnv();
             if (!overrides.isEmpty()) {
                 bodyInvoker.withContext(EnvironmentExpander.merge(getContext().get(EnvironmentExpander.class), new ExpanderImpl(overrides)));
+            }
+            ConsoleLogFilter filter = step.delegate.createLoggerDecorator(run);
+            if (filter != null) {
+                bodyInvoker.withContext(BodyInvoker.mergeConsoleLogFilters(getContext().get(ConsoleLogFilter.class), filter));
             }
             SimpleBuildWrapper.Disposer disposer = c.getDisposer();
             bodyInvoker.withCallback(disposer != null ? new Callback(disposer) : BodyExecutionCallback.wrap(getContext())).start();

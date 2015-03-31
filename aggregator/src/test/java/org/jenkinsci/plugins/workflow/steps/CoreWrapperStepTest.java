@@ -51,7 +51,6 @@ import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.Assume;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
@@ -165,7 +164,6 @@ public class CoreWrapperStepTest {
         }
     }
 
-    @Ignore("TODO test prepared")
     @Issue("JENKINS-27392")
     @Test public void loggerDecorator() throws Exception {
         story.addStep(new Statement() {
