@@ -180,6 +180,9 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         }
 
         @Override public Node getLastBuiltOn() {
+            if (label == null) {
+                return null;
+            }
             Jenkins j = Jenkins.getInstance();
             if (j == null) {
                 return null;
