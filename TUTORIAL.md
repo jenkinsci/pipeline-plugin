@@ -430,7 +430,7 @@ Here we are using the `def` keyword to define a function (you can also give a Ja
 
 The `readFile` step loads a text file from the workspace and returns its content.
 (Do _not_ try to use `java.io.File` methods, because these will refer to files on the master where Jenkins is running, not in the current workspace.)
-There is also a `writeFile` step to save content to a text file in the workspace.
+There is also a `writeFile` step to save content to a text file in the workspace, and a `fileExists` step to check whether a file exists without loading it.
 
 When you run the flow you should see
 
