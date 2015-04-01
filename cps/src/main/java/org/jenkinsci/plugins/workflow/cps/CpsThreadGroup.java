@@ -377,7 +377,7 @@ public final class CpsThreadGroup implements Serializable {
         if (lastEntry != null) {
             lastEntry.getValue().resume(new Outcome(null,t));
         } else {
-            LOGGER.log(Level.WARNING, "encountered error but could pass it to the flow", t);
+            LOGGER.log(Level.WARNING, "encountered error but could not pass it to the flow", t);
         }
     }
 

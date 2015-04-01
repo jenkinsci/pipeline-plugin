@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2014 Jesse Glick.
+ * Copyright 2015 Bastian Echterhoelter.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,37 +26,21 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Extension;
 import hudson.FilePath;
-import hudson.Util;
-import java.io.InputStream;
-import javax.inject.Inject;
-import org.apache.commons.io.IOUtils;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 
-public final class ReadFileStep extends AbstractStepImpl {
+import javax.inject.Inject;
+
+import org.kohsuke.stapler.DataBoundConstructor;
+
+public final class FileExistsStep extends AbstractStepImpl {
 
     private final String file;
-    private String encoding;
 
-    @DataBoundConstructor public ReadFileStep(String file) {
-        // Normally pointless to verify that this is a relative path, since shell steps can anyway read and write files anywhere on the slave.
-        // Could be necessary in case a plugin installs a {@link LauncherDecorator} which keeps commands inside some kind of jail.
-        // In that case we would need some API to determine that such a jail is in effect and this validation must be enforced.
-        // But just checking the path is anyway not sufficient (due to crafted symlinks); would need to check the final resulting path.
-        // Same for WriteFileStep, PushdStep, FileExistsStep.
+    @DataBoundConstructor public FileExistsStep(String file) {
         this.file = file;
     }
 
     public String getFile() {
         return file;
-    }
-
-    public String getEncoding() {
-        return encoding;
-    }
-
-    @DataBoundSetter public void setEncoding(String encoding) {
-        this.encoding = Util.fixEmptyAndTrim(encoding);
     }
 
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
@@ -66,27 +50,22 @@ public final class ReadFileStep extends AbstractStepImpl {
         }
 
         @Override public String getFunctionName() {
-            return "readFile";
+            return "fileExists";
         }
 
         @Override public String getDisplayName() {
-            return "Read file from workspace";
+            return "Verify if file exists in workspace";
         }
 
     }
 
-    public static final class Execution extends AbstractSynchronousStepExecution<String> {
+    public static final class Execution extends AbstractSynchronousStepExecution<Boolean> {
 
-        @Inject private transient ReadFileStep step;
+        @Inject private transient FileExistsStep step;
         @StepContextParameter private transient FilePath workspace;
 
-        @Override protected String run() throws Exception {
-            InputStream is = workspace.child(step.file).read();
-            try {
-                return IOUtils.toString(is, step.encoding);
-            } finally {
-                is.close();
-            }
+        @Override protected Boolean run() throws Exception {
+        	return workspace.child(step.file).exists();
         }
 
         private static final long serialVersionUID = 1L;

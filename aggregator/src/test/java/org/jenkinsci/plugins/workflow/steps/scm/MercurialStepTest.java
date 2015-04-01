@@ -90,7 +90,7 @@ public class MercurialStepTest {
             "        }\n" +
             "        dir('other') {\n" +
             "            checkout([$class: 'MercurialSCM', source: $/" + otherRepoU + "/$, clean: true])\n" +
-            "            try {\n" +
+            "            try {\n" + // TODO or use fileExists
             "                readFile 'unversioned'\n" +
             "                error 'unversioned did exist'\n" +
             "            } catch (FileNotFoundException x) {\n" +

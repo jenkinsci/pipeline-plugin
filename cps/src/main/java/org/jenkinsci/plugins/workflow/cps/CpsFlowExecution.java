@@ -93,6 +93,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.thoughtworks.xstream.io.ExtendedHierarchicalStreamWriterHelper.*;
+import hudson.init.Terminator;
 import hudson.model.User;
 import hudson.security.ACL;
 import java.beans.Introspector;
@@ -103,6 +104,8 @@ import org.acegisecurity.Authentication;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.jboss.marshalling.reflect.SerializableClassRegistry;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 
 /**
  * {@link FlowExecution} implemented with Groovy CPS.
@@ -740,6 +743,22 @@ public class CpsFlowExecution extends FlowExecution {
             // Should not expose this to callers.
             return Jenkins.ANONYMOUS;
         }
+    }
+
+    @Override public String toString() {
+        return "CpsFlowExecution[" + owner + "]";
+    }
+
+    @Restricted(DoNotUse.class)
+    @Terminator public static void suspendAll() throws InterruptedException, ExecutionException {
+        LOGGER.fine("starting to suspend all executions");
+        for (FlowExecution execution : FlowExecutionList.get()) {
+            if (execution instanceof CpsFlowExecution) {
+                LOGGER.log(Level.FINE, "waiting to suspend {0}", execution);
+                ((CpsFlowExecution) execution).waitForSuspension();
+            }
+        }
+        LOGGER.fine("finished suspending all executions");
     }
 
     // TODO: write a custom XStream Converter so that while we are writing CpsFlowExecution, it holds that lock

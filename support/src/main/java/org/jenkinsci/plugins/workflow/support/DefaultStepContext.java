@@ -26,8 +26,8 @@ package org.jenkinsci.plugins.workflow.support;
 
 import hudson.EnvVars;
 import hudson.Launcher;
+import hudson.console.ConsoleLogFilter;
 import hudson.model.Computer;
-import hudson.model.EnvironmentContributor;
 import hudson.model.Job;
 import hudson.model.Node;
 import hudson.model.Run;
@@ -35,16 +35,16 @@ import hudson.model.TaskListener;
 import hudson.util.StreamTaskListener;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import jenkins.model.CoreEnvironmentContributor;
-import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.EnvironmentExpander;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl;
@@ -63,15 +63,22 @@ public abstract class DefaultStepContext extends StepContext {
      * Uses {@link #doGet} but automatically translates certain kinds of objects into others.
      * <p>{@inheritDoc}
      */
+    @edu.umd.cs.findbugs.annotations.SuppressWarnings("OBL_UNSATISFIED_OBLIGATION_EXCEPTION_EDGE") // stream closed later
     @Override public final <T> T get(Class<T> key) throws IOException, InterruptedException {
         T value = doGet(key);
         if (key == EnvVars.class) {
             Run<?,?> run = get(Run.class);
             EnvironmentAction a = run.getAction(EnvironmentAction.class);
             EnvVars env = a != null ? a.getEnvironment() : run.getEnvironment(get(TaskListener.class));
-            if (value != null) {
+            EnvironmentExpander expander = get(EnvironmentExpander.class);
+            if (value != null || expander != null) {
                 env = new EnvVars(env);
+            }
+            if (value != null) {
                 env.putAll((EnvVars) value); // context overrides take precedence over user settings
+            }
+            if (expander != null) {
+                expander.expand(env);
             }
             return key.cast(env);
         } else if (value != null) {
@@ -84,8 +91,12 @@ public abstract class DefaultStepContext extends StepContext {
                     la = new LogActionImpl(getNode(), Charset.defaultCharset());
                     getNode().addAction(la);
                 }
-
-                listener = new StreamTaskListener(new FileOutputStream(la.getLogFile(), true));
+                ConsoleLogFilter filter = get(ConsoleLogFilter.class);
+                OutputStream os = new FileOutputStream(la.getLogFile(), true);
+                if (filter != null) {
+                    os = filter.decorateLogger(null, os);
+                }
+                listener = new StreamTaskListener(os);
                 getExecution().addListener(new GraphListener() {
                     @Override public void onNewHead(FlowNode node) {
                         try {
