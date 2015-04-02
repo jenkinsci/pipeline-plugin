@@ -94,7 +94,7 @@ public final class GitStep extends SCMStep {
     }
 
     @Override public SCM createSCM() {
-        return new GitSCM(createRepoList(url, credentialsId), Collections.singletonList(new BranchSpec("*/" + branch)), false, Collections.<SubmoduleConfig>emptyList(), null, null, null);
+        return new GitSCM(createRepoList(url, credentialsId), Collections.singletonList(new BranchSpec(branch)), false, Collections.<SubmoduleConfig>emptyList(), null, null, null);
     }
 
     // copied from GitSCM
