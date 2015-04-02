@@ -52,6 +52,7 @@ Again dependencies will be pulled in automatically, including all the OSS plugin
 * [jenkins-workflow tag](http://stackoverflow.com/tags/jenkins-workflow) on StackOverflow
 * [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide) (file issues in the `workflow-plugin` component, or other components with the `workflow` label)
 * [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow) (mention `workflow` in the subject)
+* [#JenkinsWorkflow](https://twitter.com/hashtag/JenkinsWorkflow) on Twitter
 
 # Demo
 
