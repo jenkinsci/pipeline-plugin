@@ -91,6 +91,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [X] `job-dsl`: implemented in 1.29
 - [ ] `zentimestamp`: [JENKINS-26958](https://issues.jenkins-ci.org/browse/JENKINS-26958)
 - [ ] `claim`: [JENKINS-27206](https://issues.jenkins-ci.org/browse/JENKINS-27206)
+- [ ] `ListSubversionTagsParameterValue` (`subversion`): [JENKINS-27718](https://issues.jenkins-ci.org/browse/JENKINS-27718)
 
 ## Custom steps
 
