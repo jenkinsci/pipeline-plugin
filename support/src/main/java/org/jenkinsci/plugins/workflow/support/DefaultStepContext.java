@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.support;
 
 import hudson.EnvVars;
 import hudson.Launcher;
+import hudson.LauncherDecorator;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.Computer;
 import hudson.model.Job;
@@ -71,6 +72,8 @@ public abstract class DefaultStepContext extends StepContext {
             EnvironmentAction a = run.getAction(EnvironmentAction.class);
             EnvVars customEnvironment = a != null ? a.getEnvironment() : run.getEnvironment(get(TaskListener.class));
             return key.cast(EnvironmentExpander.getEffectiveEnvironment(customEnvironment, (EnvVars) value, get(EnvironmentExpander.class)));
+        } else if (key == Launcher.class) {
+            return key.cast(makeLauncher((Launcher) value));
         } else if (value != null) {
             return value;
         } else if (key == TaskListener.class) {
@@ -116,12 +119,6 @@ public abstract class DefaultStepContext extends StepContext {
             return castOrNull(key, getExecution().getOwner().getExecutable());
         } else if (Job.class.isAssignableFrom(key)) {
             return castOrNull(key, get(Run.class).getParent());
-        } else if (key == Launcher.class) {
-            Node n = get(Node.class);
-            if (n == null) {
-                return null;
-            }
-            return key.cast(n.createLauncher(get(TaskListener.class)));
         } else if (FlowExecution.class.isAssignableFrom(key)) {
             return castOrNull(key,getExecution());
         } else {
@@ -133,6 +130,22 @@ public abstract class DefaultStepContext extends StepContext {
     private <T> T castOrNull(Class<T> key, Object o) {
         if (key.isInstance(o))  return key.cast(o);
         else                    return null;
+    }
+
+    private @Nonnull Launcher makeLauncher(@CheckForNull Launcher contextual) throws IOException, InterruptedException {
+        Launcher launcher = contextual;
+        Node n = get(Node.class);
+        if (launcher == null) {
+            if (n == null) {
+                return null;
+            }
+            launcher = n.createLauncher(get(TaskListener.class));
+        }
+        LauncherDecorator decorator = get(LauncherDecorator.class);
+        if (decorator != null && n != null) {
+            launcher = decorator.decorate(launcher, n);
+        }
+        return launcher;
     }
 
     /**
