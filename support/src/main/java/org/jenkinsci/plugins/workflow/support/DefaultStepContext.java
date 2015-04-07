@@ -132,7 +132,7 @@ public abstract class DefaultStepContext extends StepContext {
         else                    return null;
     }
 
-    private @Nonnull Launcher makeLauncher(@CheckForNull Launcher contextual) throws IOException, InterruptedException {
+    private @CheckForNull Launcher makeLauncher(@CheckForNull Launcher contextual) throws IOException, InterruptedException {
         Launcher launcher = contextual;
         Node n = get(Node.class);
         if (launcher == null) {
