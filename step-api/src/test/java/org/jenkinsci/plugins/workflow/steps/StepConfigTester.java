@@ -60,19 +60,15 @@ public final class StepConfigTester {
     @SuppressWarnings("unchecked")
     public <S extends Step> S configRoundTrip(S before) throws Exception {
         FreeStyleProject p = rule.createFreeStyleProject();
-        try {
-            p.getBuildersList().add(new StepBuilder(before));
-            // workaround for eclipse compiler Ambiguous method call
-            p = (FreeStyleProject) rule.configRoundtrip((Item)p);
-            StepBuilder b = p.getBuildersList().get(StepBuilder.class);
-            assertNotNull(b);
-            Step after = b.s;
-            assertNotNull(after);
-            assertEquals(before.getClass(), after.getClass());
-            return (S) after;
-        } finally {
-            p.delete();
-        }
+        p.getBuildersList().add(new StepBuilder(before));
+        // workaround for eclipse compiler Ambiguous method call
+        p = (FreeStyleProject) rule.configRoundtrip((Item)p);
+        StepBuilder b = p.getBuildersList().get(StepBuilder.class);
+        assertNotNull(b);
+        Step after = b.s;
+        assertNotNull(after);
+        assertEquals(before.getClass(), after.getClass());
+        return (S) after;
     }
 
     @Restricted(NoExternalUse.class)
