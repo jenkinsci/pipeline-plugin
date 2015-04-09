@@ -38,7 +38,6 @@ import org.jenkinsci.plugins.durabletask.DurableTask;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -140,7 +139,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             try {
                 FilePath workspace = getWorkspace();
                 if (workspace != null) {
-                    controller.stop(workspace);
+                    controller.stop(workspace, getContext().get(Launcher.class));
                 }
             } finally {
                 if (stopAttempt++ == 1) { // second attempt
