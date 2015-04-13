@@ -188,7 +188,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                 } else {
                     recurrencePeriod = Math.min((long) (recurrencePeriod * RECURRENCE_PERIOD_BACKOFF), MAX_RECURRENCE_PERIOD);
                 }
-                Integer exitCode = controller.exitStatus(workspace);
+                Integer exitCode = controller.exitStatus(workspace, launcher);
                 if (exitCode == null) {
                     LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
                 } else {
