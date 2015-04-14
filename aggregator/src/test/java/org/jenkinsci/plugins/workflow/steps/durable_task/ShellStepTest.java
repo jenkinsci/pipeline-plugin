@@ -2,22 +2,33 @@ package org.jenkinsci.plugins.workflow.steps.durable_task;
 
 import com.google.common.base.Predicate;
 import hudson.Functions;
+import hudson.Launcher;
+import hudson.LauncherDecorator;
 import hudson.model.BallColor;
+import hudson.model.Node;
 import hudson.model.Result;
+import java.io.File;
+import java.io.Serializable;
+import java.util.concurrent.TimeoutException;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
+import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable;
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import java.io.File;
-import java.util.concurrent.TimeoutException;
+import org.jvnet.hudson.test.TestExtension;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 public class ShellStepTest extends Assert {
     @Rule
@@ -92,6 +103,48 @@ public class ShellStepTest extends Assert {
             }
         });
     }
+
+    @Test public void launcherDecorator() throws Exception {
+        Assume.assumeTrue("TODO Windows equivalent TBD", new File("/usr/bin/nice").canExecute());
+        WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("node {nice {sh 'echo niceness=`nice`'}}"));
+        j.assertLogContains("niceness=10", j.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+        p.setDefinition(new CpsFlowDefinition("node {nice {nice {sh 'echo niceness=`nice`'}}}"));
+        j.assertLogContains("niceness=19", j.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+    }
+    public static class NiceStep extends AbstractStepImpl {
+        @DataBoundConstructor public NiceStep() {}
+        public static class Execution extends AbstractStepExecutionImpl {
+            @Override public boolean start() throws Exception {
+                getContext().newBodyInvoker().
+                        withContext(BodyInvoker.mergeLauncherDecorators(getContext().get(LauncherDecorator.class), new Decorator())).
+                        withCallback(BodyExecutionCallback.wrap(getContext())).
+                        start();
+                return false;
+            }
+            @Override public void stop(Throwable cause) throws Exception {}
+        }
+        private static class Decorator extends LauncherDecorator implements Serializable {
+            @Override public Launcher decorate(Launcher launcher, Node node) {
+                return launcher.decorateByPrefix("nice");
+            }
+        }
+        @TestExtension("launcherDecorator") public static class DescriptorImpl extends AbstractStepDescriptorImpl {
+            public DescriptorImpl() {
+                super(Execution.class);
+            }
+            @Override public String getFunctionName() {
+                return "nice";
+            }
+            @Override public String getDisplayName() {
+                return "Nice";
+            }
+            @Override public boolean takesImplicitBlockArgument() {
+                return true;
+            }
+        }
+    }
+
 
     /**
      * Waits up to the given timeout until the predicate is satisfied.
