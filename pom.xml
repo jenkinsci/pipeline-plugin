@@ -28,7 +28,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.607</version> <!-- TODO SimpleBuildWrapper-JENKINS-27392 branch -->
+        <version>1.609</version>
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
@@ -99,26 +99,6 @@
         </dependencies>
     </dependencyManagement>
     <dependencies>
-        <dependency> <!-- TODO SimpleBuildWrapper-JENKINS-27392 branch @ a52d665180a7b11dcd64673c3f08b719f6c9f908 -->
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-core</artifactId>
-            <version>1.608-20150331.141653-1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-war</artifactId>
-            <version>1.608-20150331.141722-1</version>
-            <type>war</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-war</artifactId>
-            <version>1.608-20150331.141722-1</version>
-            <classifier>war-for-test</classifier>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
