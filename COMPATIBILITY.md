@@ -47,6 +47,7 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `HipChatNotifier` (`hipchat`): [JENKINS-27202](https://issues.jenkins-ci.org/browse/JENKINS-27202)
 - [ ] `LogParserPublisher` (`log-parser`): [JENKINS-27208](https://issues.jenkins-ci.org/browse/JENKINS-27208)
 - [ ] `SlackNotifier` (`slack`): [JENKINS-27652](https://issues.jenkins-ci.org/browse/JENKINS-27652)
+- [ ] `DescriptionSetterPublisher` (`description-setter`): [PR 7](https://github.com/jenkinsci/description-setter-plugin/pull/7)
 
 ## Build wrappers
 
@@ -56,6 +57,7 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
 - [ ] `DashboardBuilder` (`environment-dashboard`): [PR 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
 - [ ] `TimestamperBuildWrapper` (`timestamper`): [JENKINS-27207](https://issues.jenkins-ci.org/browse/JENKINS-27207)
+- [ ] `MaskPasswordsBuildWrapper` (`mask-passwords`): [PR 3](https://github.com/jenkinsci/mask-passwords-plugin/pull/3)
 
 ## Triggers
 
@@ -89,6 +91,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [X] `job-dsl`: implemented in 1.29
 - [ ] `zentimestamp`: [JENKINS-26958](https://issues.jenkins-ci.org/browse/JENKINS-26958)
 - [ ] `claim`: [JENKINS-27206](https://issues.jenkins-ci.org/browse/JENKINS-27206)
+- [ ] `ListSubversionTagsParameterValue` (`subversion`): [JENKINS-27718](https://issues.jenkins-ci.org/browse/JENKINS-27718)
 
 ## Custom steps
 

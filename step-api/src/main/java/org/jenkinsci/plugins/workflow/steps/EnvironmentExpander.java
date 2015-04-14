@@ -25,6 +25,8 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.EnvVars;
+import hudson.model.Computer;
+import hudson.model.Run;
 import java.io.IOException;
 import java.io.Serializable;
 import javax.annotation.CheckForNull;
@@ -65,6 +67,34 @@ public abstract class EnvironmentExpander implements Serializable {
             original.expand(env);
             subsequent.expand(env);
         }
+    }
+
+    /**
+     * Computes an effective environment in a given context.
+     * Used from {@code DefaultStepContext} and {@code EnvActionImpl}.
+     * The precedence order is:
+     * <ol>
+     * <li>{@code expander} (if any)
+     * <li>{@code customEnvironment}
+     * <li>{@code contextualEnvironment} (if any)
+     * </ol>
+     * @param customEnvironment {@link Run#getEnvironment(TaskListener)}, or {@code EnvironmentAction#getEnvironment}
+     * @param contextualEnvironment a possible override as per {@link BodyInvoker#withContext} (such as from {@link Computer#getEnvironment} called from {@code PlaceholderExecutable})
+     * @param expander a possible expander
+     * @return the effective environment
+     */
+    public static @Nonnull EnvVars getEffectiveEnvironment(@Nonnull EnvVars customEnvironment, @CheckForNull EnvVars contextualEnvironment, @CheckForNull EnvironmentExpander expander) throws IOException, InterruptedException {
+        EnvVars env;
+        if (contextualEnvironment != null) {
+            env = new EnvVars(contextualEnvironment);
+            env.putAll(customEnvironment);
+        } else {
+            env = new EnvVars(customEnvironment);
+        }
+        if (expander != null) {
+            expander.expand(env);
+        }
+        return env;
     }
 
 }
