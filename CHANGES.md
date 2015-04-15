@@ -4,7 +4,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.6 (upcoming)
 
-* API addition: `LauncherDecorator` can now be used in block-scoped steps, and there is more flexibility in handling exits from durable tasks.x
+* API addition: `LauncherDecorator` can now be used in block-scoped steps, and there is more flexibility in handling exits from durable tasks.
 
 ## 1.5 (Apr 01 2015)
 
