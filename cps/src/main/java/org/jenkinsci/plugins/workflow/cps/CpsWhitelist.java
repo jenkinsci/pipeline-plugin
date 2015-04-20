@@ -45,6 +45,9 @@ class CpsWhitelist extends AbstractWhitelist {
                 }
             }
         }
+        if (receiver instanceof DSL && method.getName().equals("invokeMethod")) {
+            return true;
+        }
         // TODO JENKINS-24982: it would be nice if AnnotatedWhitelist accepted @Whitelisted on an override
         if (receiver instanceof EnvActionImpl) {
             String name = method.getName();
