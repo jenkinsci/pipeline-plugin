@@ -13,8 +13,8 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.GroovySandbox;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
+import javax.annotation.CheckForNull;
 
 /**
  * {@link GroovyShell} with additional tweaks necessary to run {@link CpsScript}
@@ -27,9 +27,9 @@ class CpsGroovyShell extends GroovyShell {
      *
      * Null is a valid value for just parsing the script to test-compile it without running it.
      */
-    private final @Nullable CpsFlowExecution execution;
+    private final @CheckForNull CpsFlowExecution execution;
 
-    CpsGroovyShell(CpsFlowExecution execution) {
+    CpsGroovyShell(@CheckForNull CpsFlowExecution execution) {
         super(makeClassLoader(),new Binding(),makeConfig(execution));
         this.execution = execution;
 
@@ -44,7 +44,7 @@ class CpsGroovyShell extends GroovyShell {
         return GroovySandbox.createSecureClassLoader(cl);
     }
 
-    private static CompilerConfiguration makeConfig(CpsFlowExecution execution) {
+    private static CompilerConfiguration makeConfig(@CheckForNull CpsFlowExecution execution) {
         ImportCustomizer ic = new ImportCustomizer();
         ic.addStarImports(NonCPS.class.getPackage().getName());
         ic.addStarImports("hudson.model","jenkins.model");
