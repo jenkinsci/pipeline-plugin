@@ -26,7 +26,7 @@
       <launcher class="hudson.plugins.sshslaves.SSHLauncher">
         <host>localhost</host>
         <port>22</port>
-        <credentialsId>root-login</credentialsId>
+        <credentialsId>jenkins-login</credentialsId>
       </launcher>
       <label></label>
       <nodeProperties/>
