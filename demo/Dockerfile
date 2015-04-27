@@ -20,23 +20,15 @@ RUN apt-get update
 RUN apt-get install -y openssh-server
 RUN echo 'jenkins:jenkins' | chpasswd
 
-RUN mkdir /tmp/files && chown jenkins /tmp/files
+ADD repo /tmp/files/repo
+RUN chown -R jenkins.jenkins /tmp/files
 USER jenkins
-WORKDIR /tmp/files
-
-# make a local checkout of the demo workspace
-# Set this before clone so if we have to go to a newer head revision, docker-build will rerun git-clone:
-ENV REV 82ba30cea36c5747bbd54bf3c11f61c398715f52
-RUN git clone https://github.com/jenkinsci/workflow-plugin-pipeline-demo
-# Specify a particular master revision in the Dockerfile so we can track changes (and so Docker cache works correctly):
-WORKDIR /tmp/files/workflow-plugin-pipeline-demo
-RUN git reset --hard $REV
+WORKDIR /tmp/files/repo
+RUN git config --global user.email "demo@jenkins-ci.org" && git config --global user.name "Workflow Demo" && git init && git add . && git commit -m 'demo'
 
 # Prepare local Maven repo. Note that $JENKINS_HOME is a volume so we cannot populate it now.
 RUN echo '<settings><localRepository>/usr/share/jenkins/ref/.m2/repository</localRepository></settings>' > /tmp/files/settings.xml
 RUN /usr/local/maven/bin/mvn -s /tmp/files/settings.xml install && /usr/local/maven/bin/mvn -s /tmp/files/settings.xml -f sometests -Dmaven.test.failure.ignore clean install
-
-RUN git config --global user.email "demo@jenkins-ci.org" && git config --global user.name "Workflow Demo"
 
 ENV JENKINS_UC http://jenkins-updates.cloudbees.com
 COPY workflow-version.txt plugins.txt /tmp/files/
