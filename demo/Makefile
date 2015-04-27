@@ -21,4 +21,7 @@ clean:
 
 push:
 	docker push $(IMAGE):$(TAG)
-	echo "consider also: docker tag -f $(IMAGE):$(TAG) $(IMAGE):latest"
+	echo "consider also: make push-latest"
+
+push-latest: push
+	docker tag -f $(IMAGE):$(TAG) $(IMAGE):latest
