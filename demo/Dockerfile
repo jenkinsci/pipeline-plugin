@@ -34,6 +34,8 @@ ENV JENKINS_UC http://jenkins-updates.cloudbees.com
 COPY workflow-version.txt plugins.txt /tmp/files/
 RUN sed -i "s/@VERSION@/`cat /tmp/files/workflow-version.txt`/g" /tmp/files/plugins.txt
 RUN /usr/local/bin/plugins.sh /tmp/files/plugins.txt
+# TODO plugins.sh ought to automatically create pin files for each specified plugin
+RUN for p in javadoc junit mailer script-security subversion; do touch /usr/share/jenkins/ref/plugins/$p.jpi.pinned; done
 
 ADD JENKINS_HOME /usr/share/jenkins/ref
 
