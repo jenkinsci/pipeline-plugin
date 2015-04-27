@@ -1,7 +1,7 @@
 def jettyUrl = 'http://localhost:8081/'
 
 node('slave') {
-    git url: '/home/jenkins/workflow-plugin-pipeline-demo'
+    git url: '/tmp/files/workflow-plugin-pipeline-demo'
     env.PATH="${tool 'Maven 3.x'}/bin:${env.PATH}"
     stage 'Dev'
     sh 'mvn -o clean package'
