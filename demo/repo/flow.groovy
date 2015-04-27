@@ -45,6 +45,7 @@ def undeploy(id) {
 }
 
 def runWithServer(body) {
+    def jettyUrl = 'http://localhost:8081/' // TODO why is this not inherited from the top-level scope?
     def id = UUID.randomUUID().toString()
     deploy 'target/x.war', id
     try {
