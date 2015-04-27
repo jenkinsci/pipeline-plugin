@@ -20,5 +20,5 @@ clean:
 	rm -rf snapshot/plugins
 
 push:
-	docker tag $(IMAGE):$(TAG)
 	docker push $(IMAGE):$(TAG)
+	echo "consider also: docker tag -f $(IMAGE):$(TAG) $(IMAGE):latest"
