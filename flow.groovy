@@ -1,5 +1,7 @@
+def jettyUrl = 'http://localhost:8081/'
+
 node('slave') {
-    git url: '/var/lib/jenkins/workflow-plugin-pipeline-demo'
+    git url: '/home/jenkins/workflow-plugin-pipeline-demo'
     env.PATH="${tool 'Maven 3.x'}/bin:${env.PATH}"
     stage 'Dev'
     sh 'mvn -o clean package'
@@ -20,7 +22,7 @@ node('slave') {
     deploy 'target/x.war', 'staging'
 }
 
-input message: "Does http://localhost:8080/staging/ look good?"
+input message: "Does ${jettyUrl}staging/ look good?"
 try {
     checkpoint('Before production')
 } catch (NoSuchMethodError _) {
@@ -28,10 +30,10 @@ try {
 }
 stage name: 'Production', concurrency: 1
 node('master') {
-    sh 'wget -O - -S http://localhost:8080/staging/'
+    sh "wget -O - -S ${jettyUrl}staging/"
     unarchive mapping: ['target/x.war' : 'x.war']
     deploy 'x.war', 'production'
-    echo 'Deployed to http://localhost:8080/production/'
+    echo "Deployed to ${jettyUrl}production/"
 }
 
 def deploy(war, id) {
@@ -46,7 +48,7 @@ def runWithServer(body) {
     def id = UUID.randomUUID().toString()
     deploy 'target/x.war', id
     try {
-        body.call "http://localhost:8080/${id}/"
+        body.call "${jettyUrl}${id}/"
     } finally {
         undeploy id
     }
