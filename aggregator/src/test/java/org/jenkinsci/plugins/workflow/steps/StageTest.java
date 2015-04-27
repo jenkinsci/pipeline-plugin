@@ -24,7 +24,11 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
+import hudson.model.ParametersAction;
+import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Result;
+import hudson.model.StringParameterDefinition;
+import hudson.model.StringParameterValue;
 import java.util.List;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
@@ -242,4 +246,78 @@ public class StageTest {
         });
     }
 
+    @Test
+    public void stageNameFromParameter() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("FLAG", null)));
+                p.setDefinition(new CpsFlowDefinition(
+                        "stage name: \"stage_${FLAG}\", concurrency: 1\n"
+                        + "semaphore 'X'\n"
+                        + ""));
+                WorkflowRun b1 = p.scheduleBuild2(0, new ParametersAction(
+                        new StringParameterValue("FLAG", "one"))).waitForStart();
+                SemaphoreStep.waitForStart("X/1", b1);
+                WorkflowRun b2 = p.scheduleBuild2(0, new ParametersAction(
+                        new StringParameterValue("FLAG", "one"))).waitForStart();
+                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b2);
+                WorkflowRun b3 = p.scheduleBuild2(0, new ParametersAction(
+                        new StringParameterValue("FLAG", "one"))).waitForStart();
+                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b3);
+                story.j.assertBuildStatus(Result.NOT_BUILT, JenkinsRuleExt.waitForCompletion(b2));
+                story.j.assertLogContains("Canceled since #3 got here", b2);
+                WorkflowRun b4 = p.scheduleBuild2(0, new ParametersAction(
+                        new StringParameterValue("FLAG", "two"))).waitForStart();
+                SemaphoreStep.waitForStart("X/2", b4);
+                SemaphoreStep.success("X/2", null); // b4
+                SemaphoreStep.success("X/1", null); // b1
+                SemaphoreStep.waitForStart("X/3", b3);
+                SemaphoreStep.success("X/3", null); // b3
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b4));
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b1));
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b3));
+            }
+        });
+    }
+
+    @Test
+    public void newerBuildFinishesBeforeOlder() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                        "semaphore 'X'\n"
+                        + "stage name: \"A\", concurrency: 1\n"
+                        + "semaphore 'Y'\n"
+                        + ""));
+                // b1 will enter the stage, b2 and b3 will be started.
+                // b3 will reach the stage before b2 does so b2 is canceled.
+                WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
+                SemaphoreStep.waitForStart("X/1", b1);
+                SemaphoreStep.success("X/1", null); // b1
+                SemaphoreStep.waitForStart("Y/1", b1); // b1 in stage
+
+                WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
+                SemaphoreStep.waitForStart("X/2", b2);
+
+                WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
+                SemaphoreStep.waitForStart("X/3", b3);
+                SemaphoreStep.success("X/3", null); // b3
+                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b3); // b3 in stage waiting for b1
+
+                SemaphoreStep.success("X/2", null); // b2 enters stage and get canceled
+                JenkinsRuleExt.waitForMessage("Canceled since #3 got here", b2);
+                story.j.assertBuildStatus(Result.NOT_BUILT, JenkinsRuleExt.waitForCompletion(b2));
+
+                SemaphoreStep.success("Y/1", null); // b1
+                SemaphoreStep.waitForStart("Y/2", b3);
+                SemaphoreStep.success("Y/2", null); // b3
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b1));
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b3));                
+            }
+        });
+    }
 }
