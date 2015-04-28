@@ -597,6 +597,9 @@ Every SCM push can still trigger a separate build of a quicker earlier stage as 
 Yet each build runs linearly and can even retain a single workspace, avoiding the need to identify and copy artifacts between builds.
 (Even if you dispose of a workspace from an earlier stage, you can retain information about it using simple local variables.)
 
+It is possible to disable the preemption of older builds by setting the option discardOldBuilds to false. When this option is false all
+builds that enter the stage will queue up and get built.
+
 Consult the [Docker demo](demo/README.md) for an example of a flow using multiple `stage`s.
 
 # Loading script text from version control
