@@ -320,4 +320,32 @@ public class StageTest {
             }
         });
     }
+
+   @Test
+    public void executeAllBuilds() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                        "stage name: \"A\", concurrency: 1, discardOldBuilds: false\n"
+                        + "semaphore 'X'\n"
+                        + ""));
+                WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
+                SemaphoreStep.waitForStart("X/1", b1);
+                WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
+                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b2);
+                WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
+                JenkinsRuleExt.waitForMessage("Waiting for builds [1, 2]", b3);
+                SemaphoreStep.success("X/1", null); // b1
+                SemaphoreStep.waitForStart("X/2", b2);
+                SemaphoreStep.success("X/2", null); // b2
+                SemaphoreStep.waitForStart("X/3", b3);
+                SemaphoreStep.success("X/3", null); // b3
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b1));
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b2));
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b3));
+            }
+        });
+    }
 }

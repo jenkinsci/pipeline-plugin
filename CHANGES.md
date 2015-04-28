@@ -4,6 +4,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.6 (upcoming)
 
+* Added `discardOldBuilds` option to the `stage` step to disable preemption of older builds.
 * [JENKINS-27571](https://issues.jenkins-ci.org/browse/JENKINS-27571) Fixed link in build sidepanel.
 * API addition: `LauncherDecorator` can now be used in block-scoped steps, and there is more flexibility in handling exits from durable tasks.
 

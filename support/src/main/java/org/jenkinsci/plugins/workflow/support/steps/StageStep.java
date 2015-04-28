@@ -35,12 +35,14 @@ import org.kohsuke.stapler.DataBoundSetter;
  * Marks a flow build as entering a gated “stage”, like a stage in a pipeline.
  * Each job has a set of named stages, each of which acts like a semaphore with an initial permit count,
  * but with the special behavior that only one build may be waiting at any time: the newest.
+ * To disable this behavior and have all builds queue up and execute set discardOldBuilds to false.
  * Credit goes to @jtnord for implementing the {@code block} operator in {@code buildflow-extensions}, which inspired this.
  */
 public final class StageStep extends AbstractStepImpl {
 
     public final String name;
     @DataBoundSetter public @CheckForNull Integer concurrency;
+    @DataBoundSetter public boolean discardOldBuilds = true;
 
     @DataBoundConstructor public StageStep(String name) {
         if (name == null || name.isEmpty()) {

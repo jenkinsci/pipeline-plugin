@@ -12,7 +12,11 @@ import hudson.model.listeners.RunListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -56,7 +60,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     public boolean start() throws Exception {
         node.addAction(new LabelAction(step.name));
         node.addAction(new StageActionImpl(step.name));
-        enter(run, getContext(), step.name, step.concurrency);
+        enter(run, getContext(), step.name, step.concurrency, step.discardOldBuilds);
         return false; // execute asynchronously
     }
 
@@ -107,7 +111,8 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         LOGGER.log(Level.FINE, "save: {0}", stagesByNameByJob);
     }
 
-    private static synchronized void enter(Run<?,?> r, StepContext context, String name, Integer concurrency) {
+    private static synchronized void enter(Run<?,?> r, StepContext context, String name,
+            Integer concurrency, Boolean discardOldBuilds) {
         LOGGER.log(Level.FINE, "enter {0} {1}", new Object[] {r, name});
         println(context, "Entering stage " + name);
         load();
@@ -124,25 +129,31 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
             stagesByName.put(name, stage);
         }
         stage.concurrency = concurrency;
+        stage.discardOldBuilds = discardOldBuilds;
         int build = r.number;
-        if (stage.waitingContext != null) {
+        stage.waiting.addLast(new AbstractMap.SimpleEntry<Integer,StepContext>(build,context));
+        if (stage.discardOldBuilds && stage.waiting.size() > 1) {
+            int waitingBuild = stage.waiting.getFirst().getKey();
+            StepContext waitingContext = stage.waiting.getFirst().getValue();
             // Someone has got to give up.
-            if (stage.waitingBuild < build) {
+            if (waitingBuild < build) {
                 // Cancel the older one.
                 try {
-                    cancel(stage.waitingContext, context);
+                    cancel(waitingContext, context);
                 } catch (Exception x) {
                     LOGGER.log(WARNING, "could not cancel an older flow (perhaps since deleted?)", x);
                 }
-            } else if (stage.waitingBuild > build) {
+                stage.waiting.removeFirst();
+            } else if (waitingBuild > build) {
                 // Cancel this one. And work with the older one below, instead of the one initiating this call.
                 try {
-                    cancel(context, stage.waitingContext);
+                    cancel(context, waitingContext);
                 } catch (Exception x) {
                     LOGGER.log(WARNING, "could not cancel the current flow", x);
                 }
-                build = stage.waitingBuild;
-                context = stage.waitingContext;
+                stage.waiting.removeLast();
+                build = waitingBuild;
+                context = waitingContext;
             } else {
                 throw new IllegalStateException("the same flow is trying to reënter the stage " + name); // see 'e' with two dots, that's Jesse Glick for you! - KK
             }
@@ -154,17 +165,20 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
             Stage stage2 = entry.getValue();
             // If we were holding another stage in the same job, release it, unlocking its waiter to proceed.
             if (stage2.holding.remove(build)) {
-                if (stage2.waitingContext != null) {
+                if (!stage2.waiting.isEmpty()) {
                     stage2.unblock("Unblocked since " + r.getDisplayName() + " is moving into stage " + name);
                 }
             }
         }
-        stage.waitingBuild = build;
-        stage.waitingContext = context;
         if (stage.concurrency == null || stage.holding.size() < stage.concurrency) {
             stage.unblock("Proceeding");
         } else {
-            println(context, "Waiting for builds " + stage.holding);
+            ArrayList<Integer> waitingFor = new ArrayList<Integer>(stage.holding);
+            for(Map.Entry<Integer,StepContext> entry : stage.waiting) {
+                waitingFor.add(entry.getKey());
+            }
+            waitingFor.remove(Integer.valueOf(build));
+            println(context, "Waiting for builds " + waitingFor);
         }
         cleanUp(job, jobName);
         save();
@@ -184,7 +198,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
             if (stage.holding.contains(r.number)) {
                 stage.holding.remove(r.number); // XSTR-757: do not rely on return value of TreeSet.remove(Object)
                 modified = true;
-                if (stage.waitingContext != null) {
+                if (!stage.waiting.isEmpty()) {
                     stage.unblock("Unblocked since " + r.getDisplayName() + " finished");
                 }
             }
@@ -212,7 +226,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
                 }
             }
             if (holding.isEmpty()) {
-                assert entry.getValue().waitingContext == null : entry;
+                assert entry.getValue().waiting.isEmpty() : entry;
                 it.remove();
             }
         }
@@ -265,31 +279,34 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         /** Maximum permitted size of {@link #holding}, or null for unbounded. */
         @CheckForNull
         Integer concurrency;
-        /** Context of the build currently waiting to enter this stage, if any. */
-        @CheckForNull StepContext waitingContext;
-        /** Number of the build corresponding to {@link #waitingContext}, if any. */
-        @Nullable
-        Integer waitingBuild;
+        /** Build number and context of the builds currently waiting to enter this stage, if any. */
+        Deque<Map.Entry<Integer,StepContext>> waiting = new LinkedList<Map.Entry<Integer,StepContext>>();
+        /** Should old waiting builds be aborted if a newer build enter the same stage. */
+        @CheckForNull Boolean discardOldBuilds;
+
         @Override public String toString() {
-            return "Stage[holding=" + holding + ",waitingBuild=" + waitingBuild + ",concurrency=" + concurrency + "]";
+            return "Stage[holding=" + holding + ",waiting=" + waiting + ",concurrency=" + concurrency + "]";
         }
+
         /**
          * Unblocks the build currently waiting.
          * @param message a message to print to the log of the unblocked build
          */
         void unblock(String message) {
             assert Thread.holdsLock(StageStepExecution.class);
-            assert waitingContext != null;
-            assert waitingBuild != null;
-            assert !holding.contains(waitingBuild);
+            assert !waiting.isEmpty();
+            for(Map.Entry<Integer,StepContext> entry : waiting) {
+                assert !holding.contains(entry.getKey());
+            }
             /* Not necessarily true, since a later build could reduce the concurrency of an existing stage; could perhaps adjust semantics to skip unblocking in this special case:
             assert concurrency == null || holding.size() < concurrency;
             */
+            Map.Entry<Integer, StepContext> entry = waiting.removeFirst();
+            int waitingBuild = entry.getKey();
+            StepContext waitingContext = entry.getValue();
             println(waitingContext, message);
             waitingContext.onSuccess(null);
             holding.add(waitingBuild);
-            waitingContext = null;
-            waitingBuild = null;
         }
     }
 
