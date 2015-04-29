@@ -65,7 +65,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
@@ -75,6 +78,8 @@ import javax.annotation.concurrent.GuardedBy;
 import jenkins.model.Jenkins;
 import jenkins.model.lazy.BuildReference;
 import jenkins.model.lazy.LazyBuildMixIn;
+import jenkins.model.queue.AsynchronousExecution;
+import jenkins.util.Timer;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -110,8 +115,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     };
     private transient StreamBuildListener listener;
     private transient AtomicBoolean completed;
-    /** Jenkins instance in effect when {@link #waitForCompletion} was last called. */
-    private transient Jenkins jenkins;
     /** map from node IDs to log positions from which we should copy text */
     private Map<String,Long> logsToCopy;
 
@@ -160,8 +163,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
      */
     @Override public void run() {
         if (!firstTime) {
-            waitForCompletion();
-            return;
+            throw sleep();
         }
         // Some code here copied from execute(RunExecution), but subsequently modified quite a bit.
         try {
@@ -185,7 +187,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             logsToCopy = new LinkedHashMap<String,Long>();
             execution.start();
             executionPromise.set(execution);
-            waitForCompletion();
         } catch (Throwable x) {
             if (listener == null) {
                 LOGGER.log(Level.WARNING, this + " failed to start", x);
@@ -194,39 +195,53 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
             setResult(Result.FAILURE);
             executionPromise.setException(x);
+            return;
         }
+        throw sleep();
     }
 
-    /**
-     * Sleeps until the run is finished, updating log messages periodically.
-     */
-    void waitForCompletion() {
-        jenkins = Jenkins.getInstance();
-        synchronized (completed) {
-            while (!completed.get()) {
-                if (jenkins == null || jenkins.isTerminating()) {
-                    LOGGER.log(Level.FINE, "shutting down, breaking waitForCompletion on {0}", this);
-                    // Stop writing content, in case a new set of objects gets loaded after in-VM restart and starts writing to the same file:
-                    listener.closeQuietly();
-                    listener = new StreamBuildListener(new NullStream());
-                    break;
+    private AsynchronousExecution sleep() {
+        final AsynchronousExecution asynchronousExecution = new AsynchronousExecution() {
+            @Override public void interrupt(boolean forShutdown) {
+                if (forShutdown) {
+                    return;
                 }
                 try {
-                    completed.wait(1000);
-                } catch (InterruptedException x) {
-                    try {
-                        execution.interrupt(Result.ABORTED);
-                    } catch (Exception x2) {
-                        LOGGER.log(Level.WARNING, null, x2);
-                    }
-                    Executor exec = Executor.currentExecutor();
-                    if (exec != null) {
-                        exec.recordCauseOfInterruption(this, listener);
-                    }
+                    execution.interrupt(Result.ABORTED);
+                } catch (Exception x) {
+                    LOGGER.log(Level.WARNING, null, x);
                 }
-                copyLogs();
+                getExecutor().recordCauseOfInterruption(WorkflowRun.this, listener);
             }
-        }
+            @Override public boolean blocksRestart() {
+                return execution.blocksRestart();
+            }
+            @Override public boolean displayCell() {
+                return blocksRestart();
+            }
+        };
+        final AtomicReference<ScheduledFuture<?>> copyLogsTask = new AtomicReference<ScheduledFuture<?>>();
+        copyLogsTask.set(Timer.get().scheduleAtFixedRate(new Runnable() {
+            @Override public void run() {
+                synchronized (completed) {
+                    if (completed.get()) {
+                        asynchronousExecution.completed(null);
+                        copyLogsTask.get().cancel(false);
+                        return;
+                    }
+                    Jenkins jenkins = Jenkins.getInstance();
+                    if (jenkins == null || jenkins.isTerminating()) {
+                        LOGGER.log(Level.FINE, "shutting down, breaking waitForCompletion on {0}", this);
+                        // Stop writing content, in case a new set of objects gets loaded after in-VM restart and starts writing to the same file:
+                        listener.closeQuietly();
+                        listener = new StreamBuildListener(new NullStream());
+                        return;
+                    }
+                    copyLogs();
+                }
+            }
+        }, 1, 1, TimeUnit.SECONDS));
+        return asynchronousExecution;
     }
 
     @GuardedBy("completed")
@@ -457,7 +472,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         assert completed != null;
         synchronized (completed) {
             completed.set(true);
-            completed.notifyAll();
         }
         FlowExecutionList.get().unregister(execution.getOwner());
     }

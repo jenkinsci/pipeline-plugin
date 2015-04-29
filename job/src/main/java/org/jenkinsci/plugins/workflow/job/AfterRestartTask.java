@@ -101,7 +101,7 @@ class AfterRestartTask extends AbstractQueueTask implements Queue.FlyweightTask,
     }
 
     @Override public ResourceList getResourceList() {
-        return new ResourceList();
+        return ResourceList.EMPTY;
     }
 
     @Override public Queue.Executable createExecutable() throws IOException {

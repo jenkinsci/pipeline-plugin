@@ -31,9 +31,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
+import jenkins.model.queue.AsynchronousExecution;
 import jenkins.util.Timer;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
@@ -50,10 +52,9 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import static java.util.logging.Level.*;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-/**
- * @author Kohsuke Kawaguchi
- */
 public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
     @Inject(optional=true) private transient ExecutorStep step;
@@ -111,7 +112,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         Jenkins j = Jenkins.getInstance();
         if (j != null) {
             // if we are already running, kill the ongoing activities, which releases PlaceholderExecutable from its sleep loop
-            // Similar to Run.getExecutor (and proposed Executables.getExecutor), but distinct since we do not have the Executable yet:
+            // Similar to Executor.of, but distinct since we do not have the Executable yet:
             COMPUTERS: for (Computer c : j.getComputers()) {
                 for (Executor e : c.getExecutors()) {
                     Queue.Executable exec = e.getCurrentExecutable();
@@ -129,11 +130,24 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         // and Item.cancel(Queue) is private and cannot be overridden; the only workaround for now is to have a custom QueueListener
     }
 
-    private static final class PlaceholderTask implements ContinuedTask, Serializable {
+    /** Transient handle of a running executor task. */
+    private static final class RunningTask {
+        final @Nonnull StepContext context;
+        /** null until placeholder executable runs */
+        @Nullable AsynchronousExecution execution;
+        /** null until placeholder executable runs */
+        @Nullable Launcher launcher;
+        RunningTask(StepContext context) {
+            this.context = context;
+        }
+    }
 
-        // TODO can this be replaced with StepExecutionIterator?
-        /** map from cookies to contexts of tasks thought to be running */
-        private static final Map<String,StepContext> runningTasks = new HashMap<String,StepContext>();
+    private static final String COOKIE_VAR = "JENKINS_SERVER_COOKIE";
+
+    public static final class PlaceholderTask implements ContinuedTask, Serializable {
+
+        /** keys are {@link #cookie}s */
+        private static final Map<String,RunningTask> runningTasks = new HashMap<String,RunningTask>();
 
         private final StepContext context;
         private String label;
@@ -155,7 +169,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             LOGGER.log(FINE, "deserialized {0}", cookie);
             if (cookie != null) {
                 synchronized (runningTasks) {
-                    runningTasks.put(cookie, context);
+                    runningTasks.put(cookie, new RunningTask(context));
                 }
             }
             return this;
@@ -259,8 +273,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             return ac != null && ac.hasPermission(Item.CANCEL);
         }
 
-        private @CheckForNull
-        Run<?,?> run() {
+        public @CheckForNull Run<?,?> run() {
             try {
                 if (!context.isReady()) {
                     return null;
@@ -294,7 +307,9 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         }
 
         @Override public long getEstimatedDuration() {
-            return -1;
+            Run<?,?> r = run();
+            // Not accurate if there are multiple slaves in one build, but better than nothing:
+            return r != null ? r.getEstimatedDuration() : -1;
         }
 
         @Override public ResourceList getResourceList() {
@@ -318,12 +333,23 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 return null;
             }
             synchronized (runningTasks) {
-                StepContext context = runningTasks.remove(cookie);
-                if (context == null) {
+                RunningTask runningTask = runningTasks.remove(cookie);
+                if (runningTask == null) {
                     LOGGER.log(FINE, "no running task corresponds to {0}", cookie);
+                    return null;
                 }
-                runningTasks.notifyAll();
-                return context;
+                assert runningTask.execution != null && runningTask.launcher != null;
+                runningTask.execution.completed(null);
+                try {
+                    runningTask.launcher.kill(Collections.singletonMap(COOKIE_VAR, cookie));
+                } catch (ChannelClosedException x) {
+                    // fine, Jenkins was shutting down
+                } catch (RequestAbortedException x) {
+                    // slave was exiting; too late to kill subprocesses
+                } catch (Exception x) {
+                    LOGGER.log(Level.WARNING, "failed to shut down " + cookie, x);
+                }
+                return runningTask.context;
             }
         }
 
@@ -368,9 +394,10 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
          */
         private final class PlaceholderExecutable implements ContinuableExecutable {
 
-            private static final String COOKIE_VAR = "JENKINS_SERVER_COOKIE";
-
             @Override public void run() {
+                final TaskListener listener;
+                Launcher launcher;
+                final Run<?, ?> r;
                 try {
                     Executor exec = Executor.currentExecutor();
                     if (exec == null) {
@@ -382,9 +409,9 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                     if (node == null) {
                         throw new IllegalStateException("running computer lacks a node");
                     }
-                    TaskListener listener = context.get(TaskListener.class);
-                    Launcher launcher = node.createLauncher(listener);
-                    Run<?,?> r = context.get(Run.class);
+                    listener = context.get(TaskListener.class);
+                    launcher = node.createLauncher(listener);
+                    r = context.get(Run.class);
                     if (cookie == null) {
                         // First time around.
                         cookie = UUID.randomUUID().toString();
@@ -394,7 +421,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         env.overrideAll(computer.buildEnvironment(listener));
                         env.put(COOKIE_VAR, cookie);
                         synchronized (runningTasks) {
-                            runningTasks.put(cookie, context);
+                            runningTasks.put(cookie, new RunningTask(context));
                         }
                         // For convenience, automatically allocate a workspace, like WorkspaceStep would:
                         Job<?,?> j = r.getParent();
@@ -420,39 +447,41 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         // just rescheduled after a restart; wait for task to complete
                         LOGGER.log(FINE, "resuming {0}", cookie);
                     }
-                    try {
-                        // wait until the invokeBodyLater call above completes and notifies our Callback object
-                        synchronized (runningTasks) {
-                            while (runningTasks.containsKey(cookie)) {
-                                LOGGER.log(FINE, "waiting on {0}", cookie);
-                                try {
-                                    runningTasks.wait();
-                                } catch (InterruptedException x) {
-                                    if (Jenkins.getInstance() != null) {
-                                        LOGGER.log(FINE, "interrupted {0} as by Executor.doStop", cookie);
-                                        // TODO we would like an API to StepExecution.stop the tip of our body
-                                        try {
-                                            exec.recordCauseOfInterruption(r, listener);
-                                        } catch (RuntimeException x2) {
-                                            LOGGER.log(WARNING, null, x2);
-                                        }
-                                    } else {
-                                        LOGGER.log(FINE, "normal Jenkins shutdown in {0}", cookie);
-                                    }
-                                }
-                            }
-                        }
-                    } finally {
-                        try {
-                            launcher.kill(Collections.singletonMap(COOKIE_VAR, cookie));
-                        } catch (ChannelClosedException x) {
-                            // fine, Jenkins was shutting down
-                        } catch (RequestAbortedException x) {
-                            // slave was exiting; too late to kill subprocesses
-                        }
-                    }
                 } catch (Exception x) {
                     context.onFailure(x);
+                    return;
+                }
+                // wait until the invokeBodyLater call above completes and notifies our Callback object
+                synchronized (runningTasks) {
+                    LOGGER.log(FINE, "waiting on {0}", cookie);
+                    RunningTask runningTask = runningTasks.get(cookie);
+                    assert runningTask != null;
+                    assert runningTask.execution == null;
+                    assert runningTask.launcher == null;
+                    runningTask.launcher = launcher;
+                    runningTask.execution = new AsynchronousExecution() {
+                        @Override public void interrupt(boolean forShutdown) {
+                            if (forShutdown) {
+                                return;
+                            }
+                            LOGGER.log(FINE, "interrupted {0}", cookie);
+                            // TODO save the BodyExecution somehow and call .cancel() here; currently you need to Executor.doStop the WorkflowRun as a whole, which is inconvenient
+                            // In the meantime, at least interrupt the build as a whole:
+                            Executor masterExecutor = r.getExecutor();
+                            if (masterExecutor != null) {
+                                masterExecutor.interrupt();
+                            } else { // ?
+                                super.getExecutor().recordCauseOfInterruption(r, listener);
+                            }
+                        }
+                        @Override public boolean blocksRestart() {
+                            return false;
+                        }
+                        @Override public boolean displayCell() {
+                            return true;
+                        }
+                    };
+                    throw runningTask.execution;
                 }
             }
 
@@ -461,7 +490,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             }
 
             @Override public long getEstimatedDuration() {
-                return -1;
+                return getParent().getEstimatedDuration();
             }
 
             @Override public boolean willContinue() {
@@ -472,18 +501,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
             @Restricted(DoNotUse.class) // for Jelly
             public @CheckForNull Executor getExecutor() {
-                Jenkins j = Jenkins.getInstance();
-                if (j == null) {
-                    return null;
-                }
-                for (Computer c : j.getComputers()) {
-                    for (Executor e : c.getExecutors()) {
-                        if (e.getCurrentExecutable() == this) {
-                            return e;
-                        }
-                    }
-                }
-                return null;
+                return Executor.of(this);
             }
 
             @Restricted(NoExternalUse.class) // for Jelly and toString

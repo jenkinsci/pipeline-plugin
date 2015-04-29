@@ -41,6 +41,7 @@ import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
+import jenkins.model.queue.AsynchronousExecution;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 
@@ -141,6 +142,15 @@ public abstract class FlowExecution implements FlowActionStorage {
     public boolean isComplete() {
         List<FlowNode> heads = getCurrentHeads();
         return heads.size()==1 && heads.get(0) instanceof FlowEndNode;
+    }
+
+    /**
+     * Determines whether the activity currently being run should block a Jenkins restart.
+     * @return by default, true
+     * @see AsynchronousExecution#blocksRestart
+     */
+    public boolean blocksRestart() {
+        return true;
     }
 
     /**
