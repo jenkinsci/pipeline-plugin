@@ -28,12 +28,18 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Functions;
 import hudson.Launcher;
+import hudson.console.ConsoleLogFilter;
+import hudson.console.LineTransformationOutputStream;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildWrapperDescriptor;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import jenkins.tasks.SimpleBuildWrapper;
 import org.jenkinsci.plugins.workflow.BuildWatcher;
@@ -48,6 +54,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -150,6 +157,46 @@ public class CoreWrapperStepTest {
         @TestExtension("envStickiness") public static class DescriptorImpl extends BuildWrapperDescriptor {
             @Override public String getDisplayName() {
                 return "OneVarWrapper";
+            }
+            @Override public boolean isApplicable(AbstractProject<?,?> item) {
+                return true;
+            }
+        }
+    }
+
+    @Issue("JENKINS-27392")
+    @Test public void loggerDecorator() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition("node {echo 'outside #1'; wrap([$class: 'WrapperWithLogger']) {echo 'inside the block'}; echo 'outside #2'}"));
+                WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0).get());
+                story.j.assertLogContains("outside #1", b);
+                story.j.assertLogContains("outside #2", b);
+                story.j.assertLogContains("INSIDE THE BLOCK", b);
+            }
+        });
+    }
+    public static class WrapperWithLogger extends SimpleBuildWrapper {
+        @DataBoundConstructor public WrapperWithLogger() {}
+        @Override public void setUp(SimpleBuildWrapper.Context context, Run<?,?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {}
+        @Override public ConsoleLogFilter createLoggerDecorator(Run<?,?> build) {
+            return new UpcaseFilter();
+        }
+        private static class UpcaseFilter extends ConsoleLogFilter implements Serializable {
+            private static final long serialVersionUID = 1;
+            @SuppressWarnings("rawtypes") // inherited
+            @Override public OutputStream decorateLogger(AbstractBuild _ignore, final OutputStream logger) throws IOException, InterruptedException {
+                return new LineTransformationOutputStream() {
+                    @Override protected void eol(byte[] b, int len) throws IOException {
+                        logger.write(new String(b, 0, len).toUpperCase(Locale.ROOT).getBytes());
+                    }
+                };
+            }
+        }
+        @TestExtension("loggerDecorator") public static class DescriptorImpl extends BuildWrapperDescriptor {
+            @Override public String getDisplayName() {
+                return "WrapperWithLogger";
             }
             @Override public boolean isApplicable(AbstractProject<?,?> item) {
                 return true;
