@@ -531,6 +531,18 @@ public class CpsFlowExecution extends FlowExecution {
         });
     }
 
+    @Override public boolean blocksRestart() {
+        if (programPromise == null || !programPromise.isDone()) {
+            return true;
+        }
+        CpsThreadGroup g;
+        try {
+            g = programPromise.get();
+        } catch (Exception x) {
+            return true;
+        }
+        return g.busy;
+    }
 
     /**
      * Waits for the workflow to move into the SUSPENDED state.
