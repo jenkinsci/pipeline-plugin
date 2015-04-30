@@ -240,4 +240,25 @@ public class BuildTriggerStepTest {
         j.assertLogContains("build var: override", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
     }
 
+    @Issue("JENKINS-28063")
+    @Test public void coalescedQueue() throws Exception {
+        FreeStyleProject ds = j.createFreeStyleProject("ds");
+        ds.setConcurrentBuild(true);
+        ds.getBuildersList().add(new SleepBuilder(3000));
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("echo \"triggered #${build('ds').number}\"", true));
+        QueueTaskFuture<WorkflowRun> us1F = us.scheduleBuild2(0);
+        us1F.waitForStart(); // make sure we do not coalesce the us `Queue.Item`s
+        QueueTaskFuture<WorkflowRun> us2F = us.scheduleBuild2(0);
+        WorkflowRun us1 = us1F.get();
+        assertEquals(1, us1.getNumber());
+        j.assertLogContains("triggered #1", us1);
+        WorkflowRun us2 = us2F.get();
+        assertEquals(2, us2.getNumber());
+        j.assertLogContains("triggered #1", us2);
+        FreeStyleBuild ds1 = ds.getLastBuild();
+        assertEquals(1, ds1.getNumber());
+        assertEquals(2, ds1.getCauses().size()); // 2× UpstreamCause
+    }
+
 }

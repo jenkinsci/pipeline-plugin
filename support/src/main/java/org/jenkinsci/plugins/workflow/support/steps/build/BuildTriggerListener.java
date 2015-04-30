@@ -8,16 +8,12 @@ import hudson.model.listeners.RunListener;
 
 import javax.annotation.Nonnull;
 
-/**
- * @author Vivek Pandey
- */
 @Extension
 public class BuildTriggerListener extends RunListener<Run<?,?>>{
 
     @Override
-    public void onCompleted(Run run, @Nonnull TaskListener listener) {
-        BuildTriggerAction action = run.getAction(BuildTriggerAction.class);
-        if (action != null) {
+    public void onCompleted(Run<?,?> run, @Nonnull TaskListener listener) {
+        for (BuildTriggerAction action : run.getActions(BuildTriggerAction.class)) {
             if (!action.isPropagate() || run.getResult() == Result.SUCCESS) {
                 action.getStepContext().onSuccess(new RunWrapper(run, false));
             } else {
@@ -27,9 +23,8 @@ public class BuildTriggerListener extends RunListener<Run<?,?>>{
     }
 
     @Override
-    public void onDeleted(Run run) {
-        BuildTriggerAction action = run.getAction(BuildTriggerAction.class);
-        if(action != null) {
+    public void onDeleted(Run<?,?> run) {
+        for (BuildTriggerAction action : run.getActions(BuildTriggerAction.class)) {
             action.getStepContext().onFailure(new Exception(run.getBuildStatusSummary().message));
         }
     }
