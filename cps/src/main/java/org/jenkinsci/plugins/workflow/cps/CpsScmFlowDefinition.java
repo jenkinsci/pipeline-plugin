@@ -125,7 +125,11 @@ public class CpsScmFlowDefinition extends FlowDefinition {
     }
 
     private String getFilePathSuffix() {
-        return new Properties().getProperty("hudson.slaves.WorkspaceList");
+        String defined_suffix = new Properties().getProperty("hudson.slaves.WorkspaceList");
+        if (defined_suffix == null || defined_suffix.equals("")) {
+            defined_suffix = "@";
+        }
+        return defined_suffix;
     }
 
     @Extension public static class DescriptorImpl extends FlowDefinitionDescriptor {
