@@ -121,7 +121,7 @@ public class CpsScmFlowDefinition extends FlowDefinition {
     }
 
     private FilePath getFilePathWithSuffix(FilePath baseWorkspace) {
-        return baseWorkspace.withSuffix(getFilePathSuffix());
+        return baseWorkspace.withSuffix(getFilePathSuffix() + "script");
     }
 
     private String getFilePathSuffix() {
