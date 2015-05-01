@@ -40,6 +40,7 @@ import hudson.slaves.WorkspaceList;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
@@ -91,7 +92,7 @@ public class CpsScmFlowDefinition extends FlowDefinition {
             if (baseWorkspace == null) {
                 throw new IOException(node.getDisplayName() + " may be offline");
             }
-            dir = baseWorkspace.withSuffix("@script");
+            dir = getFilePathWithSuffix(baseWorkspace);
         } else { // should not happen, but just in case:
             dir = new FilePath(owner.getRootDir());
         }
@@ -117,6 +118,14 @@ public class CpsScmFlowDefinition extends FlowDefinition {
         CpsFlowExecution exec = new CpsFlowExecution(script, true, owner);
         exec.flowStartNodeActions.add(new WorkspaceActionImpl(dir, null));
         return exec;
+    }
+
+    private FilePath getFilePathWithSuffix(FilePath baseWorkspace) {
+        return baseWorkspace.withSuffix(getFilePathSuffix());
+    }
+
+    private String getFilePathSuffix() {
+        return new Properties().getProperty("hudson.slaves.WorkspaceList");
     }
 
     @Extension public static class DescriptorImpl extends FlowDefinitionDescriptor {
