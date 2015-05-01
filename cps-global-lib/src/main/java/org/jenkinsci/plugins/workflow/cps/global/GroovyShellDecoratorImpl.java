@@ -23,7 +23,7 @@ public class GroovyShellDecoratorImpl extends GroovyShellDecorator {
     @Override
     public void configureShell(CpsFlowExecution context, GroovyShell shell) {
         try {
-            shell.getClassLoader().addURL(new File(repo.workspace,"src").toURL());
+            shell.getClassLoader().addURL(new File(repo.workspace,"src").toURI().toURL());
         } catch (MalformedURLException e) {
             throw new AssertionError(e);
         }
