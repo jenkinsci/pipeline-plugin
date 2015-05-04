@@ -10,6 +10,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 
 /**
@@ -37,11 +39,16 @@ class CpsWhitelist extends AbstractWhitelist {
                 // These are just aliases for EchoStep.
                 return true;
             }
-            if (name.equals("getProperty") && args.length == 1) {
-                if (CpsScript.PROP_ENV.equals(args[0])) {
-                    return true;
-                } else if (CpsScript.PROP_BUILD.equals(args[0])) {
-                    return true;
+            if (name.equals("getProperty") && args.length == 1 && args[0] instanceof String) {
+                for (GroovyShellDecorator gsd : GroovyShellDecorator.all()) {
+                    try {
+                        Object o = gsd.getProperty((CpsScript) receiver, (String) args[0]);
+                        if (o != null) {
+                            return true;
+                        }
+                    } catch (Throwable x) {
+                        Logger.getLogger(CpsWhitelist.class.getName()).log(Level.WARNING, null, x);
+                    }
                 }
             }
         }
