@@ -2,7 +2,9 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
-## 1.6 (upcoming)
+## 1.7 (upcoming)
+
+## 1.6 (May 04 2015)
 
 * [JENKINS-28063](https://issues.jenkins-ci.org/browse/JENKINS-28063): `build` step did not properly handle the case that two upstream builds could trigger the same downstream build.
 * [JENKINS-28179](https://issues.jenkins-ci.org/browse/JENKINS-28179): honor `-Dhudson.slaves.WorkspaceList=<character>`
