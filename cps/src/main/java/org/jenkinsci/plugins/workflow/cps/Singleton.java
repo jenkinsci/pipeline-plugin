@@ -49,6 +49,6 @@ public abstract class Singleton implements ExtensionPoint {
      * @return a POJO or {@link GroovyObject}
      * @throws Exception if there was any problem creating it (will be thrown up to the script)
      */
-    public abstract @Nonnull Object getProperty(CpsScript script) throws Exception;
+    public abstract @Nonnull Object getProperty(@Nonnull CpsScript script) throws Exception;
 
 }
