@@ -84,6 +84,14 @@ public abstract class StepDescriptor extends Descriptor<Step> {
     }
 
     /**
+     * For UI presentation purposes, allows a plugin to mark a step as deprecated or advanced.
+     * @return true to exclude from main list of steps
+     */
+    public boolean isAdvanced() {
+        return false;
+    }
+
+    /**
      * Used when a {@link Step} is instantiated programmatically.
      * The default implementation just uses {@link DescribableHelper#instantiate}.
      * @param arguments
