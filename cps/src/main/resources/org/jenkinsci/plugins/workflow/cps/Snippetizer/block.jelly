@@ -26,6 +26,7 @@ THE SOFTWARE.
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:l="/lib/layout">
     <f:optionalBlock name="snippetizer" title="Snippet Generator" help="/${it.HELP_URL}">
+        <f:section title="Steps"/>
         <!-- Similar to f:dropdownDescriptorSelector, but adds fallback content to block, and JENKINS-25130 adds per-selection help: -->
         <f:dropdownList name="prototype" title="Sample Step">
             <j:forEach var="stepDescriptor" items="${it.stepDescriptors}">
@@ -69,5 +70,19 @@ THE SOFTWARE.
                 });
             }
         </script>
+        <f:section title="Singletons"/>
+        <f:dropdownList name="singleton" title="Singleton">
+            <j:forEach var="singleton" items="${it.singletons}">
+                <f:dropdownListBlock title="${singleton.name}" lazy="singleton,it">
+                    <l:ajax>
+                        <f:block>
+                            <st:include it="${singleton}" page="help" optional="true">
+                                ${%This singleton has not supplied a description.}
+                            </st:include>
+                        </f:block>
+                    </l:ajax>
+                </f:dropdownListBlock>
+            </j:forEach>
+        </f:dropdownList>
     </f:optionalBlock>
 </j:jelly>

@@ -109,20 +109,22 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
         owner = r;
     }
 
-    @Extension public static class Binder extends GroovyShellDecorator {
-        @Override public Object getProperty(CpsScript script, String property) throws Exception {
-            if (property.equals("env")) {
-                Run<?,?> run = script.$build();
-                if (run != null) {
-                    EnvActionImpl action = run.getAction(EnvActionImpl.class);
-                    if (action == null) {
-                        action = new EnvActionImpl();
-                        run.addAction(action);
-                    }
-                    return action;
+    @Extension public static class Binder extends Singleton {
+        @Override public String getName() {
+            return "env";
+        }
+        @Override public Object getProperty(CpsScript script) throws Exception {
+            Run<?,?> run = script.$build();
+            if (run != null) {
+                EnvActionImpl action = run.getAction(EnvActionImpl.class);
+                if (action == null) {
+                    action = new EnvActionImpl();
+                    run.addAction(action);
                 }
+                return action;
+            } else {
+                throw new IllegalStateException("no associated build");
             }
-            return null;
         }
     }
 

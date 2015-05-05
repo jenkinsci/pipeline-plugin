@@ -25,12 +25,12 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.Functions;
 import hudson.model.Descriptor;
 import hudson.model.RootAction;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -175,6 +175,12 @@ import org.kohsuke.stapler.StaplerResponse;
     @Restricted(DoNotUse.class) // JENKINS-26579: j:invokeStatic does not work on plugin classes
     public Collection<? extends StepDescriptor> getStepDescriptors() {
         return StepDescriptor.all();
+    }
+
+    @Restricted(DoNotUse.class)
+    public Collection<Singleton> getSingletons() {
+        // TODO order TBD. Alphabetical? Extension.ordinal?
+        return ExtensionList.lookup(Singleton.class);
     }
 
     @Restricted(NoExternalUse.class)

@@ -24,23 +24,31 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
-import hudson.Extension;
-import hudson.model.Run;
-import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
+import groovy.lang.GroovyObject;
+import hudson.ExtensionPoint;
+import javax.annotation.Nonnull;
+import jenkins.model.RunAction2;
 
-@Extension public class RunWrapperBinder extends Singleton {
+/**
+ * Defines a provider of a singleton (global variable) offered to flows.
+ * Should have a view named {@code help} offering usage.
+ */
+public abstract class Singleton implements ExtensionPoint {
 
-    @Override public String getName() {
-        return "currentBuild";
-    }
+    /**
+     * Defines the name of the singleton.
+     * @return a Java identifier
+     */
+    public abstract @Nonnull String getName();
 
-    @Override public Object getProperty(CpsScript script) throws Exception {
-        Run<?,?> build = script.$build();
-        if (build != null) {
-            return new RunWrapper(build, true);
-        } else {
-            throw new IllegalStateException("no associated build");
-        }
-    }
+    /**
+     * Gets or creates the singleton object.
+     * If the object is stateful, and the state should not be managed externally (such as with a {@link RunAction2}),
+     * then the implementation is responsible for saving it in the {@link CpsScript#getBinding}.
+     * @param script the script we are running
+     * @return a POJO or {@link GroovyObject}
+     * @throws Exception if there was any problem creating it (will be thrown up to the script)
+     */
+    public abstract @Nonnull Object getProperty(CpsScript script) throws Exception;
 
 }

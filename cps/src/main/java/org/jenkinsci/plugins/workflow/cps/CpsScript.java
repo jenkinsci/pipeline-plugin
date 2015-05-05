@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.workflow.cps;
 import com.cloudbees.groovy.cps.SerializableScript;
 import groovy.lang.GroovyShell;
 import hudson.EnvVars;
+import hudson.ExtensionList;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
@@ -99,14 +100,13 @@ public abstract class CpsScript extends SerializableScript {
 
     @Override
     public Object getProperty(String property) {
-        for (GroovyShellDecorator gsd : GroovyShellDecorator.all()) {
-            try {
-                Object o = gsd.getProperty(this, property);
-                if (o != null) {
-                    return o;
+        for (Singleton s : ExtensionList.lookup(Singleton.class)) {
+            if (s.getName().equals(property)) {
+                try {
+                    return s.getProperty(this);
+                } catch (Exception x) {
+                    throw new InvokerInvocationException(x);
                 }
-            } catch (Exception x) {
-                throw new InvokerInvocationException(x);
             }
         }
         return super.getProperty(property);

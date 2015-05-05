@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.cps;
 
+import hudson.ExtensionList;
 import org.codehaus.groovy.runtime.GStringImpl;
 import org.codehaus.groovy.runtime.ScriptBytecodeAdapter;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.Whitelist;
@@ -10,8 +11,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.WeakHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 
 /**
@@ -40,14 +39,9 @@ class CpsWhitelist extends AbstractWhitelist {
                 return true;
             }
             if (name.equals("getProperty") && args.length == 1 && args[0] instanceof String) {
-                for (GroovyShellDecorator gsd : GroovyShellDecorator.all()) {
-                    try {
-                        Object o = gsd.getProperty((CpsScript) receiver, (String) args[0]);
-                        if (o != null) {
-                            return true;
-                        }
-                    } catch (Throwable x) {
-                        Logger.getLogger(CpsWhitelist.class.getName()).log(Level.WARNING, null, x);
+                for (Singleton s : ExtensionList.lookup(Singleton.class)) {
+                    if (s.getName().equals(args[0])) {
+                        return true;
                     }
                 }
             }
