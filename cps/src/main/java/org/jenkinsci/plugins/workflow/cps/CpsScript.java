@@ -100,10 +100,10 @@ public abstract class CpsScript extends SerializableScript {
 
     @Override
     public Object getProperty(String property) {
-        for (Singleton s : ExtensionList.lookup(Singleton.class)) {
-            if (s.getName().equals(property)) {
+        for (GlobalVariable v : ExtensionList.lookup(GlobalVariable.class)) {
+            if (v.getName().equals(property)) {
                 try {
-                    return s.getProperty(this);
+                    return v.getValue(this);
                 } catch (Exception x) {
                     throw new InvokerInvocationException(x);
                 }

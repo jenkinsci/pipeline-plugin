@@ -70,14 +70,14 @@ THE SOFTWARE.
                 });
             }
         </script>
-        <f:section title="Singletons"/>
-        <f:dropdownList name="singleton" title="Singleton">
-            <j:forEach var="singleton" items="${it.singletons}">
-                <f:dropdownListBlock title="${singleton.name}" lazy="singleton,it">
+        <f:section title="Global variables"/>
+        <f:dropdownList name="var" title="Variable">
+            <j:forEach var="var" items="${it.globalVariables}">
+                <f:dropdownListBlock title="${var.name}" lazy="var,it">
                     <l:ajax>
                         <f:block>
-                            <st:include it="${singleton}" page="help" optional="true">
-                                ${%This singleton has not supplied a description.}
+                            <st:include it="${var}" page="help" optional="true">
+                                ${%This variable has not supplied a description.}
                             </st:include>
                         </f:block>
                     </l:ajax>

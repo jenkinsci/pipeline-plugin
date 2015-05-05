@@ -109,11 +109,11 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
         owner = r;
     }
 
-    @Extension public static class Binder extends Singleton {
+    @Extension public static class Binder extends GlobalVariable {
         @Override public String getName() {
             return "env";
         }
-        @Override public Object getProperty(CpsScript script) throws Exception {
+        @Override public Object getValue(CpsScript script) throws Exception {
             Run<?,?> run = script.$build();
             if (run != null) {
                 EnvActionImpl action = run.getAction(EnvActionImpl.class);

@@ -39,8 +39,8 @@ class CpsWhitelist extends AbstractWhitelist {
                 return true;
             }
             if (name.equals("getProperty") && args.length == 1 && args[0] instanceof String) {
-                for (Singleton s : ExtensionList.lookup(Singleton.class)) {
-                    if (s.getName().equals(args[0])) {
+                for (GlobalVariable v : ExtensionList.lookup(GlobalVariable.class)) {
+                    if (v.getName().equals(args[0])) {
                         return true;
                     }
                 }

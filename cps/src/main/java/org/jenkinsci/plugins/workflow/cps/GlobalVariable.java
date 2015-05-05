@@ -30,25 +30,28 @@ import javax.annotation.Nonnull;
 import jenkins.model.RunAction2;
 
 /**
- * Defines a provider of a singleton (global variable) offered to flows.
- * Should have a view named {@code help} offering usage.
+ * Defines a provider of a global variable offered to flows.
+ * Within a given flow execution, the variable is assumed to be a singleton.
+ * It is created on demand if the script refers to it by name.
+ * <p>Should have a view named {@code help} offering usage.
  */
-public abstract class Singleton implements ExtensionPoint {
+public abstract class GlobalVariable implements ExtensionPoint {
 
     /**
-     * Defines the name of the singleton.
+     * Defines the name of the variable.
      * @return a Java identifier
      */
     public abstract @Nonnull String getName();
 
     /**
-     * Gets or creates the singleton object.
+     * Gets or creates the singleton value of the variable.
      * If the object is stateful, and the state should not be managed externally (such as with a {@link RunAction2}),
      * then the implementation is responsible for saving it in the {@link CpsScript#getBinding}.
      * @param script the script we are running
      * @return a POJO or {@link GroovyObject}
      * @throws Exception if there was any problem creating it (will be thrown up to the script)
+     * @see CpsScript#getProperty
      */
-    public abstract @Nonnull Object getProperty(@Nonnull CpsScript script) throws Exception;
+    public abstract @Nonnull Object getValue(@Nonnull CpsScript script) throws Exception;
 
 }

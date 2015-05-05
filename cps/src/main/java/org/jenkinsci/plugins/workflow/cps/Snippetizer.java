@@ -178,9 +178,9 @@ import org.kohsuke.stapler.StaplerResponse;
     }
 
     @Restricted(DoNotUse.class)
-    public Collection<Singleton> getSingletons() {
+    public Collection<GlobalVariable> getGlobalVariables() {
         // TODO order TBD. Alphabetical? Extension.ordinal?
-        return ExtensionList.lookup(Singleton.class);
+        return ExtensionList.lookup(GlobalVariable.class);
     }
 
     @Restricted(NoExternalUse.class)

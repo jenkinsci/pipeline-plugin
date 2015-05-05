@@ -28,13 +28,13 @@ import hudson.Extension;
 import hudson.model.Run;
 import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
 
-@Extension public class RunWrapperBinder extends Singleton {
+@Extension public class RunWrapperBinder extends GlobalVariable {
 
     @Override public String getName() {
         return "currentBuild";
     }
 
-    @Override public Object getProperty(CpsScript script) throws Exception {
+    @Override public Object getValue(CpsScript script) throws Exception {
         Run<?,?> build = script.$build();
         if (build != null) {
             return new RunWrapper(build, true);
