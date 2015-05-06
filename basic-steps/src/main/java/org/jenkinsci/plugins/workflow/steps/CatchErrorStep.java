@@ -57,6 +57,10 @@ public final class CatchErrorStep extends AbstractStepImpl {
             return true;
         }
 
+        @Override public boolean isAdvanced() {
+            return true;
+        }
+
     }
 
     public static final class Execution extends AbstractStepExecutionImpl {

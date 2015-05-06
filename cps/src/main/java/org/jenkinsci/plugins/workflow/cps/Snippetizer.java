@@ -30,6 +30,7 @@ import hudson.Functions;
 import hudson.model.Descriptor;
 import hudson.model.RootAction;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -172,9 +173,15 @@ import org.kohsuke.stapler.StaplerResponse;
         return null;
     }
 
-    @Restricted(DoNotUse.class) // JENKINS-26579: j:invokeStatic does not work on plugin classes
-    public Collection<? extends StepDescriptor> getStepDescriptors() {
-        return StepDescriptor.all();
+    @Restricted(DoNotUse.class)
+    public Collection<? extends StepDescriptor> getStepDescriptors(boolean advanced) {
+        List<StepDescriptor> ds = new ArrayList<StepDescriptor>();
+        for (StepDescriptor d : StepDescriptor.all()) {
+            if (d.isAdvanced() == advanced) {
+                ds.add(d);
+            }
+        }
+        return ds;
     }
 
     @Restricted(DoNotUse.class)
