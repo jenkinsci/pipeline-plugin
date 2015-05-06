@@ -10,35 +10,5 @@ node {
 }
 </pre>
 <p>(Note that here we are using single quotes in Groovy, so the variable expansion is being done by the Bourne shell, not Jenkins.)
-<p>From Groovy code inside the block, the value is also accessible as <code>env.VARNAME</code>.
-You can write to this property rather than using the <code>withEnv</code> step,
-though any changes are global to the workflow build so should not include node-specific content such as file paths:
-<p><pre>
-env.MYTOOL_VERSION = '1.33'
-node {
-  sh '/usr/local/mytool-$MYTOOL_VERSION/bin/start'
-}
-</pre>
-<p>A set of environment variables are made available to all Jenkins projects, including workflows.
-The following is a general list of variables (by name) that are available;
-see the notes below the list for Workflow-specific details.
-
-<p>
-    <iframe src="${rootURL}/env-vars.html" width="100%"></iframe>
-</p>
-
-The following variables are currently unavailable inside a workflow script:
-<ul>
-    <li><code>EXECUTOR_NUMBER</code></li>
-    <li><code>NODE_NAME</code></li>
-    <li><code>NODE_LABELS</code></li>
-    <li><code>WORKSPACE</code></li>
-    <li>SCM-specific variables such as <code>SVN_REVISION</code><li>
-</ul>
-As an example of loading variable values from Groovy:
-<p><pre>
-mail to: 'devops@acme.com',
-    subject: "Job '${env.JOB_NAME}' (${env.BUILD_NUMBER}) is waiting for input",
-    body: "Please go to ${env.BUILD_URL} and verify the build"
-</pre>
+<p>See the documentation for the <code>env</code> singleton for more information on environment variables.
 </div>

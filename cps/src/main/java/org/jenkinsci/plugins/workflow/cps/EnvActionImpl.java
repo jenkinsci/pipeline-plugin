@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import groovy.lang.GroovyObjectSupport;
 import hudson.EnvVars;
+import hudson.Extension;
 import hudson.model.Run;
 import hudson.util.LogTaskListener;
 import java.io.IOException;
@@ -51,7 +52,7 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
     private transient EnvVars ownerEnvironment; // cache
     private transient Run<?,?> owner;
 
-    EnvActionImpl() {
+    private EnvActionImpl() {
         this.env = new TreeMap<String,String>();
     }
 
@@ -106,6 +107,25 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
 
     @Override public void onLoad(Run<?,?> r) {
         owner = r;
+    }
+
+    @Extension public static class Binder extends GlobalVariable {
+        @Override public String getName() {
+            return "env";
+        }
+        @Override public Object getValue(CpsScript script) throws Exception {
+            Run<?,?> run = script.$build();
+            if (run != null) {
+                EnvActionImpl action = run.getAction(EnvActionImpl.class);
+                if (action == null) {
+                    action = new EnvActionImpl();
+                    run.addAction(action);
+                }
+                return action;
+            } else {
+                throw new IllegalStateException("no associated build");
+            }
+        }
     }
 
 }

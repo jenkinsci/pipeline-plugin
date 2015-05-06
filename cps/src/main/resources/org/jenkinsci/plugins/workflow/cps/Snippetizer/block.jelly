@@ -26,6 +26,7 @@ THE SOFTWARE.
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:l="/lib/layout">
     <f:optionalBlock name="snippetizer" title="Snippet Generator" help="/${it.HELP_URL}">
+        <f:section title="Steps"/>
         <!-- Similar to f:dropdownDescriptorSelector, but adds fallback content to block, and JENKINS-25130 adds per-selection help: -->
         <f:dropdownList name="prototype" title="Sample Step">
             <j:forEach var="stepDescriptor" items="${it.stepDescriptors}">
@@ -69,5 +70,19 @@ THE SOFTWARE.
                 });
             }
         </script>
+        <f:section title="Global variables"/>
+        <f:dropdownList name="var" title="Variable">
+            <j:forEach var="var" items="${it.globalVariables}">
+                <f:dropdownListBlock title="${var.name}" lazy="var,it">
+                    <l:ajax>
+                        <f:block>
+                            <st:include it="${var}" page="help" optional="true">
+                                ${%This variable has not supplied a description.}
+                            </st:include>
+                        </f:block>
+                    </l:ajax>
+                </f:dropdownListBlock>
+            </j:forEach>
+        </f:dropdownList>
     </f:optionalBlock>
 </j:jelly>
