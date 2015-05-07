@@ -25,3 +25,4 @@ push:
 
 push-latest: push
 	docker tag -f $(IMAGE):$(TAG) $(IMAGE):latest
+	docker push $(IMAGE):latest
