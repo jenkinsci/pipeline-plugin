@@ -65,7 +65,7 @@ public class EnvStep extends AbstractStepImpl {
         
         @Override public boolean start() throws Exception {
             getContext().newBodyInvoker().
-                withContext(new ExpanderImpl(step.overrides)).
+                withContext(EnvironmentExpander.merge(getContext().get(EnvironmentExpander.class), new ExpanderImpl(step.overrides))).
                 withCallback(BodyExecutionCallback.wrap(getContext())).
                 start();
             return false;
