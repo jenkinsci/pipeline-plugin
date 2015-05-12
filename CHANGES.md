@@ -4,7 +4,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.7 (upcoming)
 
-* `withEnv` clobbered environment variables set in enclosing steps.
+* [JENKINS-28317](https://issues.jenkins-ci.org/browse/JENKINS-28317) `withEnv` clobbered environment variables set in enclosing steps.
 
 ## 1.6 (May 04 2015)
 
