@@ -31,6 +31,9 @@ public class WorkflowLibRepositoryTest {
     @Inject
     WorkflowLibRepository repo;
 
+    @Inject
+    UserDefinedGlobalVariableList uvl;
+
     /**
      * Have some global libs
      */
@@ -83,6 +86,40 @@ public class WorkflowLibRepositoryTest {
                 story.j.assertBuildStatusSuccess(b);
 
                 story.j.assertLogContains("o=42", b);
+            }
+        });
+    }
+
+    /**
+     * User can define global variables.
+     */
+    @Test
+    public void userDefinedGlobalVariable() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                File f = new File(repo.workspace, "src/acme.groovy");
+                f.getParentFile().mkdirs();
+
+                FileUtils.writeStringToFile(f,
+                        "def hello(name) { node { sh \"echo Hello ${name}\" } } \n" +
+                                "def foo(x) { this.x = x+'-set'; } \n" +
+                                "def bar() { return x+'-get' } \n");
+
+                // simulate the effect of push
+                uvl.rebuild();
+
+                WorkflowJob p = jenkins.createProject(WorkflowJob.class, "p");
+
+                p.setDefinition(new CpsFlowDefinition(
+                        "acme.hello('Workflow');" +
+                        "acme.foo('seed');" +
+                        "echo '['+acme.bar()+']'"));
+
+                // build this workflow
+                WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+
+                story.j.assertLogContains("Hello Workflow", b);
+                story.j.assertLogContains("[seed-set-get]", b);
             }
         });
     }
