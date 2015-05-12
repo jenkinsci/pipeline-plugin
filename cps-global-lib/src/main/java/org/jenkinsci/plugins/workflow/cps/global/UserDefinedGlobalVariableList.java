@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 public class UserDefinedGlobalVariableList {
     private @Inject WorkflowLibRepository repo;
 
-    private final ExtensionList<GlobalVariable> globalVariables = Jenkins.getInstance().getExtensionList(GlobalVariable.class);
+    private final ExtensionList<GlobalVariable> globalVariables = Jenkins.getActiveInstance().getExtensionList(GlobalVariable.class);
 
     /**
      * Rebuilds the list of {@link UserDefinedGlobalVariable}s and update {@link ExtensionList} accordingly.
@@ -66,7 +66,7 @@ public class UserDefinedGlobalVariableList {
      */
     @Initializer(fatal=false,after= InitMilestone.EXTENSIONS_AUGMENTED,before=InitMilestone.JOB_LOADED)
     public static void init() {
-        Jenkins.getInstance().getExtensionList(UserDefinedGlobalVariableList.class).get(UserDefinedGlobalVariableList.class).rebuild();
+        Jenkins.getActiveInstance().getExtensionList(UserDefinedGlobalVariableList.class).get(UserDefinedGlobalVariableList.class).rebuild();
     }
 
     private static final Logger LOGGER = Logger.getLogger(UserDefinedGlobalVariableList.class.getName());
