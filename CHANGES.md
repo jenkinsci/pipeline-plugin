@@ -20,6 +20,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 * [JENKINS-27695](https://issues.jenkins-ci.org/browse/JENKINS-27695): critical error in 1.607+ running `node` blocks.
 * [JENKINS-26128](https://issues.jenkins-ci.org/browse/JENKINS-26128) added a `withEnv` step. `env.VAR = value` syntax remains supported but `withEnv` should be preferred.
 * [JENKINS-27474](https://issues.jenkins-ci.org/browse/JENKINS-27474): added a `fileExists` step.
+* [JENKINS-26552](https://issues.jenkins-ci.org/browse/JENKINS-26552) and thus [JENKINS-27389](https://issues.jenkins-ci.org/browse/JENKINS-27389): problems with environment variables fixed.
 * Avoid some possible name clashes with function names in scripts (`build` reported).
 * API addition: block-scoped steps can now pass in `EnvironmentExpander` and/or `ConsoleLogFilter` to better customize processing of nested code.
 
