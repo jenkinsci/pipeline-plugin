@@ -4,7 +4,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.7 (upcoming)
 
-* [JENKINS-28317](https://issues.jenkins-ci.org/browse/JENKINS-28317) `withEnv` clobbered environment variables set in enclosing steps.
+* [JENKINS-28317](https://issues.jenkins-ci.org/browse/JENKINS-28317): `withEnv` clobbered environment variables set in enclosing steps.
 * Ability to make some steps (such as `catchError`) as “advanced/deprecated”.
 * Ability to define global variables available to all scripts, with accompanying documentation, such as `env` and `currentBuild`.
 
@@ -20,7 +20,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 * Now based on Jenkins core 1.596.1.
 * [JENKINS-27531](https://issues.jenkins-ci.org/browse/JENKINS-27531): critical startup error in 1.597+ loading build records migrated from before 1.597.
 * [JENKINS-27695](https://issues.jenkins-ci.org/browse/JENKINS-27695): critical error in 1.607+ running `node` blocks.
-* [JENKINS-26128](https://issues.jenkins-ci.org/browse/JENKINS-26128) added a `withEnv` step. `env.VAR = value` syntax remains supported but `withEnv` should be preferred.
+* [JENKINS-26128](https://issues.jenkins-ci.org/browse/JENKINS-26128): added a `withEnv` step. `env.VAR = value` syntax remains supported but `withEnv` should be preferred.
 * [JENKINS-27474](https://issues.jenkins-ci.org/browse/JENKINS-27474): added a `fileExists` step.
 * [JENKINS-26552](https://issues.jenkins-ci.org/browse/JENKINS-26552) and thus [JENKINS-27389](https://issues.jenkins-ci.org/browse/JENKINS-27389): problems with environment variables fixed.
 * Avoid some possible name clashes with function names in scripts (`build` reported).
