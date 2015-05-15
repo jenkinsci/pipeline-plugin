@@ -24,10 +24,10 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
-import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
 import com.cloudbees.groovy.cps.SerializableScript;
 import groovy.lang.GroovyShell;
 import hudson.EnvVars;
+import hudson.ExtensionList;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
@@ -51,8 +51,6 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 public abstract class CpsScript extends SerializableScript {
 
     private static final String STEPS_VAR = "steps";
-    static final String PROP_ENV = "env";
-    static final String PROP_BUILD = "currentBuild";
 
     transient CpsFlowExecution execution;
 
@@ -102,45 +100,25 @@ public abstract class CpsScript extends SerializableScript {
 
     @Override
     public Object getProperty(String property) {
-        if (property.equals(PROP_ENV)) {
-            return $env();
-        } else if (property.equals(PROP_BUILD)) {
-            try {
-                return new RunWrapper($build(), true);
-            } catch (IOException x) {
-                throw new InvokerInvocationException(x);
+        for (GlobalVariable v : ExtensionList.lookup(GlobalVariable.class)) {
+            if (v.getName().equals(property)) {
+                try {
+                    return v.getValue(this);
+                } catch (Exception x) {
+                    throw new InvokerInvocationException(x);
+                }
             }
         }
         return super.getProperty(property);
     }
 
-    private @CheckForNull Run<?,?> $build() throws IOException {
+    @CheckForNull Run<?,?> $build() throws IOException {
         FlowExecutionOwner owner = execution.getOwner();
         Queue.Executable qe = owner.getExecutable();
         if (qe instanceof Run) {
             return (Run) qe;
         } else {
             return null;
-        }
-    }
-
-    private EnvActionImpl $env() {
-        try {
-            Run<?,?> run = $build();
-            if (run != null) {
-                EnvActionImpl action = run.getAction(EnvActionImpl.class);
-                if (action == null) {
-                    action = new EnvActionImpl();
-                    run.addAction(action);
-                }
-                return action;
-            } else {
-                return null;
-            }
-        } catch (RuntimeException x) {
-            throw x;
-        } catch (Exception x) {
-            throw new RuntimeException(x);
         }
     }
 

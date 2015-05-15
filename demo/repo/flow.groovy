@@ -26,7 +26,7 @@ input message: "Does ${jettyUrl}staging/ look good?"
 try {
     checkpoint('Before production')
 } catch (NoSuchMethodError _) {
-    echo 'Checkpoint feature available in Jenkins Enterprise by CloudBees.'
+    echo 'Checkpoint feature available in CloudBees Jenkins Enterprise.'
 }
 stage name: 'Production', concurrency: 1
 node('master') {

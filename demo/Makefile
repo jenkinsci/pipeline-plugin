@@ -5,7 +5,7 @@ build:
 	docker build -t $(IMAGE):$(TAG) .
 
 run: build
-	docker run -p 8080:8080 -p 8081:8081 -ti $(IMAGE):$(TAG)
+	docker run --rm -p 8080:8080 -p 8081:8081 -ti $(IMAGE):$(TAG)
 
 build-snapshot: build
 	[ -f ../aggregator/target/workflow-aggregator.hpi ] || mvn -f .. -DskipTests clean install
@@ -14,7 +14,7 @@ build-snapshot: build
 	docker build -t $(IMAGE):SNAPSHOT snapshot
 
 run-snapshot: build-snapshot
-	docker run -p 8080:8080 -p 8081:8081 -ti $(IMAGE):SNAPSHOT
+	docker run --rm -p 8080:8080 -p 8081:8081 -ti $(IMAGE):SNAPSHOT
 
 clean:
 	rm -rf snapshot/plugins
@@ -25,3 +25,4 @@ push:
 
 push-latest: push
 	docker tag -f $(IMAGE):$(TAG) $(IMAGE):latest
+	docker push $(IMAGE):latest

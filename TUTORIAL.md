@@ -6,7 +6,7 @@ You need to be running Jenkins 1.580.1 or later (1.596.1 or later for more recen
 If you have not already done so, make sure Workflow is installed: go to the Plugin Manager and install _Workflow: Aggregator_ and restart Jenkins.
 Also make sure the _Git_ and _JUnit_ plugins are installed and up to date.
 
-If you are running Jenkins Enterprise 14.11 or later, you already have Workflow (plus some extra associated features).
+If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Workflow (plus some extra associated features).
 
 If you want to play with Workflow without installing Jenkins separately (or touching your production system), try running the [Docker demo](demo/README.md).
 

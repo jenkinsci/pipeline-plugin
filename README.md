@@ -42,7 +42,7 @@ See the [changelog](CHANGES.md) for news.
 For OSS Jenkins users, install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
 You will need to restart Jenkins to complete installation.
 
-Jenkins Enterprise by CloudBees users get Workflow automatically as of the 14.11 (1.580.1.1) release.
+CloudBees Jenkins Enterprise users get Workflow automatically as of the 14.11 (1.580.1.1) release.
 Otherwise install _CloudBees Workflow: Aggregator_ from the update center.
 Again dependencies will be pulled in automatically, including all the OSS plugins.
 

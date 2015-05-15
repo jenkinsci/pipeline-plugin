@@ -44,8 +44,8 @@ Sample demo scenario
   via [restart UI](http://localhost:8080/restart). Doing this while the integration test is running,
   as steps like Git checkout will get disrupted by restart.
 
-Jenkins Enterprise variant
+CloudBees Jenkins Enterprise variant
 --------------------------
 
-If you would like to see Jenkins Enterprise features (such as checkpoints and the stage pipeline view),
+If you would like to see CloudBees Jenkins Enterprise features (such as checkpoints and the stage pipeline view),
 see the [extended demo page](https://registry.hub.docker.com/u/cloudbees/workflow-demo/).

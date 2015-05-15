@@ -32,7 +32,7 @@
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
-    <version>1.6-SNAPSHOT</version>
+    <version>1.7-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Workflow: Parent</name>
     <url>https://github.com/jenkinsci/workflow-plugin</url>
@@ -77,7 +77,7 @@
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>durable-task</artifactId>
-                <version>1.5-alpha-1</version>
+                <version>1.5</version>
             </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
@@ -154,7 +154,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.0</version> <!-- need MFINDBUGS-118 in 2.5 -->
+                <version>3.0.1</version> <!-- need MFINDBUGS-118 in 2.5 -->
             </plugin>
         </plugins>
     </build>

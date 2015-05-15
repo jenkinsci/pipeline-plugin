@@ -10,9 +10,17 @@ Only noting significant user-visible or major API changes, not internal code cle
 * [JENKINS-22941](https://issues.jenkins-ci.org/browse/JENKINS-22941): allow Jenkins safe restart to proceed even while a flow build is running, so long as it is just waiting (for an external process, `waitUntil`, etc.).
 * [JENKINS-26900](https://issues.jenkins-ci.org/browse/JENKINS-26900): hide the “flyweight” executor on master corresponding to the flow build when it is just waiting.
 
-## 1.6 (upcoming)
+## 1.7 (upcoming)
 
-* [JENKINS-27571](https://issues.jenkins-ci.org/browse/JENKINS-27571) Fixed link in build sidepanel.
+* [JENKINS-28317](https://issues.jenkins-ci.org/browse/JENKINS-28317): `withEnv` clobbered environment variables set in enclosing steps.
+* Ability to make some steps (such as `catchError`) as “advanced/deprecated”.
+* Ability to define global variables available to all scripts, with accompanying documentation, such as `env` and `currentBuild`.
+
+## 1.6 (May 04 2015)
+
+* [JENKINS-28063](https://issues.jenkins-ci.org/browse/JENKINS-28063): `build` step did not properly handle the case that two upstream builds could trigger the same downstream build.
+* [JENKINS-28179](https://issues.jenkins-ci.org/browse/JENKINS-28179): honor `-Dhudson.slaves.WorkspaceList=<character>`
+* [JENKINS-27571](https://issues.jenkins-ci.org/browse/JENKINS-27571): Fixed link in build sidepanel.
 * API addition: `LauncherDecorator` can now be used in block-scoped steps, and there is more flexibility in handling exits from durable tasks.
 
 ## 1.5 (Apr 01 2015)
@@ -20,8 +28,9 @@ Only noting significant user-visible or major API changes, not internal code cle
 * Now based on Jenkins core 1.596.1.
 * [JENKINS-27531](https://issues.jenkins-ci.org/browse/JENKINS-27531): critical startup error in 1.597+ loading build records migrated from before 1.597.
 * [JENKINS-27695](https://issues.jenkins-ci.org/browse/JENKINS-27695): critical error in 1.607+ running `node` blocks.
-* [JENKINS-26128](https://issues.jenkins-ci.org/browse/JENKINS-26128) added a `withEnv` step. `env.VAR = value` syntax remains supported but `withEnv` should be preferred.
+* [JENKINS-26128](https://issues.jenkins-ci.org/browse/JENKINS-26128): added a `withEnv` step. `env.VAR = value` syntax remains supported but `withEnv` should be preferred.
 * [JENKINS-27474](https://issues.jenkins-ci.org/browse/JENKINS-27474): added a `fileExists` step.
+* [JENKINS-26552](https://issues.jenkins-ci.org/browse/JENKINS-26552) and thus [JENKINS-27389](https://issues.jenkins-ci.org/browse/JENKINS-27389): problems with environment variables fixed.
 * Avoid some possible name clashes with function names in scripts (`build` reported).
 * API addition: block-scoped steps can now pass in `EnvironmentExpander` and/or `ConsoleLogFilter` to better customize processing of nested code.
 
