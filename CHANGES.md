@@ -5,6 +5,8 @@ Only noting significant user-visible or major API changes, not internal code cle
 ## 1.7 (upcoming)
 
 * [JENKINS-28317](https://issues.jenkins-ci.org/browse/JENKINS-28317) `withEnv` clobbered environment variables set in enclosing steps.
+* Ability to make some steps (such as `catchError`) as “advanced/deprecated”.
+* Ability to define global variables available to all scripts, with accompanying documentation, such as `env` and `currentBuild`.
 
 ## 1.6 (May 04 2015)
 
