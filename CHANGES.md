@@ -80,7 +80,6 @@ Only noting significant user-visible or major API changes, not internal code cle
 * Incorrect build result (status) sometimes shown in log.
 * `url:` can now be omitted from the `git` step when it is the only parameter.
 
-## 1.0
+## 1.0 (Nov 25 2014)
 
-No changes from 1.0-beta-1.
-See [here](https://github.com/jenkinsci/workflow-plugin/blob/cdca218ca11e127d97543a2e209803708c5af9d8/CHANGES.md) for changes in pre-1.0 betas.
+See [archives](https://github.com/jenkinsci/workflow-plugin/blob/cdca218ca11e127d97543a2e209803708c5af9d8/CHANGES.md) for changes in pre-1.0 betas.
