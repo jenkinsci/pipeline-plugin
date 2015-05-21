@@ -33,7 +33,7 @@
     <artifactId>workflow-durable-task-step</artifactId>
     <packaging>hpi</packaging>
     <name>Workflow: Durable Task Step</name>
-    <url>https://github.com/jenkinsci/workflow-plugin</url>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
