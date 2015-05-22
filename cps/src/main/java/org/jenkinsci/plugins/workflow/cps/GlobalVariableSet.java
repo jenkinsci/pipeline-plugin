@@ -1,8 +1,8 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.ExtensionPoint;
-import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
@@ -25,7 +25,7 @@ public abstract class GlobalVariableSet implements ExtensionPoint, Iterable<Glob
     public static class GlobalVariableProvider extends GlobalVariableSet {
         @Override
         public Iterator<GlobalVariable> iterator() {
-            return Jenkins.getInstance().getExtensionList(GlobalVariable.class).iterator();
+            return ExtensionList.lookup(GlobalVariable.class).iterator();
         }
     }
 }
