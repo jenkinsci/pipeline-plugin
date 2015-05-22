@@ -17,8 +17,9 @@ import java.io.IOException;
  * Global variable backed by user-supplied script.
  *
  * @author Kohsuke Kawaguchi
+ * @see UserDefinedGlobalVariableList
  */
-// not @Extension because these are manually registered
+// not @Extension because these are instantiated programmatically
 public class UserDefinedGlobalVariable extends GlobalVariable {
     private final WorkflowLibRepository repo;
     private final String name;
