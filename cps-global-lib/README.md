@@ -13,18 +13,24 @@ Every workflow script in your Jenkins see these shared library scripts in their 
 The directory structure of the shared library repository is as follows:
 
     (root)
-     +- src                 # groovy source files
-         +- org
-             +- foo
-                 +- Bar.groovy  # for org.foo.Bar class
-
+     +- src                     # groovy source files
+     |   +- org
+     |       +- foo
+     |           +- Bar.groovy  # for org.foo.Bar class
+     +- vars
+         +- foo.groovy          # for global 'foo' variable/function 
+         +- foo.txt             # help for 'foo' variable/function
 
 The `src` directory should look like standard Java source directory structure.
-This directory is added to the classpath when executing workflows. The groovy
-source files in this directory get the same sandbox / CPS transformation
-just like your workflow scripts.
+This directory is added to the classpath when executing workflows.
 
-Directories other than "src" is reserved for future enhancements.
+The `vars` directory hosts scripts that define global variables accessible from
+workflow scripts.
+
+The groovy source files in these directories get the same sandbox / CPS
+transformation just like your workflow scripts.
+
+Other directories under the root are reserved for future enhancements.
 
 
 ### Accessing repository
@@ -84,3 +90,86 @@ You can then call such function from your main workflow script like this:
     def z = new org.foo.Zot()
     z.checkOutFrom(repo)
 
+### Defining global functions
+You can define your own functions that looks and feels like built-in step functions like `sh` or `git`.
+For example, to define `helloWorld` step of your own, create a file named `vars/helloWorld.groovy` and
+define the `call` method:
+
+    $ cat vars/helloWorld.groovy
+    def call(msg) {
+        // you can call any valid step functions from your code, just like you can from workflow scripts
+        echo "Hello world, ${name}"
+    }
+
+Then your workflow can call this function like this:
+
+    helloWorld "Joe"
+    helloWorld("Joe")
+
+If called with a block, the `call` method will receive a `Closure` object. You can define that explicitly
+as the type to clarify your intent, like the following:
+
+    $ cat vars/windows.groovy
+    def call(Closure body) {
+        node('windows') {
+            body()
+        }
+    }
+
+Your workflow can call this function like this:
+
+    windows {
+        bat "cmd /?"
+    }
+
+See [the closure chapter of Groovy language reference](http://www.groovy-lang.org/closures.html) for more details
+about the block syntax in Groovy.
+
+### Defining global variables
+Internally, scripts in the `vars` directory are instantiated as a singleton on-demand, when used first.
+So it is possible to define more methods, properties on a single file that interact with each other:
+
+    $ cat vars/acme.groovy
+    def setFoo(v) {
+        this.foo = v;
+    }
+    def getFoo() {
+        return this.foo;
+    }
+    def say(msg) {
+        echo "Hello world, ${name}"
+    }
+
+Then your workflow can call these functions like this:
+
+    acme.foo = 5;
+    echo acme.foo; // print 5
+    acme.say "Joe" // print "Hello world, Joe"
+
+### Define more structured DSL
+If you have a lot of workflow jobs that are mostly similar, the global function/variable mechanism gives you
+a handy tool to build a higher-level DSL that captures the similarity. For example, all Jenkins plugins are
+built and tested in the same way, so we might write a global function named `jenkinsPlugin` like this:
+
+    $ cat vars/jenkinsPlugins.groovy
+    def call() {
+        // evaluate the body block, and collect configuration into the object
+        def config = [:]
+        body.resolveStrategy = Closure.DELEGATE_FIRST
+        body.delegate = config
+        body()
+        
+        // now build, based on the configuration provided
+        node {
+            git url: "https://github.com/jenkinsci/${config.name}-plugin.git"
+            sh "mvn install"
+            mail to:"...", subject: "${config.name} plugin build", body: "..."
+        }
+    }
+
+With this, the workflow script will look a whole lot simpler, to the point that people who don't know anything
+about Groovy can write it:
+
+    jenkinsPlugin {
+        name = 'git'
+    }

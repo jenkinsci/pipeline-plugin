@@ -1,7 +1,10 @@
 package org.jenkinsci.plugins.workflow.cps.global;
 
 import java.io.File;
+import java.util.Arrays;
+
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -100,11 +103,23 @@ public class WorkflowLibRepositoryTest {
                 File f = new File(repo.workspace, UserDefinedGlobalVariable.PREFIX+"/acme.groovy");
                 f.getParentFile().mkdirs();
 
-                FileUtils.writeStringToFile(f,
-                        "def hello(name) { node { sh \"echo Hello ${name}\" } } \n" +
-                                "def foo(x) { this.x = x+'-set'; } \n" +
-                                "def bar() { return x+'-get' } \n" +
-                                "def call(a,b) { echo \"call($a,$b)\" }");
+                FileUtils.writeStringToFile(f, StringUtils.join(Arrays.asList(
+                        "def hello(name) { node { sh \"echo Hello ${name}\" } }",
+                        "def foo(x) { this.x = x+'-set'; }",
+                        "def bar() { return x+'-get' }",
+
+                        // test invocation as a function
+                        "def call(a,b) { echo \"call($a,$b)\" }",
+
+                        // test closure invocation from body
+                        "def bodyCall(body) { ",
+                        "  def config = [:]",
+                        "  body.resolveStrategy = Closure.DELEGATE_FIRST",
+                        "  body.delegate = config",
+                        "  body()",
+                        "  echo 'title was '+config.title",
+                        "}")
+                        , "\n"));
 
                 // simulate the effect of push
                 uvl.rebuild();
@@ -115,7 +130,8 @@ public class WorkflowLibRepositoryTest {
                         "acme.hello('Workflow');" +
                         "acme.foo('seed');" +
                         "echo '['+acme.bar()+']';"+
-                        "acme(1,2);"));
+                        "acme(1,2);"+
+                        "acme.bodyCall { title = 'yolo' }"));
 
                 // build this workflow
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
@@ -123,6 +139,7 @@ public class WorkflowLibRepositoryTest {
                 story.j.assertLogContains("Hello Workflow", b);
                 story.j.assertLogContains("[seed-set-get]", b);
                 story.j.assertLogContains("call(1,2)", b);
+                story.j.assertLogContains("name was yolo", b);
             }
         });
     }

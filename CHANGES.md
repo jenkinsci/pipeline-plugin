@@ -4,6 +4,8 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.7 (upcoming)
 
+* [JENKINS-26135](https://issues.jenkins-ci.org/browse/JENKINS-26135): User-defined global variables/functions in git-global-lib
+
 ## 1.6 (May 04 2015)
 
 * [JENKINS-28063](https://issues.jenkins-ci.org/browse/JENKINS-28063): `build` step did not properly handle the case that two upstream builds could trigger the same downstream build.
