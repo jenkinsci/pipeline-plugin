@@ -103,7 +103,8 @@ public class WorkflowLibRepositoryTest {
                 FileUtils.writeStringToFile(f,
                         "def hello(name) { node { sh \"echo Hello ${name}\" } } \n" +
                                 "def foo(x) { this.x = x+'-set'; } \n" +
-                                "def bar() { return x+'-get' } \n");
+                                "def bar() { return x+'-get' } \n" +
+                                "def call(a,b) { echo \"call($a,$b)\" }");
 
                 // simulate the effect of push
                 uvl.rebuild();
@@ -113,13 +114,15 @@ public class WorkflowLibRepositoryTest {
                 p.setDefinition(new CpsFlowDefinition(
                         "acme.hello('Workflow');" +
                         "acme.foo('seed');" +
-                        "echo '['+acme.bar()+']'"));
+                        "echo '['+acme.bar()+']';"+
+                        "acme(1,2);"));
 
                 // build this workflow
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
 
                 story.j.assertLogContains("Hello Workflow", b);
                 story.j.assertLogContains("[seed-set-get]", b);
+                story.j.assertLogContains("call(1,2)", b);
             }
         });
     }

@@ -38,6 +38,7 @@ import javax.annotation.CheckForNull;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.codehaus.groovy.runtime.DefaultGroovyStaticMethods;
+import org.codehaus.groovy.runtime.InvokerHelper;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -94,6 +95,20 @@ public abstract class CpsScript extends SerializableScript {
      */
     @Override
     public final Object invokeMethod(String name, Object args) {
+        // if global variables are defined by that name, try to call it.
+        // the 'call' convention comes from Closure
+        for (GlobalVariable v : GlobalVariable.ALL) {
+            if (v.getName().equals(name)) {
+                try {
+                    Object o = v.getValue(this);
+                    return InvokerHelper.getMetaClass(o).invokeMethod(o,"call",args);
+                } catch (Exception x) {
+                    throw new InvokerInvocationException(x);
+                }
+            }
+        }
+
+        // otherwise try Step impls.
         DSL dsl = (DSL) getBinding().getVariable(STEPS_VAR);
         return dsl.invokeMethod(name,args);
     }
