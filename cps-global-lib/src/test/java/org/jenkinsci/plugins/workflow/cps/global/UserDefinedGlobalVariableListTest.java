@@ -53,7 +53,7 @@ public class UserDefinedGlobalVariableListTest extends Assert {
 
         FilePath src =new FilePath(new File(dir, PREFIX));
         src.child("acme.groovy").write("// empty", "UTF-8");
-        src.child("acme.html").write("<b>not so wellformed help file<img></b>", "UTF-8");
+        src.child("acme.txt").write("Plain\ntext<", "UTF-8");
 
         UserDefinedGlobalVariable acme = new UserDefinedGlobalVariable(repo, "acme");
 
@@ -63,7 +63,7 @@ public class UserDefinedGlobalVariableListTest extends Assert {
         assertTrue(current().contains(acme));
 
         // help
-        assertEquals(acme.getHelpHtml(), src.child("acme.html").readToString());
+        assertEquals("Plain<br>text&lt;", acme.getHelpHtml());
 
         // and if the file is removed it should disappear
         src.child("acme.groovy").delete();

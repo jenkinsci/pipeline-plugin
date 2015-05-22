@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.cps.global;
 
 import groovy.lang.Binding;
+import hudson.markup.EscapedMarkupFormatter;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -54,13 +55,13 @@ public class UserDefinedGlobalVariable extends GlobalVariable {
     }
 
     /**
-     * Loads help from HTML, if available.
+     * Loads help from user-defined file, if available.
      */
     public String getHelpHtml() throws IOException {
-        File help = source(".html");
+        File help = source(".txt");
         if (!help.exists())     return null;
 
-        return FileUtils.readFileToString(help, Charsets.UTF_8);
+        return new EscapedMarkupFormatter().translate(FileUtils.readFileToString(help, Charsets.UTF_8));
     }
 
     private File source(String extension) {
