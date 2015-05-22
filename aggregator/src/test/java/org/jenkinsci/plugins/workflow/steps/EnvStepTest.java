@@ -121,4 +121,22 @@ public class EnvStepTest {
         });
     }
 
+    @Test public void nested() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                    "node {\n" +
+                    "  withEnv(['A=one']) {\n" +
+                    "    withEnv(['B=two']) {\n" +
+                    "      sh 'echo A=$A B=$B'\n" +
+                    "    }\n" +
+                    "  }\n" +
+                    "}"));
+                WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                story.j.assertLogContains("A=one B=two", b);
+            }
+        });
+    }
+
 }

@@ -48,6 +48,10 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `LogParserPublisher` (`log-parser`): [JENKINS-27208](https://issues.jenkins-ci.org/browse/JENKINS-27208)
 - [ ] `SlackNotifier` (`slack`): [JENKINS-27652](https://issues.jenkins-ci.org/browse/JENKINS-27652)
 - [ ] `DescriptionSetterPublisher` (`description-setter`): [PR 7](https://github.com/jenkinsci/description-setter-plugin/pull/7)
+- [ ] `CopyToSlaveBuildWrapper` and `CopyToMasterNotifier` (`copy-to-slave`): [JENKINS-28386](https://issues.jenkins-ci.org/browse/JENKINS-28386)
+- [ ] `VeracodeNotifier` (`veracode-scanner`): [JENKINS-28387](https://issues.jenkins-ci.org/browse/JENKINS-28387)
+- [ ] `SeleniumHtmlReportPublisher` (`seleniumhtmlreport`): [JENKINS-28388](https://issues.jenkins-ci.org/browse/JENKINS-28388)
+- [ ] `GitPublisher` (`git`) or a custom step: [JENKINS-28335](https://issues.jenkins-ci.org/browse/JENKINS-28335)
 
 ## Build wrappers
 
@@ -92,6 +96,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [ ] `zentimestamp`: [JENKINS-26958](https://issues.jenkins-ci.org/browse/JENKINS-26958)
 - [ ] `claim`: [JENKINS-27206](https://issues.jenkins-ci.org/browse/JENKINS-27206)
 - [ ] `ListSubversionTagsParameterValue` (`subversion`): [JENKINS-27718](https://issues.jenkins-ci.org/browse/JENKINS-27718)
+- [ ] `authorize-project`: [JENKINS-26670](https://issues.jenkins-ci.org/browse/JENKINS-26670)
 
 ## Custom steps
 

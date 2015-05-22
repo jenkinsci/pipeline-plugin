@@ -4,6 +4,9 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.7 (upcoming)
 
+* [JENKINS-28317](https://issues.jenkins-ci.org/browse/JENKINS-28317): `withEnv` clobbered environment variables set in enclosing steps.
+* Ability to make some steps (such as `catchError`) as “advanced/deprecated”.
+* Ability to define global variables available to all scripts, with accompanying documentation, such as `env` and `currentBuild`.
 * [JENKINS-26135](https://issues.jenkins-ci.org/browse/JENKINS-26135): User-defined global variables/functions in git-global-lib
 
 ## 1.6 (May 04 2015)
@@ -18,8 +21,9 @@ Only noting significant user-visible or major API changes, not internal code cle
 * Now based on Jenkins core 1.596.1.
 * [JENKINS-27531](https://issues.jenkins-ci.org/browse/JENKINS-27531): critical startup error in 1.597+ loading build records migrated from before 1.597.
 * [JENKINS-27695](https://issues.jenkins-ci.org/browse/JENKINS-27695): critical error in 1.607+ running `node` blocks.
-* [JENKINS-26128](https://issues.jenkins-ci.org/browse/JENKINS-26128) added a `withEnv` step. `env.VAR = value` syntax remains supported but `withEnv` should be preferred.
+* [JENKINS-26128](https://issues.jenkins-ci.org/browse/JENKINS-26128): added a `withEnv` step. `env.VAR = value` syntax remains supported but `withEnv` should be preferred.
 * [JENKINS-27474](https://issues.jenkins-ci.org/browse/JENKINS-27474): added a `fileExists` step.
+* [JENKINS-26552](https://issues.jenkins-ci.org/browse/JENKINS-26552) and thus [JENKINS-27389](https://issues.jenkins-ci.org/browse/JENKINS-27389): problems with environment variables fixed.
 * Avoid some possible name clashes with function names in scripts (`build` reported).
 * API addition: block-scoped steps can now pass in `EnvironmentExpander` and/or `ConsoleLogFilter` to better customize processing of nested code.
 
@@ -77,7 +81,6 @@ Only noting significant user-visible or major API changes, not internal code cle
 * Incorrect build result (status) sometimes shown in log.
 * `url:` can now be omitted from the `git` step when it is the only parameter.
 
-## 1.0
+## 1.0 (Nov 25 2014)
 
-No changes from 1.0-beta-1.
-See [here](https://github.com/jenkinsci/workflow-plugin/blob/cdca218ca11e127d97543a2e209803708c5af9d8/CHANGES.md) for changes in pre-1.0 betas.
+See [archives](https://github.com/jenkinsci/workflow-plugin/blob/cdca218ca11e127d97543a2e209803708c5af9d8/CHANGES.md) for changes in pre-1.0 betas.
