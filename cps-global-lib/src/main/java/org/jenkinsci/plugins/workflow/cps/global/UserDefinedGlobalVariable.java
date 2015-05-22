@@ -3,7 +3,10 @@ package org.jenkinsci.plugins.workflow.cps.global;
 import groovy.lang.Binding;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.CpsScript;
+import org.jenkinsci.plugins.workflow.cps.CpsThread;
 import org.jenkinsci.plugins.workflow.cps.GlobalVariable;
 
 import javax.annotation.Nonnull;
@@ -39,8 +42,11 @@ public class UserDefinedGlobalVariable extends GlobalVariable {
         if (binding.hasVariable(getName())) {
             instance = binding.getVariable(getName());
         } else {
-            // GroovyShellDecoratorImpl puts src/ into the classpath
-            instance = script.getClass().getClassLoader().loadClass(name).newInstance();
+            CpsThread c = CpsThread.current();
+            if (c==null)
+                throw new IllegalStateException("Expected to be called from CpsThread");
+
+            instance = c.getExecution().getShell().getClassLoader().parseClass(source(".groovy")).newInstance();
             binding.setVariable(getName(), instance);
         }
         return instance;
@@ -50,10 +56,14 @@ public class UserDefinedGlobalVariable extends GlobalVariable {
      * Loads help from HTML, if available.
      */
     public String getHelpHtml() throws IOException {
-        File help = new File(repo.workspace, "src/"+ name + ".html");
+        File help = source(".html");
         if (!help.exists())     return null;
 
         return FileUtils.readFileToString(help, Charsets.UTF_8);
+    }
+
+    private File source(String extension) {
+        return new File(repo.workspace, PREFIX+"/"+ name + extension);
     }
 
     @Override
@@ -69,4 +79,6 @@ public class UserDefinedGlobalVariable extends GlobalVariable {
     public int hashCode() {
         return name.hashCode();
     }
+
+    /*package*/ static final String PREFIX = "vars";
 }

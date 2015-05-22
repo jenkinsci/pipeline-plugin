@@ -41,7 +41,7 @@ public class WorkflowLibRepositoryTest {
     public void globalLib() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                File dir = new File(repo.workspace,"src/foo");
+                File dir = new File(repo.workspace,UserDefinedGlobalVariable.PREFIX+"/foo");
                 dir.mkdirs();
 
                 FileUtils.write(new File(dir, "Foo.groovy"),
@@ -97,7 +97,7 @@ public class WorkflowLibRepositoryTest {
     public void userDefinedGlobalVariable() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                File f = new File(repo.workspace, "src/acme.groovy");
+                File f = new File(repo.workspace, UserDefinedGlobalVariable.PREFIX+"/acme.groovy");
                 f.getParentFile().mkdirs();
 
                 FileUtils.writeStringToFile(f,

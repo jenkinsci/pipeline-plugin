@@ -19,6 +19,8 @@ import java.io.File;
 import java.net.URL;
 import java.util.List;
 
+import static org.jenkinsci.plugins.workflow.cps.global.UserDefinedGlobalVariable.PREFIX;
+
 /**
  * @author Kohsuke Kawaguchi
  */
@@ -49,7 +51,7 @@ public class UserDefinedGlobalVariableListTest extends Assert {
         clone.setDirectory(dir);
         Git git = clone.call();
 
-        FilePath src =new FilePath(new File(dir, "src"));
+        FilePath src =new FilePath(new File(dir, PREFIX));
         src.child("acme.groovy").write("// empty", "UTF-8");
         src.child("acme.html").write("<b>not so wellformed help file<img></b>", "UTF-8");
 
@@ -65,7 +67,7 @@ public class UserDefinedGlobalVariableListTest extends Assert {
 
         // and if the file is removed it should disappear
         src.child("acme.groovy").delete();
-        git.rm().addFilepattern("src/acme.groovy").call();
+        git.rm().addFilepattern(PREFIX+"/acme.groovy").call();
         commitAndPush(git);
         assertFalse(current().contains(acme));
     }

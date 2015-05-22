@@ -32,7 +32,7 @@ public class UserDefinedGlobalVariableList {
      * Rebuilds the list of {@link UserDefinedGlobalVariable}s and update {@link ExtensionList} accordingly.
      */
     public void rebuild() {
-        File[] children = new File(repo.workspace,"src").listFiles();
+        File[] children = new File(repo.workspace,UserDefinedGlobalVariable.PREFIX).listFiles();
         if (children==null) children = new File[0];
 
         Set<UserDefinedGlobalVariable> gone = new HashSet<UserDefinedGlobalVariable>(
