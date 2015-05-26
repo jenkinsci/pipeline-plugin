@@ -14,6 +14,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.mozilla.javascript.tools.shell.Global;
 
 import java.io.File;
 import java.net.URL;
@@ -78,7 +79,6 @@ public class UserDefinedGlobalVariableListTest extends Assert {
     }
 
     private List<UserDefinedGlobalVariable> current() {
-        ExtensionList<GlobalVariable> globals = j.jenkins.getExtensionList(GlobalVariable.class);
-        return Util.filter(globals, UserDefinedGlobalVariable.class);
+        return Util.filter(GlobalVariable.ALL, UserDefinedGlobalVariable.class);
     }
 }
