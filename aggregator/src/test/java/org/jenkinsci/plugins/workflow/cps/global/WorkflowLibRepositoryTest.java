@@ -139,7 +139,7 @@ public class WorkflowLibRepositoryTest {
                 story.j.assertLogContains("Hello Workflow", b);
                 story.j.assertLogContains("[seed-set-get]", b);
                 story.j.assertLogContains("call(1,2)", b);
-                story.j.assertLogContains("name was yolo", b);
+                story.j.assertLogContains("title was yolo", b);
             }
         });
     }
