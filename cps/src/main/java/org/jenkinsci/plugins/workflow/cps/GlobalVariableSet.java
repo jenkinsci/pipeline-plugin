@@ -21,6 +21,7 @@ public abstract class GlobalVariableSet implements ExtensionPoint, Iterable<Glob
      * Allow {@link GlobalVariable}s to be defined with {@link Extension}, and make them discoverable
      * via {@link GlobalVariableSet}. This simplifies the registration of single global variable.
      */
+    @Extension
     @Restricted(NoExternalUse.class)
     public static class GlobalVariableProvider extends GlobalVariableSet {
         @Override
