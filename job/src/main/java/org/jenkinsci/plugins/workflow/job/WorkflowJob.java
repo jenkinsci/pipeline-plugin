@@ -395,8 +395,10 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             return Collections.emptySet();
         }
         List<SCM> scms = new LinkedList<SCM>();
-        for (WorkflowRun.SCMCheckout co : b.checkouts) {
-            scms.add(co.scm);
+        if (b.checkouts != null) {
+            for (WorkflowRun.SCMCheckout co : b.checkouts) {
+                scms.add(co.scm);
+            }
         }
         return scms;
     }
@@ -418,6 +420,9 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         WorkflowRun b = getLastCompletedBuild();
         if (b == null) {
             listener.getLogger().println("no previous build to compare to");
+            return PollingResult.NO_CHANGES;
+        }
+        if (b.checkouts == null) {
             return PollingResult.NO_CHANGES;
         }
         for (WorkflowRun.SCMCheckout co : b.checkouts) {
