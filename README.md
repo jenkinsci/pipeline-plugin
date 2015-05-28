@@ -60,7 +60,7 @@ See the [demo overview](demo/README.md) using Docker if you want to try a comple
 
     docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo
 
-and browse [localhost:8081](http://localhost:8081/).
+and browse [localhost:8080](http://localhost:8080/).
 
 # Presentations
 
