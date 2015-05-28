@@ -306,16 +306,20 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     public synchronized void onFailure(Throwable t) {
         if (t==null)
             throw new IllegalArgumentException();
-        if (isCompleted())
-            throw new IllegalStateException("Already completed", t);
+        if (isCompleted()) {
+            LOGGER.log(Level.WARNING, "already completed", t);
+            return;
+        }
         this.outcome = new Outcome(null,t);
 
         scheduleNextRun();
     }
 
     public synchronized void onSuccess(Object returnValue) {
-        if (isCompleted())
-            throw new IllegalStateException("Already completed");
+        if (isCompleted()) {
+            LOGGER.log(Level.WARNING, "already completed", new IllegalStateException());
+            return;
+        }
         this.outcome = new Outcome(returnValue,null);
 
         scheduleNextRun();
