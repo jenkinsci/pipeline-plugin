@@ -24,11 +24,10 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:l="/lib/layout">
-    <f:optionalBlock name="snippetizer" title="Snippet Generator" help="/${it.HELP_URL}">
-        <!-- Similar to f:dropdownDescriptorSelector, but adds fallback content to block, and JENKINS-25130 adds per-selection help: -->
-        <f:dropdownList name="prototype" title="Sample Step">
-            <j:forEach var="stepDescriptor" items="${it.stepDescriptors}">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:d="jelly:define" xmlns:local="local">
+    <d:taglib uri="local">
+        <d:tag name="listSteps">
+            <j:forEach var="stepDescriptor" items="${stepDescriptors}">
                 <f:dropdownListBlock title="${stepDescriptor.displayName}" staplerClass="${stepDescriptor.clazz.name}" lazy="stepDescriptor,it">
                     <l:ajax>
                         <j:set var="instance" value="${null}"/>
@@ -49,6 +48,15 @@ THE SOFTWARE.
                     </l:ajax>
                 </f:dropdownListBlock>
             </j:forEach>
+        </d:tag>
+    </d:taglib>
+    <f:optionalBlock name="snippetizer" title="Snippet Generator" help="/${it.HELP_URL}">
+        <f:section title="Steps"/>
+        <!-- Similar to f:dropdownDescriptorSelector, but adds fallback content to block, and JENKINS-25130 adds per-selection help: -->
+        <f:dropdownList name="prototype" title="Sample Step">
+            <local:listSteps stepDescriptors="${it.getStepDescriptors(false)}"/>
+            <f:dropdownListBlock title="${%— Advanced/Deprecated —}"/>
+            <local:listSteps stepDescriptors="${it.getStepDescriptors(true)}"/>
         </f:dropdownList>
         <j:set var="id" value="${h.generateId()}"/>
         <f:block>
@@ -60,6 +68,9 @@ THE SOFTWARE.
                 buildFormTree(document.forms.config);
                 // TODO JSON.stringify fails in some circumstances: https://gist.github.com/jglick/70ec4b15c1f628fdf2e9 due to Array.prototype.toJSON
                 var json = Object.toJSON(JSON.parse(${configFormJS ?: 'document.forms.config'}.elements.json.value).${definitionJS ?: 'definition'}.snippetizer.prototype);
+                if (!json) {
+                    return; // just a separator
+                }
                 new Ajax.Request('${rootURL}/${it.GENERATE_URL}', {
                     method: 'POST',
                     parameters: {json: json},
@@ -69,5 +80,19 @@ THE SOFTWARE.
                 });
             }
         </script>
+        <f:section title="Global variables"/>
+        <f:dropdownList name="var" title="Variable">
+            <j:forEach var="var" items="${it.globalVariables}">
+                <f:dropdownListBlock title="${var.name}" lazy="var,it">
+                    <l:ajax>
+                        <f:block>
+                            <st:include it="${var}" page="help" optional="true">
+                                ${%This variable has not supplied a description.}
+                            </st:include>
+                        </f:block>
+                    </l:ajax>
+                </f:dropdownListBlock>
+            </j:forEach>
+        </f:dropdownList>
     </f:optionalBlock>
 </j:jelly>

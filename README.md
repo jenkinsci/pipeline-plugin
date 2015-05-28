@@ -36,15 +36,23 @@ Read the [tutorial](TUTORIAL.md) to get started writing workflows.
 # Installation
 
 Releases are available on the Jenkins update center.
-You need to be running a sufficiently recent Jenkins release, currently an LTS in the 1.596.x line or newer, or a newer weekly release.
+You need to be running a sufficiently recent Jenkins release: an LTS in the 1.580.x line or newer (currently 1.596.x for the latest updates), or a weekly release.
 See the [changelog](CHANGES.md) for news.
 
 For OSS Jenkins users, install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
 You will need to restart Jenkins to complete installation.
 
-Jenkins Enterprise by CloudBees users get Workflow automatically as of the 14.11 (1.580.1.1) release.
+CloudBees Jenkins Enterprise users get Workflow automatically as of the 14.11 (1.580.1.1) release.
 Otherwise install _CloudBees Workflow: Aggregator_ from the update center.
 Again dependencies will be pulled in automatically, including all the OSS plugins.
+
+# News & questions
+
+* [Changelog](CHANGES.md)
+* [jenkins-workflow tag](http://stackoverflow.com/tags/jenkins-workflow) on StackOverflow
+* [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide) (file issues in the `workflow-plugin` component, or other components with the `workflow` label)
+* [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow) (mention `workflow` in the subject)
+* [#JenkinsWorkflow](https://twitter.com/hashtag/JenkinsWorkflow) on Twitter
 
 # Demo
 
@@ -52,7 +60,7 @@ See the [demo overview](demo/README.md) using Docker if you want to try a comple
 
     docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo
 
-and browse [localhost:8081](http://localhost:8081/).
+and browse [localhost:8080](http://localhost:8080/).
 
 # Presentations
 
@@ -70,11 +78,8 @@ JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJ
 
 # Development
 
-* [Changelog](CHANGES.md)
 * [Ongoing plugin compatibility list](COMPATIBILITY.md)
 * [Source repository](https://github.com/jenkinsci/workflow-plugin)
-* [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide) (file issues in the `workflow-plugin` component, or other components with the `workflow` label)
-* [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow)
 * [Open pull requests](https://github.com/jenkinsci/workflow-plugin/pulls)
 * [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
   [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)

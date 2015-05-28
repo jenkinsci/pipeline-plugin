@@ -33,7 +33,7 @@
     <artifactId>workflow-stm</artifactId>
     <packaging>hpi</packaging>
     <name>Workflow: State Transition Machine</name>
-    <url>https://github.com/jenkinsci/workflow-plugin</url>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

@@ -47,6 +47,11 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `HipChatNotifier` (`hipchat`): [JENKINS-27202](https://issues.jenkins-ci.org/browse/JENKINS-27202)
 - [ ] `LogParserPublisher` (`log-parser`): [JENKINS-27208](https://issues.jenkins-ci.org/browse/JENKINS-27208)
 - [ ] `SlackNotifier` (`slack`): [JENKINS-27652](https://issues.jenkins-ci.org/browse/JENKINS-27652)
+- [ ] `DescriptionSetterPublisher` (`description-setter`): [PR 7](https://github.com/jenkinsci/description-setter-plugin/pull/7)
+- [ ] `CopyToSlaveBuildWrapper` and `CopyToMasterNotifier` (`copy-to-slave`): [JENKINS-28386](https://issues.jenkins-ci.org/browse/JENKINS-28386)
+- [ ] `VeracodeNotifier` (`veracode-scanner`): [JENKINS-28387](https://issues.jenkins-ci.org/browse/JENKINS-28387)
+- [ ] `SeleniumHtmlReportPublisher` (`seleniumhtmlreport`): [JENKINS-28388](https://issues.jenkins-ci.org/browse/JENKINS-28388)
+- [ ] `GitPublisher` (`git`) or a custom step: [JENKINS-28335](https://issues.jenkins-ci.org/browse/JENKINS-28335)
 
 ## Build wrappers
 
@@ -66,6 +71,7 @@ Implement `Trigger<ParameterizedJobMixIn.ParameterizedJob>` and implement `Trigg
 - [ ] `ghprb`: [JENKINS-26591](https://issues.jenkins-ci.org/browse/JENKINS-26591)
 - [ ] `github`: [JENKINS-27136](https://issues.jenkins-ci.org/browse/JENKINS-27136)
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
+- [ ] `deployment-notification`: [JENKINS-28632](https://issues.jenkins-ci.org/browse/JENKINS-28632)
 
 ## Clouds
 
@@ -75,8 +81,8 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [ ] `mansion-cloud`: [JENKINS-24815](https://issues.jenkins-ci.org/browse/JENKINS-24815)
 - [ ] `mock-slave` (for prototyping): [JENKINS-25090](https://issues.jenkins-ci.org/browse/JENKINS-25090)
 - [X] `docker`: supported as of 0.8
-- [X] `nectar-vmware` (Jenkins Enterprise): supported as of 4.3.2
-- [ ] `operations-center-cloud` (Jenkins Enterprise/Operations Center): RM-2642
+- [X] `nectar-vmware` (CloudBees Jenkins Enterprise): supported as of 4.3.2
+- [ ] `operations-center-cloud` (CloudBees Jenkins Enterprise/Operations Center): RM-2642
 - [X] `ec2`: known to work as is
 
 ## Miscellaneous
@@ -90,6 +96,8 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [X] `job-dsl`: implemented in 1.29
 - [ ] `zentimestamp`: [JENKINS-26958](https://issues.jenkins-ci.org/browse/JENKINS-26958)
 - [ ] `claim`: [JENKINS-27206](https://issues.jenkins-ci.org/browse/JENKINS-27206)
+- [ ] `ListSubversionTagsParameterValue` (`subversion`): [JENKINS-27718](https://issues.jenkins-ci.org/browse/JENKINS-27718)
+- [ ] `authorize-project`: [JENKINS-26670](https://issues.jenkins-ci.org/browse/JENKINS-26670)
 
 ## Custom steps
 

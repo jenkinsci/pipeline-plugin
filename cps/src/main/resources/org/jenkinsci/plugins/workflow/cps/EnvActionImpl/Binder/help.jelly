@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core">
+    <p>
+        Environment variables are accessible from Groovy code as <code>env.VARNAME</code>.
+        You can write to such properties as well:
+    </p>
+    <p>
+        <pre>env.MYTOOL_VERSION = '1.33'
+node {
+  sh '/usr/local/mytool-$MYTOOL_VERSION/bin/start'
+}</pre>
+    </p>
+    <p>
+        However any variables set this way are global to the workflow build.
+        For variables with node-specific content (such as file paths),
+        you should instead use the <code>withEnv</code> step,
+        to bind the variable only within a <code>node</code> block.
+    </p>
+    <p>
+        A set of environment variables are made available to all Jenkins projects, including workflows.
+        The following is a general list of variables (by name) that are available;
+        see the notes below the list for Workflow-specific details.
+    </p>
+    <iframe src="${rootURL}/env-vars.html" width="100%"/> <!-- TODO rather inline EnvironmentContributor/EnvVarsHtml/index.groovy -->
+    <p>
+        The following variables are currently unavailable inside a workflow script:
+    </p>
+    <ul>
+        <li><code>EXECUTOR_NUMBER</code></li>
+        <li><code>NODE_NAME</code></li>
+        <li><code>NODE_LABELS</code></li>
+        <li><code>WORKSPACE</code></li>
+        <li>SCM-specific variables such as <code>SVN_REVISION</code></li>
+    </ul>
+    <p>
+        As an example of loading variable values from Groovy:
+    </p>
+    <p>
+        <pre>mail to: 'devops@acme.com',
+    subject: "Job '${env.JOB_NAME}' (${env.BUILD_NUMBER}) is waiting for input",
+    body: "Please go to ${env.BUILD_URL} and verify the build"</pre>
+    </p>
+</j:jelly>

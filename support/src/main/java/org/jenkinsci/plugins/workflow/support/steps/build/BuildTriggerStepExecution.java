@@ -86,9 +86,13 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         // if the build is still in the queue, abort it.
         // BuildTriggerListener will report the failure, so this method shouldn't call getContext().onFailure()
         for (Queue.Item i : q.getItems()) {
-            BuildTriggerAction bta = i.getAction(BuildTriggerAction.class);
-            if (bta!=null && bta.getStepContext().equals(getContext())) {
-                q.cancel(i);
+            for (BuildTriggerAction bta : i.getActions(BuildTriggerAction.class)) {
+                if (bta.getStepContext().equals(getContext())) {
+                    // Note that it is a little questionable to cancel the queue item in case it has other causes,
+                    // but in the common case that this is the only cause, it is most intuitive to do so.
+                    // The same applies to aborting the actual build once started.
+                    q.cancel(i);
+                }
             }
         }
 
@@ -100,10 +104,10 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
                 Queue.Executable exec = e.getCurrentExecutable();
                 if (exec instanceof Run) {
                     Run<?,?> b = (Run) exec;
-
-                    BuildTriggerAction bta = b.getAction(BuildTriggerAction.class);
-                    if (bta!=null && bta.getStepContext().equals(getContext())) {
-                        e.interrupt(Result.ABORTED, new BuildTriggerCancelledCause(cause));
+                    for (BuildTriggerAction bta : b.getActions(BuildTriggerAction.class)) {
+                        if (bta.getStepContext().equals(getContext())) {
+                            e.interrupt(Result.ABORTED, new BuildTriggerCancelledCause(cause));
+                        }
                     }
                 }
             }

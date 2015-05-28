@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow;
 
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -42,7 +43,8 @@ public class DSLTest {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("echo 'this came from a step'"));
         r.assertLogContains("this came from a step", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
-        p.setDefinition(new CpsFlowDefinition("def echo(s) {println s.toUpperCase()}\necho 'this came from my own function'\nsteps.echo 'but this is still from a step'"));
+        ScriptApproval.get().approveSignature("method java.lang.String toUpperCase"); // TODO until script-security whitelists this kind of thing by default
+        p.setDefinition(new CpsFlowDefinition("def echo(s) {println s.toUpperCase()}\necho 'this came from my own function'\nsteps.echo 'but this is still from a step'", true));
         WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("THIS CAME FROM MY OWN FUNCTION", b2);
         r.assertLogContains("but this is still from a step", b2);

@@ -25,8 +25,11 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.common.util.concurrent.FutureCallback;
 import hudson.EnvVars;
+import hudson.Launcher;
+import hudson.LauncherDecorator;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractBuild;
+import hudson.model.Node;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -53,6 +56,7 @@ public abstract class BodyInvoker {
      * <dt>{@link EnvVars}<dd>use {@link EnvironmentExpander} instead
      * <dt>{@link EnvironmentExpander}<dd>use {@link EnvironmentExpander#merge}
      * <dt>{@link ConsoleLogFilter}<dd>use {@link #mergeConsoleLogFilters}
+     * <dt>{@link LauncherDecorator}<dd>use {@link #mergeLauncherDecorators}
      * </dl>
      * @see StepContext#get(Class)
      *
@@ -128,6 +132,31 @@ public abstract class BodyInvoker {
         @SuppressWarnings("rawtypes") // not my fault
         @Override public OutputStream decorateLogger(AbstractBuild _ignore, OutputStream logger) throws IOException, InterruptedException {
             return subsequent.decorateLogger(_ignore, original.decorateLogger(_ignore, logger));
+        }
+    }
+
+    /**
+     * Merge two launcher decorators so that both are applied.
+     * @param original the original decorator in {@link StepContext#get}, if any
+     * @param subsequent your implementation; should be {@link Serializable}
+     * @return a merge of the two, or just yours if there was no original
+     * @see #withContext
+     */
+    public static LauncherDecorator mergeLauncherDecorators(@CheckForNull LauncherDecorator original, @Nonnull LauncherDecorator subsequent) {
+        if (original == null) {
+            return subsequent;
+        }
+        return new MergedLauncherDecorator(original, subsequent);
+    }
+    private static final class MergedLauncherDecorator extends LauncherDecorator implements Serializable {
+        private static final long serialVersionUID = 1;
+        private final LauncherDecorator original, subsequent;
+        MergedLauncherDecorator(LauncherDecorator original, LauncherDecorator subsequent) {
+            this.original = original;
+            this.subsequent = subsequent;
+        }
+        @Override public Launcher decorate(Launcher launcher, Node node) {
+            return subsequent.decorate(original.decorate(launcher, node), node);
         }
     }
 

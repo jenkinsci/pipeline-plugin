@@ -610,6 +610,9 @@ public class WorkflowTest extends SingleJobTestBase {
                         + "  semaphore 'env'\n"
                         + "  env.BUILD_TAG=\"${env.BUILD_TAG}2\"\n"
                         + "  sh 'echo tag3=$BUILD_TAG stuff=$STUFF'\n"
+                        + "  env.PATH=\"/opt/stuff/bin:${env.PATH}\"\n"
+                        + "  sh 'echo shell PATH=$PATH'\n"
+                        + "  echo \"groovy PATH=${env.PATH}\""
                         + "}", true));
                 startBuilding();
                 SemaphoreStep.waitForStart("env/1", b);
@@ -625,10 +628,13 @@ public class WorkflowTest extends SingleJobTestBase {
                 story.j.assertLogContains("tag=jenkins-demo-1 PERMACHINE=set", b);
                 story.j.assertLogContains("tag2=custom", b);
                 story.j.assertLogContains("tag3=custom2 stuff=more", b);
+                story.j.assertLogContains("shell PATH=/opt/stuff/bin:", b);
+                story.j.assertLogContains("groovy PATH=/opt/stuff/bin:", b);
                 EnvironmentAction a = b.getAction(EnvironmentAction.class);
                 assertNotNull(a);
                 assertEquals("custom2", a.getEnvironment().get("BUILD_TAG"));
                 assertEquals("more", a.getEnvironment().get("STUFF"));
+                assertNotNull(a.getEnvironment().get("PATH"));
             }
         });
     }

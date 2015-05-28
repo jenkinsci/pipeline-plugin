@@ -28,12 +28,12 @@
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>1.5-SNAPSHOT</version>
+        <version>1.7-SNAPSHOT</version>
     </parent>
     <artifactId>workflow-durable-task-step</artifactId>
     <packaging>hpi</packaging>
     <name>Workflow: Durable Task Step</name>
-    <url>https://github.com/jenkinsci/workflow-plugin</url>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
