@@ -142,7 +142,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     "def r = s.node.rootPath\n" +
                     "def p = r.getRemote()\n" +
 
-                    "watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
+                    "semaphore 'wait'\n" +
 
                     // make sure these values are still alive
                     "assert s.nodeName=='" + nodeName + "'\n" +
@@ -150,8 +150,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     "assert r.channel==s.channel : r.channel.toString() + ' vs ' + s.channel\n"));
 
                 startBuilding();
-                waitForWorkflowToSuspend();
-
+                SemaphoreStep.waitForStart("wait/1", b);
                 assertTrue(b.isBuilding());
             }
         });
@@ -159,15 +158,8 @@ public class WorkflowTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
-
-                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
-
-                watchDescriptor.watchUpdate();
-
-                e.waitForSuspension();
-                assertTrue(e.isComplete()); // TODO sometimes fails
-
-                assertBuildCompletedSuccessfully();
+                SemaphoreStep.success("wait/1", story);
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
             }
         });
     }
