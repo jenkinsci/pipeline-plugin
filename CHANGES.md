@@ -2,7 +2,9 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
-## 1.7 (upcoming)
+## 1.8 (upcoming)
+
+## 1.7 (May 29 2015)
 
 * [JENKINS-28317](https://issues.jenkins-ci.org/browse/JENKINS-28317): `withEnv` clobbered environment variables set in enclosing steps.
 * Ability to make some steps (such as `catchError`) as “advanced/deprecated”.
