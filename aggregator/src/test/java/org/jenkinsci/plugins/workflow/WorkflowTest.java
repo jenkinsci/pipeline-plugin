@@ -364,7 +364,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     Thread.sleep(100);
                 }
                 story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
-                story.j.assertLogContains("finished waiting", b); // TODO sometimes missing
+                story.j.assertLogContains("finished waiting", b);
                 story.j.assertLogContains("OK, done", b);
                 killJnlpProc();
             }
