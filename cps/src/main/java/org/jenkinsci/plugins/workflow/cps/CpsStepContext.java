@@ -303,11 +303,12 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         return node;
     }
 
-    public synchronized void onFailure(Throwable t) {
-        if (t==null)
+    @Override public synchronized void onFailure(Throwable t) {
+        if (t == null) {
             throw new IllegalArgumentException();
+        }
         if (isCompleted()) {
-            LOGGER.log(Level.WARNING, "already completed", t);
+            LOGGER.log(Level.WARNING, "already completed " + this, new IllegalStateException(t));
             return;
         }
         this.outcome = new Outcome(null,t);
@@ -315,9 +316,9 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         scheduleNextRun();
     }
 
-    public synchronized void onSuccess(Object returnValue) {
+    @Override public synchronized void onSuccess(Object returnValue) {
         if (isCompleted()) {
-            LOGGER.log(Level.WARNING, "already completed", new IllegalStateException());
+            LOGGER.log(Level.WARNING, "already completed " + this, new IllegalStateException());
             return;
         }
         this.outcome = new Outcome(returnValue,null);
@@ -501,6 +502,10 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         int result = executionRef.hashCode();
         result = 31 * result + id.hashCode();
         return result;
+    }
+
+    @Override public String toString() {
+        return "CpsStepContext[" + id + "]:" + executionRef;
     }
 
     private static final long serialVersionUID = 1L;
