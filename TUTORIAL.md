@@ -615,13 +615,45 @@ In that case you do not enter any Groovy code in the Jenkins UI; you just indica
 For some cases you may prefer to explicitly load Groovy script text from some source.
 The standard Groovy `evaluate` function can be used, but most likely you will want to load a flow definition from a workspace.
 For this purpose you can use the `load` step, which takes a filename in the workspace and runs it as Groovy source text.
-The loaded file can either contain statements at top level, which are run immediately; or it can define functions and return `this`, in which case the result of the `load` step can be used to invoke those functions like methods.
+
+The loaded file can contain statements at top level, which are run immediately.
+That is fine if you only want to use a single executor and workspace, and do not mind hard-coding the slave label in the Jenkins job.
+For more complex cases, though, you want to leave the external script in full control of slave allocation.
+In that case the main script defined in the job can just load and run a closure (block of code to be run later):
+
+```groovy
+node {
+    git '…'
+    load 'flow.groovy'
+}()
+```
+
+The subtle part here is that we actually have to do a bit of work with the `node` and `git` steps just to check out a source repository into a workspace so that we can `load` something.
+Once we have loaded the code, we exit the initial `node` block to release the temporary workspace, so it is not locked for the duration of the build.
+The return value of the `load` step also becomes the return value of the `node` step, which we run as a closure with the parentheses `()`.
+
+Here `flow.groovy` could look like:
+
+```groovy
+{ ->
+  node('special-slave') {
+    hello 'world'
+  }
+}
+def hello(whom) {
+  echo "hello ${whom}"
+}
+```
+
+Note that while it can contain helper functions, the only code at top level is a Groovy `Closure`, which is the return value of the script, and thus of the main script’s `load` step.
+
+The helper script can alternately define functions and return `this`, in which case the result of the `load` step can be used to invoke those functions like object methods.
 An older version of the [Docker demo](demo/README.md) showed this technique in practice:
 
 ```groovy
 def flow
 node('slave') {
-    git url: '…'
+    git '…'
     flow = load 'flow.groovy'
     flow.devQAStaging()
 }
@@ -634,7 +666,6 @@ where [flow.groovy](https://github.com/jenkinsci/workflow-plugin-pipeline-demo/b
 return this;
 ```
 
-The subtle part here is that we actually have to do a bit of work with the `node` and `git` steps just to check out a workspace so that we can `load` something.
 In this case `devQAStaging` runs on the same node as the main source code checkout, while `production` runs outside of that block (and in fact allocates a different node).
 
 ## Global libraries
