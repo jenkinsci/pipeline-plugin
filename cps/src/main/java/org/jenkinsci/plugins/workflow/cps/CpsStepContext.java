@@ -243,8 +243,11 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
             getProgramPromiseExecutorService.submit(new Runnable() {
                 @Override public void run() {
                     try {
-                        ListenableFuture<CpsThreadGroup> pp = getFlowExecution().programPromise;
-                        assert pp != null;
+                        ListenableFuture<CpsThreadGroup> pp;
+                        CpsFlowExecution flowExecution = getFlowExecution();
+                        while ((pp = flowExecution.programPromise) == null) {
+                            Thread.sleep(100); // TODO why is this occasionally not set right away?
+                        }
                         f.set(pp.get());
                     } catch (Throwable x) { // from getFlowExecution() or get()
                         f.setException(x);
