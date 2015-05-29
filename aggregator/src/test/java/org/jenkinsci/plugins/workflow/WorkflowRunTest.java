@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow;
 
-import hudson.FilePath;
 import hudson.model.BallColor;
 import hudson.model.Item;
 import hudson.model.ParametersAction;
@@ -40,14 +39,13 @@ import hudson.security.Permission;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.test.steps.WatchYourStep;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -62,9 +60,6 @@ public class WorkflowRunTest {
     @Rule public JenkinsRule r = new JenkinsRule();
 
     WorkflowJob p;
-
-    @Inject
-    WatchYourStep.DescriptorImpl watch;
 
     @Before
     public void setUp() throws Exception {
@@ -98,13 +93,10 @@ public class WorkflowRunTest {
      */
     @Test
     public void iconColor() throws Exception {
-        // marker file I use for synchronization
-        FilePath test = new FilePath(r.jenkins.root).child("touch");
-
         p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition(
             "println('hello')\n"+
-            "watch(new File('"+test.getRemote()+"'))\n"+
+            "semaphore 'wait'\n"+
             "println('hello')\n"
         ));
 
@@ -120,14 +112,13 @@ public class WorkflowRunTest {
         assertFalse(b1.hasntStartedYet());
         assertColor(b1, BallColor.NOTBUILT_ANIME);
 
-        e.waitForSuspension();
+        SemaphoreStep.waitForStart("wait/1", b1);
 
         // at the pause point, it should be still blinking gray
         assertFalse(b1.hasntStartedYet());
         assertColor(b1, BallColor.NOTBUILT_ANIME);
 
-        test.touch(0);
-        watch.watchUpdate();
+        SemaphoreStep.success("wait/1", null);
 
         // bring it to the completion
         q.get(5, TimeUnit.SECONDS);
@@ -138,7 +129,6 @@ public class WorkflowRunTest {
         assertColor(b1, BallColor.BLUE);
 
         // get another one going
-        test.delete();
         q = p.scheduleBuild2(0);
         WorkflowRun b2 = q.getStartCondition().get();
         e = (CpsFlowExecution) b2.getExecutionPromise().get();
@@ -147,15 +137,14 @@ public class WorkflowRunTest {
         assertFalse(b2.hasntStartedYet());
         assertColor(b2, BallColor.BLUE_ANIME);
 
-        e.waitForSuspension();
+        SemaphoreStep.waitForStart("wait/2", b2);
 
         // at the pause point, it should be still blinking gray
         assertFalse(b2.hasntStartedYet());
         assertColor(b2, BallColor.BLUE_ANIME);
 
         // bring it to the completion
-        test.touch(0);
-        watch.watchUpdate();
+        SemaphoreStep.success("wait/2", null);
         q.get(5, TimeUnit.SECONDS);
 
         // and the color should be now solid blue

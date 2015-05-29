@@ -27,11 +27,7 @@ package org.jenkinsci.plugins.workflow;
 import com.google.common.base.Function;
 import hudson.model.Computer;
 import hudson.model.Node;
-import hudson.model.ParametersAction;
-import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
-import hudson.model.StringParameterDefinition;
-import hudson.model.StringParameterValue;
 import hudson.model.TaskListener;
 import hudson.model.User;
 import hudson.model.labels.LabelAtom;
@@ -58,7 +54,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import jenkins.security.QueueItemAuthenticatorConfiguration;
-import org.apache.commons.io.FileUtils;
 import org.apache.tools.ant.util.JavaEnvUtils;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
@@ -103,9 +98,9 @@ public class WorkflowTest extends SingleJobTestBase {
             @Override
             public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition("watch(new File('" + jenkins().getRootDir() + "/touch'))"));
+                p.setDefinition(new CpsFlowDefinition("semaphore 'wait'"));
                 startBuilding();
-                waitForWorkflowToSuspend();
+                SemaphoreStep.waitForStart("wait/1", b);
                 assertTrue(b.isBuilding());
                 assertFalse(jenkins().toComputer().isIdle());
             }
@@ -119,8 +114,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     Thread.sleep(100);
                 }
                 assertFalse(jenkins().toComputer().isIdle());
-                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
-                watchDescriptor.watchUpdate();
+                SemaphoreStep.success("wait/1", null);
                 story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
             }
         });
@@ -158,7 +152,7 @@ public class WorkflowTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
-                SemaphoreStep.success("wait/1", story);
+                SemaphoreStep.success("wait/1", null);
                 story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
             }
         });
@@ -180,37 +174,22 @@ public class WorkflowTest extends SingleJobTestBase {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
                     "node('" + s.getNodeName() + "') {\n" +
-                    // TODO this has been observed to print the basename command, but not echo the result; why?
                     "    sh('echo before=`basename $PWD`')\n" +
                     "    sh('echo ONSLAVE=$ONSLAVE')\n" +
-
-                        // we'll suspend the execution here
-                    "    watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
-
+                    "    semaphore 'wait'\n" +
                     "    sh('echo after=$PWD')\n" +
                     "}"));
 
                 startBuilding();
-
-                // wait until the execution gets to the watch task
-                while (watchDescriptor.getActiveWatches().isEmpty()) {
-                    assertTrue(b.isBuilding());
-                    waitForWorkflowToSuspend();
-                }
+                SemaphoreStep.waitForStart("wait/1", b);
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
-
-                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
-
-                while (!e.isComplete()) {
-                    e.waitForSuspension();
-                }
-
-                assertBuildCompletedSuccessfully(); // TODO sometimes fails even though Allocate node : End has been printed
+                SemaphoreStep.success("wait/1", null);
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
 
                 story.j.assertLogContains("before=demo", b);
                 story.j.assertLogContains("ONSLAVE=true", b);
@@ -233,20 +212,18 @@ public class WorkflowTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
-                String script = "node {watch(new File('" + jenkins().getRootDir() + "/touch'))}";
+                String script = "node {semaphore 'wait'}";
                 p.setDefinition(new CpsFlowDefinition(script));
                 startBuilding();
                 waitForWorkflowToSuspend();
-                // intentionally not waiting for watch step to begin
+                // intentionally not waiting for semaphore step to begin
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
-                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "");
-                watchDescriptor.watchUpdate();
-                waitForWorkflowToComplete();
-                assertBuildCompletedSuccessfully();
+                SemaphoreStep.success("wait/1", null);
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
             }
         });
     }
@@ -406,30 +383,23 @@ public class WorkflowTest extends SingleJobTestBase {
                 String slaveRoot = story.j.createTmpDir().getPath();
                 jenkins().addNode(new DumbSlave("slave", "dummy", slaveRoot, "2", Node.Mode.NORMAL, "", story.j.createComputerLauncher(null), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList()));
                 p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("FLAG", null)));
                 p.setDefinition(new CpsFlowDefinition(
                         "node('slave') {\n" + // this locks the WS
                                 "    sh('echo default=`basename $PWD`')\n" +
                                 "    ws {\n" + // and this locks a second one
                                 "        sh('echo before=`basename $PWD`')\n" +
-                                "        watch(new File('" + jenkins().getRootDir() + "', FLAG))\n" +
+                                "        semaphore 'wait'\n" +
                                 "        sh('echo after=`basename $PWD`')\n" +
                                 "    }\n" +
                                 "}"
                 ));
                 p.save();
-                WorkflowRun b1 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "one"))).waitForStart();
-                CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecutionPromise().get();
-                while (watchDescriptor.getActiveWatches().isEmpty()) {
-                    assertTrue(b1.isBuilding());
-                    waitForWorkflowToSuspend(e1);
-                }
-                WorkflowRun b2 = p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "two"))).waitForStart();
-                CpsFlowExecution e2 = (CpsFlowExecution) b2.getExecutionPromise().get();
-                while (watchDescriptor.getActiveWatches().size() == 1) {
-                    assertTrue(b2.isBuilding());
-                    waitForWorkflowToSuspend(e2);
-                }
+                WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
+                SemaphoreStep.waitForStart("wait/1", b1);
+                assertTrue(b1.isBuilding());
+                WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
+                SemaphoreStep.waitForStart("wait/2", b2);
+                assertTrue(b2.isBuilding());
             }
         });
         story.addStep(new Statement() {
@@ -441,20 +411,20 @@ public class WorkflowTest extends SingleJobTestBase {
                 WorkflowRun b2 = p.getBuildByNumber(2);
                 CpsFlowExecution e2 = (CpsFlowExecution) b2.getExecution();
                 assertThatWorkflowIsSuspended(b2, e2);
-                FileUtils.write(new File(jenkins().getRootDir(), "one"), "here");
-                FileUtils.write(new File(jenkins().getRootDir(), "two"), "here");
+                SemaphoreStep.success("wait/1", null);
+                SemaphoreStep.success("wait/2", null);
                 story.j.waitUntilNoActivity();
                 assertBuildCompletedSuccessfully(b1);
                 assertBuildCompletedSuccessfully(b2);
-                // TODO sometimes basename is run but echo is not, or output lost; once got ‘InvalidClassException: cannot bind non-proxy descriptor to a proxy class’ inside BourneShellScript.doLaunch
+                // TODO once got ‘InvalidClassException: cannot bind non-proxy descriptor to a proxy class’ inside BourneShellScript.doLaunch
                 story.j.assertLogContains("default=demo", b1);
                 story.j.assertLogContains("before=demo@2", b1);
                 story.j.assertLogContains("after=demo@2", b1);
                 story.j.assertLogContains("default=demo@3", b2);
                 story.j.assertLogContains("before=demo@4", b2);
                 story.j.assertLogContains("after=demo@4", b2);
-                FileUtils.write(new File(jenkins().getRootDir(), "three"), "here");
-                WorkflowRun b3 = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("FLAG", "three"))));
+                SemaphoreStep.success("wait/3", null);
+                WorkflowRun b3 = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
                 story.j.assertLogContains("default=demo", b3);
                 story.j.assertLogContains("before=demo@2", b3);
                 story.j.assertLogContains("after=demo@2", b3);
@@ -472,21 +442,15 @@ public class WorkflowTest extends SingleJobTestBase {
                 p.setDefinition(new CpsFlowDefinition(
                     "int count=0;\n" +
                     "retry(3) {\n" +
-                        // we'll suspend the execution here
-                    "    watch(new File('" + jenkins().getRootDir() + "/touch'))\n" +
-
+                    "    semaphore 'wait'\n" +
                     "    if (count++ < 2) {\n" + // forcing retry
                     "        error 'died'\n" +
                     "    }\n" +
                     "}"));
 
                 startBuilding();
-
-                // wait until the execution gets to the watch task
-                while (watchDescriptor.getActiveWatches().isEmpty()) {
-                    assertTrue(b.isBuilding());
-                    waitForWorkflowToSuspend();
-                }
+                SemaphoreStep.waitForStart("wait/1", b);
+                assertTrue(b.isBuilding());
             }
         });
         story.addStep(new Statement() {
@@ -495,15 +459,12 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertThatWorkflowIsSuspended();
 
                 // resume execution and cause the retry to invoke the body again
-                FileUtils.write(new File(jenkins().getRootDir(), "touch"), "I'm here");
+                SemaphoreStep.success("wait/1", null);
+                SemaphoreStep.success("wait/2", null);
+                SemaphoreStep.success("wait/3", null);
 
-                while (!e.isComplete()) {
-                    e.waitForSuspension();
-                }
-
+                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
                 assertTrue(e.programPromise.get().closures.isEmpty());
-
-                assertBuildCompletedSuccessfully();
             }
         });
     }
