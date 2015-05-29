@@ -341,7 +341,7 @@ public class WorkflowTest extends SingleJobTestBase {
                     Thread.sleep(100);
                 }
                 story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
-                story.j.assertLogContains("finished waiting", b);
+                story.j.assertLogContains("finished waiting", b); // TODO sometimes is not printed to log, despite f2 having been removed
                 story.j.assertLogContains("OK, done", b);
                 killJnlpProc();
             }
