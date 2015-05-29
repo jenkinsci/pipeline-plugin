@@ -193,6 +193,9 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                     LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
                 } else {
                     recurrencePeriod = 0;
+                    if (controller.writeLog(workspace, listener.getLogger())) {
+                        LOGGER.log(Level.FINE, "last-minute output in {0} on {1}", new Object[] {remote, node});
+                    }
                     controller.cleanup(workspace);
                     if (exitCode == 0) {
                         getContext().onSuccess(exitCode);
