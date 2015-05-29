@@ -28,7 +28,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>1.7</version>
+        <version>1.8-SNAPSHOT</version>
     </parent>
     <artifactId>workflow-durable-task-step</artifactId>
     <packaging>hpi</packaging>
