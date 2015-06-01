@@ -93,6 +93,9 @@ public final class CpsThreadGroup implements Serializable {
      */
     transient ExecutorService runner;
 
+    /** Set while {@link #runner} is doing something. */
+    transient boolean busy;
+
     /**
      * "Exported" closures that are referenced by live {@link CpsStepContext}s.
      */

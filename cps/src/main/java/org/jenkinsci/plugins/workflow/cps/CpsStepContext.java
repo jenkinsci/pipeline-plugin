@@ -339,6 +339,11 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
             return;
         }
 
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins != null && jenkins.isQuietingDown()) {
+            // TODO would like to just return now, but that makes the flow hang after restart
+        }
+
         try {
             final FlowNode n = getNode();
             final CpsFlowExecution flow = getFlowExecution();

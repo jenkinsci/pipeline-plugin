@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow;
 
 import com.google.common.base.Function;
 import hudson.model.Computer;
+import hudson.model.Executor;
 import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.TaskListener;
@@ -102,7 +103,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 startBuilding();
                 SemaphoreStep.waitForStart("wait/1", b);
                 assertTrue(b.isBuilding());
-                assertFalse(jenkins().toComputer().isIdle());
+                liveness();
             }
         });
         story.addStep(new Statement() {
@@ -113,11 +114,19 @@ public class WorkflowTest extends SingleJobTestBase {
                 for (int i = 0; i < 600 && !Queue.getInstance().isEmpty(); i++) {
                     Thread.sleep(100);
                 }
-                assertFalse(jenkins().toComputer().isIdle());
+                liveness();
                 SemaphoreStep.success("wait/1", null);
                 story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
             }
         });
+    }
+    private void liveness() {
+        assertFalse(jenkins().toComputer().isIdle());
+        Executor e = b.getOneOffExecutor();
+        assertNotNull(e);
+        assertEquals(e, b.getExecutor());
+        assertTrue(e.isActive());
+        assertFalse(e.isAlive());
     }
 
     /**

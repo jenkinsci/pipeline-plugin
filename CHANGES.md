@@ -4,6 +4,12 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.8 (upcoming)
 
+* Now based on Jenkins core 1.609.x.
+* [JENKINS-24673](https://issues.jenkins-ci.org/browse/JENKINS-24673) [JENKINS-27392](https://issues.jenkins-ci.org/browse/JENKINS-27392) Added `wrap` step, permitting compatibility with plugins offering build wrappers.
+* [JENKINS-25938](https://issues.jenkins-ci.org/browse/JENKINS-25938): avoid creating a Java (native) thread for every executor (flow build or `node {}` block).
+* [JENKINS-22941](https://issues.jenkins-ci.org/browse/JENKINS-22941): allow Jenkins safe restart to proceed even while a flow build is running, so long as it is just waiting (for an external process, `waitUntil`, etc.).
+* [JENKINS-26900](https://issues.jenkins-ci.org/browse/JENKINS-26900): hide the “flyweight” executor on master corresponding to the flow build when it is just waiting.
+
 ## 1.7 (May 29 2015)
 
 * [JENKINS-28317](https://issues.jenkins-ci.org/browse/JENKINS-28317): `withEnv` clobbered environment variables set in enclosing steps.
