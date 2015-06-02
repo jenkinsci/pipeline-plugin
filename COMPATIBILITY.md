@@ -18,6 +18,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `IntegritySCM` (`integrity-plugin`): [JENKINS-27140](https://issues.jenkins-ci.org/browse/JENKINS-27140)
 - [ ] `RepoScm` (`repo`): [JENKINS-26836](https://issues.jenkins-ci.org/browse/JENKINS-26836)
 - [ ] `teamconcert`: [JENKINS-27464](https://issues.jenkins-ci.org/browse/JENKINS-27464)
+- [ ] `CVSSCM` (`cvs`): [JENKINS-27717](https://issues.jenkins-ci.org/browse/JENKINS-27717)
 
 ## Build steps and post-build actions
 
