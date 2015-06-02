@@ -2,7 +2,9 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
-## 1.8 (upcoming)
+## 1.9 (upcoming)
+
+## 1.8 (Jun 01 2015)
 
 * Now based on Jenkins core 1.609.x.
 * [JENKINS-24673](https://issues.jenkins-ci.org/browse/JENKINS-24673) [JENKINS-27392](https://issues.jenkins-ci.org/browse/JENKINS-27392) Added `wrap` step, permitting compatibility with plugins offering build wrappers.
