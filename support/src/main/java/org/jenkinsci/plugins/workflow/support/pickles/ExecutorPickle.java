@@ -28,13 +28,11 @@ import org.jenkinsci.plugins.workflow.pickles.Pickle;
 import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import hudson.Extension;
-import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Node;
 import hudson.model.OneOffExecutor;
 import hudson.model.Queue;
 import hudson.model.queue.SubTask;
-import jenkins.model.Jenkins;
 
 import java.util.concurrent.Future;
 
@@ -80,17 +78,9 @@ public class ExecutorPickle extends Pickle {
                 }
 
                 Queue.Executable exec = future.get();
-
-                Jenkins j = Jenkins.getInstance();
-                if (j == null) {
-                    return null;
-                }
-                for (Computer c : j.getComputers()) {
-                    for (Executor e : c.getExecutors()) {
-                        if (e.getCurrentExecutable() == exec) {
-                            return e;
-                        }
-                    }
+                Executor e = Executor.of(exec);
+                if (e != null) {
+                    return e;
                 }
 
                 // TODO this could happen as a race condition if the executable takes <1s to run; how could that be prevented?

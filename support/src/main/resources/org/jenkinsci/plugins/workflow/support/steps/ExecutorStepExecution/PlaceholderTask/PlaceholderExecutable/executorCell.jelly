@@ -26,10 +26,23 @@
 
 <j:jelly xmlns:j="jelly:core" xmlns:t="/lib/hudson" xmlns:l="/lib/layout">
     <td class="pane">
-        <div style="white-space: normal">${%Building}
-            <!-- TODO check for Item.READ permission on the accessControlled() -->
-            <a href="${rootURL}/${it.parent.url}" class="model-link"><l:breakable value="${it.parent.fullDisplayName}"/></a>
-            <t:buildProgressBar build="${it.parent}" executor="${executor}"/>
+        <div style="white-space: normal">
+            <j:set var="r" value="${it.parent.run()}"/>
+            <j:set var="rAuth" value="${r != null and h.hasPermission(r.parent, r.parent.READ) ? r : null}"/>
+            <j:choose>
+                <j:when test="${rAuth != null}">
+                    part of <a href="${rootURL}/${r.parent.url}"><l:breakable value="${r.parent.fullDisplayName}"/></a>
+                    <t:buildProgressBar build="${it.parent}" executor="${executor}"/>
+                </j:when>
+                <j:otherwise>
+                    <span>${%Unknown Task}</span>
+                </j:otherwise>
+            </j:choose>
         </div>
+    </td>
+    <td class="pane">
+        <j:if test="${rAuth != null}">
+            <a href="${rootURL}/${r.url}" class="model-link inside"><l:breakable value="${r.displayName}"/></a>
+        </j:if>
     </td>
 </j:jelly>

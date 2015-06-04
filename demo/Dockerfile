@@ -1,4 +1,4 @@
-FROM jenkins:1.596.2
+FROM jenkins:1.609.1
 
 USER root
 
@@ -10,7 +10,7 @@ RUN ln -sv /usr/local/apache-maven-$MAVEN_VERSION /usr/local/maven
 # install Jetty
 WORKDIR /opt
 # jetty package is still 8
-ENV JETTY_VERSION 9.2.9.v20150224
+ENV JETTY_VERSION 9.2.11.v20150529
 RUN wget -O - "http://mirrors.ibiblio.org/eclipse/jetty/$JETTY_VERSION/dist/jetty-distribution-$JETTY_VERSION.tar.gz" | tar xvfz -
 RUN ln -sv jetty-distribution-$JETTY_VERSION jetty
 RUN cd /tmp; ln -s /opt/jetty/webapps

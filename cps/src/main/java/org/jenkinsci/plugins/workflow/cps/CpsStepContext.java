@@ -243,8 +243,11 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
             getProgramPromiseExecutorService.submit(new Runnable() {
                 @Override public void run() {
                     try {
-                        ListenableFuture<CpsThreadGroup> pp = getFlowExecution().programPromise;
-                        assert pp != null;
+                        ListenableFuture<CpsThreadGroup> pp;
+                        CpsFlowExecution flowExecution = getFlowExecution();
+                        while ((pp = flowExecution.programPromise) == null) {
+                            Thread.sleep(100); // TODO why is this occasionally not set right away?
+                        }
                         f.set(pp.get());
                     } catch (Throwable x) { // from getFlowExecution() or get()
                         f.setException(x);
@@ -303,19 +306,24 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         return node;
     }
 
-    public synchronized void onFailure(Throwable t) {
-        if (t==null)
+    @Override public synchronized void onFailure(Throwable t) {
+        if (t == null) {
             throw new IllegalArgumentException();
-        if (isCompleted())
-            throw new IllegalStateException("Already completed", t);
+        }
+        if (isCompleted()) {
+            LOGGER.log(Level.WARNING, "already completed " + this, new IllegalStateException(t));
+            return;
+        }
         this.outcome = new Outcome(null,t);
 
         scheduleNextRun();
     }
 
-    public synchronized void onSuccess(Object returnValue) {
-        if (isCompleted())
-            throw new IllegalStateException("Already completed");
+    @Override public synchronized void onSuccess(Object returnValue) {
+        if (isCompleted()) {
+            LOGGER.log(Level.WARNING, "already completed " + this, new IllegalStateException());
+            return;
+        }
         this.outcome = new Outcome(returnValue,null);
 
         scheduleNextRun();
@@ -329,6 +337,11 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
             // if we get the result set before the start method returned, then DSL.invokeMethod() will
             // plan the next action.
             return;
+        }
+
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins != null && jenkins.isQuietingDown()) {
+            // TODO would like to just return now, but that makes the flow hang after restart
         }
 
         try {
@@ -497,6 +510,10 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         int result = executionRef.hashCode();
         result = 31 * result + id.hashCode();
         return result;
+    }
+
+    @Override public String toString() {
+        return "CpsStepContext[" + id + "]:" + executionRef;
     }
 
     private static final long serialVersionUID = 1L;
