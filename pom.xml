@@ -71,7 +71,7 @@
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>script-security</artifactId>
-                <version>1.15-SNAPSHOT</version> <!-- TODO JENKINS-28586 branch -->
+                <version>1.15-SNAPSHOT</version> <!-- TODO requires #13 -->
             </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
