@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.support.steps.build;
+package org.jenkinsci.plugins.workflow.util;
 
 import hudson.model.Item;
 import java.net.URI;
@@ -38,8 +38,9 @@ import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * JENKINS-19413 workaround.
+ * Will be deleted in the future.
  */
-class StaplerReferer {
+public class StaplerReferer {
 
     private static final Logger LOGGER = Logger.getLogger(StaplerReferer.class.getName());
 
