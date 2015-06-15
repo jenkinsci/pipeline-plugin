@@ -28,10 +28,8 @@ import hudson.Extension;
 import hudson.model.Job;
 import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import javax.annotation.CheckForNull;
+import org.jenkinsci.plugins.workflow.util.StaplerReferer;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -63,15 +61,8 @@ public final class GenericSCMStep extends SCMStep {
             return "General SCM";
         }
 
-        public Collection<? extends SCMDescriptor<?>> getApplicableDescriptors(@CheckForNull Job<?,?> job) {
-            // TODO could probably be simplified to SCM._for
-            List<SCMDescriptor<?>> r = new ArrayList<SCMDescriptor<?>>();
-            for (SCMDescriptor<?> d : SCM.all()) {
-                if (job == null || d.isApplicable(job)) {
-                    r.add(d);
-                }
-            }
-            return r;
+        public Collection<? extends SCMDescriptor<?>> getApplicableDescriptors() {
+            return SCM._for(StaplerReferer.findItemFromRequest(Job.class));
         }
 
     }

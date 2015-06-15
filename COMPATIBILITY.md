@@ -56,9 +56,8 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 
 ## Build wrappers
 
-- [X] API to integrate these: [JENKINS-24673](https://issues.jenkins-ci.org/browse/JENKINS-24673)
 - [ ] `ConfigFileBuildWrapper` (`config-file-provider`): [JENKINS-26339](https://issues.jenkins-ci.org/browse/JENKINS-26339)
-- [ ] `Xvnc` (`xvnc`): [JENKINS-26477](https://issues.jenkins-ci.org/browse/JENKINS-26477)
+- [X] `Xvnc` (`xvnc`) supported as of 1.22
 - [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
 - [ ] `DashboardBuilder` (`environment-dashboard`): [issue 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
 - [ ] `TimestamperBuildWrapper` (`timestamper`): [JENKINS-27207](https://issues.jenkins-ci.org/browse/JENKINS-27207)

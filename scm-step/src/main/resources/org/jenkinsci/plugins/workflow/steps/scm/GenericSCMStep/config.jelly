@@ -25,6 +25,6 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
-    <f:dropdownDescriptorSelector field="scm" title="SCM" descriptors="${descriptor.getApplicableDescriptors(it)}"/>
+    <f:dropdownDescriptorSelector field="scm" title="SCM" descriptors="${descriptor.applicableDescriptors}"/>
     <st:include page="config-generic.jelly" class="org.jenkinsci.plugins.workflow.steps.scm.SCMStep"/>
 </j:jelly>
