@@ -4,6 +4,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.9 (upcoming)
 
+* [JENKINS-26135](https://issues.jenkins-ci.org/browse/JENKINS-26135): User-defined global variables/functions in git-global-lib
 * [JENKINS-28756](https://issues.jenkins-ci.org/browse/JENKINS-28756): dropdown for _General SCM_ step incorrectly listed SCMs not compatible with Workflow.
 
 ## 1.8 (Jun 01 2015)
@@ -19,7 +20,6 @@ Only noting significant user-visible or major API changes, not internal code cle
 * [JENKINS-28317](https://issues.jenkins-ci.org/browse/JENKINS-28317): `withEnv` clobbered environment variables set in enclosing steps.
 * Ability to make some steps (such as `catchError`) as “advanced/deprecated”.
 * Ability to define global variables available to all scripts, with accompanying documentation, such as `env` and `currentBuild`.
-* [JENKINS-26135](https://issues.jenkins-ci.org/browse/JENKINS-26135): User-defined global variables/functions in git-global-lib
 
 ## 1.6 (May 04 2015)
 
