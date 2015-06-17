@@ -4,6 +4,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.9 (upcoming)
 
+* [JENKINS-26107](https://issues.jenkins-ci.org/browse/JENKINS-26107): `label` step.
 * [JENKINS-28756](https://issues.jenkins-ci.org/browse/JENKINS-28756): dropdown for _General SCM_ step incorrectly listed SCMs not compatible with Workflow.
 
 ## 1.8 (Jun 01 2015)
