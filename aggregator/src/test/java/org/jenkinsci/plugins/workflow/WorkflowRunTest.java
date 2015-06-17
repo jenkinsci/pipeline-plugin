@@ -25,12 +25,14 @@
 package org.jenkinsci.plugins.workflow;
 
 import hudson.model.BallColor;
+import hudson.model.Executor;
 import hudson.model.Item;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Result;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
+import hudson.model.TaskListener;
 import hudson.model.User;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.security.ACL;
@@ -45,18 +47,26 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 
 import static org.junit.Assert.*;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.TestExtension;
 import org.jvnet.hudson.test.recipes.LocalData;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 public class WorkflowRunTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public JenkinsRule r = new JenkinsRule();
 
     WorkflowJob p;
@@ -199,6 +209,50 @@ public class WorkflowRunTest {
         WorkflowRun b = p.getLastBuild();
         assertNotNull(b);
         r.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+    }
+
+    @Issue("JENKINS-25550")
+    @Test public void hardKill() throws Exception {
+        p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("zombie()"));
+        WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+        JenkinsRuleExt.waitForMessage("undead", b);
+        Executor ex = b.getExecutor();
+        assertNotNull(ex);
+        ex.interrupt();
+        JenkinsRuleExt.waitForMessage("bwahaha org.jenkinsci.plugins.workflow.steps.FlowInterruptedException #1", b);
+        ex.interrupt();
+        JenkinsRuleExt.waitForMessage("bwahaha org.jenkinsci.plugins.workflow.steps.FlowInterruptedException #2", b);
+        ex.interrupt();
+        JenkinsRuleExt.waitForMessage("Hard kill!", b);
+        JenkinsRuleExt.waitForCompletion(b);
+        r.assertBuildStatus(Result.ABORTED, b);
+    }
+    public static class Zombie extends AbstractStepImpl {
+        @DataBoundConstructor public Zombie() {}
+        public static class Execution extends AbstractStepExecutionImpl {
+            @StepContextParameter private transient TaskListener listener;
+            int count;
+            @Override public boolean start() throws Exception {
+                listener.getLogger().println("undead");
+                return false;
+            }
+            @Override public void stop(Throwable cause) throws Exception {
+                listener.getLogger().println("bwahaha " + cause + " #" + ++count);
+            }
+
+        }
+        @TestExtension("hardKill") public static class DescriptorImpl extends AbstractStepDescriptorImpl {
+            public DescriptorImpl() {
+                super(Execution.class);
+            }
+            @Override public String getFunctionName() {
+                return "zombie";
+            }
+            @Override public String getDisplayName() {
+                return "zombie";
+            }
+        }
     }
 
 }

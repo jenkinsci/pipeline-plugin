@@ -68,6 +68,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -202,8 +203,14 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     private AsynchronousExecution sleep() {
         final AsynchronousExecution asynchronousExecution = new AsynchronousExecution() {
+            AtomicInteger interruptionCount = new AtomicInteger();
             @Override public void interrupt(boolean forShutdown) {
                 if (forShutdown) {
+                    return;
+                }
+                if (interruptionCount.incrementAndGet() == 3) {
+                    listener.getLogger().println("Hard kill!");
+                    finish(Result.ABORTED);
                     return;
                 }
                 try {
@@ -503,7 +510,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     @Exported
     @Override protected boolean isInProgress() {
-        return execution != null && !execution.isComplete();
+        return execution != null && !execution.isComplete() && (completed == null || !completed.get());
     }
 
     @Override public boolean isLogUpdated() {
