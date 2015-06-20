@@ -27,7 +27,6 @@ package org.jenkinsci.plugins.workflow.cps;
 import com.cloudbees.groovy.cps.SerializableScript;
 import groovy.lang.GroovyShell;
 import hudson.EnvVars;
-import hudson.ExtensionList;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
@@ -193,7 +192,12 @@ public abstract class CpsScript extends SerializableScript {
         print(DefaultGroovyMethods.sprintf(this/*not actually used*/, format, values));
     }
 
-    /** Effectively overrides {@link DefaultGroovyStaticMethods#sleep(Object, long)} so that {@code SleepStep} works even in the bare form {@code sleep 5}. */
+    /**
+     * Effectively overrides {@link DefaultGroovyStaticMethods#sleep(Object, long)}
+     * so that {@code SleepStep} works even in the bare form {@code sleep 5}.
+     *
+     * @see CpsClosure2#sleep(long)
+     */
     public Object sleep(long arg) {
         return invokeMethod("sleep", arg);
     }

@@ -75,7 +75,7 @@
         <dependency>
             <groupId>com.cloudbees</groupId>
             <artifactId>groovy-cps</artifactId>
-            <version>1.4</version>
+            <version>1.5-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <!-- TODO currently job depends on tests from here; this dependency should probably be broken -->
