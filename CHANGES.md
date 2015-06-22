@@ -5,6 +5,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 ## 1.9 (upcoming)
 
 * [JENKINS-25550](https://issues.jenkins-ci.org/browse/JENKINS-25550): flow builds hung due to a buggy step (and certain erroneous scripts) can now be forcibly stopped by clicking the stop button three times.
+* [JENKINS-26860](https://issues.jenkins-ci.org/browse/JENKINS-26860): added _Execute concurrent builds if necessary_ option for Workflow projects.
 * [JENKINS-28756](https://issues.jenkins-ci.org/browse/JENKINS-28756): dropdown for _General SCM_ step incorrectly listed SCMs not compatible with Workflow.
 
 ## 1.8 (Jun 01 2015)

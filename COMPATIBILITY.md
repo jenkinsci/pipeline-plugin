@@ -53,6 +53,8 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [ ] `VeracodeNotifier` (`veracode-scanner`): [JENKINS-28387](https://issues.jenkins-ci.org/browse/JENKINS-28387)
 - [ ] `SeleniumHtmlReportPublisher` (`seleniumhtmlreport`): [JENKINS-28388](https://issues.jenkins-ci.org/browse/JENKINS-28388)
 - [ ] `GitPublisher` (`git`) or a custom step: [JENKINS-28335](https://issues.jenkins-ci.org/browse/JENKINS-28335)
+- [ ] SonarQube Jenkins: [SONARJNKNS-213](http://jira.sonarsource.com/browse/SONARJNKNS-213)
+- [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
 
 ## Build wrappers
 
@@ -60,9 +62,10 @@ See [this guide](basic-steps/CORE-STEPS.md#adding-support-from-plugins) for maki
 - [X] `Xvnc` (`xvnc`) supported as of 1.22
 - [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
 - [ ] `DashboardBuilder` (`environment-dashboard`): [issue 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
-- [ ] `TimestamperBuildWrapper` (`timestamper`): [JENKINS-27207](https://issues.jenkins-ci.org/browse/JENKINS-27207)
+- [X] `TimestamperBuildWrapper` (`timestamper`): scheduled for 1.6.3 release
 - [ ] `MaskPasswordsBuildWrapper` (`mask-passwords`): [PR 3](https://github.com/jenkinsci/mask-passwords-plugin/pull/3)
 - [ ] `SSHAgentBuildWrapper` (`ssh-agent`): [JENKINS-28689](https://issues.jenkins-ci.org/browse/JENKINS-28689)
+- [ ] `XvfbBuildWrapper` (`xvfb`): [JENKINS-28928](https://issues.jenkins-ci.org/browse/JENKINS-28928)
 
 ## Triggers
 
@@ -73,6 +76,7 @@ Implement `Trigger<ParameterizedJobMixIn.ParameterizedJob>` and implement `Trigg
 - [ ] `github`: [JENKINS-27136](https://issues.jenkins-ci.org/browse/JENKINS-27136)
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
 - [ ] `deployment-notification`: [JENKINS-28632](https://issues.jenkins-ci.org/browse/JENKINS-28632)
+- [ ] `gitlab-plugin`: [issue 89](https://github.com/DABSquared/gitlab-plugin/issues/89)
 
 ## Clouds
 
