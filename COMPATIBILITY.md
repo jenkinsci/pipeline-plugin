@@ -102,7 +102,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 - [ ] `zentimestamp`: [JENKINS-26958](https://issues.jenkins-ci.org/browse/JENKINS-26958)
 - [ ] `claim`: [JENKINS-27206](https://issues.jenkins-ci.org/browse/JENKINS-27206)
 - [ ] `ListSubversionTagsParameterValue` (`subversion`): [JENKINS-27718](https://issues.jenkins-ci.org/browse/JENKINS-27718)
-- [ ] `authorize-project`: [JENKINS-26670](https://issues.jenkins-ci.org/browse/JENKINS-26670)
+- [X] `authorize-project`: scheduled for 1.0.4
 
 ## Custom steps
 
