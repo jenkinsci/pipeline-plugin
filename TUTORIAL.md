@@ -165,7 +165,7 @@ The `tool` step makes sure a tool with the given name (in this case, a specific 
 But merely running this step does not do much good; the script needs to know _where_ it was installed, so the tool can be run later.
 For this, we need a variable.
 
-The `def` keywork in Groovy is the quickest way to define a new variable (with no specific type). So
+The `def` keyword in Groovy is the quickest way to define a new variable (with no specific type). So
 
 ```groovy
 def mvnHome = tool 'M3'
