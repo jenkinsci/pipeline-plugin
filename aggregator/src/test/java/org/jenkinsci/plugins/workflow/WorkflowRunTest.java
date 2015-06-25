@@ -49,6 +49,7 @@ import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 
 import static org.junit.Assert.*;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
@@ -57,6 +58,7 @@ import org.jvnet.hudson.test.recipes.LocalData;
 
 public class WorkflowRunTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public JenkinsRule r = new JenkinsRule();
 
     WorkflowJob p;
@@ -86,6 +88,14 @@ public class WorkflowRunTest {
         p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("PARAM", null)));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("PARAM", "value"))));
         r.assertLogContains("param=value", b);
+    }
+
+    @Test public void funnyParameters() throws Exception {
+        p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("echo \"a.b=${binding['a.b']}\"", /* TODO Script.binding does not work in sandbox */false));
+        p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("a.b", null)));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("a.b", "v"))));
+        r.assertLogContains("a.b=v", b);
     }
 
     /**
