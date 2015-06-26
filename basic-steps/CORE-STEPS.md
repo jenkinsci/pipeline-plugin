@@ -80,8 +80,4 @@ node('linux') {
 
 # Adding support from plugins
 
-As a plugin author, to add support for use of your build step from a workflow, depend on Jenkins 1.577+, typically 1.580.1 ([tips](../scm-step/README.md#basic-update)).
-Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
-Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](../scm-step/README.md#constructor-vs-setters)).
-
-To add support for a build wrapper, depend on Jenkins 1.599+, and implement `SimpleBuildWrapper`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildWrapper.html).
+See the [compatibility guide](../COMPATIBILITY.md#plugin-developer-guide).

@@ -78,6 +78,8 @@ JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJ
 
 [Using version control from a workflow](scm-step/README.md)
 
+[Using the global Groovy class library](cps-global-lib/README.md)
+
 # Development
 
 * [Ongoing plugin compatibility list](COMPATIBILITY.md)
