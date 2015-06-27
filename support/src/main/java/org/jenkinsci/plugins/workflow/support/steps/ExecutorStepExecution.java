@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
 import com.google.inject.Inject;
+
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -22,6 +23,7 @@ import hudson.remoting.RequestAbortedException;
 import hudson.security.ACL;
 import hudson.security.AccessControlled;
 import hudson.slaves.WorkspaceList;
+
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
@@ -33,11 +35,16 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.annotation.CheckForNull;
+
 import jenkins.model.Jenkins;
+import jenkins.model.Jenkins.MasterComputer;
 import jenkins.model.queue.AsynchronousExecution;
 import jenkins.util.Timer;
+
 import org.acegisecurity.Authentication;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.jenkinsci.plugins.durabletask.executors.ContinuedTask;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -52,6 +59,7 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import static java.util.logging.Level.*;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -417,12 +425,14 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         cookie = UUID.randomUUID().toString();
                         // Switches the label to a self-label, so if the executable is killed and restarted via ExecutorPickle, it will run on the same node:
                         label = computer.getName();
-
                         EnvVars env = computer.getEnvironment();
                         env.overrideAll(computer.buildEnvironment(listener));
-                        env.put("NODE_NAME", label);
                         env.put(COOKIE_VAR, cookie);
-
+                        if (getExecutor().getOwner() instanceof MasterComputer) {
+                            env.put("NODE_NAME", "master");
+                        } else {
+                            env.put("NODE_NAME", label);
+                        }
                         synchronized (runningTasks) {
                             runningTasks.put(cookie, new RunningTask(context));
                         }
