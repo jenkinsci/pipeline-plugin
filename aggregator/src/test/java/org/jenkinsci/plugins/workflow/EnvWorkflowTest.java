@@ -36,7 +36,7 @@ import org.jvnet.hudson.test.JenkinsRule;
  * Verifies that specific environment variables are available.
  *
  */
-public class AvailableEnvVarTest {
+public class EnvWorkflowTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
