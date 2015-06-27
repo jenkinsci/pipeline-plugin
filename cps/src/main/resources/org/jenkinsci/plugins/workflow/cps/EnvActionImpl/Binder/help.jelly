@@ -28,7 +28,6 @@ node {
     </p>
     <ul>
         <li><code>EXECUTOR_NUMBER</code></li>
-        <li><code>NODE_NAME</code></li>
         <li><code>NODE_LABELS</code></li>
         <li><code>WORKSPACE</code></li>
         <li>SCM-specific variables such as <code>SVN_REVISION</code></li>
