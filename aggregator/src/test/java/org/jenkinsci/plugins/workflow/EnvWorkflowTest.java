@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2015.
+ * Copyright 2015 CloudBees, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,6 @@
 
 package org.jenkinsci.plugins.workflow;
 
-import hudson.slaves.DumbSlave;
-
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Rule;
@@ -41,17 +39,26 @@ public class EnvWorkflowTest {
     @Rule public JenkinsRule r = new JenkinsRule();
 
     /**
-     * Verifies if NODE_NAME environment variable is available in a slave node.
+     * Verifies if NODE_NAME environment variable is available on a slave node and on master.
      *
      * @throws Exception
      */
     @Test public void areAvailable() throws Exception {
+        r.createSlave("node-test", null, null);
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "workflow-test");
-        DumbSlave s = r.createSlave("node-test", null, null);
-        s.getComputer().connect(false).get();
 
-        p.setDefinition(new CpsFlowDefinition("node('node-test') { echo \"My name is ${env.NODE_NAME}\" }"));
-        r.assertLogContains("My name is node-test", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+        p.setDefinition(new CpsFlowDefinition(
+            "node('master') {\n" +
+            "  echo \"My name on master is ${env.NODE_NAME}\"\n" +
+            "}\n"
+        ));
+        r.assertLogContains("My name on master is master", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+
+        p.setDefinition(new CpsFlowDefinition(
+            "node('node-test') {\n" +
+            "  echo \"My name on a slave is ${env.NODE_NAME}\"\n" +
+            "}\n"
+        ));
+        r.assertLogContains("My name on a slave is node-test", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
-
 }

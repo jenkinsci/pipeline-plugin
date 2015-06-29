@@ -44,7 +44,6 @@ import jenkins.model.queue.AsynchronousExecution;
 import jenkins.util.Timer;
 
 import org.acegisecurity.Authentication;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.jenkinsci.plugins.durabletask.executors.ContinuedTask;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -62,6 +61,7 @@ import static java.util.logging.Level.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
 
 public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
@@ -429,6 +429,8 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         EnvVars env = computer.getEnvironment();
                         env.overrideAll(computer.buildEnvironment(listener));
                         env.put(COOKIE_VAR, cookie);
+                        // TODO: Copied from https://github.com/jenkinsci/jenkins/blob/9c443c8d5bafd63fce574f6d0cf400cd8fe1f124/core/src/main/java/jenkins/model/CoreEnvironmentContributor.java#L59
+                        // TODO: It is interesting to add NODE_LABELS and EXECUTOR_NUMBER
                         if (exec.getOwner() instanceof MasterComputer) {
                             env.put("NODE_NAME", "master");
                         } else {
