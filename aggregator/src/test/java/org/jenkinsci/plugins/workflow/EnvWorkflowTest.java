@@ -40,6 +40,11 @@ public class EnvWorkflowTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
+    /**
+     * Verifies if NODE_NAME environment variable is available in a slave node.
+     *
+     * @throws Exception
+     */
     @Test public void areAvailable() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "workflow-test");
         DumbSlave s = r.createSlave("node-test", null, null);

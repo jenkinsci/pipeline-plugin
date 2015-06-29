@@ -425,14 +425,16 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         cookie = UUID.randomUUID().toString();
                         // Switches the label to a self-label, so if the executable is killed and restarted via ExecutorPickle, it will run on the same node:
                         label = computer.getName();
+
                         EnvVars env = computer.getEnvironment();
                         env.overrideAll(computer.buildEnvironment(listener));
                         env.put(COOKIE_VAR, cookie);
-                        if (getExecutor().getOwner() instanceof MasterComputer) {
+                        if (exec.getOwner() instanceof MasterComputer) {
                             env.put("NODE_NAME", "master");
                         } else {
                             env.put("NODE_NAME", label);
                         }
+
                         synchronized (runningTasks) {
                             runningTasks.put(cookie, new RunningTask(context));
                         }
