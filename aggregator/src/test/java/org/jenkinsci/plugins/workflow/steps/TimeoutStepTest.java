@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Result;
 import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.workflow.BuildWatcher;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
@@ -14,6 +13,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 
 /**
