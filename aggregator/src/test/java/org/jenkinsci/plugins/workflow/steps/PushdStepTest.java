@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Functions;
 import java.io.File;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -70,7 +69,7 @@ public class PushdStepTest {
             @Override public void evaluate() throws Throwable {
                 SemaphoreStep.success("restarting/1", null);
                 WorkflowRun b = story.j.jenkins.getItemByFullName("p", WorkflowJob.class).getLastBuild();
-                story.j.assertLogContains(File.separator + "subdir", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
+                story.j.assertLogContains(File.separator + "subdir", story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b)));
             }
         });
     }

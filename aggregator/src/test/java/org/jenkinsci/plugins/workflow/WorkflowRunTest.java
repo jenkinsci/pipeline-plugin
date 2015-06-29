@@ -209,7 +209,7 @@ public class WorkflowRunTest {
         assertNotNull(p);
         WorkflowRun b = p.getLastBuild();
         assertNotNull(b);
-        r.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+        r.assertBuildStatusSuccess(r.waitForCompletion(b));
     }
 
 }

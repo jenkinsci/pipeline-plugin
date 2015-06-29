@@ -83,7 +83,7 @@ public class CoreWrapperStepTest {
                 SemaphoreStep.success("restarting/1", null);
                 WorkflowJob p = story.j.jenkins.getItemByFullName("p", WorkflowJob.class);
                 WorkflowRun b = p.getLastBuild();
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
                 String expected = "/home/jenkins/extra/bin:/usr/bin:/bin";
                 story.j.assertLogContains("groovy PATH=" + expected + ":", b);
                 story.j.assertLogContains("shell PATH=" + expected + ":", b);

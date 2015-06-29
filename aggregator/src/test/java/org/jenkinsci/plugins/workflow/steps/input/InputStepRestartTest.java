@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.steps.input;
 
 import com.google.common.base.Function;
 import java.io.IOException;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -61,7 +60,7 @@ public class InputStepRestartTest extends SingleJobTestBase {
                         return null;
                     }
                 }).get();
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
             }
         });
     }
