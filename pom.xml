@@ -65,6 +65,7 @@
         -->
         <module>job</module>
         <module>aggregator</module>
+        <module>multibranch</module>
     </modules>
     <dependencyManagement>
         <dependencies>
