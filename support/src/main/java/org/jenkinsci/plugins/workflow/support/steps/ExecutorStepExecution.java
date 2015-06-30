@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
+import jenkins.model.Jenkins.MasterComputer;
 import jenkins.util.Timer;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
@@ -389,6 +390,14 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         label = computer.getName();
                         EnvVars env = computer.buildEnvironment(listener);
                         env.put(COOKIE_VAR, cookie);
+                        // TODO: Copied from https://github.com/jenkinsci/jenkins/blob/9c443c8d5bafd63fce574f6d0cf400cd8fe1f124/core/src/main/java/jenkins/model/CoreEnvironmentContributor.java#L59
+                        // TODO: It is interesting to add NODE_LABELS and EXECUTOR_NUMBER
+                        if (exec.getOwner() instanceof MasterComputer) {
+                            env.put("NODE_NAME", "master");
+                        } else {
+                            env.put("NODE_NAME", label);
+                        }
+
                         synchronized (runningTasks) {
                             runningTasks.put(cookie, context);
                         }
