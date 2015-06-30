@@ -27,7 +27,6 @@ package org.jenkinsci.plugins.workflow;
 import hudson.EnvVars;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
-import hudson.model.Node.Mode;
 import hudson.model.Slave;
 import hudson.slaves.CommandLauncher;
 import hudson.slaves.NodeProperty;
