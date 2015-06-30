@@ -30,26 +30,20 @@ import hudson.security.ACL;
 import jenkins.branch.BranchProjectFactory;
 import jenkins.branch.MultiBranchProject;
 import org.acegisecurity.Authentication;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 
 /**
  * Representation of a set of workflows keyed off of source branches.
  */
-public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowBranchProject,WorkflowBranchBuild> {
+public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,WorkflowRun> {
 
     public WorkflowMultiBranchProject(ItemGroup parent, String name) {
         super(parent, name);
     }
 
-    @Override protected BranchProjectFactory<WorkflowBranchProject, WorkflowBranchBuild> newProjectFactory() {
+    @Override protected BranchProjectFactory<WorkflowJob,WorkflowRun> newProjectFactory() {
         return new WorkflowProjectFactoryImpl();
-    }
-
-    @Override public Authentication getDefaultAuthentication() {
-        return ACL.SYSTEM;
-    }
-
-    @Override public Authentication getDefaultAuthentication(Queue.Item item) {
-        return getDefaultAuthentication();
     }
 
 }

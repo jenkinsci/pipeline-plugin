@@ -24,18 +24,25 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
-import java.io.File;
-import java.io.IOException;
-import org.jenkinsci.plugins.workflow.job.AbstractWorkflowRun;
+import hudson.model.JobProperty;
+import javax.annotation.Nonnull;
+import jenkins.branch.Branch;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 
-public class WorkflowBranchBuild extends AbstractWorkflowRun<WorkflowBranchProject,WorkflowBranchBuild> {
+/**
+ * Marker for jobs based on a specific branch.
+ */
+public class BranchJobProperty extends JobProperty<WorkflowJob> {
 
-    public WorkflowBranchBuild(WorkflowBranchProject job) throws IOException {
-        super(job);
+    @Nonnull private Branch branch;
+
+    public synchronized Branch getBranch() {
+        return branch;
     }
 
-    public WorkflowBranchBuild(WorkflowBranchProject project, File buildDir) throws IOException {
-        super(project, buildDir);
+    synchronized void setBranch(@Nonnull Branch branch) {
+        branch.getClass();
+        this.branch = branch;
     }
 
 }

@@ -27,40 +27,55 @@ package org.jenkinsci.plugins.workflow.multibranch;
 import hudson.Extension;
 import hudson.model.Item;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.branch.Branch;
 import jenkins.branch.BranchProjectFactory;
 import jenkins.branch.BranchProjectFactoryDescriptor;
 import jenkins.branch.MultiBranchProject;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class WorkflowProjectFactoryImpl extends BranchProjectFactory<WorkflowBranchProject, WorkflowBranchBuild> {
+public class WorkflowProjectFactoryImpl extends BranchProjectFactory<WorkflowJob,WorkflowRun> {
     
     @DataBoundConstructor public WorkflowProjectFactoryImpl() {}
 
-    @Override public WorkflowBranchProject newInstance(Branch branch) {
-        return new WorkflowBranchProject((WorkflowMultiBranchProject) getOwner(), branch);
+    @Override public WorkflowJob newInstance(Branch branch) {
+        WorkflowJob job = new WorkflowJob((WorkflowMultiBranchProject) getOwner(), branch.getName());
+        setBranch(job, branch);
+        return job;
     }
 
-    @Override public Branch getBranch(WorkflowBranchProject project) {
-        return project.getBranch();
+    @Override public Branch getBranch(WorkflowJob project) {
+        return project.getProperty(BranchJobProperty.class).getBranch();
     }
 
-    @Override public WorkflowBranchProject setBranch(WorkflowBranchProject project, Branch branch) {
-        if (!project.getBranch().equals(branch)) {
-            project.setBranch(branch);
+    @Override public WorkflowJob setBranch(WorkflowJob project, Branch branch) {
+        boolean mod = false;
+        BranchJobProperty property = project.getProperty(BranchJobProperty.class);
+        if (property == null) {
+            property = new BranchJobProperty();
+            property.setBranch(branch);
+            mod = true;
+        } else {
+            if (!property.getBranch().equals(branch)) {
+                property.setBranch(branch);
+                mod = true;
+            }
+        }
+        if (mod) {
             try {
                 project.save();
-            } catch (IOException e) {
-                // TODO log
+            } catch (IOException x) {
+                Logger.getLogger(WorkflowProjectFactoryImpl.class.getName()).log(Level.WARNING, null, x);
             }
-        } else {
-            project.setBranch(branch);
         }
         return project;
     }
 
     @Override public boolean isProject(Item item) {
-        return item instanceof WorkflowBranchProject;
+        return item instanceof WorkflowJob && ((WorkflowJob) item).getProperty(BranchJobProperty.class) != null;
     }
 
     @Extension public static class DescriptorImpl extends BranchProjectFactoryDescriptor {
