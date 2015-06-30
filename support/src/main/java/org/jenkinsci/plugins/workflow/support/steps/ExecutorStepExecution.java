@@ -35,6 +35,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
+import jenkins.model.Jenkins.MasterComputer;
 import jenkins.model.queue.AsynchronousExecution;
 import jenkins.util.Timer;
 import org.acegisecurity.Authentication;
@@ -417,9 +418,18 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         cookie = UUID.randomUUID().toString();
                         // Switches the label to a self-label, so if the executable is killed and restarted via ExecutorPickle, it will run on the same node:
                         label = computer.getName();
+
                         EnvVars env = computer.getEnvironment();
                         env.overrideAll(computer.buildEnvironment(listener));
                         env.put(COOKIE_VAR, cookie);
+                        // TODO: Copied from https://github.com/jenkinsci/jenkins/blob/9c443c8d5bafd63fce574f6d0cf400cd8fe1f124/core/src/main/java/jenkins/model/CoreEnvironmentContributor.java#L59
+                        // TODO: It is interesting to add NODE_LABELS and EXECUTOR_NUMBER
+                        if (exec.getOwner() instanceof MasterComputer) {
+                            env.put("NODE_NAME", "master");
+                        } else {
+                            env.put("NODE_NAME", label);
+                        }
+
                         synchronized (runningTasks) {
                             runningTasks.put(cookie, new RunningTask(context));
                         }
