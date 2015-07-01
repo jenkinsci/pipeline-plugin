@@ -26,13 +26,17 @@ package org.jenkinsci.plugins.workflow.multibranch;
 
 import hudson.Extension;
 import hudson.model.ItemGroup;
+import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
+import java.io.IOException;
 import java.util.List;
 import jenkins.branch.BranchProjectFactory;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.MultiBranchProjectDescriptor;
+import jenkins.scm.api.SCMSource;
+import jenkins.scm.api.SCMSourceCriteria;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 
@@ -48,6 +52,14 @@ public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,W
 
     @Override protected BranchProjectFactory<WorkflowJob,WorkflowRun> newProjectFactory() {
         return new WorkflowProjectFactoryImpl();
+    }
+
+    @Override public SCMSourceCriteria getSCMSourceCriteria(SCMSource source) {
+        return new SCMSourceCriteria() {
+            @Override public boolean isHead(SCMSourceCriteria.Probe probe, TaskListener listener) throws IOException {
+                return probe.exists(WorkflowProjectFactoryImpl.SCRIPT);
+            }
+        };
     }
 
     @Extension public static class DescriptorImpl extends MultiBranchProjectDescriptor {

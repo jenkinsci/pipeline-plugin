@@ -42,6 +42,8 @@ public class WorkflowProjectFactoryImpl extends BranchProjectFactory<WorkflowJob
     
     private static final Logger LOGGER = Logger.getLogger(WorkflowProjectFactoryImpl.class.getName());
 
+    static final String SCRIPT = "jenkins.groovy";
+
     @DataBoundConstructor public WorkflowProjectFactoryImpl() {}
 
     @Override public WorkflowJob newInstance(Branch branch) {
@@ -74,7 +76,7 @@ public class WorkflowProjectFactoryImpl extends BranchProjectFactory<WorkflowJob
     private void setBranch(BranchJobProperty property, Branch branch, WorkflowJob project) {
         property.setBranch(branch);
         // TODO DRY would perhaps be better for getDefinition to consult the property
-        project.setDefinition(new CpsScmFlowDefinition(branch.getScm(), "jenkins.groovy"));
+        project.setDefinition(new CpsScmFlowDefinition(branch.getScm(), SCRIPT));
     }
 
     @Override public boolean isProject(Item item) {
