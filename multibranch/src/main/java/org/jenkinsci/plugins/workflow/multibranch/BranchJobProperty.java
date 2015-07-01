@@ -25,16 +25,19 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
 import hudson.Extension;
-import hudson.model.JobProperty;
+import hudson.model.Item;
 import hudson.model.JobPropertyDescriptor;
+import hudson.security.ACL;
+import hudson.security.Permission;
 import javax.annotation.Nonnull;
 import jenkins.branch.Branch;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.acegisecurity.Authentication;
+import org.jenkinsci.plugins.workflow.job.WorkflowJobProperty;
 
 /**
  * Marker for jobs based on a specific branch.
  */
-public class BranchJobProperty extends JobProperty<WorkflowJob> {
+public class BranchJobProperty extends WorkflowJobProperty {
 
     private /*@Nonnull once initialized */ Branch branch;
 
@@ -45,6 +48,20 @@ public class BranchJobProperty extends JobProperty<WorkflowJob> {
     synchronized void setBranch(@Nonnull Branch branch) {
         branch.getClass();
         this.branch = branch;
+    }
+
+    @Override public ACL decorateACL(final ACL acl) {
+        return new ACL() {
+            @Override public boolean hasPermission(Authentication a, Permission permission) {
+                // This project is managed by its parent and may not be directly configured or deleted.
+                // Note that Item.EXTENDED_READ may still be granted, so you can still see Snippet Generator, etc.
+                if (permission == Item.CONFIGURE || permission == Item.DELETE) {
+                    return false;
+                } else {
+                    return acl.hasPermission(a, permission);
+                }
+            }
+        };
     }
 
     @Extension public static class DescriptorImpl extends JobPropertyDescriptor {
