@@ -33,12 +33,15 @@ import jenkins.branch.Branch;
 import jenkins.branch.BranchProjectFactory;
 import jenkins.branch.BranchProjectFactoryDescriptor;
 import jenkins.branch.MultiBranchProject;
+import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class WorkflowProjectFactoryImpl extends BranchProjectFactory<WorkflowJob,WorkflowRun> {
     
+    private static final Logger LOGGER = Logger.getLogger(WorkflowProjectFactoryImpl.class.getName());
+
     @DataBoundConstructor public WorkflowProjectFactoryImpl() {}
 
     @Override public WorkflowJob newInstance(Branch branch) {
@@ -52,26 +55,26 @@ public class WorkflowProjectFactoryImpl extends BranchProjectFactory<WorkflowJob
     }
 
     @Override public WorkflowJob setBranch(WorkflowJob project, Branch branch) {
-        boolean mod = false;
         BranchJobProperty property = project.getProperty(BranchJobProperty.class);
-        if (property == null) {
-            property = new BranchJobProperty();
-            property.setBranch(branch);
-            mod = true;
-        } else {
-            if (!property.getBranch().equals(branch)) {
-                property.setBranch(branch);
-                mod = true;
-            }
-        }
-        if (mod) {
-            try {
+        try {
+            if (property == null) {
+                property = new BranchJobProperty();
+                setBranch(property, branch, project);
+                project.addProperty(property);
+            } else if (!property.getBranch().equals(branch)) {
+                setBranch(property, branch, project);
                 project.save();
-            } catch (IOException x) {
-                Logger.getLogger(WorkflowProjectFactoryImpl.class.getName()).log(Level.WARNING, null, x);
             }
+        } catch (IOException x) {
+            LOGGER.log(Level.WARNING, null, x);
         }
         return project;
+    }
+
+    private void setBranch(BranchJobProperty property, Branch branch, WorkflowJob project) {
+        property.setBranch(branch);
+        // TODO DRY would perhaps be better for getDefinition to consult the property
+        project.setDefinition(new CpsScmFlowDefinition(branch.getScm(), "jenkins.groovy"));
     }
 
     @Override public boolean isProject(Item item) {
@@ -84,6 +87,7 @@ public class WorkflowProjectFactoryImpl extends BranchProjectFactory<WorkflowJob
             return "Fixed configuration";
         }
 
+        @SuppressWarnings("rawtypes") // TODO fix super class
         @Override public boolean isApplicable(Class<? extends MultiBranchProject> clazz) {
             return WorkflowMultiBranchProject.class.isAssignableFrom(clazz);
         }
