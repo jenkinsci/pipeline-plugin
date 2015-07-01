@@ -24,7 +24,9 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import hudson.Extension;
 import hudson.model.JobProperty;
+import hudson.model.JobPropertyDescriptor;
 import javax.annotation.Nonnull;
 import jenkins.branch.Branch;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -43,6 +45,14 @@ public class BranchJobProperty extends JobProperty<WorkflowJob> {
     synchronized void setBranch(@Nonnull Branch branch) {
         branch.getClass();
         this.branch = branch;
+    }
+
+    @Extension public static class DescriptorImpl extends JobPropertyDescriptor {
+
+        @Override public String getDisplayName() {
+            return "Based on branch";
+        }
+
     }
 
 }
