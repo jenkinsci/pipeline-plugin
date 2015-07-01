@@ -24,12 +24,15 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import hudson.Extension;
 import hudson.model.ItemGroup;
-import hudson.model.Queue;
-import hudson.security.ACL;
+import hudson.model.TopLevelItem;
+import hudson.scm.SCM;
+import hudson.scm.SCMDescriptor;
+import java.util.List;
 import jenkins.branch.BranchProjectFactory;
 import jenkins.branch.MultiBranchProject;
-import org.acegisecurity.Authentication;
+import jenkins.branch.MultiBranchProjectDescriptor;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 
@@ -44,6 +47,25 @@ public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,W
 
     @Override protected BranchProjectFactory<WorkflowJob,WorkflowRun> newProjectFactory() {
         return new WorkflowProjectFactoryImpl();
+    }
+
+    @Extension public static class DescriptorImpl extends MultiBranchProjectDescriptor {
+
+        @Override public String getDisplayName() {
+            return "Multibranch Workflow";
+        }
+
+        @Override public TopLevelItem newInstance(ItemGroup parent, String name) {
+            return new WorkflowMultiBranchProject(parent, name);
+        }
+
+        @Override public List<SCMDescriptor<?>> getSCMDescriptors() {
+            // TODO this is a problem. We need to select only those compatible with Workflow.
+            // Yet SCMDescriptor.isApplicable requires an actual Job, whereas we can only pass WorkflowJob.class!
+            // Can we create a dummy WorkflowJob instance?
+            return SCM.all();
+        }
+
     }
 
 }
