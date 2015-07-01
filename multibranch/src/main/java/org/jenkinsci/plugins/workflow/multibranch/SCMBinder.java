@@ -24,10 +24,12 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import com.thoughtworks.xstream.converters.Converter;
 import groovy.lang.GroovyShell;
 import hudson.Extension;
 import hudson.model.Queue;
 import hudson.scm.SCM;
+import hudson.util.DescribableList;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.logging.Level;
@@ -35,12 +37,13 @@ import java.util.logging.Logger;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.GroovyShellDecorator;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.pickles.Pickle;
+import org.jenkinsci.plugins.workflow.support.pickles.SingleTypedPickleFactory;
+import org.jenkinsci.plugins.workflow.support.pickles.XStreamPickle;
 
 /**
  * Adds an {@code scm} global variable to the script.
  * This makes it possible to run {@code checkout scm} to get your project sources in the right branch.
- * <p>Note that for this to be legal, the {@link SCM} implementation must implement {@link Serializable}.
- * Normally that is no real burden, since it is saved by XStream into a project configuration anyway.
  */
 @Extension public class SCMBinder extends GroovyShellDecorator {
 
@@ -59,6 +62,19 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
         } catch (IOException x) {
             Logger.getLogger(SCMBinder.class.getName()).log(Level.WARNING, null, x);
         }
+    }
+
+    /**
+     * Ensures that {@code scm} is saved in its XML representation.
+     * Necessary for {@code GitSCM} which is marked {@link Serializable}
+     * yet includes a {@link DescribableList} which relies on a custom {@link Converter}.
+     */
+    @Extension public static class Pickler extends SingleTypedPickleFactory<SCM> {
+
+        @Override protected Pickle pickle(SCM scm) {
+            return new XStreamPickle(scm);
+        }
+
     }
 
 }
