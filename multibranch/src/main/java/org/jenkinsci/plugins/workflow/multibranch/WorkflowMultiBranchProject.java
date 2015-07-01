@@ -39,6 +39,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 /**
  * Representation of a set of workflows keyed off of source branches.
  */
+@SuppressWarnings({"unchecked", "rawtypes"}) // core’s fault
 public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,WorkflowRun> {
 
     public WorkflowMultiBranchProject(ItemGroup parent, String name) {
