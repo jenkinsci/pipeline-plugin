@@ -45,6 +45,9 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 @Extension public class SCMBinder extends GroovyShellDecorator {
 
     @Override public void configureShell(CpsFlowExecution context, GroovyShell shell) {
+        if (context == null) {
+            return;
+        }
         try {
             Queue.Executable exec = context.getOwner().getExecutable();
             if (exec instanceof WorkflowRun) {
