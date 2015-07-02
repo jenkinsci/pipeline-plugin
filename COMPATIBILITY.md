@@ -53,7 +53,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `GitPublisher` (`git`) or a custom step: [JENKINS-28335](https://issues.jenkins-ci.org/browse/JENKINS-28335)
 - [ ] SonarQube Jenkins: [SONARJNKNS-213](http://jira.sonarsource.com/browse/SONARJNKNS-213)
 - [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
-- [X] `ScoveragePublisher` (`scoverage`): scheduled to be supported in 0.8.0 [PR 3](https://github.com/jenkinsci/scoverage-plugin/pull/3)
+- [X] `ScoveragePublisher` (`scoverage`): supported in 1.2.0
 
 ## Build wrappers
 
