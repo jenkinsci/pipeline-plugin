@@ -52,6 +52,8 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
 
     @StepContextParameter private transient FlowNode node;
 
+    @StepContextParameter private transient FilePath ws;
+
     /**
      * Result of the input.
      */
@@ -302,7 +304,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
     private Object convert(String name, ParameterValue v) throws IOException, InterruptedException {
         if (v instanceof FileParameterValue) {
             FileParameterValue fv = (FileParameterValue) v;
-            FilePath fp = new FilePath(run.getRootDir()).child(name);
+            FilePath fp = ws.child(name);
             fp.copyFrom(fv.getFile());
             return fp;
         } else {
