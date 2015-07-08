@@ -20,16 +20,19 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.GrantedAuthority;
+import org.apache.commons.fileupload.FileItem;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.support.actions.PauseAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.RequestImpl;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -124,8 +127,20 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
      * Called from the form via browser to submit/abort this input step.
      */
     @RequirePOST
-    public HttpResponse doSubmit(StaplerRequest request) throws IOException, ServletException, InterruptedException {
-        if (request.getParameter("proceed")!=null) {
+    public HttpResponse doSubmit(StaplerRequest request) throws IOException, ServletException, InterruptedException {        
+        String proceed = null;
+        
+        if (isMultipart(request)) {
+            // TODO: fix hack ... see getFileItem comments
+            FileItem proceedFileItem = getFileItem(request, "proceed");
+            if (proceedFileItem != null) {
+                proceed = proceedFileItem.getString();
+            }
+        } else {
+            proceed = request.getParameter("proceed");
+        }
+        
+        if (proceed != null) {
             doProceed(request);
         } else {
             doAbort();
@@ -296,4 +311,62 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
     }
 
     private static final long serialVersionUID = 1L;
+    
+    // TODO: replace with a call to MultipartFormDataParser.isMultipart once available in parent core
+    private static boolean isMultipart(StaplerRequest request) {
+        if (request == null) {
+            return false;
+        }
+
+        String contentType = request.getContentType();
+        if (contentType == null) {
+            return false;
+        }
+
+        String[] parts = contentType.split(";");
+        if (parts.length == 0) {
+            return false;
+        }
+
+        for (int i = 0; i < parts.length; i++) {
+            if ("multipart/form-data".equals(parts[i])) {
+                return true;
+            }
+        }
+
+        return false;
+    }    
+    
+    // TODO: total hack to gain access to all parsedFormData from Stapler RequestImpl
+    // It sooo sucks that RequestImpl makes the decision it does wrt isFormField ... why not let the 
+    // caller do that kind of filtering if they need it !!    
+    private static FileItem getFileItem(StaplerRequest request, String name) throws ServletException, IOException {
+        FileItem item = request.getFileItem(name);
+        
+        if (item != null) {
+            return item;
+        }
+        if (!(request instanceof RequestImpl)) {
+            return null;
+        }
+
+        try {
+            Field parsedFormDataField = request.getClass().getDeclaredField("parsedFormData");
+
+            boolean isAccessible = parsedFormDataField.isAccessible();
+            parsedFormDataField.setAccessible(true);
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, FileItem> fieldValue = (Map<String, FileItem> ) parsedFormDataField.get(request);
+                return fieldValue.get(name);
+            } finally {
+                parsedFormDataField.setAccessible(isAccessible);
+            }
+        } catch (IllegalAccessException e) {
+            // fall through
+        } catch (NoSuchFieldException e) {            
+            // fall through
+        }
+        return null;
+    }
 }
