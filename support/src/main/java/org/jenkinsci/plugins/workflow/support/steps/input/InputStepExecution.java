@@ -353,7 +353,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
         }
 
         try {
-            Field parsedFormDataField = request.getClass().getDeclaredField("parsedFormData");
+            Field parsedFormDataField = RequestImpl.class.getDeclaredField("parsedFormData");
 
             boolean isAccessible = parsedFormDataField.isAccessible();
             parsedFormDataField.setAccessible(true);
