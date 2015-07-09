@@ -52,8 +52,6 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
 
     @StepContextParameter private transient FlowNode node;
 
-    @StepContextParameter private transient FilePath ws;
-
     /**
      * Result of the input.
      */
@@ -304,9 +302,15 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
     private Object convert(String name, ParameterValue v) throws IOException, InterruptedException {
         if (v instanceof FileParameterValue) {
             FileParameterValue fv = (FileParameterValue) v;
-            FilePath fp = ws.child(name);
-            fp.copyFrom(fv.getFile());
-            return fp;
+            FilePath workspace = getContext().get(FilePath.class);
+            if (workspace != null) {
+                FilePath fp =  workspace.child(name);
+                fp.copyFrom(fv.getFile());
+                return fp;
+            } else {
+                // This should never happen.
+                throw new Failure("No workspace found in context.");
+            }
         } else {
             return v.getValue();
         }
