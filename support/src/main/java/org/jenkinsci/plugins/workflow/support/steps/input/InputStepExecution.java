@@ -344,7 +344,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
     }    
     
     // TODO: total hack to gain access to all parsedFormData from Stapler RequestImpl
-    // It sooo sucks that RequestImpl makes the decision it does wrt isFormField ... why not let the 
+    // It's a pity that RequestImpl makes the decision it does wrt isFormField FileItem filtering... why not let the 
     // caller do that kind of filtering if they need it !!    
     private static FileItem getFileItem(StaplerRequest request, String name) throws ServletException, IOException {
         FileItem item = request.getFileItem(name);
