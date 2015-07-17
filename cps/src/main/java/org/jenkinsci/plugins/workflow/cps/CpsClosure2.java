@@ -6,6 +6,7 @@ import com.cloudbees.groovy.cps.impl.CpsClosure;
 import groovy.lang.Closure;
 import org.codehaus.groovy.runtime.DefaultGroovyStaticMethods;
 import org.codehaus.groovy.runtime.InvokerHelper;
+import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class CpsClosure2 extends CpsClosure {
     /**
      * @see CpsScript#sleep(long)
      */
+    @Whitelisted
     public Object sleep(long arg) {
         return InvokerHelper.invokeMethod(getOwner(), "sleep", arg);
     }
@@ -43,18 +45,22 @@ public class CpsClosure2 extends CpsClosure {
         In CpsScript we override these methods and redefine them as variants of the 'echo' step,
         so for this to work the same from closure body, we need to redefine them.
  */
+    @Whitelisted
     public void println(Object arg) {
         InvokerHelper.invokeMethod(getOwner(), "println", new Object[]{arg});
     }
 
+    @Whitelisted
     public void println() {
         InvokerHelper.invokeMethod(getOwner(), "println", new Object[0]);
     }
 
+    @Whitelisted
     public void print(Object arg) {
         InvokerHelper.invokeMethod(getOwner(), "print", new Object[]{arg});
     }
 
+    @Whitelisted
     public void printf(String format, Object value) {
         InvokerHelper.invokeMethod(getOwner(), "printf", new Object[]{format,value});
     }
