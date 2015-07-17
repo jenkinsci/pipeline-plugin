@@ -44,7 +44,7 @@ public class WorkflowLibRepositoryTest {
     public void globalLib() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                File dir = new File(repo.workspace,UserDefinedGlobalVariable.PREFIX+"/foo");
+                File dir = new File(repo.workspace,"src/foo");
                 dir.mkdirs();
 
                 FileUtils.write(new File(dir, "Foo.groovy"),
