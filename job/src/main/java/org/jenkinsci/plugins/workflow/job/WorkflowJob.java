@@ -35,6 +35,7 @@ import hudson.model.BuildableItem;
 import hudson.model.Cause;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
+import hudson.model.Executor;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Items;
@@ -44,6 +45,7 @@ import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.ResourceList;
+import hudson.model.Run;
 import hudson.model.RunMap;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
@@ -76,6 +78,7 @@ import jenkins.model.ParameterizedJobMixIn;
 import jenkins.model.lazy.LazyBuildMixIn;
 import jenkins.triggers.SCMTriggerItem;
 import jenkins.util.TimeDuration;
+import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.kohsuke.accmod.Restricted;
@@ -83,6 +86,7 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -94,6 +98,8 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     @SuppressWarnings("deprecation")
     private hudson.model.BuildAuthorizationToken authToken;
     private transient LazyBuildMixIn<WorkflowJob,WorkflowRun> buildMixIn;
+    /** defaults to true */
+    private @CheckForNull Boolean concurrentBuild;
 
     public WorkflowJob(ItemGroup parent, String name) {
         super(parent, name);
@@ -151,7 +157,8 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     @SuppressWarnings("deprecation")
     @Override protected void submit(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException, Descriptor.FormException {
         super.submit(req, rsp);
-        definition = req.bindJSON(FlowDefinition.class, req.getSubmittedForm().getJSONObject("definition"));
+        JSONObject json = req.getSubmittedForm();
+        definition = req.bindJSON(FlowDefinition.class, json.getJSONObject("definition"));
         authToken = hudson.model.BuildAuthorizationToken.create(req);
         for (Trigger t : triggers) {
             t.stop();
@@ -161,10 +168,11 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         } else {
             quietPeriod = null;
         }
-        triggers.rebuild(req, req.getSubmittedForm(), Trigger.for_(this));
+        triggers.rebuild(req, json, Trigger.for_(this));
         for (Trigger t : triggers) {
             t.start(this, true);
         }
+        concurrentBuild = json.optBoolean("concurrentBuild") ? null : false;
     }
     
     @Override public boolean isBuildable() {
@@ -291,13 +299,39 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     }
 
     @Override public CauseOfBlockage getCauseOfBlockage() {
-        // TODO is there any legitimate reason to block a flow? maybe !isConcurrentBuild()?
+        if (isLogUpdated() && !isConcurrentBuild()) {
+            return new BecauseOfBuildInProgress(getLastBuild());
+        }
         return null;
     }
+    // TODO delete when https://github.com/jenkinsci/jenkins/pull/1747 is available
+    public static class BecauseOfBuildInProgress extends CauseOfBlockage {
+        private final Run<?,?> build;
 
+        public BecauseOfBuildInProgress(Run<?, ?> build) {
+            this.build = build;
+        }
+
+        @Override
+        public String getShortDescription() {
+            Executor e = build.getExecutor();
+            String eta = "";
+            if (e != null) {
+                eta = hudson.model.Messages.AbstractProject_ETA(e.getEstimatedRemainingTime());
+            }
+            int lbn = build.getNumber();
+            return hudson.model.Messages.AbstractProject_BuildInProgress(lbn, eta);
+        }
+    }
+
+    @Exported
     @Override public boolean isConcurrentBuild() {
-        // TODO should this be configurable?
-        return true;
+        return !Boolean.FALSE.equals(concurrentBuild);
+    }
+    
+    public void setConcurrentBuild(boolean b) throws IOException {
+        concurrentBuild = b ? null : false;
+        save();
     }
 
     @Override public void checkAbortPermission() {

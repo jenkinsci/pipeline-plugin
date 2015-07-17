@@ -64,6 +64,8 @@ and browse [localhost:8080](http://localhost:8080/).
 
 # Presentations
 
+Jenkins Workflow: What’s Up? (JUC DC) (Jun 2015): [slides](http://www.slideshare.net/jgcloudbees/juc-dc-2015-workflow-whats-up)
+
 Workflow Meetup London (Mar 2015): [slides](http://www.slideshare.net/jgcloudbees/london-workflow-summit-kkjg)
 
 Webinar _Orchestrating the Continuous Delivery Process in Jenkins with Workflow_ (Dec 2014): [video](http://youtu.be/ZqfiW8eVcuQ)
@@ -75,6 +77,8 @@ JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJ
 [Reusing build steps from freestyle projects](basic-steps/CORE-STEPS.md)
 
 [Using version control from a workflow](scm-step/README.md)
+
+[Using the global Groovy class library](cps-global-lib/README.md)
 
 # Development
 
