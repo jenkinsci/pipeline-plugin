@@ -30,7 +30,6 @@ import hudson.tasks.i18n.Messages;
 import hudson.tasks.junit.TestResultAction;
 import java.util.List;
 import javax.mail.internet.InternetAddress;
-import org.jenkinsci.plugins.workflow.BuildWatcher;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -38,6 +37,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
 import org.junit.Rule;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.mock_javamail.Mailbox;
 

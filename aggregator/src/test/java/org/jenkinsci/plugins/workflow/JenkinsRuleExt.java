@@ -27,8 +27,6 @@ package org.jenkinsci.plugins.workflow;
 import hudson.EnvVars;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
-import hudson.model.Node.Mode;
-import hudson.model.Run;
 import hudson.model.Slave;
 import hudson.slaves.CommandLauncher;
 import hudson.slaves.NodeProperty;
@@ -46,31 +44,6 @@ import org.jvnet.hudson.test.JenkinsRule;
  * Utilities that could be added to {@link JenkinsRule} in the future but are not yet available in our baseline version.
  */
 public class JenkinsRuleExt {
-
-    // TODO use standard version 1.607+
-
-    /**
-     * Waits for a build to complete.
-     * @return the same build, once done
-     */
-    public static <R extends Run<?,?>> R waitForCompletion(R r) throws InterruptedException {
-        // Could be using com.jayway.awaitility:awaitility but it seems like overkill here.
-        while (r.isBuilding()) {
-            Thread.sleep(100);
-        }
-        return r;
-    }
-
-    /**
-     * Waits for a build log to contain a specified string.
-     * @return the same build, once it does
-     */
-    public static <R extends Run<?,?>> R waitForMessage(String message, R r) throws IOException, InterruptedException {
-        while (!JenkinsRule.getLog(r).contains(message)) {
-            Thread.sleep(100);
-        }
-        return r;
-    }
 
     /**
      * Akin to {@link JenkinsRule#createSlave(String, String, EnvVars)} but allows {@link Computer#getEnvironment} to be controlled rather than directly modifying launchers.

@@ -26,8 +26,6 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.slaves.DumbSlave;
 import java.io.File;
-import org.jenkinsci.plugins.workflow.BuildWatcher;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -35,6 +33,7 @@ import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.Rule;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -63,8 +62,8 @@ public class WorkspaceStepTest {
         SemaphoreStep.waitForStart("customWorkspace/2", b3);
         SemaphoreStep.success("customWorkspace/1", null);
         SemaphoreStep.success("customWorkspace/2", null);
-        r.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b2));
-        r.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b3));
+        r.assertBuildStatusSuccess(r.waitForCompletion(b2));
+        r.assertBuildStatusSuccess(r.waitForCompletion(b3));
         String location = new File(r.jenkins.getRootDir(), "custom-location").getAbsolutePath();
         r.assertLogContains(location, b2);
         r.assertLogNotContains("custom-location@", b2);

@@ -28,8 +28,6 @@ import hudson.model.Result;
 import java.util.List;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
-import org.jenkinsci.plugins.workflow.BuildWatcher;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -42,8 +40,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class StageTest {
@@ -119,7 +117,7 @@ public class StageTest {
                     assertTrue(b1.isBuilding());
                     e2.waitForSuspension();
                     e3.waitForSuspension();
-                    story.j.assertBuildStatus(Result.NOT_BUILT, JenkinsRuleExt.waitForCompletion(b2));
+                    story.j.assertBuildStatus(Result.NOT_BUILT, story.j.waitForCompletion(b2));
                     InterruptedBuildAction iba = b2.getAction(InterruptedBuildAction.class);
                     assertNotNull(iba);
                     List<CauseOfInterruption> causes = iba.getCauses();
@@ -182,13 +180,13 @@ public class StageTest {
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("serializability/1", b1);
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
-                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b2);
+                story.j.waitForMessage("Waiting for builds [1]", b2);
                 WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
-                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b3);
+                story.j.waitForMessage("Waiting for builds [1]", b3);
                 SemaphoreStep.success("serializability/1", null); // b1
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b1));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b1));
                 SemaphoreStep.success("serializability/2", null); // b3
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b3));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b3));
                 story.j.assertBuildStatus(Result.NOT_BUILT, b2);
                 story.j.assertLogContains("Canceled since #3 got here", b2);
                 story.j.assertLogContains("in finally", b2);
@@ -210,12 +208,12 @@ public class StageTest {
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("holdingAfterUnblockA/1", b1); // about to leave A
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
-                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b2);
+                story.j.waitForMessage("Waiting for builds [1]", b2);
                 SemaphoreStep.success("holdingAfterUnblockA/1", null);
                 SemaphoreStep.waitForStart("holdingAfterUnblockB/1", b1); // now in B
                 SemaphoreStep.waitForStart("holdingAfterUnblockA/2", b2); // b2 unblocked, now in A
                 WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
-                JenkinsRuleExt.waitForMessage("Waiting for builds [2]", b3);
+                story.j.waitForMessage("Waiting for builds [2]", b3);
             }
         });
     }
@@ -232,12 +230,12 @@ public class StageTest {
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("holdingAfterExitUnblock/1", b1); // about to leave
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
-                JenkinsRuleExt.waitForMessage("Waiting for builds [1]", b2);
+                story.j.waitForMessage("Waiting for builds [1]", b2);
                 SemaphoreStep.success("holdingAfterExitUnblock/1", null);
-                JenkinsRuleExt.waitForCompletion(b1);
+                story.j.waitForCompletion(b1);
                 SemaphoreStep.waitForStart("holdingAfterExitUnblock/2", b2); // b2 unblocked
                 WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
-                JenkinsRuleExt.waitForMessage("Waiting for builds [2]", b3);
+                story.j.waitForMessage("Waiting for builds [2]", b3);
             }
         });
     }

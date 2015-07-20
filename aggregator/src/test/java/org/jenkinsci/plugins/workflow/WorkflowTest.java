@@ -116,7 +116,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 }
                 liveness();
                 SemaphoreStep.success("wait/1", null);
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
             }
         });
     }
@@ -162,7 +162,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
                 SemaphoreStep.success("wait/1", null);
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
             }
         });
     }
@@ -198,7 +198,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
                 SemaphoreStep.success("wait/1", null);
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
 
                 story.j.assertLogContains("before=demo", b);
                 story.j.assertLogContains("ONSLAVE=true", b);
@@ -232,7 +232,7 @@ public class WorkflowTest extends SingleJobTestBase {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
                 SemaphoreStep.success("wait/1", null);
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
             }
         });
     }
@@ -300,7 +300,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 while (f2.isFile()) {
                     Thread.sleep(100);
                 }
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
                 story.j.assertLogContains("finished waiting", b);
                 story.j.assertLogContains("OK, done", b);
                 killJnlpProc();
@@ -349,7 +349,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 while (f2.isFile()) {
                     Thread.sleep(100);
                 }
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
                 story.j.assertLogContains("finished waiting", b); // TODO sometimes is not printed to log, despite f2 having been removed
                 story.j.assertLogContains("OK, done", b);
                 killJnlpProc();
@@ -472,7 +472,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 SemaphoreStep.success("wait/2", null);
                 SemaphoreStep.success("wait/3", null);
 
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
                 assertTrue(e.programPromise.get().closures.isEmpty());
             }
         });
@@ -490,11 +490,11 @@ public class WorkflowTest extends SingleJobTestBase {
                 startBuilding();
                 waitForWorkflowToSuspend();
                 assertTrue(b.isBuilding());
-                JenkinsRuleExt.waitForMessage("running as someone", b);
+                story.j.waitForMessage("running as someone", b);
                 CheckAuth.finish(false);
                 waitForWorkflowToSuspend();
                 assertTrue(b.isBuilding());
-                JenkinsRuleExt.waitForMessage("still running as someone", b);
+                story.j.waitForMessage("still running as someone", b);
             }
         });
         story.addStep(new Statement() {
@@ -502,9 +502,9 @@ public class WorkflowTest extends SingleJobTestBase {
                 assertEquals(JenkinsRule.DummySecurityRealm.class, jenkins().getSecurityRealm().getClass());
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
-                JenkinsRuleExt.waitForMessage("again running as someone", b);
+                story.j.waitForMessage("again running as someone", b);
                 CheckAuth.finish(true);
-                story.j.assertLogContains("finally running as someone", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
+                story.j.assertLogContains("finally running as someone", story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b)));
             }
         });
     }
@@ -586,7 +586,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 rebuildContext(story.j);
                 assertThatWorkflowIsSuspended();
                 SemaphoreStep.success("env/1", null);
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
                 story.j.assertLogContains("tag=jenkins-demo-1 PERMACHINE=set", b);
                 story.j.assertLogContains("tag2=custom", b);
                 story.j.assertLogContains("tag3=custom2 stuff=more", b);
@@ -608,7 +608,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition("node('special') {echo 'OK ran'}"));
                 startBuilding();
-                JenkinsRuleExt.waitForMessage("Still waiting to schedule task", b);
+                story.j.waitForMessage("Still waiting to schedule task", b);
             }
         });
         story.addStep(new Statement() {
@@ -616,7 +616,7 @@ public class WorkflowTest extends SingleJobTestBase {
                 story.j.createSlave("special", null);
                 rebuildContext(story.j);
                 // TODO JENKINS-27532 sometimes two copies of the WorkflowRun are loaded
-                story.j.assertLogContains("OK ran", story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b)));
+                story.j.assertLogContains("OK ran", story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b)));
             }
         });
     }
