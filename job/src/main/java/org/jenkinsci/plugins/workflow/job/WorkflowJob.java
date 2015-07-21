@@ -32,38 +32,34 @@ import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
-import hudson.model.Cause;
-import hudson.model.Computer;
-import hudson.model.Descriptor;
-import hudson.model.Executor;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Items;
-import hudson.model.Job;
-import hudson.model.JobProperty;
-import hudson.model.Label;
-import hudson.model.Node;
-import hudson.model.Queue;
 import hudson.model.ResourceList;
-import hudson.model.Run;
-import hudson.model.RunMap;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.model.TopLevelItemDescriptor;
-import hudson.model.queue.CauseOfBlockage;
+import hudson.model.AbstractProject;
+import hudson.model.Computer;
+import hudson.model.Descriptor;
+import hudson.model.Executor;
+import hudson.model.Label;
+import hudson.model.Node;
+import hudson.model.Queue;
+import hudson.model.Run;
 import hudson.model.queue.QueueTaskFuture;
-import hudson.model.queue.SubTask;
+import hudson.model.queue.CauseOfBlockage;
 import hudson.scm.PollingResult;
 import hudson.scm.SCM;
-import hudson.search.SearchIndexBuilder;
 import hudson.security.ACL;
 import hudson.slaves.WorkspaceList;
-import hudson.triggers.SCMTrigger;
+import hudson.tasks.Publisher;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
+import hudson.triggers.SCMTrigger;
 import hudson.util.AlternativeUiTextProvider;
 import hudson.util.DescribableList;
-import hudson.widgets.HistoryWidget;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,52 +67,45 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
+
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
 import jenkins.model.lazy.LazyBuildMixIn;
 import jenkins.triggers.SCMTriggerItem;
-import jenkins.util.TimeDuration;
 import net.sf.json.JSONObject;
+
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
-import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.export.Exported;
-import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements BuildableItem, LazyBuildMixIn.LazyLoadingJob<WorkflowJob,WorkflowRun>, ParameterizedJobMixIn.ParameterizedJob, TopLevelItem, Queue.FlyweightTask, SCMTriggerItem {
+public final class WorkflowJob extends AbstractProject<WorkflowJob,WorkflowRun> implements BuildableItem, LazyBuildMixIn.LazyLoadingJob<WorkflowJob,WorkflowRun>, ParameterizedJobMixIn.ParameterizedJob, TopLevelItem, Queue.FlyweightTask, SCMTriggerItem {
 
     private FlowDefinition definition;
     private DescribableList<Trigger<?>,TriggerDescriptor> triggers = new DescribableList<Trigger<?>,TriggerDescriptor>(this);
     private volatile Integer quietPeriod;
     @SuppressWarnings("deprecation")
     private hudson.model.BuildAuthorizationToken authToken;
-    private transient LazyBuildMixIn<WorkflowJob,WorkflowRun> buildMixIn;
     /** defaults to true */
     private @CheckForNull Boolean concurrentBuild;
 
     public WorkflowJob(ItemGroup parent, String name) {
         super(parent, name);
-        buildMixIn = createBuildMixIn();
     }
 
     @Override public void onCreatedFromScratch() {
         super.onCreatedFromScratch();
-        buildMixIn.onCreatedFromScratch();
     }
 
     @Override public void onLoad(ItemGroup<? extends Item> parent, String name) throws IOException {
         super.onLoad(parent, name);
-        if (buildMixIn == null) {
-            buildMixIn = createBuildMixIn();
-        }
-        buildMixIn.onLoad(parent, name);
         if (triggers == null) {
             triggers = new DescribableList<Trigger<?>,TriggerDescriptor>(this);
         } else {
@@ -125,17 +114,6 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         for (Trigger t : triggers) {
             t.start(this, Items.currentlyUpdatingByXml());
         }
-    }
-
-    private LazyBuildMixIn<WorkflowJob,WorkflowRun> createBuildMixIn() {
-        return new LazyBuildMixIn<WorkflowJob,WorkflowRun>() {
-            @Override protected WorkflowJob asJob() {
-                return WorkflowJob.this;
-            }
-            @Override protected Class<WorkflowRun> getBuildClass() {
-                return WorkflowRun.class;
-            }
-        };
     }
 
     private ParameterizedJobMixIn<WorkflowJob,WorkflowRun> createParameterizedJobMixIn() {
@@ -179,90 +157,8 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return true; // why not?
     }
 
-    @Override protected RunMap<WorkflowRun> _getRuns() {
-        return buildMixIn._getRuns();
-    }
-
-    @Override public LazyBuildMixIn<WorkflowJob,WorkflowRun> getLazyBuildMixIn() {
-        return buildMixIn;
-    }
-
-    @Override protected void removeRun(WorkflowRun run) {
-        buildMixIn.removeRun(run);
-    }
-
-    @Override @Deprecated public WorkflowRun getBuild(String id) {
-        return buildMixIn.getBuild(id);
-    }
-
-    @Override public WorkflowRun getBuildByNumber(int n) {
-        return buildMixIn.getBuildByNumber(n);
-    }
-
-    @Override public WorkflowRun getFirstBuild() {
-        return buildMixIn.getFirstBuild();
-    }
-
-    @Override public WorkflowRun getLastBuild() {
-        return buildMixIn.getLastBuild();
-    }
-
-    @Override public WorkflowRun getNearestBuild(int n) {
-        return buildMixIn.getNearestBuild(n);
-    }
-
-    @Override public WorkflowRun getNearestOldBuild(int n) {
-        return buildMixIn.getNearestOldBuild(n);
-    }
-
-    @Override protected HistoryWidget createHistoryWidget() {
-        return buildMixIn.createHistoryWidget();
-    }
-
-    @Override public Queue.Executable createExecutable() throws IOException {
-        return buildMixIn.newBuild();
-    }
-
-    @Deprecated
-    @Override public boolean scheduleBuild() {
-        return createParameterizedJobMixIn().scheduleBuild();
-    }
-
-    @Override public boolean scheduleBuild(Cause c) {
-        return createParameterizedJobMixIn().scheduleBuild(c);
-    }
-
-    @Deprecated
-    @Override public boolean scheduleBuild(int quietPeriod) {
-        return createParameterizedJobMixIn().scheduleBuild(quietPeriod);
-    }
-
-    @Override public boolean scheduleBuild(int quietPeriod, Cause c) {
-        return createParameterizedJobMixIn().scheduleBuild(quietPeriod, c);
-    }
-
     @Override public @CheckForNull QueueTaskFuture<WorkflowRun> scheduleBuild2(int quietPeriod, Action... actions) {
         return createParameterizedJobMixIn().scheduleBuild2(quietPeriod, actions);
-    }
-
-    public void doBuild(StaplerRequest req, StaplerResponse rsp, @QueryParameter TimeDuration delay) throws IOException, ServletException {
-        createParameterizedJobMixIn().doBuild(req, rsp, delay);
-    }
-
-    public void doBuildWithParameters(StaplerRequest req, StaplerResponse rsp, @QueryParameter TimeDuration delay) throws IOException, ServletException {
-        createParameterizedJobMixIn().doBuildWithParameters(req, rsp, delay);
-    }
-
-    @RequirePOST public void doCancelQueue(StaplerRequest req, StaplerResponse rsp ) throws IOException, ServletException {
-        createParameterizedJobMixIn().doCancelQueue(req, rsp);
-    }
-
-    @Override protected SearchIndexBuilder makeSearchIndex() {
-        return createParameterizedJobMixIn().extendSearchIndex(super.makeSearchIndex());
-    }
-
-    public boolean isParameterized() {
-        return createParameterizedJobMixIn().isParameterized();
     }
 
     @SuppressWarnings("deprecation")
@@ -282,10 +178,6 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     public void setQuietPeriod(Integer seconds) throws IOException {
         this.quietPeriod = seconds;
         save();
-    }
-
-    @Override public String getBuildNowText() {
-        return createParameterizedJobMixIn().getBuildNowText();
     }
 
     @Override public boolean isBuildBlocked() {
@@ -342,16 +234,6 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         return hasPermission(CANCEL);
     }
 
-    @Override public Collection<? extends SubTask> getSubTasks() {
-        // TODO mostly copied from AbstractProject, except SubTaskContributor is not available:
-        List<SubTask> subTasks = new ArrayList<SubTask>();
-        subTasks.add(this);
-        for (JobProperty<? super WorkflowJob> p : properties) {
-            subTasks.addAll(p.getSubTasks());
-        }
-        return subTasks;
-    }
-
     @Override public Authentication getDefaultAuthentication() {
         return ACL.SYSTEM;
     }
@@ -370,10 +252,6 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
 
     @Override public Node getLastBuiltOn() {
         return Jenkins.getInstance();
-    }
-
-    @Override public Queue.Task getOwnerTask() {
-        return this;
     }
 
     @Override public Object getSameNodeConstraint() {
@@ -528,5 +406,20 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         }
 
     }
+
+	@Override
+	public DescribableList<Publisher, Descriptor<Publisher>> getPublishersList() {
+		return null;
+	}
+
+	@Override
+	protected Class<WorkflowRun> getBuildClass() {
+		return WorkflowRun.class;
+	}
+
+	@Override
+	public boolean isFingerprintConfigured() {
+		return false;
+	}
 
 }
