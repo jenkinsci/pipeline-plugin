@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.workflow.cps.global;
 
 import groovy.lang.Binding;
-import hudson.markup.EscapedMarkupFormatter;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsScript;
@@ -11,6 +10,7 @@ import org.jenkinsci.plugins.workflow.cps.GlobalVariable;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
+import jenkins.model.Jenkins;
 
 /**
  * Global variable backed by user-supplied script.
@@ -59,7 +59,7 @@ public class UserDefinedGlobalVariable extends GlobalVariable {
         File help = source(".txt");
         if (!help.exists())     return null;
 
-        return new EscapedMarkupFormatter().translate(FileUtils.readFileToString(help, Charsets.UTF_8));
+        return Jenkins.getActiveInstance().getMarkupFormatter().translate(FileUtils.readFileToString(help, Charsets.UTF_8));
     }
 
     private File source(String extension) {
