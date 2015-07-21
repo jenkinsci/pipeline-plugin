@@ -24,8 +24,6 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
-import org.jenkinsci.plugins.workflow.BuildWatcher;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -34,6 +32,7 @@ import org.junit.Test;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class EnvStepTest {
@@ -79,7 +78,7 @@ public class EnvStepTest {
                 SemaphoreStep.waitForStart("b/1", b);
                 SemaphoreStep.success("a/1", null);
                 SemaphoreStep.success("b/1", null);
-                story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
                 story.j.assertLogContains("[a] TOOL=aloc", b);
                 story.j.assertLogContains("[b] TOOL=bloc", b);
             }
@@ -110,7 +109,7 @@ public class EnvStepTest {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 SemaphoreStep.success("restarting/1", null);
-                WorkflowRun b = story.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(story.j.jenkins.getItemByFullName("p", WorkflowJob.class).getLastBuild()));
+                WorkflowRun b = story.j.assertBuildStatusSuccess(story.j.waitForCompletion(story.j.jenkins.getItemByFullName("p", WorkflowJob.class).getLastBuild()));
                 story.j.assertLogContains("groovy before val:", b);
                 story.j.assertLogContains("shell before val:", b);
                 story.j.assertLogContains("groovy after val:", b);

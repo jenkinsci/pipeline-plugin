@@ -65,6 +65,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `MaskPasswordsBuildWrapper` (`mask-passwords`): [PR 3](https://github.com/jenkinsci/mask-passwords-plugin/pull/3)
 - [ ] `SSHAgentBuildWrapper` (`ssh-agent`): [JENKINS-28689](https://issues.jenkins-ci.org/browse/JENKINS-28689)
 - [ ] `XvfbBuildWrapper` (`xvfb`): [JENKINS-28928](https://issues.jenkins-ci.org/browse/JENKINS-28928)
+- [ ] `LockWrapper` (`locks-and-latches`): [JENKINS-29461](https://issues.jenkins-ci.org/browse/JENKINS-29461)
 
 ## Triggers
 
@@ -74,6 +75,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
 - [ ] `deployment-notification`: [JENKINS-28632](https://issues.jenkins-ci.org/browse/JENKINS-28632)
 - [ ] `gitlab-plugin`: [issue 89](https://github.com/DABSquared/gitlab-plugin/issues/89)
+- [ ] `bitbucket`: [JENKINS-28882](https://issues.jenkins-ci.org/browse/JENKINS-28882)
 
 ## Clouds
 
@@ -199,9 +201,9 @@ You still need to make the aforementioned changes, since at the end you are just
 
 See the [user documentation](basic-steps/CORE-STEPS.md) for background. The metastep is `step`.
 
-To add support for use of a `Builder` or `Publisher` from a workflow, depend on Jenkins 1.577+, typically 1.580.1 ([tips](../scm-step/README.md#basic-update)).
+To add support for use of a `Builder` or `Publisher` from a workflow, depend on Jenkins 1.577+, typically 1.580.1 ([tips](#basic-update)).
 Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
-Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](../scm-step/README.md#constructor-vs-setters)).
+Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](#constructor-vs-setters)).
 
 ### Build wrappers
 

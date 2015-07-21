@@ -52,6 +52,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
@@ -228,7 +229,7 @@ public class WorkflowRunTest {
         assertNotNull(p);
         WorkflowRun b = p.getLastBuild();
         assertNotNull(b);
-        r.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+        r.assertBuildStatusSuccess(r.waitForCompletion(b));
     }
 
 }
