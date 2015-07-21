@@ -200,9 +200,9 @@ You still need to make the aforementioned changes, since at the end you are just
 
 See the [user documentation](basic-steps/CORE-STEPS.md) for background. The metastep is `step`.
 
-To add support for use of a `Builder` or `Publisher` from a workflow, depend on Jenkins 1.577+, typically 1.580.1 ([tips](../scm-step/README.md#basic-update)).
+To add support for use of a `Builder` or `Publisher` from a workflow, depend on Jenkins 1.577+, typically 1.580.1 ([tips](#basic-update)).
 Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
-Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](../scm-step/README.md#constructor-vs-setters)).
+Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](#constructor-vs-setters)).
 
 ### Build wrappers
 
