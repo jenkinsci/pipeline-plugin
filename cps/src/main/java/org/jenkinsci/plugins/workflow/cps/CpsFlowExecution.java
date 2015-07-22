@@ -92,6 +92,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.thoughtworks.xstream.io.ExtendedHierarchicalStreamWriterHelper.*;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.init.Terminator;
 import hudson.model.User;
 import hudson.security.ACL;
@@ -225,10 +226,12 @@ public class CpsFlowExecution extends FlowExecution {
      */
     @GuardedBy("this")
     /*package*/ /* almost final*/ Stack<BlockStartNode> startNodes = new Stack<BlockStartNode>();
+    @SuppressFBWarnings({"IS_FIELD_NOT_GUARDED", "IS2_INCONSISTENT_SYNC"}) // irrelevant here
     private transient List<String> startNodesSerial; // used only between unmarshal and onLoad
 
     @GuardedBy("this")
     private /* almost final*/ NavigableMap<Integer,FlowHead> heads = new TreeMap<Integer,FlowHead>();
+    @SuppressFBWarnings({"IS_FIELD_NOT_GUARDED", "IS2_INCONSISTENT_SYNC"}) // irrelevant here
     private transient Map<Integer,String> headsSerial; // used only between unmarshal and onLoad
 
     private final AtomicInteger iota = new AtomicInteger();
@@ -387,20 +390,22 @@ public class CpsFlowExecution extends FlowExecution {
     public void onLoad(FlowExecutionOwner owner) throws IOException {
         this.owner = owner;
         storage = createStorage();
-        // heads could not be restored in unmarshal, so doing that now:
-        heads = new TreeMap<Integer,FlowHead>();
-        for (Map.Entry<Integer,String> entry : headsSerial.entrySet()) {
-            FlowHead h = new FlowHead(this, entry.getKey());
-            h.setForDeserialize(storage.getNode(entry.getValue()));
-            heads.put(h.getId(), h);
+        synchronized (this) {
+            // heads could not be restored in unmarshal, so doing that now:
+            heads = new TreeMap<Integer,FlowHead>();
+            for (Map.Entry<Integer,String> entry : headsSerial.entrySet()) {
+                FlowHead h = new FlowHead(this, entry.getKey());
+                h.setForDeserialize(storage.getNode(entry.getValue()));
+                heads.put(h.getId(), h);
+            }
+            headsSerial = null;
+            // Same for startNodes:
+            startNodes = new Stack<BlockStartNode>();
+            for (String id : startNodesSerial) {
+                startNodes.add((BlockStartNode) storage.getNode(id));
+            }
+            startNodesSerial = null;
         }
-        headsSerial = null;
-        // Same for startNodes:
-        startNodes = new Stack<BlockStartNode>();
-        for (String id : startNodesSerial) {
-            startNodes.add((BlockStartNode) storage.getNode(id));
-        }
-        startNodesSerial = null;
         try {
             if (!isComplete())
                 loadProgramAsync(getProgramDataFile());
@@ -645,7 +650,11 @@ public class CpsFlowExecution extends FlowExecution {
      * This is used when a thread waits and collects the outcome of another thread.
      */
     void subsumeHead(FlowNode n) {
-        for (FlowHead h : heads.values()) {
+        List<FlowHead> _heads;
+        synchronized (this) {
+            _heads = new ArrayList<FlowHead>(heads.values());
+        }
+        for (FlowHead h : _heads) {
             if (h.get()==n) {
                 h.remove();
                 return;
