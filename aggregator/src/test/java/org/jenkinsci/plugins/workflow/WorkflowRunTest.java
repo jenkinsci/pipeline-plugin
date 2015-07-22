@@ -36,19 +36,27 @@ import hudson.model.queue.QueueTaskFuture;
 import hudson.security.ACL;
 import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.security.Permission;
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
+import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepNode;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
-
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -221,6 +229,37 @@ public class WorkflowRunTest {
         WorkflowRun b = p.getLastBuild();
         assertNotNull(b);
         r.assertBuildStatusSuccess(r.waitForCompletion(b));
+    }
+
+    @Ignore("TODO as per JENKINS-27704, CpsFlowExecution.owner should be transient")
+    @Issue("JENKINS-29571")
+    @Test public void buildRecordAfterRename() throws Exception {
+        {
+            WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p1");
+            p.setDefinition(new CpsFlowDefinition("echo 'hello world'"));
+            r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+            p.renameTo("p2");
+        }
+        r.jenkins.reload();
+        {
+            WorkflowJob p = r.jenkins.getItemByFullName("p2", WorkflowJob.class);
+            assertNotNull(p);
+            WorkflowRun b = p.getLastBuild();
+            assertNotNull(b);
+            System.out.println(FileUtils.readFileToString(new File(b.getRootDir(), "build.xml")));
+            r.assertLogContains("hello world", b);
+            FlowExecution exec = b.getExecution();
+            assertNotNull(exec);
+            FlowGraphWalker w = new FlowGraphWalker(exec);
+            List<String> steps = new ArrayList<String>();
+            FlowNode n;
+            while ((n = w.next()) != null) {
+                if (n instanceof StepNode) {
+                    steps.add(((StepNode) n).getDescriptor().getFunctionName());
+                }
+            }
+            assertEquals("[echo]", steps.toString());
+        }
     }
 
 }
