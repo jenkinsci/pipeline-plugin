@@ -56,7 +56,6 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -231,7 +230,6 @@ public class WorkflowRunTest {
         r.assertBuildStatusSuccess(r.waitForCompletion(b));
     }
 
-    @Ignore("TODO as per JENKINS-27704, CpsFlowExecution.owner should be transient")
     @Issue("JENKINS-29571")
     @Test public void buildRecordAfterRename() throws Exception {
         {
