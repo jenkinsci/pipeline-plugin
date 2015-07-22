@@ -38,13 +38,13 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class WorkflowProjectFactoryImpl extends BranchProjectFactory<WorkflowJob,WorkflowRun> {
+public class WorkflowBranchProjectFactory extends BranchProjectFactory<WorkflowJob,WorkflowRun> {
     
-    private static final Logger LOGGER = Logger.getLogger(WorkflowProjectFactoryImpl.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(WorkflowBranchProjectFactory.class.getName());
 
     static final String SCRIPT = "jenkins.groovy";
 
-    @DataBoundConstructor public WorkflowProjectFactoryImpl() {}
+    @DataBoundConstructor public WorkflowBranchProjectFactory() {}
 
     @Override public WorkflowJob newInstance(Branch branch) {
         WorkflowJob job = new WorkflowJob((WorkflowMultiBranchProject) getOwner(), branch.getName());

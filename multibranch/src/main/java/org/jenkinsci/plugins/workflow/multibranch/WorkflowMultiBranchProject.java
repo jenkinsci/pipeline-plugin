@@ -51,13 +51,13 @@ public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,W
     }
 
     @Override protected BranchProjectFactory<WorkflowJob,WorkflowRun> newProjectFactory() {
-        return new WorkflowProjectFactoryImpl();
+        return new WorkflowBranchProjectFactory();
     }
 
     @Override public SCMSourceCriteria getSCMSourceCriteria(SCMSource source) {
         return new SCMSourceCriteria() {
             @Override public boolean isHead(SCMSourceCriteria.Probe probe, TaskListener listener) throws IOException {
-                return probe.exists(WorkflowProjectFactoryImpl.SCRIPT);
+                return probe.exists(WorkflowBranchProjectFactory.SCRIPT);
             }
         };
     }
