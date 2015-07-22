@@ -180,13 +180,18 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
             checkouts = new LinkedList<SCMCheckout>();
             Owner owner = new Owner(this);
-            execution = definition.create(owner, listener, getAllActions());
+            
+            FlowExecution newExecution = definition.create(owner, listener, getAllActions());
             FlowExecutionList.get().register(owner);
-            execution.addListener(new GraphL());
+            newExecution.addListener(new GraphL());
             completed = new AtomicBoolean();
             logsToCopy = new LinkedHashMap<String,Long>();
-            execution.start();
-            executionPromise.set(execution);
+            newExecution.start();
+            
+            // It's only okay to initialise the global once the new FlowExecution
+            // has successfully started.
+            execution = newExecution;
+            executionPromise.set(newExecution);
         } catch (Throwable x) {
             if (listener == null) {
                 LOGGER.log(Level.WARNING, this + " failed to start", x);

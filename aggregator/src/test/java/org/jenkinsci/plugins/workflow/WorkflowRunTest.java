@@ -52,6 +52,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
@@ -201,6 +202,26 @@ public class WorkflowRunTest {
         r.assertBuildStatusSuccess(p.scheduleBuild2(0));
     }
 
+    @Test @Issue("JENKINS-29221")
+    public void failedToStartRun() throws Exception {
+        p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition(
+                "{{stage 'dev'\n" +
+                        "def hello = new HelloWorld()\n" +
+                        "public class HelloWorld()\n" +
+                        "{ // <- invalid class definition }\n" +
+                        "}}"
+        ));
+        QueueTaskFuture<WorkflowRun> workflowRunQueueTaskFuture = p.scheduleBuild2(0);
+        WorkflowRun run = r.assertBuildStatus(Result.FAILURE, workflowRunQueueTaskFuture.get());
+
+        // The issue was that the WorkflowRun's execution instance got initialised even though the script
+        // was bad and the execution never started. The fix is to ensure that it only gets initialised
+        // if the execution instance starts successfully i.e. in the case of this test, that it doesn't
+        // get initialised.
+        assertNull(run.getExecution());
+    }
+
     @Issue("JENKINS-27531")
     @LocalData
     @Test public void loadMigratedBuildRecord() throws Exception {
@@ -208,7 +229,7 @@ public class WorkflowRunTest {
         assertNotNull(p);
         WorkflowRun b = p.getLastBuild();
         assertNotNull(b);
-        r.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+        r.assertBuildStatusSuccess(r.waitForCompletion(b));
     }
 
 }

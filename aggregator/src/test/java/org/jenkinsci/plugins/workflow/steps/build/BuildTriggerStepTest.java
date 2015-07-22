@@ -26,9 +26,8 @@ import org.jvnet.hudson.test.MockFolder;
 import java.util.Arrays;
 import java.util.List;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
-import org.jenkinsci.plugins.workflow.BuildWatcher;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.junit.ClassRule;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.FailureBuilder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.SleepBuilder;
@@ -120,7 +119,7 @@ public class BuildTriggerStepTest {
         }
         fb.getExecutor().interrupt();
 
-        j.assertBuildStatus(Result.ABORTED, JenkinsRuleExt.waitForCompletion(fb));
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(fb));
         j.assertBuildStatus(Result.FAILURE,q.get());
     }
 
@@ -172,10 +171,10 @@ public class BuildTriggerStepTest {
         // Should be the same as, e.g., GerritTrigger.RunningJobs.cancelJob, which calls Executor.interrupt directly.
         // (Not if the Executor.currentExecutable is an AfterRestartTask.Body, though in that case probably the FreeStyleBuild would have been killed by restart anyway!)
         usb.doStop();
-        j.assertBuildStatus(Result.ABORTED, JenkinsRuleExt.waitForCompletion(usb));
-        j.assertBuildStatus(Result.ABORTED, JenkinsRuleExt.waitForCompletion(ds1b));
-        j.assertBuildStatus(Result.ABORTED, JenkinsRuleExt.waitForCompletion(ds2b));
-        j.assertBuildStatus(Result.ABORTED, JenkinsRuleExt.waitForCompletion(ds3b));
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(usb));
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(ds1b));
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(ds2b));
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(ds3b));
     }
 
     @SuppressWarnings("deprecation")

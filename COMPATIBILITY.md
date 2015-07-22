@@ -53,6 +53,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `GitPublisher` (`git`) or a custom step: [JENKINS-28335](https://issues.jenkins-ci.org/browse/JENKINS-28335)
 - [ ] SonarQube Jenkins: [SONARJNKNS-213](http://jira.sonarsource.com/browse/SONARJNKNS-213)
 - [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
+- [X] `ScoveragePublisher` (`scoverage`): supported in 1.2.0
 
 ## Build wrappers
 
@@ -64,6 +65,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `MaskPasswordsBuildWrapper` (`mask-passwords`): [PR 3](https://github.com/jenkinsci/mask-passwords-plugin/pull/3)
 - [ ] `SSHAgentBuildWrapper` (`ssh-agent`): [JENKINS-28689](https://issues.jenkins-ci.org/browse/JENKINS-28689)
 - [ ] `XvfbBuildWrapper` (`xvfb`): [JENKINS-28928](https://issues.jenkins-ci.org/browse/JENKINS-28928)
+- [ ] `LockWrapper` (`locks-and-latches`): [JENKINS-29461](https://issues.jenkins-ci.org/browse/JENKINS-29461)
 
 ## Triggers
 
@@ -73,6 +75,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
 - [ ] `deployment-notification`: [JENKINS-28632](https://issues.jenkins-ci.org/browse/JENKINS-28632)
 - [ ] `gitlab-plugin`: [issue 89](https://github.com/DABSquared/gitlab-plugin/issues/89)
+- [ ] `bitbucket`: [JENKINS-28882](https://issues.jenkins-ci.org/browse/JENKINS-28882)
 
 ## Clouds
 
@@ -198,9 +201,9 @@ You still need to make the aforementioned changes, since at the end you are just
 
 See the [user documentation](basic-steps/CORE-STEPS.md) for background. The metastep is `step`.
 
-To add support for use of a `Builder` or `Publisher` from a workflow, depend on Jenkins 1.577+, typically 1.580.1 ([tips](../scm-step/README.md#basic-update)).
+To add support for use of a `Builder` or `Publisher` from a workflow, depend on Jenkins 1.577+, typically 1.580.1 ([tips](#basic-update)).
 Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
-Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](../scm-step/README.md#constructor-vs-setters)).
+Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](#constructor-vs-setters)).
 
 ### Build wrappers
 
@@ -219,3 +222,26 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 
 Plugins can also implement custom Workflow steps with specialized behavior by adding a dependency on `workflow-step-api`.
 Generally you will extend `AbstractStepImpl`, `AbstractStepDescriptorImpl`, and `AbstractStepExecutionImpl` (or `AbstractSynchronousStepExecution`).
+
+## Historical background
+
+Traditional Jenkins `Job`s are defined in a fairly deep type hierarchy: `FreestyleProject` → `Project` → `AbstractProject` → `Job` → `AbstractItem` → `Item`.
+(As well as paired `Run` types: `FreestyleBuild`, etc.)
+In older versions of Jenkins, much of the interesting implementation was in `AbstractProject` (or `AbstractBuild`), which was packed full of assorted features not present in `Job` (or `Run`).
+Some of these features were also needed by Workflow, like having a programmatic way to start a build (optionally with parameters), or lazy-load build records, or integrate with SCM triggers.
+Others were not applicable to Workflow, like declaring a single SCM and a single workspace per build, or being tied to a specific label, or running a linear sequence of build steps within the scope of a single Java method call.
+
+`WorkflowJob` directly extends `Job` since it cannot act like an `AbstractProject`.
+Therefore some refactoring was needed, to make the relevant features available to other `Job` types without code or API duplication.
+Rather than introduce yet another level into the type hierarchy (and freezing for all time the decision about which features are more “generic” than others), mixins were introduced.
+Each encapsulates a set of related functionality originally tied to `AbstractProject` but now also usable from `WorkflowJob` (and potentially other future `Job` types).
+
+* `ParameterizedJobMixIn` allows a job to be scheduled to the queue (the older `BuildableItem` was inadequate), taking care also of build parameters and the REST build trigger.
+* `SCMTriggerItem` integrates with `SCMTrigger`, including a definition of which SCM or SCMs a job is using, and how it should perform polling. It also allows various plugins to interoperate with the Multiple SCMs plugin without needing an explicit dependency. Supersedes and deprecates `SCMedItem`.
+* `LazyBuildMixIn` handles the plumbing of lazy-loading build records (a system introduced in Jenkins 1.485).
+
+For Workflow compatibility, plugins formerly referring to `AbstractProject`/`AbstractBuild` will generally need to start dealing with `Job`/`Run` but may also need to refer to `ParameterizedJobMixIn` and/or ``SCMTriggerItem`.
+(`LazyBuildMixIn` is rarely needed from outside code, as the methods defined in `Job`/`Run` suffice for typical purposes.)
+
+Future improvements to Workflow may well require yet more implementation code to be extracted from `AbstractProject`/`AbstractBuild`.
+The main constraint is the need to retain binary compatibility.

@@ -25,8 +25,6 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import java.util.List;
-import org.jenkinsci.plugins.workflow.BuildWatcher;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
@@ -39,6 +37,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class SleepStepTest {
@@ -65,7 +64,7 @@ public class SleepStepTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = r.j.jenkins.getItemByFullName("p", WorkflowJob.class);
                 WorkflowRun b = p.getLastBuild();
-                r.j.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+                r.j.assertBuildStatusSuccess(r.j.waitForCompletion(b));
             }
         });
     }

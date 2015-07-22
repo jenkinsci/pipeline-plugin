@@ -50,7 +50,7 @@ node {
         mail subject: 'all well', to: 'admin@somewhere', body: 'All well.'
     } catch (e) {
         def w = new StringWriter()
-        e.printStackTrace(w)
+        e.printStackTrace(new PrintWriter(w))
         mail subject: "failed with ${e.message}", to: 'admin@somewhere', body: "Failed: ${w}"
         throw e
     }
