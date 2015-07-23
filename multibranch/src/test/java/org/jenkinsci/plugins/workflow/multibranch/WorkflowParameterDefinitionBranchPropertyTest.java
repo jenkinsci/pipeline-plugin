@@ -56,4 +56,6 @@ public class WorkflowParameterDefinitionBranchPropertyTest {
         assertEquals(expected, clazzes);
     }
 
+    // TODO can configure property and pass parameters to branch projects
+
 }
