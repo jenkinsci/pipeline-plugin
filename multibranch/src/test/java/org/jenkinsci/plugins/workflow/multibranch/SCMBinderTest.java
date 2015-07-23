@@ -28,6 +28,7 @@ import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.GitSCMSource;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
@@ -35,6 +36,7 @@ import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -71,6 +73,35 @@ public class SCMBinderTest {
                 assertNotNull(b1);
                 assertEquals(1, b1.getNumber());
                 story.j.assertLogContains("initial content", story.j.waitForCompletion(b1));
+            }
+        });
+    }
+
+    @Ignore("TODO currently will print `subsequent content` in b1")
+    @Test public void exactRevision() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                sampleRepo.write("jenkins.groovy", "semaphore 'wait'; node {checkout scm; echo readFile('file')}");
+                sampleRepo.write("file", "initial content");
+                sampleRepo.git("add", "jenkins.groovy");
+                sampleRepo.git("commit", "--all", "--message=flow");
+                WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+                mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+                mp.scheduleBuild2(0, null).get();
+                WorkflowJob p = mp.getItem("master");
+                SemaphoreStep.waitForStart("wait/1", null);
+                WorkflowRun b1 = p.getLastBuild();
+                assertNotNull(b1);
+                assertEquals(1, b1.getNumber());
+                sampleRepo.write("jenkins.groovy", "node {checkout scm; echo readFile('file').toUpperCase()}");
+                ScriptApproval.get().approveSignature("method java.lang.String toUpperCase");
+                sampleRepo.write("file", "subsequent content");
+                sampleRepo.git("commit", "--all", "--message=tweaked");
+                SemaphoreStep.success("wait/1", null);
+                WorkflowRun b2 = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                assertEquals(2, b2.getNumber());
+                story.j.assertLogContains("initial content", story.j.waitForCompletion(b1));
+                story.j.assertLogContains("SUBSEQUENT CONTENT", b2);
             }
         });
     }

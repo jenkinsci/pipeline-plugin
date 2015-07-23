@@ -79,6 +79,5 @@ public class WorkflowMultiBranchProjectTest {
     // TODO scheduled reindexing can add branch projects
     // TODO regular polling works on branch projects
     // TODO changelog shows per-branch changes
-    // TODO (SCMBinderTest?) `jenkins.groovy` and `file` agree on contents even if not building current branch head
 
 }
