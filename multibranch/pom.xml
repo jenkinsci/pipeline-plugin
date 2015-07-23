@@ -58,6 +58,13 @@ THE SOFTWARE.
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>workflow-support</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>workflow-aggregator</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>
