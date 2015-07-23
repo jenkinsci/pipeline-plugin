@@ -48,6 +48,8 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 @SuppressWarnings({"unchecked", "rawtypes"}) // core’s fault
 public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,WorkflowRun> {
 
+    static final String SCRIPT = "jenkins.groovy";
+
     public WorkflowMultiBranchProject(ItemGroup parent, String name) {
         super(parent, name);
     }
@@ -59,7 +61,7 @@ public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,W
     @Override public SCMSourceCriteria getSCMSourceCriteria(SCMSource source) {
         return new SCMSourceCriteria() {
             @Override public boolean isHead(SCMSourceCriteria.Probe probe, TaskListener listener) throws IOException {
-                return probe.exists(WorkflowBranchProjectFactory.SCRIPT);
+                return probe.exists(SCRIPT);
             }
         };
     }

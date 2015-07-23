@@ -33,7 +33,6 @@ import jenkins.branch.Branch;
 import jenkins.branch.BranchProjectFactory;
 import jenkins.branch.BranchProjectFactoryDescriptor;
 import jenkins.branch.MultiBranchProject;
-import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -42,12 +41,11 @@ public class WorkflowBranchProjectFactory extends BranchProjectFactory<WorkflowJ
     
     private static final Logger LOGGER = Logger.getLogger(WorkflowBranchProjectFactory.class.getName());
 
-    static final String SCRIPT = "jenkins.groovy";
-
     @DataBoundConstructor public WorkflowBranchProjectFactory() {}
 
     @Override public WorkflowJob newInstance(Branch branch) {
         WorkflowJob job = new WorkflowJob((WorkflowMultiBranchProject) getOwner(), branch.getName());
+        job.setDefinition(new SCMBinder());
         setBranch(job, branch);
         return job;
     }
@@ -61,22 +59,16 @@ public class WorkflowBranchProjectFactory extends BranchProjectFactory<WorkflowJ
         try {
             if (property == null) {
                 property = new BranchJobProperty();
-                setBranch(property, branch, project);
+                property.setBranch(branch);
                 project.addProperty(property);
             } else if (!property.getBranch().equals(branch)) {
-                setBranch(property, branch, project);
+                property.setBranch(branch);
                 project.save();
             }
         } catch (IOException x) {
             LOGGER.log(Level.WARNING, null, x);
         }
         return project;
-    }
-
-    private void setBranch(BranchJobProperty property, Branch branch, WorkflowJob project) {
-        property.setBranch(branch);
-        // TODO DRY would perhaps be better for getDefinition to consult the property
-        project.setDefinition(new CpsScmFlowDefinition(branch.getScm(), SCRIPT));
     }
 
     @Override public boolean isProject(Item item) {

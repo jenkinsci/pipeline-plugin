@@ -36,7 +36,6 @@ import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -77,11 +76,13 @@ public class SCMBinderTest {
         });
     }
 
-    @Ignore("TODO currently will print `subsequent content` in b1")
     @Test public void exactRevision() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                sampleRepo.write("jenkins.groovy", "semaphore 'wait'; node {checkout scm; echo readFile('file')}");
+                ScriptApproval sa = ScriptApproval.get();
+                sa.approveSignature("staticField hudson.model.Items XSTREAM2");
+                sa.approveSignature("method com.thoughtworks.xstream.XStream toXML java.lang.Object");
+                sampleRepo.write("jenkins.groovy", "echo hudson.model.Items.XSTREAM2.toXML(scm); semaphore 'wait'; node {checkout scm; echo readFile('file')}");
                 sampleRepo.write("file", "initial content");
                 sampleRepo.git("add", "jenkins.groovy");
                 sampleRepo.git("commit", "--all", "--message=flow");
@@ -94,7 +95,7 @@ public class SCMBinderTest {
                 assertNotNull(b1);
                 assertEquals(1, b1.getNumber());
                 sampleRepo.write("jenkins.groovy", "node {checkout scm; echo readFile('file').toUpperCase()}");
-                ScriptApproval.get().approveSignature("method java.lang.String toUpperCase");
+                sa.approveSignature("method java.lang.String toUpperCase");
                 sampleRepo.write("file", "subsequent content");
                 sampleRepo.git("commit", "--all", "--message=tweaked");
                 SemaphoreStep.success("wait/1", null);
@@ -105,5 +106,8 @@ public class SCMBinderTest {
             }
         });
     }
+
+    // TODO corresponding test for Mercurial
+    // TODO corresponding test for Subversion
 
 }
