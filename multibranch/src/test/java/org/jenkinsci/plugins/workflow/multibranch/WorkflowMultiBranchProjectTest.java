@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import javax.annotation.Nonnull;
 import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
@@ -53,10 +54,8 @@ public class WorkflowMultiBranchProjectTest {
         sampleRepo.git("commit", "--all", "--message=flow");
         WorkflowMultiBranchProject mp = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
         mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
-        mp.scheduleBuild2(0, null).get();
+        WorkflowJob p = findBranchProject(mp, "master");
         assertEquals(1, mp.getItems().size());
-        WorkflowJob p = mp.getItem("master");
-        assertNotNull(p);
         r.waitUntilNoActivity();
         WorkflowRun b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
@@ -66,10 +65,8 @@ public class WorkflowMultiBranchProjectTest {
         ScriptApproval.get().approveSignature("method java.lang.String toUpperCase");
         sampleRepo.write("file", "subsequent content");
         sampleRepo.git("commit", "--all", "--message=tweaked");
-        mp.scheduleBuild2(0, null).get();
+        p = findBranchProject(mp, "feature");
         assertEquals(2, mp.getItems().size());
-        p = mp.getItem("feature");
-        assertNotNull(p);
         r.waitUntilNoActivity();
         b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
@@ -80,5 +77,15 @@ public class WorkflowMultiBranchProjectTest {
     // TODO scheduled reindexing can add branch projects
     // TODO regular polling works on branch projects
     // TODO changelog shows per-branch changes
+
+    static @Nonnull WorkflowJob findBranchProject(@Nonnull WorkflowMultiBranchProject mp, @Nonnull String name) throws Exception {
+        mp.scheduleBuild2(0, null).get();
+        WorkflowJob p = mp.getItem(name);
+        if (p == null) {
+            mp.getIndexing().writeWholeLogTo(System.out);
+            fail(name + " project not found");
+        }
+        return p;
+    }
 
 }

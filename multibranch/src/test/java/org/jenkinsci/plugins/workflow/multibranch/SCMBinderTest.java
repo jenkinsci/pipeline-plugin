@@ -32,15 +32,18 @@ import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.GitSCMSource;
+import jenkins.scm.impl.subversion.SubversionSCMSource;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
 import org.jenkinsci.plugins.workflow.steps.scm.MercurialSampleRepoRule;
+import org.jenkinsci.plugins.workflow.steps.scm.SubversionSampleRepoRule;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -51,6 +54,7 @@ public class SCMBinderTest {
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
     @Rule public GitSampleRepoRule sampleGitRepo = new GitSampleRepoRule();
+    @Rule public SubversionSampleRepoRule sampleSvnRepo = new SubversionSampleRepoRule();
     @Rule public MercurialSampleRepoRule sampleHgRepo = new MercurialSampleRepoRule();
 
     @Test public void scmPickle() throws Exception {
@@ -63,8 +67,7 @@ public class SCMBinderTest {
                 sampleGitRepo.git("commit", "--all", "--message=flow");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
                 mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
-                mp.scheduleBuild2(0, null).get();
-                WorkflowJob p = mp.getItem("master");
+                WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject(mp, "master");
                 SemaphoreStep.waitForStart("wait/1", null);
                 WorkflowRun b1 = p.getLastBuild();
                 assertNotNull(b1);
@@ -96,8 +99,7 @@ public class SCMBinderTest {
                 sampleGitRepo.git("commit", "--all", "--message=flow");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
                 mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
-                mp.scheduleBuild2(0, null).get();
-                WorkflowJob p = mp.getItem("master");
+                WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject(mp, "master");
                 SemaphoreStep.waitForStart("wait/1", null);
                 WorkflowRun b1 = p.getLastBuild();
                 assertNotNull(b1);
@@ -106,6 +108,38 @@ public class SCMBinderTest {
                 sa.approveSignature("method java.lang.String toUpperCase");
                 sampleGitRepo.write("file", "subsequent content");
                 sampleGitRepo.git("commit", "--all", "--message=tweaked");
+                SemaphoreStep.success("wait/1", null);
+                WorkflowRun b2 = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                assertEquals(2, b2.getNumber());
+                story.j.assertLogContains("initial content", story.j.waitForCompletion(b1));
+                story.j.assertLogContains("SUBSEQUENT CONTENT", b2);
+            }
+        });
+    }
+
+    @Ignore("TODO NPE during indexing from SubversionSCM.getRelativePath: repository.getRepositoryRoot(false) → null")
+    @Test public void exactRevisionSubversion() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                sampleSvnRepo.init();
+                ScriptApproval sa = ScriptApproval.get();
+                sa.approveSignature("staticField hudson.model.Items XSTREAM2");
+                sa.approveSignature("method com.thoughtworks.xstream.XStream toXML java.lang.Object");
+                sampleSvnRepo.write("jenkins.groovy", "echo hudson.model.Items.XSTREAM2.toXML(scm); semaphore 'wait'; node {checkout scm; echo readFile('file')}");
+                sampleSvnRepo.write("file", "initial content");
+                sampleSvnRepo.svn("add", "jenkins.groovy");
+                sampleSvnRepo.svn("commit", "--message=flow");
+                WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+                mp.getSourcesList().add(new BranchSource(new SubversionSCMSource(null, sampleSvnRepo.rootUrl(), null, null, null), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+                WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject(mp, "trunk");
+                SemaphoreStep.waitForStart("wait/1", null);
+                WorkflowRun b1 = p.getLastBuild();
+                assertNotNull(b1);
+                assertEquals(1, b1.getNumber());
+                sampleSvnRepo.write("jenkins.groovy", "node {checkout scm; echo readFile('file').toUpperCase()}");
+                sa.approveSignature("method java.lang.String toUpperCase");
+                sampleSvnRepo.write("file", "subsequent content");
+                sampleSvnRepo.svn("commit", "--message=tweaked");
                 SemaphoreStep.success("wait/1", null);
                 WorkflowRun b2 = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
                 assertEquals(2, b2.getNumber());
@@ -137,8 +171,7 @@ public class SCMBinderTest {
                 }
                 */
                 mp.getSourcesList().add(new BranchSource(new MercurialSCMSource(null, instName, sampleHgRepo.fileUrl(), null, null, null, null, null, true), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
-                mp.scheduleBuild2(0, null).get();
-                WorkflowJob p = mp.getItem("default");
+                WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject(mp, "default");
                 SemaphoreStep.waitForStart("wait/1", null);
                 WorkflowRun b1 = p.getLastBuild();
                 assertNotNull(b1);
@@ -155,7 +188,5 @@ public class SCMBinderTest {
             }
         });
     }
-
-    // TODO corresponding test for Subversion
 
 }
