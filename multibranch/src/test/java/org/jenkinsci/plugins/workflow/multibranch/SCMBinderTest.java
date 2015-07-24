@@ -117,7 +117,7 @@ public class SCMBinderTest {
         });
     }
 
-    @Ignore("TODO NPE during indexing from SubversionSCM.getRelativePath: repository.getRepositoryRoot(false) → null")
+    @Ignore("TODO fails without https://github.com/jenkinsci/subversion-plugin/pull/129")
     @Test public void exactRevisionSubversion() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -130,7 +130,7 @@ public class SCMBinderTest {
                 sampleSvnRepo.svn("add", "jenkins.groovy");
                 sampleSvnRepo.svn("commit", "--message=flow");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
-                mp.getSourcesList().add(new BranchSource(new SubversionSCMSource(null, sampleSvnRepo.rootUrl(), null, null, null), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+                mp.getSourcesList().add(new BranchSource(new SubversionSCMSource(null, sampleSvnRepo.prjUrl(), null, null, null), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
                 WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject(mp, "trunk");
                 SemaphoreStep.waitForStart("wait/1", null);
                 WorkflowRun b1 = p.getLastBuild();

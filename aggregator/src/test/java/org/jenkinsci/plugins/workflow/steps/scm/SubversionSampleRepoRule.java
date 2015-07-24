@@ -64,16 +64,20 @@ public final class SubversionSampleRepoRule extends AbstractSampleRepoRule {
         return new URI(u.getScheme(), "", u.getPath(), u.getFragment()).toString();
     }
 
+    public String prjUrl() throws URISyntaxException {
+        return rootUrl() + "prj";
+    }
+
     public String trunkUrl() throws URISyntaxException {
-        return rootUrl() + "prj/trunk";
+        return prjUrl() + "/trunk";
     }
 
     public String branchesUrl() throws URISyntaxException {
-        return rootUrl() + "prj/branches";
+        return prjUrl() + "/branches";
     }
 
     public String tagsUrl() throws URISyntaxException {
-        return rootUrl() + "prj/tags";
+        return prjUrl() + "/tags";
     }
 
     @Override public String toString() {
