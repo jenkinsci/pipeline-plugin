@@ -24,28 +24,26 @@
 
 package org.jenkinsci.plugins.workflow.steps.scm;
 
+import static org.jenkinsci.plugins.workflow.steps.scm.AbstractSampleRepoRule.run;
 import org.jvnet.hudson.test.JenkinsRule;
 
-/**
- * Manages a sample Git repository.
- */
-public final class GitSampleRepoRule extends AbstractSampleDVCSRepoRule {
+public final class MercurialSampleRepoRule extends AbstractSampleDVCSRepoRule {
 
-    public void git(String... cmds) throws Exception {
-        run("git", cmds);
+    public void hg(String... cmds) throws Exception {
+        run("hg", cmds);
     }
 
     @Override public void init() throws Exception {
-        run(true, tmp.getRoot(), "git", "version");
-        git("init");
+        run(true, tmp.getRoot(), "hg", "version");
+        hg("init");
         write("file", "");
-        git("add", "file");
-        git("commit", "--message=init");
+        hg("add", "file");
+        hg("commit", "--message=init");
     }
 
     public void notifyCommit(JenkinsRule r) throws Exception {
         synchronousPolling(r);
-        System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + bareUrl(), "text/plain").getWebResponse().getContentAsString());
+        System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + fileUrl(), "text/plain").getWebResponse().getContentAsString());
         r.waitUntilNoActivity();
     }
 
