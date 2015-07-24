@@ -58,15 +58,27 @@ public final class SubversionSampleRepoRule extends AbstractSampleRepoRule {
         FileUtils.write(new File(wc, rel), text);
     }
 
-    public String url() throws URISyntaxException {
+    public String rootUrl() throws URISyntaxException {
         URI u = repo.toURI();
          // TODO SVN rejects File.toUri syntax (requires blank authority field)
         return new URI(u.getScheme(), "", u.getPath(), u.getFragment()).toString();
     }
 
+    public String trunkUrl() throws URISyntaxException {
+        return rootUrl() + "prj/trunk";
+    }
+
+    public String branchesUrl() throws URISyntaxException {
+        return rootUrl() + "prj/branches";
+    }
+
+    public String tagsUrl() throws URISyntaxException {
+        return rootUrl() + "prj/tags";
+    }
+
     @Override public String toString() {
         try {
-            return url();
+            return rootUrl();
         } catch (URISyntaxException x) {
             throw new IllegalStateException(x);
         }
@@ -83,12 +95,13 @@ public final class SubversionSampleRepoRule extends AbstractSampleRepoRule {
         run(true, tmp.getRoot(), "svn", "--version");
         run(true, tmp.getRoot(), "svnadmin", "--version");
         run(false, repo, "svnadmin", "create", "--compatible-version=1.5", repo.getAbsolutePath());
-        svn("co", url(), ".");
-        System.out.println("Checking out " + repo + " to " + wc);
+        svn("mkdir", "--parents", "--message=structure", trunkUrl(), branchesUrl(), tagsUrl());
+        System.out.println("Initialized " + this + " and working copy " + wc);
     }
 
     public void init() throws Exception {
         basicInit();
+        svn("co", trunkUrl(), ".");
         write("file", "");
         svn("add", "file");
         svn("commit", "--message=init");
@@ -112,7 +125,7 @@ public final class SubversionSampleRepoRule extends AbstractSampleRepoRule {
         synchronousPolling(r);
         // Mocking the web POST, with crumb, is way too hard, and get an IllegalStateException: STREAMED from doNotifyCommit’s getReader anyway.
         for (SubversionRepositoryStatus.Listener listener : ExtensionList.lookup(SubversionRepositoryStatus.Listener.class)) {
-            listener.onNotify(UUID.fromString(uuid(url())), -1, Collections.singleton(path));
+            listener.onNotify(UUID.fromString(uuid(rootUrl())), -1, Collections.singleton(path));
         }
         r.waitUntilNoActivity();
     }
