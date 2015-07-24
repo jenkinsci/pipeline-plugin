@@ -94,7 +94,7 @@ public final class SubversionSampleRepoRule extends AbstractSampleRepoRule {
     public void basicInit() throws Exception {
         run(true, tmp.getRoot(), "svn", "--version");
         run(true, tmp.getRoot(), "svnadmin", "--version");
-        run(false, repo, "svnadmin", "create", "--compatible-version=1.5", repo.getAbsolutePath());
+        run(true, repo, "svnadmin", "create", "--compatible-version=1.5", repo.getAbsolutePath());
         svn("mkdir", "--parents", "--message=structure", trunkUrl(), branchesUrl(), tagsUrl());
         System.out.println("Initialized " + this + " and working copy " + wc);
     }
