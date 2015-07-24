@@ -52,10 +52,6 @@ public class GitSampleRepoRule extends ExternalResource {
     @Override protected void before() throws Throwable {
         tmp.create();
         sampleRepo = tmp.newFolder();
-        git("init");
-        write("file", "");
-        git("add", "file");
-        git("commit", "--message=init");
     }
 
     @Override protected void after() {
@@ -71,6 +67,13 @@ public class GitSampleRepoRule extends ExternalResource {
         args.add("git");
         args.addAll(Arrays.asList(cmds));
         SubversionStepTest.run(sampleRepo, args.toArray(new String[args.size()]));
+    }
+
+    public void init() throws Exception {
+        git("init");
+        write("file", "");
+        git("add", "file");
+        git("commit", "--message=init");
     }
 
     @Override public String toString() {

@@ -77,6 +77,7 @@ public class CpsScmFlowDefinitionTest {
     }
 
     @Test public void changelogAndPolling() throws Exception {
+        sampleRepo.init();
         sampleRepo.write("flow.groovy", "echo 'version one'");
         sampleRepo.git("add", "flow.groovy");
         sampleRepo.git("commit", "--message=init");

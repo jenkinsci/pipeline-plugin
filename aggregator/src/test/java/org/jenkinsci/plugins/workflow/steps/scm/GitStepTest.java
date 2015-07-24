@@ -47,6 +47,7 @@ public class GitStepTest {
     @Rule public GitSampleRepoRule otherRepo = new GitSampleRepoRule();
 
     @Test public void basicCloneAndUpdate() throws Exception {
+        sampleRepo.init();
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         r.createOnlineSlave(Label.get("remote"));
         p.setDefinition(new CpsFlowDefinition(
@@ -68,6 +69,7 @@ public class GitStepTest {
     }
 
     @Test public void changelogAndPolling() throws Exception {
+        sampleRepo.init();
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         p.addTrigger(new SCMTrigger("")); // no schedule, use notifyCommit only
         r.createOnlineSlave(Label.get("remote"));
@@ -99,6 +101,7 @@ public class GitStepTest {
     }
 
     @Test public void multipleSCMs() throws Exception {
+        sampleRepo.init();
         otherRepo.git("init");
         otherRepo.write("otherfile", "");
         otherRepo.git("add", "otherfile");

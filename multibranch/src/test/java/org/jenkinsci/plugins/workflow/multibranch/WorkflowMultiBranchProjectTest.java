@@ -46,6 +46,7 @@ public class WorkflowMultiBranchProjectTest {
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
     @Test public void basicBranches() throws Exception {
+        sampleRepo.init();
         sampleRepo.write("jenkins.groovy", "node {checkout scm; echo readFile('file')}");
         sampleRepo.write("file", "initial content");
         sampleRepo.git("add", "jenkins.groovy");

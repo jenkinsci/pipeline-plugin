@@ -50,6 +50,7 @@ public class SCMBinderTest {
     @Test public void scmPickle() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
+                sampleRepo.init();
                 sampleRepo.write("jenkins.groovy", "semaphore 'wait'; node {checkout scm; echo readFile('file')}");
                 sampleRepo.write("file", "initial content");
                 sampleRepo.git("add", "jenkins.groovy");
@@ -76,9 +77,10 @@ public class SCMBinderTest {
         });
     }
 
-    @Test public void exactRevision() throws Exception {
+    @Test public void exactRevisionGit() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
+                sampleRepo.init();
                 ScriptApproval sa = ScriptApproval.get();
                 sa.approveSignature("staticField hudson.model.Items XSTREAM2");
                 sa.approveSignature("method com.thoughtworks.xstream.XStream toXML java.lang.Object");
