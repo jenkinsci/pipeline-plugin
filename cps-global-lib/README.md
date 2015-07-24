@@ -31,8 +31,8 @@ Directories other than "src" is reserved for future enhancements.
 This directory is managed by Git, and you'll deploy new changes through `git push`.
 The repository is exposed in two endpoints:
 
- * `http://server/jenkins/workflowLibs.git` (when your Jenkins is `http://server/jenkins/`.
  * `ssh://USERNAME@server:PORT/workflowLibs.git` through [Jenkins SSH](https://wiki.jenkins-ci.org/display/JENKINS/Jenkins+SSH)
+ * `http://server/jenkins/workflowLibs.git` (when your Jenkins is `http://server/jenkins/`). As noted in [JENKINS-26537](https://issues.jenkins-ci.org/browse/JENKINS-26537), this mode will not currently work in an authenticated Jenkins instance.
 
 Having the shared library script in Git allows you to track changes, perform
 tested deployments, and reuse the same scripts across a large number of instances.
