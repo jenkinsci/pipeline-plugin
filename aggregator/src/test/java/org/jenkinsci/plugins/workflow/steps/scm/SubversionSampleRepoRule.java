@@ -81,8 +81,10 @@ public final class SubversionSampleRepoRule extends AbstractSampleRepoRule {
 
     public void basicInit() throws Exception {
         run(true, tmp.getRoot(), "svn", "--version");
+        run(true, tmp.getRoot(), "svnadmin", "--version");
         run(false, repo, "svnadmin", "create", "--compatible-version=1.5", repo.getAbsolutePath());
         svn("co", url(), ".");
+        System.out.println("Checking out " + repo + " to " + wc);
     }
 
     public void init() throws Exception {
