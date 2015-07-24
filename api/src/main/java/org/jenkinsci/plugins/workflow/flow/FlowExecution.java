@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.flow;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import hudson.Util;
 import hudson.model.Executor;
 import jenkins.model.CauseOfInterruption;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -76,7 +77,16 @@ public abstract class FlowExecution implements FlowActionStorage {
     /**
      * Should be called by the flow owner after it is deserialized.
      */
-    public abstract void onLoad();
+    public /*abstract*/ void onLoad(FlowExecutionOwner owner) throws IOException {
+        if (Util.isOverridden(FlowExecution.class, getClass(), "onLoad")) {
+            onLoad();
+        }
+    }
+
+    @Deprecated
+    public void onLoad() {
+        throw new AbstractMethodError("you must implement the new overload of onLoad");
+    }
 
     public abstract FlowExecutionOwner getOwner();
 

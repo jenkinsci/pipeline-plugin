@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -46,8 +47,9 @@ public class CpsFlowDefinition2Test extends AbstractCpsFlowTest {
 
         assertFalse("Expected the execution to be suspended but it has completed", exec.isComplete());
 
+        FlowExecutionOwner owner = exec.getOwner();
         exec = roundtripXStream(exec);    // poor man's simulation of Jenkins restart
-        exec.onLoad();
+        exec.onLoad(owner);
 
         // now resume workflow execution
         SemaphoreStep.success("watch/1", null);

@@ -8,6 +8,7 @@ Only noting significant user-visible or major API changes, not internal code cle
 * [JENKINS-26860](https://issues.jenkins-ci.org/browse/JENKINS-26860): added _Execute concurrent builds if necessary_ option for Workflow projects.
 * [JENKINS-28756](https://issues.jenkins-ci.org/browse/JENKINS-28756): dropdown for _General SCM_ step incorrectly listed SCMs not compatible with Workflow.
 * [JENKINS-29221](https://issues.jenkins-ci.org/browse/JENKINS-29221): better robustness when the Groovy script is uncompilable.
+* [JENKINS-29571](https://issues.jenkins-ci.org/browse/JENKINS-29571): corrupt build record after renaming a job.
 
 ## 1.8 (Jun 01 2015)
 
