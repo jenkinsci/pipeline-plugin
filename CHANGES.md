@@ -2,7 +2,7 @@
 
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
-## 1.9 (upcoming)
+## 1.9-beta-1 (upcoming)
 
 * [JENKINS-26129](https://issues.jenkins-ci.org/browse/JENKINS-26129): Experimental support for multibranch workflows. (For now, in a separate plugin, not included in _Workflow: Aggregator_, since it depends on the Branch API plugin which does not have a non-beta release and so is available only from the experimental update center.)
 * [JENKINS-28131](https://issues.jenkins-ci.org/browse/JENKINS-28131): pass `NODE_NAME` into `node {}`.
