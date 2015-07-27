@@ -65,6 +65,7 @@
         -->
         <module>job</module>
         <module>aggregator</module>
+        <module>multibranch</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -88,7 +89,11 @@
                 <artifactId>subversion</artifactId>
                 <version>2.5</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>mercurial</artifactId>
+                <version>1.54</version>
+            </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-all</artifactId>

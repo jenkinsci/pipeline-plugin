@@ -334,6 +334,16 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         save();
     }
 
+    @Override public ACL getACL() {
+        ACL acl = super.getACL();
+        for (JobProperty<?> property : properties) {
+            if (property instanceof WorkflowJobProperty) {
+                acl = ((WorkflowJobProperty) property).decorateACL(acl);
+            }
+        }
+        return acl;
+    }
+
     @Override public void checkAbortPermission() {
         checkPermission(CANCEL);
     }

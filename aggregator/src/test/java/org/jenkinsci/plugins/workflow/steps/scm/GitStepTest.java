@@ -29,57 +29,25 @@ import hudson.plugins.git.GitSCM;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.triggers.SCMTrigger;
-import java.io.File;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import jenkins.util.VirtualFile;
-import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class GitStepTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
-    @Rule public TemporaryFolder tmp = new TemporaryFolder();
+    @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
+    @Rule public GitSampleRepoRule otherRepo = new GitSampleRepoRule();
 
-    private File sampleRepo;
-
-    static void git(File repo, String... cmds) throws Exception {
-        List<String> args = new ArrayList<String>();
-        args.add("git");
-        args.addAll(Arrays.asList(cmds));
-        SubversionStepTest.run(repo, args.toArray(new String[args.size()]));
-    }
-
-    /** Otherwise {@link JenkinsRule#waitUntilNoActivity()} is ineffective when we have just pinged a commit notification endpoint. */
-    @Before public void synchronousPolling() {
-        r.jenkins.getDescriptorByType(SCMTrigger.DescriptorImpl.class).synchronousPolling = true;
-    }
-
-    @Before public void sampleRepo() throws Exception {
-        sampleRepo = createSampleRepo(tmp);
-    }
-
-    static File createSampleRepo(TemporaryFolder tmp) throws Exception {
-        File sampleRepo = tmp.newFolder();
-        git(sampleRepo, "init");
-        FileUtils.touch(new File(sampleRepo, "file"));
-        git(sampleRepo, "add", "file");
-        git(sampleRepo, "commit", "--message=init");
-        return sampleRepo;
-    }
-    
     @Test public void basicCloneAndUpdate() throws Exception {
+        sampleRepo.init();
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         r.createOnlineSlave(Label.get("remote"));
         p.setDefinition(new CpsFlowDefinition(
@@ -92,15 +60,16 @@ public class GitStepTest {
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("Cloning the remote Git repository", b); // GitSCM.retrieveChanges
         assertTrue(b.getArtifactManager().root().child("file").isFile());
-        FileUtils.touch(new File(sampleRepo, "nextfile"));
-        git(sampleRepo, "add", "nextfile");
-        git(sampleRepo, "commit", "--message=next");
+        sampleRepo.write("nextfile", "");
+        sampleRepo.git("add", "nextfile");
+        sampleRepo.git("commit", "--message=next");
         b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("Fetching changes from the remote Git repository", b); // GitSCM.retrieveChanges
         assertTrue(b.getArtifactManager().root().child("nextfile").isFile());
     }
 
     @Test public void changelogAndPolling() throws Exception {
+        sampleRepo.init();
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         p.addTrigger(new SCMTrigger("")); // no schedule, use notifyCommit only
         r.createOnlineSlave(Label.get("remote"));
@@ -112,11 +81,10 @@ public class GitStepTest {
             "}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("Cloning the remote Git repository", b);
-        FileUtils.touch(new File(sampleRepo, "nextfile"));
-        git(sampleRepo, "add", "nextfile");
-        git(sampleRepo, "commit", "--message=next");
-        System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
-        r.waitUntilNoActivity();
+        sampleRepo.write("nextfile", "");
+        sampleRepo.git("add", "nextfile");
+        sampleRepo.git("commit", "--message=next");
+        sampleRepo.notifyCommit(r);
         b = p.getLastBuild();
         assertEquals(2, b.number);
         r.assertLogContains("Fetching changes from the remote Git repository", b);
@@ -133,11 +101,11 @@ public class GitStepTest {
     }
 
     @Test public void multipleSCMs() throws Exception {
-        File otherRepo = tmp.newFolder();
-        git(otherRepo, "init");
-        FileUtils.touch(new File(otherRepo, "otherfile"));
-        git(otherRepo, "add", "otherfile");
-        git(otherRepo, "commit", "--message=init");
+        sampleRepo.init();
+        otherRepo.git("init");
+        otherRepo.write("otherfile", "");
+        otherRepo.git("add", "otherfile");
+        otherRepo.git("commit", "--message=init");
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         p.addTrigger(new SCMTrigger(""));
         p.setQuietPeriod(3); // so it only does one build
@@ -157,15 +125,14 @@ public class GitStepTest {
         VirtualFile artifacts = b.getArtifactManager().root();
         assertTrue(artifacts.child("main/file").isFile());
         assertTrue(artifacts.child("other/otherfile").isFile());
-        FileUtils.touch(new File(sampleRepo, "file2"));
-        git(sampleRepo, "add", "file2");
-        git(sampleRepo, "commit", "--message=file2");
-        FileUtils.touch(new File(otherRepo, "otherfile2"));
-        git(otherRepo, "add", "otherfile2");
-        git(otherRepo, "commit", "--message=otherfile2");
-        System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
-        System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(otherRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
-        r.waitUntilNoActivity();
+        sampleRepo.write("file2", "");
+        sampleRepo.git("add", "file2");
+        sampleRepo.git("commit", "--message=file2");
+        otherRepo.write("otherfile2", "");
+        otherRepo.git("add", "otherfile2");
+        otherRepo.git("commit", "--message=otherfile2");
+        sampleRepo.notifyCommit(r);
+        otherRepo.notifyCommit(r);
         b = p.getLastBuild();
         assertEquals(2, b.number);
         artifacts = b.getArtifactManager().root();
@@ -173,9 +140,9 @@ public class GitStepTest {
         assertTrue(artifacts.child("other/otherfile2").isFile());
         Iterator<? extends SCM> scms = p.getSCMs().iterator();
         assertTrue(scms.hasNext());
-        assertEquals(sampleRepo.getAbsolutePath(), ((GitSCM) scms.next()).getRepositories().get(0).getURIs().get(0).toString());
+        assertEquals(sampleRepo.toString(), ((GitSCM) scms.next()).getRepositories().get(0).getURIs().get(0).toString());
         assertTrue(scms.hasNext());
-        assertEquals(otherRepo.getAbsolutePath(), ((GitSCM) scms.next()).getRepositories().get(0).getURIs().get(0).toString());
+        assertEquals(otherRepo.toString(), ((GitSCM) scms.next()).getRepositories().get(0).getURIs().get(0).toString());
         assertFalse(scms.hasNext());
         List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = b.getChangeSets();
         assertEquals(2, changeSets.size());

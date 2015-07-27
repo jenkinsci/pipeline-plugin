@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2014 Jesse Glick.
+ * Copyright 2015 CloudBees, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +22,29 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.steps;
+package org.jenkinsci.plugins.workflow.steps.scm;
 
-import hudson.tasks.Maven;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.Rule;
-import org.jvnet.hudson.test.BuildWatcher;
+import static org.jenkinsci.plugins.workflow.steps.scm.AbstractSampleRepoRule.run;
 import org.jvnet.hudson.test.JenkinsRule;
 
-public class ToolStepTest {
+public final class MercurialSampleRepoRule extends AbstractSampleDVCSRepoRule {
 
-    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = new JenkinsRule();
+    public void hg(String... cmds) throws Exception {
+        run("hg", cmds);
+    }
 
-    @Test public void build() throws Exception {
-        Maven.MavenInstallation tool = r.configureMaven3();
-        String name = tool.getName();
-        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("node {def home = tool '" + name + "'; sh \"M2_HOME=${home} ${home}/bin/mvn -version\"}"));
-        r.assertLogContains("Apache Maven 3", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+    @Override public void init() throws Exception {
+        run(true, tmp.getRoot(), "hg", "version");
+        hg("init");
+        write("file", "");
+        hg("add", "file");
+        hg("commit", "--message=init");
+    }
+
+    public void notifyCommit(JenkinsRule r) throws Exception {
+        synchronousPolling(r);
+        System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + fileUrl(), "text/plain").getWebResponse().getContentAsString());
+        r.waitUntilNoActivity();
     }
 
 }
