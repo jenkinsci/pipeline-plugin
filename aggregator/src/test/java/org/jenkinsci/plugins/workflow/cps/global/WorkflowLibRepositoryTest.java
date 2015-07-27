@@ -104,7 +104,7 @@ public class WorkflowLibRepositoryTest {
                 f.getParentFile().mkdirs();
 
                 FileUtils.writeStringToFile(f, StringUtils.join(Arrays.asList(
-                        "def hello(name) { node { sh \"echo Hello ${name}\" } }",
+                        "def hello(name) {echo \"Hello ${name}\"}",
                         "def foo(x) { this.x = x+'-set'; }",
                         "def bar() { return x+'-get' }",
 
