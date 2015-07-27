@@ -30,6 +30,7 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
+import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
 import hudson.model.Cause;
@@ -100,6 +101,8 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     private transient LazyBuildMixIn<WorkflowJob,WorkflowRun> buildMixIn;
     /** defaults to true */
     private @CheckForNull Boolean concurrentBuild;
+    
+    public static final AlternativeUiTextProvider.Message<WorkflowJob> BUILD_NOW_TEXT = new AlternativeUiTextProvider.Message<WorkflowJob>();
 
     public WorkflowJob(ItemGroup parent, String name) {
         super(parent, name);
@@ -285,7 +288,8 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     }
 
     @Override public String getBuildNowText() {
-        return createParameterizedJobMixIn().getBuildNowText();
+        //TODO Get rid of it when JENKINS-26147 gets fixed
+        return AlternativeUiTextProvider.get(BUILD_NOW_TEXT, this, createParameterizedJobMixIn().getBuildNowText());
     }
 
     @Override public boolean isBuildBlocked() {
