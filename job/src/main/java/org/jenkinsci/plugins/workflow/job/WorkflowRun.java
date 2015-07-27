@@ -419,7 +419,14 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             System.err.printf("loading %s @%h%n", this, this);
         }
         if (execution != null) {
-            execution.onLoad();
+            try {
+                execution.onLoad(new Owner(this));
+            } catch (IOException x) {
+                LOGGER.log(Level.WARNING, null, x);
+                execution = null; // probably too broken to use
+            }
+        }
+        if (execution != null) {
             execution.addListener(new GraphL());
             executionPromise.set(execution);
             if (!execution.isComplete()) {

@@ -28,11 +28,6 @@ import hudson.plugins.mercurial.MercurialSCM;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.triggers.SCMTrigger;
-import java.io.File;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import jenkins.util.VirtualFile;
@@ -41,10 +36,8 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.For;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -52,33 +45,15 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class MercurialStepTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
-    @Rule public TemporaryFolder tmp = new TemporaryFolder();
-
-    private static void hg(File repo, String... cmds) throws Exception {
-        List<String> args = new ArrayList<String>();
-        args.add("hg");
-        args.addAll(Arrays.asList(cmds));
-        SubversionStepTest.run(repo, args.toArray(new String[args.size()]));
-    }
-
-    /** Otherwise {@link JenkinsRule#waitUntilNoActivity()} is ineffective when we have just pinged a commit notification endpoint. */
-    @Before public void synchronousPolling() {
-        r.jenkins.getDescriptorByType(SCMTrigger.DescriptorImpl.class).synchronousPolling = true;
-    }
+    @Rule public MercurialSampleRepoRule sampleRepo = new MercurialSampleRepoRule();
+    @Rule public MercurialSampleRepoRule otherRepo = new MercurialSampleRepoRule();
 
     @Test public void multipleSCMs() throws Exception {
-        File sampleRepo = tmp.newFolder();
-        hg(sampleRepo, "init");
-        FileUtils.touch(new File(sampleRepo, "file"));
-        hg(sampleRepo, "add", "file");
-        hg(sampleRepo, "commit", "--message=init");
-        URI sampleRepoU = sampleRepo.toURI();
-        File otherRepo = tmp.newFolder();
-        hg(otherRepo, "init");
-        FileUtils.touch(new File(otherRepo, "otherfile"));
-        hg(otherRepo, "add", "otherfile");
-        hg(otherRepo, "commit", "--message=init");
-        URI otherRepoU = otherRepo.toURI();
+        sampleRepo.init();
+        otherRepo.hg("init");
+        otherRepo.write("otherfile", "");
+        otherRepo.hg("add", "otherfile");
+        otherRepo.hg("commit", "--message=init");
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         p.addTrigger(new SCMTrigger(""));
         p.setQuietPeriod(3); // so it only does one build
@@ -86,10 +61,10 @@ public class MercurialStepTest {
             "node {\n" +
             "    ws {\n" +
             "        dir('main') {\n" +
-            "            checkout([$class: 'MercurialSCM', source: $/" + sampleRepoU + "/$])\n" +
+            "            checkout([$class: 'MercurialSCM', source: $/" + sampleRepo.fileUrl() + "/$])\n" +
             "        }\n" +
             "        dir('other') {\n" +
-            "            checkout([$class: 'MercurialSCM', source: $/" + otherRepoU + "/$, clean: true])\n" +
+            "            checkout([$class: 'MercurialSCM', source: $/" + otherRepo.fileUrl() + "/$, clean: true])\n" +
             "            try {\n" + // TODO or use fileExists
             "                readFile 'unversioned'\n" +
             "                error 'unversioned did exist'\n" +
@@ -106,15 +81,14 @@ public class MercurialStepTest {
         assertTrue(artifacts.child("main/file").isFile());
         assertTrue(artifacts.child("other/otherfile").isFile());
         r.assertLogContains("unversioned did not exist", b);
-        FileUtils.touch(new File(sampleRepo, "file2"));
-        hg(sampleRepo, "add", "file2");
-        hg(sampleRepo, "commit", "--message=file2");
-        FileUtils.touch(new File(otherRepo, "otherfile2"));
-        hg(otherRepo, "add", "otherfile2");
-        hg(otherRepo, "commit", "--message=otherfile2");
-        System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(sampleRepoU.toString(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
-        System.out.println(r.createWebClient().goTo("mercurial/notifyCommit?url=" + URLEncoder.encode(otherRepoU.toString(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
-        r.waitUntilNoActivity();
+        sampleRepo.write("file2", "");
+        sampleRepo.hg("add", "file2");
+        sampleRepo.hg("commit", "--message=file2");
+        otherRepo.write("otherfile2", "");
+        otherRepo.hg("add", "otherfile2");
+        otherRepo.hg("commit", "--message=otherfile2");
+        sampleRepo.notifyCommit(r);
+        otherRepo.notifyCommit(r);
         FileUtils.copyFile(p.getSCMTrigger().getLogFile(), System.out);
         b = r.assertBuildStatusSuccess(p.getLastBuild());
         assertEquals(2, b.number);
@@ -124,9 +98,9 @@ public class MercurialStepTest {
         r.assertLogContains("unversioned did not exist", b);
         Iterator<? extends SCM> scms = p.getSCMs().iterator();
         assertTrue(scms.hasNext());
-        assertEquals(sampleRepoU.toString(), ((MercurialSCM) scms.next()).getSource());
+        assertEquals(sampleRepo.fileUrl(), ((MercurialSCM) scms.next()).getSource());
         assertTrue(scms.hasNext());
-        assertEquals(otherRepoU.toString(), ((MercurialSCM) scms.next()).getSource());
+        assertEquals(otherRepo.fileUrl(), ((MercurialSCM) scms.next()).getSource());
         assertFalse(scms.hasNext());
         List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = b.getChangeSets();
         assertEquals(2, changeSets.size());

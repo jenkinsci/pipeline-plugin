@@ -57,11 +57,11 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 
 ## Build wrappers
 
-- [ ] `ConfigFileBuildWrapper` (`config-file-provider`): [JENKINS-26339](https://issues.jenkins-ci.org/browse/JENKINS-26339)
+- [X] `ConfigFileBuildWrapper` (`config-file-provider`): scheduled for 2.9.1 release
 - [X] `Xvnc` (`xvnc`) supported as of 1.22
 - [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
 - [ ] `DashboardBuilder` (`environment-dashboard`): [issue 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
-- [X] `TimestamperBuildWrapper` (`timestamper`): scheduled for 1.6.3 release
+- [X] `TimestamperBuildWrapper` (`timestamper`): supported as of 1.7
 - [ ] `MaskPasswordsBuildWrapper` (`mask-passwords`): [PR 3](https://github.com/jenkinsci/mask-passwords-plugin/pull/3)
 - [ ] `SSHAgentBuildWrapper` (`ssh-agent`): [JENKINS-28689](https://issues.jenkins-ci.org/browse/JENKINS-28689)
 - [ ] `XvfbBuildWrapper` (`xvfb`): [JENKINS-28928](https://issues.jenkins-ci.org/browse/JENKINS-28928)
@@ -96,7 +96,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `build-failure-analyzer`: [JENKINS-27123](https://issues.jenkins-ci.org/browse/JENKINS-27123)
 - [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
 - [X] `job-dsl`: implemented in 1.29
-- [ ] `zentimestamp`: [JENKINS-26958](https://issues.jenkins-ci.org/browse/JENKINS-26958)
+- [X] `zentimestamp`: basic compatibility in 4.2
 - [ ] `claim`: [JENKINS-27206](https://issues.jenkins-ci.org/browse/JENKINS-27206)
 - [ ] `ListSubversionTagsParameterValue` (`subversion`): [JENKINS-27718](https://issues.jenkins-ci.org/browse/JENKINS-27718)
 - [X] `authorize-project`: scheduled for 1.0.4
@@ -222,3 +222,26 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 
 Plugins can also implement custom Workflow steps with specialized behavior by adding a dependency on `workflow-step-api`.
 Generally you will extend `AbstractStepImpl`, `AbstractStepDescriptorImpl`, and `AbstractStepExecutionImpl` (or `AbstractSynchronousStepExecution`).
+
+## Historical background
+
+Traditional Jenkins `Job`s are defined in a fairly deep type hierarchy: `FreestyleProject` → `Project` → `AbstractProject` → `Job` → `AbstractItem` → `Item`.
+(As well as paired `Run` types: `FreestyleBuild`, etc.)
+In older versions of Jenkins, much of the interesting implementation was in `AbstractProject` (or `AbstractBuild`), which was packed full of assorted features not present in `Job` (or `Run`).
+Some of these features were also needed by Workflow, like having a programmatic way to start a build (optionally with parameters), or lazy-load build records, or integrate with SCM triggers.
+Others were not applicable to Workflow, like declaring a single SCM and a single workspace per build, or being tied to a specific label, or running a linear sequence of build steps within the scope of a single Java method call.
+
+`WorkflowJob` directly extends `Job` since it cannot act like an `AbstractProject`.
+Therefore some refactoring was needed, to make the relevant features available to other `Job` types without code or API duplication.
+Rather than introduce yet another level into the type hierarchy (and freezing for all time the decision about which features are more “generic” than others), mixins were introduced.
+Each encapsulates a set of related functionality originally tied to `AbstractProject` but now also usable from `WorkflowJob` (and potentially other future `Job` types).
+
+* `ParameterizedJobMixIn` allows a job to be scheduled to the queue (the older `BuildableItem` was inadequate), taking care also of build parameters and the REST build trigger.
+* `SCMTriggerItem` integrates with `SCMTrigger`, including a definition of which SCM or SCMs a job is using, and how it should perform polling. It also allows various plugins to interoperate with the Multiple SCMs plugin without needing an explicit dependency. Supersedes and deprecates `SCMedItem`.
+* `LazyBuildMixIn` handles the plumbing of lazy-loading build records (a system introduced in Jenkins 1.485).
+
+For Workflow compatibility, plugins formerly referring to `AbstractProject`/`AbstractBuild` will generally need to start dealing with `Job`/`Run` but may also need to refer to `ParameterizedJobMixIn` and/or ``SCMTriggerItem`.
+(`LazyBuildMixIn` is rarely needed from outside code, as the methods defined in `Job`/`Run` suffice for typical purposes.)
+
+Future improvements to Workflow may well require yet more implementation code to be extracted from `AbstractProject`/`AbstractBuild`.
+The main constraint is the need to retain binary compatibility.

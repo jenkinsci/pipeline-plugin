@@ -65,7 +65,13 @@ public class PickleResolver implements ObjectResolver {
         List<ListenableFuture<?>> members = new ArrayList<ListenableFuture<?>>();
         for (Pickle r : pickles) {
             // TODO log("rehydrating " + r);
-            members.add(Futures.transform(r.rehydrate(), new Function<Object,Object>() {
+            ListenableFuture<?> future;
+            try {
+                future = r.rehydrate();
+            } catch (RuntimeException x) {
+                future = Futures.immediateFailedFuture(x);
+            }
+            members.add(Futures.transform(future, new Function<Object,Object>() {
                 @Override public Object apply(Object input) {
                     // TODO log("rehydrated to " + input);
                     return input;

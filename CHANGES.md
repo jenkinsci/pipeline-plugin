@@ -5,10 +5,12 @@ Only noting significant user-visible or major API changes, not internal code cle
 ## 1.9 (upcoming)
 
 * [JENKINS-26135](https://issues.jenkins-ci.org/browse/JENKINS-26135): User-defined global variables/functions in git-global-lib
+* [JENKINS-26129](https://issues.jenkins-ci.org/browse/JENKINS-26129): Experimental support for multibranch workflows. (For now, in a separate plugin, not included in _Workflow: Aggregator_, since it depends on the Branch API plugin which does not have a non-beta release and so is available only from the experimental update center.)
 * [JENKINS-28131](https://issues.jenkins-ci.org/browse/JENKINS-28131): pass `NODE_NAME` into `node {}`.
 * [JENKINS-26860](https://issues.jenkins-ci.org/browse/JENKINS-26860): added _Execute concurrent builds if necessary_ option for Workflow projects.
 * [JENKINS-28756](https://issues.jenkins-ci.org/browse/JENKINS-28756): dropdown for _General SCM_ step incorrectly listed SCMs not compatible with Workflow.
 * [JENKINS-29221](https://issues.jenkins-ci.org/browse/JENKINS-29221): better robustness when the Groovy script is uncompilable.
+* [JENKINS-29571](https://issues.jenkins-ci.org/browse/JENKINS-29571): corrupt build record after renaming a job.
 
 ## 1.8 (Jun 01 2015)
 

@@ -24,101 +24,37 @@
 
 package org.jenkinsci.plugins.workflow.steps.scm;
 
-import hudson.ExtensionList;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
-import hudson.scm.SubversionRepositoryStatus;
 import hudson.scm.SubversionSCM;
 import hudson.triggers.SCMTrigger;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import jenkins.util.VirtualFile;
-import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
-import org.junit.Assume;
-import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class SubversionStepTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public JenkinsRule r = new JenkinsRule();
-    @Rule public TemporaryFolder tmp = new TemporaryFolder();
-
-    public static void run(File cwd, String... cmds) throws Exception {
-        ProcessBuilder pb = new ProcessBuilder(cmds);
-        try {
-            ProcessBuilder.class.getMethod("inheritIO").invoke(pb);
-        } catch (NoSuchMethodException x) {
-            // prior to Java 7
-        }
-        try {
-            int r = pb.directory(cwd).start().waitFor();
-            Assume.assumeTrue(Arrays.toString(cmds) + " failed with error code " + r, r == 0);
-        } catch (Exception ex) {
-            Assume.assumeNoException(Arrays.toString(cmds) + " failed with exception (required tooling not installed?)", ex);
-        }
-    }
-
-    private static String uuid(String url) throws Exception {
-        Process proc = new ProcessBuilder("svn", "info", "--xml", url).start();
-        BufferedReader r = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-        Pattern p = Pattern.compile("<uuid>(.+)</uuid>");
-        String line;
-        while ((line = r.readLine()) != null) {
-            Matcher m = p.matcher(line);
-            if (m.matches()) {
-                return m.group(1);
-            }
-        }
-        throw new IllegalStateException("no output");
-    }
-
-    private void notifyCommit(String uuid, String path) throws Exception {
-        // Mocking the web POST, with crumb, is way too hard, and get an IllegalStateException: STREAMED from doNotifyCommit’s getReader anyway.
-        for (SubversionRepositoryStatus.Listener listener : ExtensionList.lookup(SubversionRepositoryStatus.Listener.class)) {
-            listener.onNotify(UUID.fromString(uuid), -1, Collections.singleton(path));
-        }
-    }
-
-    /** Otherwise {@link JenkinsRule#waitUntilNoActivity()} is ineffective when we have just pinged a commit notification endpoint. */
-    @Before public void synchronousPolling() {
-        r.jenkins.getDescriptorByType(SCMTrigger.DescriptorImpl.class).synchronousPolling = true;
-    }
+    @Rule public SubversionSampleRepoRule sampleRepo = new SubversionSampleRepoRule();
+    @Rule public SubversionSampleRepoRule otherRepo = new SubversionSampleRepoRule();
 
     @Test public void multipleSCMs() throws Exception {
-        File sampleRepo = tmp.newFolder();
-        URI u = sampleRepo.toURI();
-        String sampleRepoU = new URI(u.getScheme(), "", u.getPath(), u.getFragment()).toString(); // TODO SVN rejects File.toUri syntax (requires blank authority field)
-        run(sampleRepo, "svnadmin", "create", "--compatible-version=1.5", sampleRepo.getAbsolutePath());
-        File sampleWc = tmp.newFolder();
-        run(sampleWc, "svn", "co", sampleRepoU, ".");
-        FileUtils.touch(new File(sampleWc, "file"));
-        run(sampleWc, "svn", "add", "file");
-        run(sampleWc, "svn", "commit", "--message=init");
-        File otherRepo = tmp.newFolder();
-        u = otherRepo.toURI();
-        String otherRepoU = new URI(u.getScheme(), "", u.getPath(), u.getFragment()).toString();
-        run(otherRepo, "svnadmin", "create", "--compatible-version=1.5", otherRepo.getAbsolutePath());
-        File otherWc = tmp.newFolder();
-        run(otherWc, "svn", "co", otherRepoU, ".");
-        FileUtils.touch(new File(otherWc, "otherfile"));
-        run(otherWc, "svn", "add", "otherfile");
-        run(otherWc, "svn", "commit", "--message=init");
+        sampleRepo.init();
+        otherRepo.basicInit();
+        otherRepo.svn("co", otherRepo.trunkUrl(), ".");
+        otherRepo.write("otherfile", "");
+        otherRepo.svn("add", "otherfile");
+        otherRepo.svn("commit", "--message=init");
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         p.addTrigger(new SCMTrigger(""));
         p.setQuietPeriod(3); // so it only does one build
@@ -126,10 +62,10 @@ public class SubversionStepTest {
             "node {\n" +
             "    ws {\n" +
             "        dir('main') {\n" +
-            "            svn(url: '" + sampleRepoU + "')\n" +
+            "            svn(url: '" + sampleRepo.trunkUrl() + "')\n" +
             "        }\n" +
             "        dir('other') {\n" +
-            "            svn(url: '" + otherRepoU + "')\n" +
+            "            svn(url: '" + otherRepo.trunkUrl() + "')\n" +
             "        }\n" +
             "        archive '**'\n" +
             "    }\n" +
@@ -138,14 +74,14 @@ public class SubversionStepTest {
         VirtualFile artifacts = b.getArtifactManager().root();
         assertTrue(artifacts.child("main/file").isFile());
         assertTrue(artifacts.child("other/otherfile").isFile());
-        FileUtils.touch(new File(sampleWc, "file2"));
-        run(sampleWc, "svn", "add", "file2");
-        run(sampleWc, "svn", "commit", "--message=+file2");
-        FileUtils.touch(new File(otherWc, "otherfile2"));
-        run(otherWc, "svn", "add", "otherfile2");
-        run(otherWc, "svn", "commit", "--message=+otherfile2");
-        notifyCommit(uuid(sampleRepoU), "file2");
-        notifyCommit(uuid(otherRepoU), "otherfile2");
+        sampleRepo.write("file2", "");
+        sampleRepo.svn("add", "file2");
+        sampleRepo.svn("commit", "--message=+file2");
+        otherRepo.write("otherfile2", "");
+        otherRepo.svn("add", "otherfile2");
+        otherRepo.svn("commit", "--message=+otherfile2");
+        sampleRepo.notifyCommit(r, "prj/trunk/file2");
+        otherRepo.notifyCommit(r, "prj/trunk/otherfile2");
         r.waitUntilNoActivity();
         b = p.getLastBuild();
         assertEquals(2, b.number);
@@ -154,9 +90,9 @@ public class SubversionStepTest {
         assertTrue(artifacts.child("other/otherfile2").isFile());
         Iterator<? extends SCM> scms = p.getSCMs().iterator();
         assertTrue(scms.hasNext());
-        assertEquals(sampleRepoU.replaceFirst("/$", ""), ((SubversionSCM) scms.next()).getLocations()[0].getURL());
+        assertEquals(sampleRepo.trunkUrl().replaceFirst("/$", ""), ((SubversionSCM) scms.next()).getLocations()[0].getURL());
         assertTrue(scms.hasNext());
-        assertEquals(otherRepoU.replaceFirst("/$", ""), ((SubversionSCM) scms.next()).getLocations()[0].getURL());
+        assertEquals(otherRepo.trunkUrl().replaceFirst("/$", ""), ((SubversionSCM) scms.next()).getLocations()[0].getURL());
         assertFalse(scms.hasNext());
         List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = b.getChangeSets();
         assertEquals(2, changeSets.size());
@@ -166,13 +102,13 @@ public class SubversionStepTest {
         Iterator<? extends ChangeLogSet.Entry> iterator = changeSet.iterator();
         assertTrue(iterator.hasNext());
         ChangeLogSet.Entry entry = iterator.next();
-        assertEquals("[/file2]", entry.getAffectedPaths().toString());
+        assertEquals("[file2]", entry.getAffectedPaths().toString());
         assertFalse(iterator.hasNext());
         changeSet = changeSets.get(1);
         iterator = changeSet.iterator();
         assertTrue(iterator.hasNext());
         entry = iterator.next();
-        assertEquals("[/otherfile2]", entry.getAffectedPaths().toString());
+        assertEquals("[otherfile2]", entry.getAffectedPaths().toString());
         assertFalse(iterator.hasNext());
     }
 
