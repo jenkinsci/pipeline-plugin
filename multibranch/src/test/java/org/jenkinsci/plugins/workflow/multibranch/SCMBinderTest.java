@@ -117,7 +117,7 @@ public class SCMBinderTest {
         });
     }
 
-    @Ignore("TODO fails without https://github.com/jenkinsci/subversion-plugin/pull/129")
+    @Ignore("TODO fails without https://github.com/jenkinsci/subversion-plugin/pull/129 in 2.5.2")
     @Test public void exactRevisionSubversion() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
