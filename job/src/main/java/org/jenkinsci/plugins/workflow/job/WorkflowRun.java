@@ -163,7 +163,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (!firstTime) {
             throw sleep();
         }
-        // Some code here copied from execute(RunExecution), but subsequently modified quite a bit.
         try {
             onStartBuilding();
             OutputStream logger = new FileOutputStream(getLogFile());
@@ -173,8 +172,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             updateSymlinks(listener);
             FlowDefinition definition = getParent().getDefinition();
             if (definition == null) {
-                listener.error("No flow definition, cannot run");
-                return;
+                throw new AbortException("No flow definition, cannot run");
             }
             checkouts = new LinkedList<SCMCheckout>();
             Owner owner = new Owner(this);
@@ -191,12 +189,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             execution = newExecution;
             executionPromise.set(newExecution);
         } catch (Throwable x) {
-            if (listener == null) {
-                LOGGER.log(Level.WARNING, this + " failed to start", x);
-            } else {
-                x.printStackTrace(listener.error("failed to start build"));
-            }
-            setResult(Result.FAILURE);
+            doFinish(Result.FAILURE, x);
             executionPromise.setException(x);
             return;
         }
@@ -422,20 +415,29 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     }
 
     private void finish(Result r) {
+        doFinish(r, execution.getCauseOfFailure());
+        FlowExecutionList.get().unregister(execution.getOwner());
+    }
+
+    /** Normally called from {@link #finish} but also handles the case that the flow did not even start correctly, for example due to an error in {@link FlowExecution#start}. */
+    private void doFinish(@Nonnull Result r, @CheckForNull Throwable t) {
         setResult(r);
         LOGGER.log(Level.INFO, "{0} completed: {1}", new Object[] {this, getResult()});
         // TODO set duration
-        RunListener.fireCompleted(WorkflowRun.this, listener);
-        Throwable t = execution.getCauseOfFailure();
-        if (t instanceof AbortException) {
-            listener.error(t.getMessage());
-        } else if (t instanceof FlowInterruptedException) {
-            ((FlowInterruptedException) t).handle(this, listener);
-        } else if (t != null) {
-            t.printStackTrace(listener.getLogger());
+        if (listener == null) {
+            LOGGER.log(Level.WARNING, this + " failed to start", t);
+        } else {
+            RunListener.fireCompleted(WorkflowRun.this, listener);
+            if (t instanceof AbortException) {
+                listener.error(t.getMessage());
+            } else if (t instanceof FlowInterruptedException) {
+                ((FlowInterruptedException) t).handle(this, listener);
+            } else if (t != null) {
+                t.printStackTrace(listener.getLogger());
+            }
+            listener.finished(getResult());
+            listener.closeQuietly();
         }
-        listener.finished(getResult());
-        listener.closeQuietly();
         logsToCopy = null;
         duration = Math.max(0, System.currentTimeMillis() - getStartTimeInMillis());
         try {
@@ -445,11 +447,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             LOGGER.log(Level.WARNING, null, x);
         }
         onEndBuilding();
-        assert completed != null;
-        synchronized (completed) {
-            completed.set(true);
+        if (completed != null) {
+            synchronized (completed) {
+                completed.set(true);
+            }
         }
-        FlowExecutionList.get().unregister(execution.getOwner());
     }
 
     /**
