@@ -189,7 +189,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             execution = newExecution;
             executionPromise.set(newExecution);
         } catch (Throwable x) {
-            doFinish(Result.FAILURE, x);
+            finish(Result.FAILURE, x);
             executionPromise.setException(x);
             return;
         }
@@ -414,13 +414,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     }
 
-    private void finish(Result r) {
-        doFinish(r, execution.getCauseOfFailure());
-        FlowExecutionList.get().unregister(execution.getOwner());
-    }
-
-    /** Normally called from {@link #finish} but also handles the case that the flow did not even start correctly, for example due to an error in {@link FlowExecution#start}. */
-    private void doFinish(@Nonnull Result r, @CheckForNull Throwable t) {
+    /** Handles normal build completion (including errors) but also handles the case that the flow did not even start correctly, for example due to an error in {@link FlowExecution#start}. */
+    private void finish(@Nonnull Result r, @CheckForNull Throwable t) {
         setResult(r);
         LOGGER.log(Level.INFO, "{0} completed: {1}", new Object[] {this, getResult()});
         // TODO set duration
@@ -452,6 +447,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 completed.set(true);
             }
         }
+        FlowExecutionList.get().unregister(new Owner(this));
     }
 
     /**
@@ -647,7 +643,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
             logNodeMessage(node, "Running: " + node.getDisplayName());
             if (node instanceof FlowEndNode) {
-                finish(((FlowEndNode) node).getResult());
+                finish(((FlowEndNode) node).getResult(), execution.getCauseOfFailure());
             } else {
                 try {
                     save();
