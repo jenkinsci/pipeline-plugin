@@ -116,7 +116,7 @@ public class TimeoutStepTest extends Assert {
 
                 SemaphoreStep.success("restarted/1", null);
 
-                story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b));
+                story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b));
             }
         });
     }
