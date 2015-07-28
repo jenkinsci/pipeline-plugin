@@ -118,7 +118,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     /** map from node IDs to log positions from which we should copy text */
     private Map<String,Long> logsToCopy;
 
-    List<SCMCheckout> checkouts;
+    /** List of performed checkouts. null until started*/
+    @CheckForNull List<SCMCheckout> checkouts;
     // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally; perhaps keep a List<WeakReference<ChangeLogSet<?>>>
     private transient List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
 
@@ -565,6 +566,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         Computer computer = workspace.toComputer();
         if (computer == null) {
             throw new IllegalStateException();
+        }
+        if (checkouts == null) {
+            throw new IllegalStateException("The build execution has not been started yet");
         }
         checkouts.add(new SCMCheckout(scm, computer.getName(), workspace.getRemote(), changelogFile, pollingBaseline));
     }
