@@ -51,6 +51,7 @@ import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
 import hudson.util.NullStream;
+import hudson.util.PersistedList;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -62,7 +63,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -130,7 +130,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     public WorkflowRun(WorkflowJob job) throws IOException {
         super(job);
         firstTime = true;
-        checkouts = new LinkedList<SCMCheckout>();
+        checkouts = new PersistedList<SCMCheckout>(this);
         //System.err.printf("created %s @%h%n", this, this);
     }
 
@@ -531,7 +531,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             if (listener != null) {
                 listener.error("JENKINS-26761: list of SCM checkouts in " + this + " was lost; polling will be broken");
             }
-            checkouts = new LinkedList<SCMCheckout>();
+            checkouts = new PersistedList<SCMCheckout>(this);
             // Could this.save(), but might pollute diagnosis, and (worse) might clobber real data if there is >1 WorkflowRun with the same ID.
         }
         return checkouts;
