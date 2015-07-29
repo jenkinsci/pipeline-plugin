@@ -4,6 +4,8 @@ Only noting significant user-visible or major API changes, not internal code cle
 
 ## 1.9 (upcoming)
 
+* [JENKINS-26761](https://issues.jenkins-ci.org/browse/JENKINS-26761): `NullPointerException` from Git commit notification requests under unknown circumstances; improved robustness and logging.
+
 ## 1.9-beta-1 (Jul 27 2015)
 
 * [JENKINS-26129](https://issues.jenkins-ci.org/browse/JENKINS-26129): Experimental support for multibranch workflows. (For now, in a separate plugin, not included in _Workflow: Aggregator_, since it depends on the Branch API plugin which does not have a non-beta release and so is available only from the experimental update center.)

@@ -27,20 +27,25 @@ package org.jenkinsci.plugins.workflow.steps.scm;
 import hudson.model.Label;
 import hudson.scm.ChangeLogSet;
 import hudson.triggers.SCMTrigger;
+import java.io.File;
 import java.util.Iterator;
 import java.util.List;
+import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class GitStepRestartTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule r = new RestartableJenkinsRule();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
@@ -61,6 +66,7 @@ public class GitStepRestartTest {
                 p.save();
                 WorkflowRun b = r.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
                 r.j.assertLogContains("Cloning the remote Git repository", b);
+                FileUtils.copyFile(new File(b.getRootDir(), "build.xml"), System.out);
             }
         });
         r.addStep(new Statement() {
