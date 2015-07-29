@@ -47,6 +47,10 @@ Only noting significant user-visible or major API changes, not internal code cle
 * Avoid some possible name clashes with function names in scripts (`build` reported).
 * API addition: block-scoped steps can now pass in `EnvironmentExpander` and/or `ConsoleLogFilter` to better customize processing of nested code.
 
+## 1.4.1 (Jul 29 2015)
+
+* JENKINS-26761 robustness/diagnostics backport from 1.9.
+
 ## 1.4 (Mar 16 2015)
 
 * [JENKINS-26034](https://issues.jenkins-ci.org/browse/JENKINS-26034): added `failFast` option to the `parallel` step.
