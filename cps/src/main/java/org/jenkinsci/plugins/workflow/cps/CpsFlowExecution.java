@@ -592,8 +592,9 @@ public class CpsFlowExecution extends FlowExecution {
 
     @Override
     public ListenableFuture<List<StepExecution>> getCurrentExecutions(final boolean innerMostOnly) {
-        if (programPromise==null)
+        if (programPromise == null || isComplete()) {
             return Futures.immediateFuture(Collections.<StepExecution>emptyList());
+        }
 
         final SettableFuture<List<StepExecution>> r = SettableFuture.create();
         runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
