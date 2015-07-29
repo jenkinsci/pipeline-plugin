@@ -30,6 +30,7 @@ import org.jenkinsci.plugins.workflow.actions.TimingAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
@@ -50,6 +51,7 @@ import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
 import hudson.util.NullStream;
+import hudson.util.PersistedList;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -61,7 +63,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -95,7 +96,7 @@ import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
-@edu.umd.cs.findbugs.annotations.SuppressWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER") // completed is an unusual usage
+@SuppressFBWarnings(value="JLM_JSR166_UTILCONCURRENT_MONITORENTER", justification="completed is an unusual usage")
 public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Queue.Executable, LazyBuildMixIn.LazyLoadingRun<WorkflowJob,WorkflowRun> {
 
     private static final Logger LOGGER = Logger.getLogger(WorkflowRun.class.getName());
@@ -118,7 +119,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     /** map from node IDs to log positions from which we should copy text */
     private Map<String,Long> logsToCopy;
 
-    List<SCMCheckout> checkouts;
+    /** JENKINS-26761: supposed to always be set but sometimes is not. Access only through {@link #checkouts(TaskListener)}. */
+    private @CheckForNull List<SCMCheckout> checkouts;
     // TODO could use a WeakReference to reduce memory, but that complicates how we add to it incrementally; perhaps keep a List<WeakReference<ChangeLogSet<?>>>
     private transient List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
 
@@ -128,6 +130,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     public WorkflowRun(WorkflowJob job) throws IOException {
         super(job);
         firstTime = true;
+        checkouts = new PersistedList<SCMCheckout>(this);
         //System.err.printf("created %s @%h%n", this, this);
     }
 
@@ -178,7 +181,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 listener.error("No flow definition, cannot run");
                 return;
             }
-            checkouts = new LinkedList<SCMCheckout>();
             Owner owner = new Owner(this);
             
             FlowExecution newExecution = definition.create(owner, listener, getAllActions());
@@ -443,6 +445,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 Queue.getInstance().schedule(new AfterRestartTask(this), 0);
             }
         }
+        checkouts(null); // only for diagnostics
         synchronized (LOADING_RUNS) {
             LOADING_RUNS.remove(key()); // or could just make the value type be WeakReference<WorkflowRun>
             LOADING_RUNS.notifyAll();
@@ -522,15 +525,23 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return isBuilding(); // there is no equivalent to a post-production state for flows
     }
 
+    synchronized @Nonnull List<SCMCheckout> checkouts(@CheckForNull TaskListener listener) {
+        if (checkouts == null) {
+            LOGGER.log(Level.WARNING, "JENKINS-26761: no checkouts in {0}", this);
+            if (listener != null) {
+                listener.error("JENKINS-26761: list of SCM checkouts in " + this + " was lost; polling will be broken");
+            }
+            checkouts = new PersistedList<SCMCheckout>(this);
+            // Could this.save(), but might pollute diagnosis, and (worse) might clobber real data if there is >1 WorkflowRun with the same ID.
+        }
+        return checkouts;
+    }
+
     @Exported
     public synchronized List<ChangeLogSet<? extends ChangeLogSet.Entry>> getChangeSets() {
         if (changeSets == null) {
             changeSets = new ArrayList<ChangeLogSet<? extends ChangeLogSet.Entry>>();
-            if (checkouts == null) {
-                LOGGER.log(Level.WARNING, "no checkouts in {0}", this);
-                return changeSets;
-            }
-            for (SCMCheckout co : checkouts) {
+            for (SCMCheckout co : checkouts(null)) {
                 if (co.changelogFile != null && co.changelogFile.isFile()) {
                     try {
                         changeSets.add(co.scm.createChangeLogParser().parse(this, co.scm.getEffectiveBrowser(), co.changelogFile));
@@ -553,7 +564,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     }
 
-    private void onCheckout(SCM scm, FilePath workspace, @CheckForNull File changelogFile, @CheckForNull SCMRevisionState pollingBaseline) throws Exception {
+    private void onCheckout(SCM scm, FilePath workspace, TaskListener listener, @CheckForNull File changelogFile, @CheckForNull SCMRevisionState pollingBaseline) throws Exception {
         if (changelogFile != null && changelogFile.isFile()) {
             ChangeLogSet<?> cls = scm.createChangeLogParser().parse(this, scm.getEffectiveBrowser(), changelogFile);
             getChangeSets().add(cls);
@@ -566,7 +577,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (computer == null) {
             throw new IllegalStateException();
         }
-        checkouts.add(new SCMCheckout(scm, computer.getName(), workspace.getRemote(), changelogFile, pollingBaseline));
+        checkouts(listener).add(new SCMCheckout(scm, computer.getName(), workspace.getRemote(), changelogFile, pollingBaseline));
     }
 
     static final class SCMCheckout {
@@ -716,7 +727,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     @Extension public static final class SCMListenerImpl extends SCMListener {
         @Override public void onCheckout(Run<?,?> build, SCM scm, FilePath workspace, TaskListener listener, File changelogFile, SCMRevisionState pollingBaseline) throws Exception {
             if (build instanceof WorkflowRun) {
-                ((WorkflowRun) build).onCheckout(scm, workspace, changelogFile, pollingBaseline);
+                ((WorkflowRun) build).onCheckout(scm, workspace, listener, changelogFile, pollingBaseline);
             }
         }
     }
