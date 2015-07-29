@@ -93,7 +93,7 @@ public class TimeoutStepTest extends Assert {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "restarted");
                 p.setDefinition(new CpsFlowDefinition(""
                         + "node {\n"
-                        + "  timeout(15) {\n"
+                        + "  timeout(time: 15, unit: 'SECONDS') {\n"
                         + "    semaphore 'restarted'\n"
                         + "    sleep 999\n"
                         + "  }\n"
