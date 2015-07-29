@@ -93,19 +93,13 @@ public class TimeoutStepTest extends Assert {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "restarted");
                 p.setDefinition(new CpsFlowDefinition(""
                         + "node {\n"
-                        + "  timeout(time:1, unit:'MINUTES') {\n"
-                        + "    echo 'Hello World'\n"
-                        + "    sleep 40\n"
+                        + "  timeout(15) {\n"
                         + "    semaphore 'restarted'\n"
-                        + "    sleep 70\n"
-                        + "    echo 'Bye World'\n"
+                        + "    sleep 999\n"
                         + "  }\n"
                         + "}\n"));
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
-                CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
-
                 SemaphoreStep.waitForStart("restarted/1", b);
-                assertTrue(JenkinsRule.getLog(b), b.isBuilding());
             }
         });
         story.addStep(new Statement() {
@@ -113,9 +107,7 @@ public class TimeoutStepTest extends Assert {
             public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.getItemByFullName("restarted", WorkflowJob.class);
                 WorkflowRun b = p.getBuildByNumber(1);
-
                 SemaphoreStep.success("restarted/1", null);
-
                 story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b));
             }
         });
