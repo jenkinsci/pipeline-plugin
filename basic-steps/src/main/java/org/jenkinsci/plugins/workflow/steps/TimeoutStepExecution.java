@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.workflow.steps;
 import com.google.inject.Inject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import jenkins.util.Timer;
 
 /**
@@ -11,16 +10,13 @@ import jenkins.util.Timer;
  */
 @SuppressFBWarnings("SE_INNER_CLASS")
 public class TimeoutStepExecution extends AbstractStepExecutionImpl {
-    @Inject(optional=true) private transient TimeoutStep step;
-    private int time;
-    private TimeUnit unit;
+    @Inject(optional=true)
+    private TimeoutStep step;
     private BodyExecution body;
     private transient ScheduledFuture<?> killer;
 
     @Override
     public boolean start() throws Exception {
-        time = step.getTime();
-        unit = step.getUnit();
         StepContext context = getContext();
         body = context.newBodyInvoker()
                 .withCallback(new Callback())
@@ -45,7 +41,7 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
                     body.cancel(true);
                 }
             }
-        }, time, unit);
+        }, step.getTime(), step.getUnit());
     }
 
     @Override

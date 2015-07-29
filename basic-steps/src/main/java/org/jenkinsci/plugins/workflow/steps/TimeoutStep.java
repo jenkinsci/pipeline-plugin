@@ -5,6 +5,7 @@ import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -12,7 +13,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Kohsuke Kawaguchi
  */
-public class TimeoutStep extends AbstractStepImpl {
+public class TimeoutStep extends AbstractStepImpl implements Serializable {
 
     private final int time;
 
@@ -73,4 +74,5 @@ public class TimeoutStep extends AbstractStepImpl {
 
     }
 
+    private static final long serialVersionUID = 1L;
 }
