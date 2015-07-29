@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow;
 
 import hudson.EnvVars;
 import java.io.IOException;
-import java.io.Serializable;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -38,7 +37,6 @@ import org.jenkinsci.plugins.workflow.steps.EnvironmentExpander;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
@@ -53,7 +51,6 @@ public class DynamicEnvironmentExpanderTest {
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
-    @Ignore("TODO from onResume, state is null")
     @Issue("JENKINS-26163")
     @Test public void dynamics() {
         story.addStep(new Statement() {
@@ -77,48 +74,32 @@ public class DynamicEnvironmentExpanderTest {
     public static class DynamicEnvStep extends AbstractStepImpl {
         @DataBoundConstructor public DynamicEnvStep() {}
         public static class Execution extends AbstractStepExecutionImpl {
+            private static final long serialVersionUID = 1;
+            String value;
             @Override public boolean start() throws Exception {
                 StepContext context = getContext();
-                State state = new State("one");
+                value = "one";
                 context.newBodyInvoker().
-                        // State object saved in two ways, but should be the same instance:
-                        withContexts(state, EnvironmentExpander.merge(context.get(EnvironmentExpander.class), new ExpanderImpl(state))).
+                        withContexts(EnvironmentExpander.merge(context.get(EnvironmentExpander.class), new ExpanderImpl(this))).
                         withCallback(BodyExecutionCallback.wrap(context)).
                         withDisplayName(null).start();
                 return false;
             }
             @Override public void onResume() {
-                try {
-                    StepContext context = getContext();
-                    // Matches withContexts call above:
-                    State state = context.get(State.class);
-                    System.err.printf("resuming @%h%n", state);
-                    state.value = "two";
-                    context.saveState();
-                } catch (Exception x) {
-                    throw new AssertionError(x);
-                }
+                super.onResume();
+                value = "two";
             }
             @Override public void stop(Throwable cause) throws Exception {}
         }
-        private static class State implements Serializable {
-            String value;
-            State(String value) {
-                this.value = value;
-                System.err.printf("constructing %s @%h%n", value, this);
-            }
-            private Object readResolve() {
-                System.err.printf("deserializing %s @%h%n", value, this);
-                return this;
-            }
-        }
         private static class ExpanderImpl extends EnvironmentExpander {
-            private final State state;
-            ExpanderImpl(State state) {
-                this.state = state;
+            private static final long serialVersionUID = 1;
+            // Also works as this$0 from an inner class, but see http://docs.oracle.com/javase/8/docs/platform/serialization/spec/serial-arch.html#a4539 for why that is risky:
+            private final Execution execution;
+            ExpanderImpl(Execution execution) {
+                this.execution = execution;
             }
             @Override public void expand(EnvVars env) throws IOException, InterruptedException {
-                env.override("DYNVAR", state.value);
+                env.override("DYNVAR", execution.value);
             }
         }
         @TestExtension("dynamics") public static class DescriptorImpl extends AbstractStepDescriptorImpl {
