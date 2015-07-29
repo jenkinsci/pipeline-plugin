@@ -40,8 +40,8 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
         killer = Timer.get().schedule(new Runnable() {
             @Override
             public void run() {
-                // TODO: print this to console
                 if (!body.isDone()) {
+                    // TODO use a proper CauseOfInterruption
                     body.cancel(true);
                 }
             }
