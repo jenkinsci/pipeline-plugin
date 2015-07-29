@@ -1,10 +1,8 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Result;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -15,7 +13,6 @@ import org.junit.*;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 /**
@@ -83,7 +80,6 @@ public class TimeoutStepTest extends Assert {
         });
     }
 
-    @Ignore("TODO onResume is not called at all")
     @Issue("JENKINS-26163")
     @Test
     public void restarted() throws Exception {

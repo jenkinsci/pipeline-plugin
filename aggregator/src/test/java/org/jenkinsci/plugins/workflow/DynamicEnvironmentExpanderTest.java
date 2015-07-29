@@ -53,7 +53,7 @@ public class DynamicEnvironmentExpanderTest {
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
-    @Ignore("TODO onResume is not called at all")
+    @Ignore("TODO from onResume, state is null")
     @Issue("JENKINS-26163")
     @Test public void dynamics() {
         story.addStep(new Statement() {

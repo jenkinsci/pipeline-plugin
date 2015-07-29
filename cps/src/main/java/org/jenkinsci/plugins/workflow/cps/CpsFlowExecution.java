@@ -591,7 +591,7 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     @Override
-    public ListenableFuture<List<StepExecution>> getCurrentExecutions() {
+    public ListenableFuture<List<StepExecution>> getCurrentExecutions(final boolean innerMostOnly) {
         if (programPromise==null)
             return Futures.immediateFuture(Collections.<StepExecution>emptyList());
 
@@ -599,16 +599,27 @@ public class CpsFlowExecution extends FlowExecution {
         runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
             @Override
             public void onSuccess(CpsThreadGroup g) {
-                // to exclude outer StepExecutions, first build a map by FlowHead
-                // younger threads with their StepExecutions will overshadow old threads, leaving inner-most threads alone.
-                Map<FlowHead,StepExecution> m = new HashMap<FlowHead, StepExecution>();
-                for (CpsThread t : g.threads.values()) {
-                    StepExecution e = t.getStep();
-                    if (e!=null)
-                        m.put(t.head,e);
+                if (innerMostOnly) {
+                    // to exclude outer StepExecutions, first build a map by FlowHead
+                    // younger threads with their StepExecutions will overshadow old threads, leaving inner-most threads alone.
+                    Map<FlowHead, StepExecution> m = new HashMap<FlowHead, StepExecution>();
+                    for (CpsThread t : g.threads.values()) {
+                        StepExecution e = t.getStep();
+                        if (e != null) {
+                            m.put(t.head, e);
+                        }
+                    }
+                    r.set(ImmutableList.copyOf(m.values()));
+                } else {
+                    List<StepExecution> es = new ArrayList<StepExecution>();
+                    for (CpsThread t : g.threads.values()) {
+                        StepExecution e = t.getStep();
+                        if (e != null) {
+                            es.add(e);
+                        }
+                    }
+                    r.set(Collections.unmodifiableList(es));
                 }
-
-                r.set(ImmutableList.copyOf(m.values()));
             }
 
             @Override
@@ -678,7 +689,7 @@ public class CpsFlowExecution extends FlowExecution {
         final FlowInterruptedException ex = new FlowInterruptedException(result,causes);
 
         // stop all ongoing activities
-        Futures.addCallback(getCurrentExecutions(), new FutureCallback<List<StepExecution>>() {
+        Futures.addCallback(getCurrentExecutions(/* cf. JENKINS-26148 */true), new FutureCallback<List<StepExecution>>() {
             @Override
             public void onSuccess(List<StepExecution> l) {
                 for (StepExecution e : Iterators.reverse(l)) {
