@@ -76,6 +76,7 @@ public class GitStepRestartTest {
                 p.save();
                 WorkflowRun b = r.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
                 r.j.assertLogContains("Cloning the remote Git repository", b);
+                FileUtils.copyFile(new File(b.getRootDir(), "build.xml"), System.out);
             }
         });
         r.addStep(new Statement() {
