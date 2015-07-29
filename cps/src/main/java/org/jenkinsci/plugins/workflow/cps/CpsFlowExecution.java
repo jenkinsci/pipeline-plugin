@@ -97,6 +97,7 @@ import hudson.init.Terminator;
 import hudson.model.User;
 import hudson.security.ACL;
 import java.beans.Introspector;
+import java.util.LinkedHashMap;
 import javax.annotation.CheckForNull;
 import javax.annotation.concurrent.GuardedBy;
 
@@ -603,7 +604,7 @@ public class CpsFlowExecution extends FlowExecution {
                 if (innerMostOnly) {
                     // to exclude outer StepExecutions, first build a map by FlowHead
                     // younger threads with their StepExecutions will overshadow old threads, leaving inner-most threads alone.
-                    Map<FlowHead, StepExecution> m = new HashMap<FlowHead, StepExecution>();
+                    Map<FlowHead, StepExecution> m = new LinkedHashMap<FlowHead, StepExecution>();
                     for (CpsThread t : g.threads.values()) {
                         StepExecution e = t.getStep();
                         if (e != null) {
