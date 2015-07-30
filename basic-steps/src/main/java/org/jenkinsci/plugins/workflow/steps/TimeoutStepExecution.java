@@ -3,6 +3,8 @@ package org.jenkinsci.plugins.workflow.steps;
 import com.google.inject.Inject;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import jenkins.util.Timer;
 
 /**
@@ -15,6 +17,8 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
     private BodyExecution body;
     private transient ScheduledFuture<?> killer;
 
+    private long end;
+
     @Override
     public boolean start() throws Exception {
         StepContext context = getContext();
@@ -22,26 +26,32 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
                 .withCallback(new Callback())
                 .withDisplayName(null)  // hide the body block
                 .start();
-        setupTimer();
+        long now = step.getUnit().convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        end = now + step.getTime();
+        setupTimer(now);
         return false;   // execution is asynchronous
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        setupTimer();
+        setupTimer(step.getUnit().convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
     }
 
-    private void setupTimer() {
-        killer = Timer.get().schedule(new Runnable() {
-            @Override
-            public void run() {
-                if (!body.isDone()) {
-                    // TODO use a proper CauseOfInterruption
-                    body.cancel(true);
+    private void setupTimer(final long now) {
+        if (end > now) {
+            killer = Timer.get().schedule(new Runnable() {
+                @Override
+                public void run() {
+                    if (!body.isDone()) {
+                        // TODO use a proper CauseOfInterruption
+                        body.cancel(true);
+                    }
                 }
-            }
-        }, step.getTime(), step.getUnit());
+            }, end - now, step.getUnit());
+        } else {
+            getContext().onFailure(null);
+        }
     }
 
     @Override

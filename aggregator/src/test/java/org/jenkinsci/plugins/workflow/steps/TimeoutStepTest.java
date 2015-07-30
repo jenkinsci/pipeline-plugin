@@ -109,6 +109,36 @@ public class TimeoutStepTest extends Assert {
         });
     }
 
+    @Test
+    public void timeIsConsumed() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "timeIsConsumed");
+                p.setDefinition(new CpsFlowDefinition(""
+                        + "node {\n"
+                        + "  timeout(time: 60, unit: 'SECONDS') {\n"
+                        + "    sleep 10\n"
+                        + "    semaphore 'timeIsConsumed'\n"
+                        + "    sleep 50\n"
+                        + "  }\n"
+                        + "}\n"));
+                WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
+                SemaphoreStep.waitForStart("timeIsConsumed/1", b);
+            }
+        });
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.getItemByFullName("timeIsConsumed", WorkflowJob.class);
+                WorkflowRun b = p.getBuildByNumber(1);
+                SemaphoreStep.success("timeIsConsumed/1", null);
+                story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b));
+            }
+        });
+    }
+
+
     // TODO: timeout inside parallel
 
 }
