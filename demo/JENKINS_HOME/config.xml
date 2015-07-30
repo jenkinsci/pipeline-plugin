@@ -2,7 +2,7 @@
 <hudson>
   <disabledAdministrativeMonitors/>
   <version>1.0</version>
-  <numExecutors>2</numExecutors>
+  <numExecutors>0</numExecutors>
   <mode>NORMAL</mode>
   <useSecurity>true</useSecurity>
   <authorizationStrategy class="hudson.security.AuthorizationStrategy$Unsecured"/>
@@ -14,13 +14,30 @@
   <jdks/>
   <viewsTabBar class="hudson.views.DefaultViewsTabBar"/>
   <myViewsTabBar class="hudson.views.DefaultMyViewsTabBar"/>
+  <!-- TODO if JENKINS-25090 implemented, could use a MockCloud instead: -->
   <clouds/>
   <slaves>
     <slave>
-      <name>slave</name>
+      <name>slave1</name>
       <description></description>
-      <remoteFS>/tmp/slave</remoteFS>
-      <numExecutors>2</numExecutors>
+      <remoteFS>/tmp/slave1</remoteFS>
+      <numExecutors>1</numExecutors>
+      <mode>NORMAL</mode>
+      <retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/>
+      <launcher class="hudson.plugins.sshslaves.SSHLauncher">
+        <host>localhost</host>
+        <port>22</port>
+        <credentialsId>jenkins-login</credentialsId>
+      </launcher>
+      <label></label>
+      <nodeProperties/>
+      <userId>anonymous</userId>
+    </slave>
+    <slave>
+      <name>slave2</name>
+      <description></description>
+      <remoteFS>/tmp/slave2</remoteFS>
+      <numExecutors>1</numExecutors>
       <mode>NORMAL</mode>
       <retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/>
       <launcher class="hudson.plugins.sshslaves.SSHLauncher">
