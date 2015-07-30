@@ -42,7 +42,7 @@ def runTests(duration) {
     node {
         checkout scm
         runWithServer {url ->
-            mvn "-o -f sometests/pom.xml test -Durl=${url} -Dduration=${duration}"
+            mvn "-o -f sometests test -Durl=${url} -Dduration=${duration}"
         }
     }
 }
@@ -57,6 +57,7 @@ def undeploy(id) {
 }
 
 def runWithServer(body) {
+    def jettyUrl = 'http://localhost:8081/' // TODO why is this not inherited from the top-level scope?
     def id = UUID.randomUUID().toString()
     deploy id
     try {
