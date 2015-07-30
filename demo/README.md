@@ -15,8 +15,10 @@ VM's IP (instead of `localhost`).  You can get this by running `boot2docker ip` 
 
 The continuous delivery pipeline consists of the following sequence.
 
-* Loads the workflow script from [flow.groovy](https://github.com/jenkinsci/workflow-plugin/blob/master/demo/repo/flow.groovy) in the repository.
-* Checks out source code from the same repository and build it via Maven with unit testing.
+* Loads the workflow script from [jenkins.groovy](https://github.com/jenkinsci/workflow-plugin/blob/master/demo/repo/jenkins.groovy) in the repository at `/tmp/files/repo`.
+  Each branch automatically creates a matching subproject that builds that branch.
+* Checks out source code from the same repository and commit as `jenkins.groovy`.
+* Builds sources via Maven with unit testing.
 * Run two parallel integration tests that involve deploying the app to a PaaS-like ephemeral server instances, which get
   thrown away when tests are done (this is done by using auto-deployment of Jetty)
 * Once integration tests are successful, the webapp gets to the staging server at http://localhost:8081/staging/
