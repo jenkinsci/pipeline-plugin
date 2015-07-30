@@ -20,6 +20,11 @@ RUN apt-get update
 RUN apt-get install -y openssh-server
 RUN echo 'jenkins:jenkins' | chpasswd
 
+ENV JENKINS_UC http://jenkins-updates.cloudbees.com
+COPY workflow-version.txt plugins.txt /tmp/files/
+RUN sed -i "s/@VERSION@/`cat /tmp/files/workflow-version.txt`/g" /tmp/files/plugins.txt
+RUN /usr/local/bin/plugins.sh /tmp/files/plugins.txt
+
 ADD repo /tmp/files/repo-wc
 RUN chown -R jenkins.jenkins /tmp/files
 USER jenkins
@@ -27,13 +32,8 @@ WORKDIR /tmp/files
 RUN git init --bare repo && cd repo-wc && git init && git add . && git -c user.email=demo@jenkins-ci.org -c user.name="Workflow Demo" commit -m 'demo' && git push ../repo master
 
 # Prepare local Maven repo. Note that $JENKINS_HOME is a volume so we cannot populate it now.
-RUN echo '<settings><localRepository>/usr/share/jenkins/ref/.m2/repository</localRepository></settings>' > /tmp/files/settings.xml
+RUN echo '<settings><mirrors><mirror><id>central</id><url>http://repo.jenkins-ci.org/simple/repo1-cache/</url><mirrorOf>central</mirrorOf></mirror></mirrors><localRepository>/usr/share/jenkins/ref/.m2/repository</localRepository></settings>' > /tmp/files/settings.xml
 RUN cd repo-wc && /usr/local/maven/bin/mvn -s /tmp/files/settings.xml install && /usr/local/maven/bin/mvn -s /tmp/files/settings.xml -f sometests -Dmaven.test.failure.ignore clean install
-
-ENV JENKINS_UC http://jenkins-updates.cloudbees.com
-COPY workflow-version.txt plugins.txt /tmp/files/
-RUN sed -i "s/@VERSION@/`cat /tmp/files/workflow-version.txt`/g" /tmp/files/plugins.txt
-RUN /usr/local/bin/plugins.sh /tmp/files/plugins.txt
 
 ADD JENKINS_HOME /usr/share/jenkins/ref
 
