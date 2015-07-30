@@ -1,16 +1,16 @@
 package org.jenkinsci.plugins.workflow.steps;
 
-import jenkins.util.Timer;
-
-import javax.inject.Inject;
+import com.google.inject.Inject;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.ScheduledFuture;
+import jenkins.util.Timer;
 
 /**
  * @author Kohsuke Kawaguchi
  */
-@edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_INNER_CLASS")
+@SuppressFBWarnings("SE_INNER_CLASS")
 public class TimeoutStepExecution extends AbstractStepExecutionImpl {
-    @Inject
+    @Inject(optional=true)
     private TimeoutStep step;
     private BodyExecution body;
     private transient ScheduledFuture<?> killer;
@@ -36,8 +36,8 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
         killer = Timer.get().schedule(new Runnable() {
             @Override
             public void run() {
-                // TODO: print this to console
                 if (!body.isDone()) {
+                    // TODO use a proper CauseOfInterruption
                     body.cancel(true);
                 }
             }

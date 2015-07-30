@@ -34,7 +34,6 @@ import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 
@@ -129,7 +128,6 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
         });
     }
 
-    @Ignore("TODO JENKINS-26163 executions.isEmpty() because StepExecution.applyAll is called while body is active")
     @Test public void restartDuringDelay() {
         story.addStep(new Statement() {
             @SuppressWarnings("SleepWhileInLoop")
@@ -154,7 +152,7 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
                 while (executions.get(0).recurrencePeriod == LONG_TIME) {
                     Thread.sleep(100);
                 }
-                story.j.assertLogContains("Will try again after " + Util.getTimeSpanString(LONG_TIME), b);
+                story.j.waitForMessage("Will try again after " + Util.getTimeSpanString(LONG_TIME), b);
                 // timer is now waiting for a long time
             }
         });

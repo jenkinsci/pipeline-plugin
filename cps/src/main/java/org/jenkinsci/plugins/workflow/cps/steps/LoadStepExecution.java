@@ -21,7 +21,7 @@ public class LoadStepExecution extends AbstractStepExecutionImpl {
     @StepContextParameter
     private transient FilePath cwd;
 
-    @Inject
+    @Inject(optional=true)
     private transient LoadStep step;
 
     @StepContextParameter
