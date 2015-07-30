@@ -1,7 +1,7 @@
 def jettyUrl = 'http://localhost:8081/'
 
 node('slave') {
-    git url: '/tmp/files/repo'
+    checkout scm
     env.PATH="${tool 'Maven 3.x'}/bin:${env.PATH}"
     stage 'Dev'
     sh 'mvn -o clean package'
