@@ -6,7 +6,7 @@
     <jenkins.branch.BranchSource plugin="branch-api@0.2-beta-4">
       <source class="jenkins.plugins.git.GitSCMSource" plugin="git@2.3.5">
         <id>5bb71116-2b8c-437b-baaa-2947e1ca947f</id>
-        <remote>/tmp/files/repo</remote>
+        <remote>git://localhost/repo</remote>
         <credentialsId></credentialsId>
         <includes>*</includes>
         <excludes></excludes>

@@ -6,7 +6,7 @@ It highlights key parts of the workflow plugin:
 
 Run it like:
 
-    docker run -p 8080:8080 -p 8081:8081 -ti jenkinsci/workflow-demo
+    docker run -p 8080:8080 -p 8081:8081 -p 9418:9418 -ti jenkinsci/workflow-demo
 
 Jenkins runs on port 8080, and Jetty runs on port 8081.
 
@@ -15,7 +15,8 @@ VM's IP (instead of `localhost`).  You can get this by running `boot2docker ip` 
 
 The continuous delivery pipeline consists of the following sequence.
 
-* Loads the workflow script from [jenkins.groovy](https://github.com/jenkinsci/workflow-plugin/blob/master/demo/repo/jenkins.groovy) in the repository at `/tmp/files/repo`.
+* Loads the workflow script from [jenkins.groovy](https://github.com/jenkinsci/workflow-plugin/blob/master/demo/repo/jenkins.groovy) in a local Git repository.
+  You may clone from, edit, and push to `git://localhost/repo`.
   Each branch automatically creates a matching subproject that builds that branch.
 * Checks out source code from the same repository and commit as `jenkins.groovy`.
 * Builds sources via Maven with unit testing.
