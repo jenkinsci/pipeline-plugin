@@ -5,7 +5,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import jenkins.model.CauseOfInterruption;
 import jenkins.util.Timer;
+
+import javax.annotation.Nonnull;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -38,19 +41,18 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
         setupTimer(step.getUnit().convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
     }
 
-    private void setupTimer(final long now) {
+    private void setupTimer(@Nonnull final long now) {
         if (end > now) {
             killer = Timer.get().schedule(new Runnable() {
                 @Override
                 public void run() {
                     if (!body.isDone()) {
-                        // TODO use a proper CauseOfInterruption
-                        body.cancel(true);
+                        body.cancel(new ExceededTimeout());
                     }
                 }
             }, end - now, step.getUnit());
         } else {
-            getContext().onFailure(null);
+            body.cancel(new ExceededTimeout());
         }
     }
 
@@ -81,6 +83,16 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
         }
 
         private static final long serialVersionUID = 1L;
+    }
+
+    /**
+     * Common cause in this step.
+     */
+    private class ExceededTimeout extends CauseOfInterruption {
+        @Override
+        public String getShortDescription() {
+            return "Timeout has been exceeded";
+        }
     }
 
     private static final long serialVersionUID = 1L;
