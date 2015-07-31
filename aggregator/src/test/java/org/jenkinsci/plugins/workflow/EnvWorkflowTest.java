@@ -49,14 +49,14 @@ public class EnvWorkflowTest {
 
         p.setDefinition(new CpsFlowDefinition(
             "node('master') {\n" +
-            "  echo \"My name on master is ${env.NODE_NAME}\"\n" +
+            "  sh 'echo My name on master is $NODE_NAME'\n" +
             "}\n"
         ));
         r.assertLogContains("My name on master is master", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
 
         p.setDefinition(new CpsFlowDefinition(
             "node('node-test') {\n" +
-            "  echo \"My name on a slave is ${env.NODE_NAME}\"\n" +
+            "  sh 'echo My name on a slave is $NODE_NAME'\n" +
             "}\n"
         ));
         r.assertLogContains("My name on a slave is node-test", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
