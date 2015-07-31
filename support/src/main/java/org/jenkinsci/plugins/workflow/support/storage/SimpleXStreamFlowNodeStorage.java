@@ -164,7 +164,7 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
      * To group node and their actions together into one object.
      */
     private static class Tag {
-        final @Nonnull FlowNode node;
+        final /* @Nonnull except perhaps after deserialization */ FlowNode node;
         private final @CheckForNull Action[] actions;
 
         private Tag(@Nonnull FlowNode node, @Nonnull List<Action> actions) {
