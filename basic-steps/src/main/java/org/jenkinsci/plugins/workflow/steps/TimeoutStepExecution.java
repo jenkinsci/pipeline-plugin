@@ -16,11 +16,11 @@ import javax.annotation.Nonnull;
 @SuppressFBWarnings("SE_INNER_CLASS")
 public class TimeoutStepExecution extends AbstractStepExecutionImpl {
     @Inject(optional=true)
-    private TimeoutStep step;
+    private transient TimeoutStep step;
     private BodyExecution body;
     private transient ScheduledFuture<?> killer;
 
-    private long end;
+    private long end = 0;
 
     @Override
     public boolean start() throws Exception {
@@ -29,8 +29,8 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
                 .withCallback(new Callback())
                 .withDisplayName(null)  // hide the body block
                 .start();
-        long now = step.getUnit().convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-        end = now + step.getTime();
+        long now = System.currentTimeMillis();
+        end = now + step.getUnit().toMillis(step.getTime());
         setupTimer(now);
         return false;   // execution is asynchronous
     }
@@ -38,9 +38,14 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
     @Override
     public void onResume() {
         super.onResume();
-        setupTimer(step.getUnit().convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+        setupTimer(System.currentTimeMillis());
     }
 
+    /**
+     * Sets the timer to manage the timeout.
+     *
+     * @param now Current time in milliseconds.
+     */
     private void setupTimer(@Nonnull final long now) {
         if (end > now) {
             killer = Timer.get().schedule(new Runnable() {
@@ -48,7 +53,7 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
                 public void run() {
                     body.cancel(new ExceededTimeout());
                 }
-            }, end - now, step.getUnit());
+            }, end - now, TimeUnit.MILLISECONDS);
         } else {
             body.cancel(new ExceededTimeout());
         }
