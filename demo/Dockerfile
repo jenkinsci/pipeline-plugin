@@ -38,6 +38,8 @@ USER root
 RUN chown -R jenkins.jenkins /usr/share/jenkins/ref
 COPY run.sh /usr/local/bin/run.sh
 RUN chmod a+x /usr/local/bin/run.sh
+
+USER jenkins
 CMD /usr/local/bin/run.sh
 
 EXPOSE 8080 8081 9418
