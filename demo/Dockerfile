@@ -20,22 +20,20 @@ RUN apt-get update
 RUN apt-get install -y openssh-server
 RUN echo 'jenkins:jenkins' | chpasswd
 
-ADD repo /tmp/files/repo
-RUN chown -R jenkins.jenkins /tmp/files
-USER jenkins
-WORKDIR /tmp/files/repo
-RUN git config --global user.email "demo@jenkins-ci.org" && git config --global user.name "Workflow Demo" && git init && git add . && git commit -m 'demo'
-
-# Prepare local Maven repo. Note that $JENKINS_HOME is a volume so we cannot populate it now.
-RUN echo '<settings><localRepository>/usr/share/jenkins/ref/.m2/repository</localRepository></settings>' > /tmp/files/settings.xml
-RUN /usr/local/maven/bin/mvn -s /tmp/files/settings.xml install && /usr/local/maven/bin/mvn -s /tmp/files/settings.xml -f sometests -Dmaven.test.failure.ignore clean install
-
 ENV JENKINS_UC http://jenkins-updates.cloudbees.com
 COPY workflow-version.txt plugins.txt /tmp/files/
 RUN sed -i "s/@VERSION@/`cat /tmp/files/workflow-version.txt`/g" /tmp/files/plugins.txt
 RUN /usr/local/bin/plugins.sh /tmp/files/plugins.txt
-# TODO plugins.sh ought to automatically create pin files for each specified plugin
-RUN for p in javadoc junit mailer script-security subversion; do touch /usr/share/jenkins/ref/plugins/$p.jpi.pinned; done
+
+ADD repo /tmp/files/repo-wc
+RUN chown -R jenkins.jenkins /tmp/files
+USER jenkins
+WORKDIR /tmp/files
+RUN git init --bare repo && cd repo-wc && git init && git add . && git -c user.email=demo@jenkins-ci.org -c user.name="Workflow Demo" commit -m 'demo' && git push ../repo master
+
+# Prepare local Maven repo. Note that $JENKINS_HOME is a volume so we cannot populate it now.
+RUN echo '<settings><mirrors><mirror><id>central</id><url>http://repo.jenkins-ci.org/simple/repo1-cache/</url><mirrorOf>central</mirrorOf></mirror></mirrors><localRepository>/usr/share/jenkins/ref/.m2/repository</localRepository></settings>' > /tmp/files/settings.xml
+RUN cd repo-wc && /usr/local/maven/bin/mvn -s /tmp/files/settings.xml install && /usr/local/maven/bin/mvn -s /tmp/files/settings.xml -f sometests -Dmaven.test.failure.ignore clean install
 
 ADD JENKINS_HOME /usr/share/jenkins/ref
 
@@ -44,4 +42,4 @@ COPY run.sh /usr/local/bin/run.sh
 RUN chmod a+x /usr/local/bin/run.sh
 CMD /usr/local/bin/run.sh
 
-EXPOSE 8080 8081
+EXPOSE 8080 8081 9418
