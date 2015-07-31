@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Result;
+import jenkins.model.CauseOfInterruption;
+import jenkins.model.InterruptedBuildAction;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
@@ -14,6 +16,8 @@ import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
+
+import java.util.List;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -133,7 +137,13 @@ public class TimeoutStepTest extends Assert {
                 WorkflowJob p = story.j.jenkins.getItemByFullName("timeIsConsumed", WorkflowJob.class);
                 WorkflowRun b = p.getBuildByNumber(1);
                 SemaphoreStep.success("timeIsConsumed/1", null);
-                story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b));
+                WorkflowRun run = story.j.waitForCompletion(b);
+                InterruptedBuildAction action = b.getAction(InterruptedBuildAction.class);
+                assertNotNull(action);
+                List<CauseOfInterruption> causes = action.getCauses();
+                assertEquals(1, causes.size());
+                assertEquals(TimeoutStepExecution.ExceededTimeout.class, causes.get(0).getClass());
+                story.j.assertBuildStatus(Result.ABORTED, run);
             }
         });
     }
