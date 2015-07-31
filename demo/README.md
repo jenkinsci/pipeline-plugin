@@ -27,6 +27,7 @@ The continuous delivery pipeline consists of the following sequence.
 * Workflow completes
 
 You can log in as root in the demo container via `ssh -p 8022 root@localhost` if you add `-p 8022:22`. The password is `root`.
+(TODO is this still true?)
 (If you have `nsenter`, [you can use docker-enter instead of ssh for a smoother demo](http://jpetazzo.github.io/2014/06/23/docker-ssh-considered-evil/)
 This is useful to kill Jetty to simulate a failure in the production deployment (via `pkill -9 -f jetty`) or restart it (via `jetty &`)
 

@@ -8,6 +8,7 @@ junit:1.5
 mailer:1.15
 mapdb-api:1.0.6.0
 mercurial:1.54
+mock-slave:1.6
 scm-api:0.2
 script-security:1.14
 subversion:2.5

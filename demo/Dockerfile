@@ -15,17 +15,14 @@ RUN wget -O - "http://mirrors.ibiblio.org/eclipse/jetty/$JETTY_VERSION/dist/jett
 RUN ln -sv jetty-distribution-$JETTY_VERSION jetty
 RUN cd /tmp; ln -s /opt/jetty/webapps
 
-# TODO why is it not in the package list by default?
-RUN apt-get update
-RUN apt-get install -y openssh-server
-RUN echo 'jenkins:jenkins' | chpasswd
-
 ENV JENKINS_UC http://jenkins-updates.cloudbees.com
 COPY workflow-version.txt plugins.txt /tmp/files/
 RUN sed -i "s/@VERSION@/`cat /tmp/files/workflow-version.txt`/g" /tmp/files/plugins.txt
+USER jenkins
 RUN /usr/local/bin/plugins.sh /tmp/files/plugins.txt
 
 ADD repo /tmp/files/repo-wc
+USER root
 RUN chown -R jenkins.jenkins /tmp/files
 USER jenkins
 WORKDIR /tmp/files
@@ -38,6 +35,7 @@ RUN cd repo-wc && /usr/local/maven/bin/mvn -s /tmp/files/settings.xml install &&
 ADD JENKINS_HOME /usr/share/jenkins/ref
 
 USER root
+RUN chown -R jenkins.jenkins /usr/share/jenkins/ref
 COPY run.sh /usr/local/bin/run.sh
 RUN chmod a+x /usr/local/bin/run.sh
 CMD /usr/local/bin/run.sh
