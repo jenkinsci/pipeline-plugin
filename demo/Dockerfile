@@ -36,8 +36,8 @@ ADD JENKINS_HOME /usr/share/jenkins/ref
 
 USER root
 RUN chown -R jenkins.jenkins /usr/share/jenkins/ref
-COPY run.sh /usr/local/bin/run.sh
-RUN chmod a+x /usr/local/bin/run.sh
+COPY run.sh jetty.sh /usr/local/bin/
+RUN chmod a+x /usr/local/bin/run.sh /usr/local/bin/jetty.sh
 
 USER jenkins
 CMD /usr/local/bin/run.sh
