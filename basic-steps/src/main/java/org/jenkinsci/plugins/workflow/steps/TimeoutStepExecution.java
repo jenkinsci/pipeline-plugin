@@ -46,9 +46,7 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
             killer = Timer.get().schedule(new Runnable() {
                 @Override
                 public void run() {
-                    if (!body.isDone()) {
-                        body.cancel(new ExceededTimeout());
-                    }
+                    body.cancel(new ExceededTimeout());
                 }
             }, end - now, step.getUnit());
         } else {
@@ -88,7 +86,10 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
     /**
      * Common cause in this step.
      */
-    private class ExceededTimeout extends CauseOfInterruption {
+    public static final class ExceededTimeout extends CauseOfInterruption {
+
+        private static final long serialVersionUID = 1L;
+
         @Override
         public String getShortDescription() {
             return "Timeout has been exceeded";
