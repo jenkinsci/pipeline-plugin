@@ -8,8 +8,6 @@ import java.util.concurrent.TimeUnit;
 import jenkins.model.CauseOfInterruption;
 import jenkins.util.Timer;
 
-import javax.annotation.Nonnull;
-
 /**
  * @author Kohsuke Kawaguchi
  */
@@ -46,7 +44,7 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
      *
      * @param now Current time in milliseconds.
      */
-    private void setupTimer(@Nonnull final long now) {
+    private void setupTimer(final long now) {
         if (end > now) {
             killer = Timer.get().schedule(new Runnable() {
                 @Override
