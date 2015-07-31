@@ -26,9 +26,8 @@ The continuous delivery pipeline consists of the following sequence.
 * Human will manually inspect the staging instance, and when ready, approves the deployment to the production server at http://localhost:8081/production/
 * Workflow completes
 
-You can log in as root in the demo container via `ssh -p 8022 root@localhost` if you add `-p 8022:22`. The password is `root`.
-(TODO is this still true?)
-(If you have `nsenter`, [you can use docker-enter instead of ssh for a smoother demo](http://jpetazzo.github.io/2014/06/23/docker-ssh-considered-evil/)
+To log in to the container, get `nsenter` and [you can use docker-enter](http://jpetazzo.github.io/2014/06/23/docker-ssh-considered-evil/),
+or just use `docker exec -ti $container /bin/bash`.
 This is useful to kill Jetty to simulate a failure in the production deployment (via `pkill -9 -f jetty`) or restart it (via `jetty &`)
 
 [Binary image page](https://registry.hub.docker.com/u/jenkinsci/workflow-demo/)
