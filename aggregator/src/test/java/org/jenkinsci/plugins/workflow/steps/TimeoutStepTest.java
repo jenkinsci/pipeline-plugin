@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Result;
+import jenkins.model.CauseOfInterruption;
+import jenkins.model.InterruptedBuildAction;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
@@ -14,6 +16,8 @@ import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
+
+import java.util.List;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -105,6 +109,41 @@ public class TimeoutStepTest extends Assert {
                 WorkflowRun b = p.getBuildByNumber(1);
                 SemaphoreStep.success("restarted/1", null);
                 story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b));
+            }
+        });
+    }
+
+    @Test
+    public void timeIsConsumed() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "timeIsConsumed");
+                p.setDefinition(new CpsFlowDefinition(""
+                        + "node {\n"
+                        + "  timeout(time: 20, unit: 'SECONDS') {\n"
+                        + "    sleep 10\n"
+                        + "    semaphore 'timeIsConsumed'\n"
+                        + "    sleep 10\n"
+                        + "  }\n"
+                        + "}\n"));
+                WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
+                SemaphoreStep.waitForStart("timeIsConsumed/1", b);
+            }
+        });
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.getItemByFullName("timeIsConsumed", WorkflowJob.class);
+                WorkflowRun b = p.getBuildByNumber(1);
+                SemaphoreStep.success("timeIsConsumed/1", null);
+                WorkflowRun run = story.j.waitForCompletion(b);
+                InterruptedBuildAction action = b.getAction(InterruptedBuildAction.class);
+                assertNotNull(action);
+                List<CauseOfInterruption> causes = action.getCauses();
+                assertEquals(1, causes.size());
+                assertEquals(TimeoutStepExecution.ExceededTimeout.class, causes.get(0).getClass());
+                story.j.assertBuildStatus(Result.ABORTED, run);
             }
         });
     }
