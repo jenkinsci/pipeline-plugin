@@ -63,20 +63,9 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
             body.cancel(cause);
     }
 
-    private class Callback extends BodyExecutionCallback {
-        @Override
-        public void onSuccess(StepContext context, Object result) {
-            cancelKiller();
-            getContext().onSuccess(result);
-        }
+    private class Callback extends BodyExecutionCallback.TailCall {
 
-        @Override
-        public void onFailure(StepContext context, Throwable t) {
-            cancelKiller();
-            getContext().onFailure(t);
-        }
-
-        private void cancelKiller() {
+        @Override protected void finished(StepContext context) throws Exception {
             if (killer!=null) {
                 killer.cancel(true);
                 killer = null;
@@ -84,6 +73,7 @@ public class TimeoutStepExecution extends AbstractStepExecutionImpl {
         }
 
         private static final long serialVersionUID = 1L;
+
     }
 
     /**

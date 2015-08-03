@@ -353,7 +353,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
          * Called when the body closure is complete.
          */
         @SuppressFBWarnings(value="SE_BAD_FIELD", justification="lease is pickled")
-        private static final class Callback extends BodyExecutionCallback {
+        private static final class Callback extends BodyExecutionCallback.TailCall {
 
             private final String cookie;
             private WorkspaceList.Lease lease;
@@ -363,20 +363,11 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 this.lease = lease;
             }
 
-            @Override public void onSuccess(StepContext context, Object returnValue) {
-                LOGGER.log(FINE, "onSuccess {0}", cookie);
+            @Override protected void finished(StepContext context) throws Exception {
+                LOGGER.log(FINE, "finished {0}", cookie);
                 lease.release();
                 lease = null;
                 finish(cookie);
-                context.onSuccess(returnValue);
-            }
-
-            @Override public void onFailure(StepContext context, Throwable t) {
-                LOGGER.log(FINE, "onFailure {0}", cookie);
-                lease.release();
-                lease = null;
-                finish(cookie);
-                context.onFailure(t);
             }
 
         }
