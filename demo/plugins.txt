@@ -1,5 +1,5 @@
 branch-api:0.2-beta-4
-durable-task:1.5
+durable-task:1.6
 git:2.3.5
 git-client:1.17.0
 git-server:1.6
@@ -8,7 +8,7 @@ junit:1.5
 mailer:1.15
 mapdb-api:1.0.6.0
 mercurial:1.54
-mock-slave:1.6
+mock-slave:1.8
 scm-api:0.2
 script-security:1.14
 subversion:2.5
