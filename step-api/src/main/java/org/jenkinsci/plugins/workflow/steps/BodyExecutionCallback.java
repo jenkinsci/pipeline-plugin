@@ -96,6 +96,7 @@ public abstract class BodyExecutionCallback implements Serializable {
 
     /**
      * A convenience subclass for the common case that the step expects to run its block just once and return the same value (or throw the same error).
+     * @see <a href="https://en.wikipedia.org/wiki/Tail_call">Tail call</a>
      */
     public static abstract class TailCall extends BodyExecutionCallback {
 
