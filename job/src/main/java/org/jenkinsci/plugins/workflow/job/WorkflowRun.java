@@ -184,13 +184,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             newExecution.addListener(new GraphL());
             completed = new AtomicBoolean();
             logsToCopy = new LinkedHashMap<String,Long>();
-            newExecution.start();
-            
-            // It's only okay to initialise the global once the new FlowExecution
-            // has successfully started.
             execution = newExecution;
+            newExecution.start();
             executionPromise.set(newExecution);
         } catch (Throwable x) {
+            execution = null; // ensures isInProgress returns false
             finish(Result.FAILURE, x);
             executionPromise.setException(x);
             return;
