@@ -75,7 +75,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
 - [ ] `deployment-notification`: [JENKINS-28632](https://issues.jenkins-ci.org/browse/JENKINS-28632)
 - [ ] `gitlab-plugin`: [issue 89](https://github.com/DABSquared/gitlab-plugin/issues/89)
-- [ ] `bitbucket`: [JENKINS-28882](https://issues.jenkins-ci.org/browse/JENKINS-28882)
+- [X] `bitbucket`: supported as of 1.1.2
 
 ## Clouds
 
