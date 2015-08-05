@@ -8,7 +8,8 @@ build:
 run: build
 	$(DOCKER_RUN) $(IMAGE):$(TAG)
 
-build-snapshot: build
+build-snapshot:
+	docker build -t $(IMAGE):RELEASE .
 	[ -f ../aggregator/target/workflow-aggregator.hpi ] || mvn -f .. -DskipTests clean install
 	mkdir -p snapshot/plugins
 	for p in ../*/target/*.hpi; do cp -v $$p snapshot/plugins/$$(basename $${p%%.hpi}).jpi; done

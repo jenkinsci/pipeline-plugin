@@ -14,42 +14,15 @@
   <jdks/>
   <viewsTabBar class="hudson.views.DefaultViewsTabBar"/>
   <myViewsTabBar class="hudson.views.DefaultMyViewsTabBar"/>
-  <!-- TODO if JENKINS-25090 implemented, could use a MockCloud instead: -->
-  <clouds/>
-  <slaves>
-    <slave>
-      <name>slave1</name>
-      <description></description>
-      <remoteFS>/tmp/slave1</remoteFS>
-      <numExecutors>1</numExecutors>
+  <clouds>
+    <org.jenkinci.plugins.mock__slave.MockCloud>
+      <name>mock</name>
       <mode>NORMAL</mode>
-      <retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/>
-      <launcher class="hudson.plugins.sshslaves.SSHLauncher">
-        <host>localhost</host>
-        <port>22</port>
-        <credentialsId>jenkins-login</credentialsId>
-      </launcher>
-      <label></label>
-      <nodeProperties/>
-      <userId>anonymous</userId>
-    </slave>
-    <slave>
-      <name>slave2</name>
-      <description></description>
-      <remoteFS>/tmp/slave2</remoteFS>
       <numExecutors>1</numExecutors>
-      <mode>NORMAL</mode>
-      <retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/>
-      <launcher class="hudson.plugins.sshslaves.SSHLauncher">
-        <host>localhost</host>
-        <port>22</port>
-        <credentialsId>jenkins-login</credentialsId>
-      </launcher>
-      <label></label>
-      <nodeProperties/>
-      <userId>anonymous</userId>
-    </slave>
-  </slaves>
+      <labelString></labelString>
+    </org.jenkinci.plugins.mock__slave.MockCloud>
+  </clouds>
+   <slaves/>
   <scmCheckoutRetryCount>0</scmCheckoutRetryCount>
   <views>
     <hudson.model.AllView>
