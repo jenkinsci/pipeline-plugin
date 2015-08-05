@@ -269,7 +269,7 @@ public class CpsFlowExecution extends FlowExecution {
         this(script, false, owner);
     }
 
-    CpsFlowExecution(String script, boolean sandbox, FlowExecutionOwner owner) throws IOException {
+    protected CpsFlowExecution(String script, boolean sandbox, FlowExecutionOwner owner) throws IOException {
         this.owner = owner;
         this.script = script;
         this.sandbox = sandbox;
@@ -387,9 +387,7 @@ public class CpsFlowExecution extends FlowExecution {
         return iota.incrementAndGet();
     }
 
-    @Override
-    public void onLoad(FlowExecutionOwner owner) throws IOException {
-        this.owner = owner;
+    protected void initializeStorage() throws IOException {
         storage = createStorage();
         synchronized (this) {
             // heads could not be restored in unmarshal, so doing that now:
@@ -407,6 +405,12 @@ public class CpsFlowExecution extends FlowExecution {
             }
             startNodesSerial = null;
         }
+    }
+
+    @Override
+    public void onLoad(FlowExecutionOwner owner) throws IOException {
+        this.owner = owner;
+        initializeStorage();
         try {
             if (!isComplete())
                 loadProgramAsync(getProgramDataFile());
