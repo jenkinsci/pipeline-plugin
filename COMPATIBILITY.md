@@ -57,7 +57,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 
 ## Build wrappers
 
-- [X] `ConfigFileBuildWrapper` (`config-file-provider`): scheduled for 2.9.1 release
+- [X] `ConfigFileBuildWrapper` (`config-file-provider`): supported as of 2.9.1
 - [X] `Xvnc` (`xvnc`) supported as of 1.22
 - [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
 - [ ] `DashboardBuilder` (`environment-dashboard`): [issue 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
