@@ -28,8 +28,12 @@ THE SOFTWARE.
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>1.9-beta-2-SNAPSHOT</version>
+        <version>1.9-beta-1</version>
     </parent>
+    <version>1.9-beta-2-SNAPSHOT</version> <!-- TODO cannot release a non-beta until branch-api dep is out of beta -->
+    <properties>
+        <workflow.version>${project.parent.version}</workflow.version> <!-- TODO see above -->
+    </properties>
     <artifactId>workflow-multibranch</artifactId>
     <packaging>hpi</packaging>
     <name>Workflow: Multibranch</name>
@@ -38,12 +42,12 @@ THE SOFTWARE.
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-job</artifactId>
-            <version>${project.version}</version>
+            <version>${workflow.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-cps</artifactId>
-            <version>${project.version}</version>
+            <version>${workflow.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -53,20 +57,20 @@ THE SOFTWARE.
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-aggregator</artifactId>
-            <version>${project.version}</version>
+            <version>${workflow.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-support</artifactId>
-            <version>${project.version}</version>
+            <version>${workflow.version}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-aggregator</artifactId>
-            <version>${project.version}</version>
+            <version>${workflow.version}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
