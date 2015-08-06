@@ -62,7 +62,7 @@ public class CpsScmFlowDefinitionTest {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsScmFlowDefinition(new SingleFileSCM("flow.groovy", "echo 'hello from SCM'"), "flow.groovy"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        // TODO currently the log text is in Run.log, but not on FlowStartNode/LogAction, so not visible from Running Steps etc.
+        // TODO currently the log text is in Run.log, but not on FlowStartNode/LogAction, so not visible from Workflow Steps etc.
         r.assertLogContains("hello from SCM", b);
         r.assertLogContains("Staging flow.groovy", b);
         FlowGraphWalker w = new FlowGraphWalker(b.getExecution());

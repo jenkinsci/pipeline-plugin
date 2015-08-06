@@ -45,7 +45,7 @@ public final class FlowGraphTableAction implements Action {
     }
 
     @Override public String getDisplayName() {
-        return "Running Steps";
+        return "Workflow Steps";
     }
 
     @Override public String getUrlName() {
