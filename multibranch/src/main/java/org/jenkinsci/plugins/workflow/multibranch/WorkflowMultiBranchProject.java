@@ -48,7 +48,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 @SuppressWarnings({"unchecked", "rawtypes"}) // core’s fault
 public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,WorkflowRun> {
 
-    static final String SCRIPT = "jenkins.groovy";
+    static final String SCRIPT = "Jenkinsfile";
 
     public WorkflowMultiBranchProject(ItemGroup parent, String name) {
         super(parent, name);
