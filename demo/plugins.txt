@@ -19,7 +19,7 @@ workflow-cps:@VERSION@
 workflow-cps-global-lib:@VERSION@
 workflow-durable-task-step:@VERSION@
 workflow-job:@VERSION@
-workflow-multibranch:@VERSION@
+workflow-multibranch:1.9-beta-1
 workflow-scm-step:@VERSION@
 workflow-step-api:@VERSION@
 workflow-support:@VERSION@
