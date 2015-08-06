@@ -579,7 +579,7 @@ You may also have noticed that we are running `JUnitResultArchiver` several time
 The test results recorded in the build are cumulative.
 
 When you view the log for a build with multiple branches, the output from each will be intermixed.
-It can be useful to click on the _Running Steps_ link on the build’s sidebar.
+It can be useful to click on the _Workflow Steps_ link on the build’s sidebar.
 This will display a tree-table view of all the steps run so far in the build, grouped by logical block, for example `parallel` branch.
 You can click on individual steps and get more details, such as the log output for that step in isolation, the workspace associated with a `node` step, and so on.
 

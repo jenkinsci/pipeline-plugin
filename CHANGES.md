@@ -3,7 +3,7 @@
 Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
 
 ## 1.9 (upcoming)
-
+* "Running Steps" action if now called "Workflow Steps" as it will show steps for workflows that have long since completed.
 * [JENKINS-29738](https://issues.jenkins-ci.org/browse/JENKINS-29738): TimeoutStep restarts the timeout value when `onResume` method is invoked
 * [JENKINS-26163](https://issues.jenkins-ci.org/browse/JENKINS-26163): `AbstractStepExecutionImpl.onResume` was not (usually) being called for block-scoped steps, leading to incorrect behavior after Jenkins restart for flows inside `timeout` or `waitUntil`.
 * [JENKINS-26761](https://issues.jenkins-ci.org/browse/JENKINS-26761): `NullPointerException` from Git commit notification requests under unknown circumstances; improved robustness and logging.
