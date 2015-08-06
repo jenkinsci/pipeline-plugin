@@ -69,7 +69,7 @@ public class WaitForConditionStepTest extends SingleJobTestBase {
                 SemaphoreStep.waitForStart("wait/2", b);
                 String message = "broken condition";
                 SemaphoreStep.failure("wait/2", new AbortException(message));
-                // TODO the following fails (missing message) when run as part of whole suite, but not standalone: story.j.assertLogContains(message, story.j.assertBuildStatus(Result.FAILURE, JenkinsRuleExt.waitForCompletion(b)));
+                // TODO the following fails (missing message) when run as part of whole suite, but not standalone: story.j.assertLogContains(message, story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b)));
                 waitForWorkflowToComplete();
                 story.j.assertBuildStatus(Result.FAILURE, b);
                 story.j.assertLogContains(message, b);
