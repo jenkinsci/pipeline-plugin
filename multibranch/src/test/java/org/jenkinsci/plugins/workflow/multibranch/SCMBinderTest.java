@@ -61,9 +61,9 @@ public class SCMBinderTest {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 sampleGitRepo.init();
-                sampleGitRepo.write("jenkins.groovy", "semaphore 'wait'; node {checkout scm; echo readFile('file')}");
+                sampleGitRepo.write("Jenkinsfile", "semaphore 'wait'; node {checkout scm; echo readFile('file')}");
                 sampleGitRepo.write("file", "initial content");
-                sampleGitRepo.git("add", "jenkins.groovy");
+                sampleGitRepo.git("add", "Jenkinsfile");
                 sampleGitRepo.git("commit", "--all", "--message=flow");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
                 mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
@@ -93,9 +93,9 @@ public class SCMBinderTest {
                 ScriptApproval sa = ScriptApproval.get();
                 sa.approveSignature("staticField hudson.model.Items XSTREAM2");
                 sa.approveSignature("method com.thoughtworks.xstream.XStream toXML java.lang.Object");
-                sampleGitRepo.write("jenkins.groovy", "echo hudson.model.Items.XSTREAM2.toXML(scm); semaphore 'wait'; node {checkout scm; echo readFile('file')}");
+                sampleGitRepo.write("Jenkinsfile", "echo hudson.model.Items.XSTREAM2.toXML(scm); semaphore 'wait'; node {checkout scm; echo readFile('file')}");
                 sampleGitRepo.write("file", "initial content");
-                sampleGitRepo.git("add", "jenkins.groovy");
+                sampleGitRepo.git("add", "Jenkinsfile");
                 sampleGitRepo.git("commit", "--all", "--message=flow");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
                 mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
@@ -104,7 +104,7 @@ public class SCMBinderTest {
                 WorkflowRun b1 = p.getLastBuild();
                 assertNotNull(b1);
                 assertEquals(1, b1.getNumber());
-                sampleGitRepo.write("jenkins.groovy", "node {checkout scm; echo readFile('file').toUpperCase()}");
+                sampleGitRepo.write("Jenkinsfile", "node {checkout scm; echo readFile('file').toUpperCase()}");
                 sa.approveSignature("method java.lang.String toUpperCase");
                 sampleGitRepo.write("file", "subsequent content");
                 sampleGitRepo.git("commit", "--all", "--message=tweaked");
@@ -125,9 +125,9 @@ public class SCMBinderTest {
                 ScriptApproval sa = ScriptApproval.get();
                 sa.approveSignature("staticField hudson.model.Items XSTREAM2");
                 sa.approveSignature("method com.thoughtworks.xstream.XStream toXML java.lang.Object");
-                sampleSvnRepo.write("jenkins.groovy", "echo hudson.model.Items.XSTREAM2.toXML(scm); semaphore 'wait'; node {checkout scm; echo readFile('file')}");
+                sampleSvnRepo.write("Jenkinsfile", "echo hudson.model.Items.XSTREAM2.toXML(scm); semaphore 'wait'; node {checkout scm; echo readFile('file')}");
                 sampleSvnRepo.write("file", "initial content");
-                sampleSvnRepo.svn("add", "jenkins.groovy");
+                sampleSvnRepo.svn("add", "Jenkinsfile");
                 sampleSvnRepo.svn("commit", "--message=flow");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
                 mp.getSourcesList().add(new BranchSource(new SubversionSCMSource(null, sampleSvnRepo.prjUrl(), null, null, null), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
@@ -136,7 +136,7 @@ public class SCMBinderTest {
                 WorkflowRun b1 = p.getLastBuild();
                 assertNotNull(b1);
                 assertEquals(1, b1.getNumber());
-                sampleSvnRepo.write("jenkins.groovy", "node {checkout scm; echo readFile('file').toUpperCase()}");
+                sampleSvnRepo.write("Jenkinsfile", "node {checkout scm; echo readFile('file').toUpperCase()}");
                 sa.approveSignature("method java.lang.String toUpperCase");
                 sampleSvnRepo.write("file", "subsequent content");
                 sampleSvnRepo.svn("commit", "--message=tweaked");
@@ -156,7 +156,7 @@ public class SCMBinderTest {
                 ScriptApproval sa = ScriptApproval.get();
                 sa.approveSignature("staticField hudson.model.Items XSTREAM2");
                 sa.approveSignature("method com.thoughtworks.xstream.XStream toXML java.lang.Object");
-                sampleHgRepo.write("jenkins.groovy", "echo hudson.model.Items.XSTREAM2.toXML(scm); semaphore 'wait'; node {checkout scm; echo readFile('file')}");
+                sampleHgRepo.write("Jenkinsfile", "echo hudson.model.Items.XSTREAM2.toXML(scm); semaphore 'wait'; node {checkout scm; echo readFile('file')}");
                 sampleHgRepo.write("file", "initial content");
                 sampleHgRepo.hg("commit", "--addremove", "--message=flow");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
@@ -176,7 +176,7 @@ public class SCMBinderTest {
                 WorkflowRun b1 = p.getLastBuild();
                 assertNotNull(b1);
                 assertEquals(1, b1.getNumber());
-                sampleHgRepo.write("jenkins.groovy", "node {checkout scm; echo readFile('file').toUpperCase()}");
+                sampleHgRepo.write("Jenkinsfile", "node {checkout scm; echo readFile('file').toUpperCase()}");
                 sa.approveSignature("method java.lang.String toUpperCase");
                 sampleHgRepo.write("file", "subsequent content");
                 sampleHgRepo.hg("commit", "--message=tweaked");
