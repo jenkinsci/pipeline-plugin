@@ -304,7 +304,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         }
         return null;
     }
-    // TODO delete when https://github.com/jenkinsci/jenkins/pull/1747 is available
+    // TODO use BlockedBecauseOfBuildInProgress in 1.624
     public static class BecauseOfBuildInProgress extends CauseOfBlockage {
         private final Run<?,?> build;
 
