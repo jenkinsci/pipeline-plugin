@@ -6,7 +6,8 @@ import hudson.model.Result;
 import static hudson.model.Result.ABORTED;
 
 /**
- * {@link StepExecution} that always executes synchronously.
+ * {@link StepExecution} that always executes synchronously. This API should be used for short-lived tasks that
+ * return almost instantly. For long-lived tasks use {@link AbstractSynchronousNonBlockingStepExecution}.
  * @param <T> the type of the return value (may be {@link Void})
  * @author Kohsuke Kawaguchi
  */
