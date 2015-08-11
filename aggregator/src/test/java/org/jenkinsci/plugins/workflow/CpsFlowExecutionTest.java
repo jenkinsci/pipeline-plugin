@@ -49,12 +49,14 @@ public class CpsFlowExecutionTest {
         r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertNotNull(LOADER);
         System.err.println(LOADER.get());
-        {
+        try {
             // TODO in Groovy 1.8.9 this keeps static state, but only for the last script (as also noted in JENKINS-23762).
             // The fix of GROOVY-5025 (62bfb68) in 1.9 addresses this, which we would get if JENKINS-21249 is implemented.
             Field f = ASTTransformationVisitor.class.getDeclaredField("compUnit");
             f.setAccessible(true);
             f.set(null, null);
+        } catch (NoSuchFieldException e) {
+            // assuming that Groovy version is newer
         }
         MemoryAssert.assertGC(LOADER);
     }
