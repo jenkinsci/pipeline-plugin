@@ -131,7 +131,7 @@ public class WorkflowLibRepositoryTest {
                         "acme.foo('seed');" +
                         "echo '['+acme.bar()+']';"+
                         "acme(1,2);"+
-                        "acme.bodyCall { title = 'yolo' }"));
+                        "acme.bodyCall { title = 'yolo' }",true));
 
                 // build this workflow
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
