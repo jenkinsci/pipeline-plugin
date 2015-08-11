@@ -2,6 +2,10 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.10 (upcoming)
+
+* [JENKINS-29890](https://issues.jenkins-ci.org/browse/JENKINS-29890): `input` step submitter was not being consistently logged.
+
 ## 1.9 (Aug 06 2015)
 
 * _Running Steps_ link is now called _Workflow Steps_ as it will show steps for workflows that have long since completed.
