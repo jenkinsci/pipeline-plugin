@@ -4,18 +4,10 @@ import static org.junit.Assert.assertTrue;
 import hudson.model.TaskListener;
 import hudson.model.Run;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-
-import jenkins.model.Jenkins;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
@@ -45,7 +37,8 @@ public class SynchronousNonBlockingStepTest {
         "}"));
         WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
 
-        // Stop here until syncnonblocking has printed the message "Test Sync Message"
+        // Wait for syncnonblocking to be started
+        System.out.println("Waiting to syncnonblocking to start...");
         SynchronousNonBlockingStep.waitForStart("wait", b);
 
         // At this point the execution is paused inside the synchronous non-blocking step
@@ -64,14 +57,15 @@ public class SynchronousNonBlockingStepTest {
 
         // Check for message the test message sent to context listener
         System.out.println("Checking build log message present...");
-        j.assertLogContains("Test Sync Message", b);
+        j.waitForMessage("Test Sync Message", b);
         // The last step did not run yet
         j.assertLogNotContains("Second message", b);
 
-        // No need to call success since it's called in the syncnonblocking thread
-        // SynchronousNonBlockingStep.success("wait/1", null);
+        // Let syncnonblocking to continue
+        SynchronousNonBlockingStep.notify("wait");
+
         System.out.println("Waiting until syncnonblocking (and the full flow) finishes");
-        j.waitUntilNoActivity();
+        j.waitForCompletion(b);
         System.out.println("Build finished. Continue.");
         // Check for the last message
         j.assertLogContains("Second message", b);
@@ -93,9 +87,9 @@ public class SynchronousNonBlockingStepTest {
             final Set<String> started = new HashSet<String>();
         }
 
-        private final String id;
+        private String id;
 
-        @DataBoundConstructor 
+        @DataBoundConstructor
         public SynchronousNonBlockingStep(String id) {
             this.id = id;
         }
@@ -104,18 +98,24 @@ public class SynchronousNonBlockingStepTest {
             return id;
         }
 
-        private String k() {
-            return id;
-        }
-
-        public static void waitForStart(@Nonnull String k, @CheckForNull Run<?,?> b) throws IOException, InterruptedException {
+        public static void waitForStart(String id, Run<?,?> b) throws IOException, InterruptedException {
             State s = State.get();
             synchronized (s) {
-                while (!s.started.contains(k)) {
+                while (!s.started.contains(id)) {
                     if (b != null && !b.isBuilding()) {
                         throw new AssertionError(JenkinsRule.getLog(b));
                     }
                     s.wait(1000);
+                }
+            }
+        }
+
+        public static final void notify(String id) {
+            State s = State.get();
+            synchronized (s) {
+                if (s.started.contains(id)) {
+                    s.started.remove(id);
+                    s.notifyAll();
                 }
             }
         }
@@ -127,23 +127,22 @@ public class SynchronousNonBlockingStepTest {
 
             @Override
             protected Void run() throws Exception {
+                System.out.println("Starting syncnonblocking " + step.getId());
                 // Send a test message to the listener
                 getContext().get(TaskListener.class).getLogger().println("Test Sync Message");
 
                 State s = State.get();
-                String k = step.k();
-                // Let's wait 2 seconds to give time to the main test thread to reach the wait point
-                Thread.sleep(2000);
-
                 synchronized (s) {
-                    s.started.add(k);
+                    s.started.add(step.getId());
                     s.notifyAll();
                 }
 
                 // Let's wait 2 additional seconds after unblocking the test thread
                 // During this 2 seconds it will check for the messages in the build log
                 System.out.println("Sleeping inside the syncnonblocking thread");
-                Thread.sleep(2000);
+                synchronized (s) {
+                    s.wait();
+                }
                 System.out.println("Continue syncnonblocking");
 
                 return null;

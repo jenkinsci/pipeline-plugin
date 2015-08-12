@@ -44,11 +44,16 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
         getContext().onFailure(cause);
     }
 
-    private class StepRunner implements Runnable {
+    @Override
+    public void onResume() {
+        getContext().onFailure(new AssertionError("Resume after a restart not supported for non-blockin synchronous steps"));
+    }
 
-        private final AbstractSynchronousNonBlockingStepExecution<T> step;
+    private static class StepRunner implements Runnable {
 
-        public StepRunner(AbstractSynchronousNonBlockingStepExecution<T> step) {
+        private final AbstractSynchronousNonBlockingStepExecution<?> step;
+
+        public StepRunner(AbstractSynchronousNonBlockingStepExecution<?> step) {
             this.step = step;
         }
 
