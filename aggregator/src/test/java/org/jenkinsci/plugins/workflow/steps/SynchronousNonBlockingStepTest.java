@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepNode;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -46,7 +47,7 @@ public class SynchronousNonBlockingStepTest {
         FlowGraphWalker walker = new FlowGraphWalker(b.getExecution());
         boolean found = false;
         for (FlowNode n = walker.next(); n != null; n = walker.next()) {
-            if (n.getDisplayName().equals("Sync non-blocking Test step")) {
+            if (n instanceof StepNode) {
                 found = true;
                 break;
             }

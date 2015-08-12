@@ -7,7 +7,12 @@ import static hudson.model.Result.ABORTED;
 
 /**
  * {@link StepExecution} that always executes synchronously. This API should be used for short-lived tasks that
- * return almost instantly. For long-lived tasks use {@link AbstractSynchronousNonBlockingStepExecution}.
+ * return almost instantly.
+ *
+ * To call legacy Jenkins APIs which are potentially long-running and interruptible yet offer no asynchronous mode
+ * (for example because they block on a remoting call) use {@link AbstractSynchronousNonBlockingStepExecution}.
+ * Also note that long-lived tasks which do not need to run within a Java method call should use the more general {@link AbstractStepExecutionImpl}
+ *
  * @param <T> the type of the return value (may be {@link Void})
  * @author Kohsuke Kawaguchi
  */

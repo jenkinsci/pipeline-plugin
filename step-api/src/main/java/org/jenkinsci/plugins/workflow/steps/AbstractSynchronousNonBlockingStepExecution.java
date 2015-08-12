@@ -1,17 +1,20 @@
 package org.jenkinsci.plugins.workflow.steps;
 
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import hudson.util.DaemonThreadFactory;
+import hudson.util.NamingThreadFactory;
 
-import jenkins.util.Timer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
- * {@link StepExecution} that always executes synchronously and does not block the CPS VM thread.
+ * Similar to {@link AbstractSynchronousStepExecution} but it always executes synchronously and does not block the CPS VM thread.
+ * @see {@link StepExecution}
  * @param <T> the type of the return value (may be {@link Void})
  */
 public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends AbstractStepExecutionImpl {
 
-    private transient volatile ScheduledFuture<?> task;
+    private transient volatile Future<?> task;
 
     protected AbstractSynchronousNonBlockingStepExecution() {
     }
@@ -29,7 +32,7 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
 
     @Override
     public final boolean start() throws Exception {
-        task = Timer.get().schedule(new StepRunner(this), 0, TimeUnit.MILLISECONDS);
+        task = StepRunnerExecutorService.get().submit(new StepRunner(this));
         return false;
     }
 
@@ -46,7 +49,7 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
 
     @Override
     public void onResume() {
-        getContext().onFailure(new AssertionError("Resume after a restart not supported for non-blockin synchronous steps"));
+        getContext().onFailure(new Exception("Resume after a restart not supported for non-blocking synchronous steps"));
     }
 
     private static class StepRunner implements Runnable {
@@ -64,6 +67,18 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
             } catch (Exception e) {
                 step.getContext().onFailure(e);
             }
+        }
+    }
+
+    private static class StepRunnerExecutorService {
+
+        private static ExecutorService executorService;
+
+        public static synchronized ExecutorService get() {
+            if (executorService == null) {
+                executorService = Executors.newSingleThreadExecutor(new NamingThreadFactory(new DaemonThreadFactory(), "org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution"));
+            }
+            return executorService;
         }
     }
 }
