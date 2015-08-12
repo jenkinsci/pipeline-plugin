@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import static org.junit.Assert.assertTrue;
+import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.Run;
 
@@ -10,6 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepNode;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -71,6 +73,32 @@ public class SynchronousNonBlockingStepTest {
         // Check for the last message
         j.assertLogContains("Second message", b);
         j.assertBuildStatusSuccess(b);
+    }
+
+    @Test
+    public void interruptedTest() throws Exception {
+        WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("node {\n" +
+            "echo 'First message'\n" +
+            "syncnonblocking 'waitinterrupt'\n" +
+            "echo 'Second message'\n" +
+        "}"));
+        WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
+
+        // Wait for syncnonblocking to be started
+        System.out.println("Waiting to syncnonblocking to start...");
+        // waitinterrupt is a special key that makes syncnonblocking step to wait inside a while  loop checking
+        // for Thread.interrupted()
+        SynchronousNonBlockingStep.waitForStart("waitinterrupt", b);
+
+        // At this point syncnonblocking is looping and checking for interruption
+
+        CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
+        // Let's force a call to stop. This will try to send an interruption to the run Thread
+        e.interrupt(Result.ABORTED);
+        System.out.println("Looking for interruption received log message");
+        j.waitForMessage("Run thread interrupted", b);
+        j.waitForCompletion(b);
     }
 
     public static final class SynchronousNonBlockingStep extends AbstractStepImpl implements Serializable {
@@ -136,6 +164,13 @@ public class SynchronousNonBlockingStepTest {
                 synchronized (s) {
                     s.started.add(step.getId());
                     s.notifyAll();
+                }
+                if (step.getId().equals("waitinterrupt")) {
+                    while (true) {
+                        if (Thread.interrupted()) {
+                            getContext().get(TaskListener.class).getLogger().println("Run thread interrupted");
+                        }
+                    }
                 }
 
                 // Let's wait 2 additional seconds after unblocking the test thread

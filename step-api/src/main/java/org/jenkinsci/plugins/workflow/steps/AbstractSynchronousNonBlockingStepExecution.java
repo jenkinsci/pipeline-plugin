@@ -42,7 +42,7 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
     @Override
     public void stop(Throwable cause) throws Exception {
         if (task != null) {
-            task.cancel(false);
+            task.cancel(true);
         }
         getContext().onFailure(cause);
     }
