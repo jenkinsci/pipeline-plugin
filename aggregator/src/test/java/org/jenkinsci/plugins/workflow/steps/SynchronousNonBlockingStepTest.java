@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
@@ -101,6 +102,34 @@ public class SynchronousNonBlockingStepTest {
         j.waitForCompletion(b);
     }
 
+    @Test
+    public void parallelTest() throws Exception {
+        WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("node {\n" +
+            "echo 'First message'\n" +
+            "parallel( a: { syncnonblocking 'wait0'; echo 'a branch'; }, b: { echo 'b branch' } )\n" +
+            "echo 'Second message'\n" +
+        "}"));
+        WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
+
+        SynchronousNonBlockingStep.waitForStart("wait0", b);
+
+        // Wait for "b" branch to print its message
+        j.waitForMessage("b branch", b);
+        System.out.println("b branch finishes");
+
+        // Check that "a" branch is effectively blocked
+        j.assertLogNotContains("a branch", b);
+
+        // Notify "a" branch
+        System.out.println("Continue on wait0");
+        SynchronousNonBlockingStep.notify("wait0");
+
+        // Wait for "a" branch to finish
+        j.waitForMessage("a branch", b);
+        j.waitForCompletion(b);
+    }
+
     public static final class SynchronousNonBlockingStep extends AbstractStepImpl implements Serializable {
 
         public static final class State {
@@ -167,19 +196,21 @@ public class SynchronousNonBlockingStepTest {
                 }
                 if (step.getId().equals("waitinterrupt")) {
                     while (true) {
+                        // Keep in an interruptible state
                         if (Thread.interrupted()) {
                             getContext().get(TaskListener.class).getLogger().println("Run thread interrupted");
                         }
                     }
                 }
 
-                // Let's wait 2 additional seconds after unblocking the test thread
-                // During this 2 seconds it will check for the messages in the build log
-                System.out.println("Sleeping inside the syncnonblocking thread");
+                // Wait until somone (main test thread) notify us
+                System.out.println("Sleeping inside the syncnonblocking thread (" + step.getId() + ")");
                 synchronized (s) {
-                    s.wait();
+                    while (s.started.contains(step.getId())) {
+                        s.wait(1000);
+                    }
                 }
-                System.out.println("Continue syncnonblocking");
+                System.out.println("Continue syncnonblocking " + step.getId());
 
                 return null;
             }
