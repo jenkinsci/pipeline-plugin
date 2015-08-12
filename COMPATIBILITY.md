@@ -221,8 +221,8 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 
 ## Custom steps
 
-Plugins can also implement custom Workflow steps with specialized behavior by adding a dependency on `workflow-step-api`.
-Generally you will extend `AbstractStepImpl`, `AbstractStepDescriptorImpl`, and `AbstractStepExecutionImpl` (or `AbstractSynchronousStepExecution`).
+Plugins can also implement custom Workflow steps with specialized behavior.
+See [here](step-api/README.md) for more.
 
 ## Historical background
 
