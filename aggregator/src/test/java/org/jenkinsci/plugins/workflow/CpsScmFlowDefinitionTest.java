@@ -67,8 +67,7 @@ public class CpsScmFlowDefinitionTest {
         r.assertLogContains("Staging flow.groovy", b);
         FlowGraphWalker w = new FlowGraphWalker(b.getExecution());
         int workspaces = 0;
-        FlowNode n;
-        while ((n = w.next()) != null) {
+        for (FlowNode n : w) {
             if (n.getAction(WorkspaceAction.class) != null) {
                 workspaces++;
             }
