@@ -9,15 +9,15 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepNode;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -50,7 +50,7 @@ public class SynchronousNonBlockingStepTest {
         FlowGraphWalker walker = new FlowGraphWalker(b.getExecution());
         boolean found = false;
         for (FlowNode n = walker.next(); n != null; n = walker.next()) {
-            if (n instanceof StepNode) {
+            if (n instanceof StepNode && ((StepNode) n).getDescriptor() instanceof SynchronousNonBlockingStep.DescriptorImpl) {
                 found = true;
                 break;
             }
@@ -63,6 +63,7 @@ public class SynchronousNonBlockingStepTest {
         System.out.println("Checking build log message present...");
         j.waitForMessage("Test Sync Message", b);
         // The last step did not run yet
+        j.assertLogContains("First message", b);
         j.assertLogNotContains("Second message", b);
 
         // Let syncnonblocking to continue
@@ -81,24 +82,23 @@ public class SynchronousNonBlockingStepTest {
         WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("node {\n" +
             "echo 'First message'\n" +
-            "syncnonblocking 'waitinterrupt'\n" +
+            "try { syncnonblocking 'wait' } catch(InterruptedException e) { echo 'Interrupted!' }\n" +
             "echo 'Second message'\n" +
         "}"));
         WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
 
         // Wait for syncnonblocking to be started
         System.out.println("Waiting to syncnonblocking to start...");
-        // waitinterrupt is a special key that makes syncnonblocking step to wait inside a while  loop checking
-        // for Thread.interrupted()
-        SynchronousNonBlockingStep.waitForStart("waitinterrupt", b);
+        SynchronousNonBlockingStep.waitForStart("wait", b);
 
-        // At this point syncnonblocking is looping and checking for interruption
+        // At this point syncnonblocking is waiting for an interruption
 
-        CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
+        FlowExecution e = b.getExecutionPromise().get();
         // Let's force a call to stop. This will try to send an interruption to the run Thread
         e.interrupt(Result.ABORTED);
         System.out.println("Looking for interruption received log message");
-        j.waitForMessage("Run thread interrupted", b);
+        j.waitForMessage("Interrupted!", b);
+        System.out.println("Waiting for build completion");
         j.waitForCompletion(b);
     }
 
@@ -107,12 +107,14 @@ public class SynchronousNonBlockingStepTest {
         WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("node {\n" +
             "echo 'First message'\n" +
-            "parallel( a: { syncnonblocking 'wait0'; echo 'a branch'; }, b: { echo 'b branch' } )\n" +
+            "parallel( a: { syncnonblocking 'wait0'; echo 'a branch'; }, b: { semaphore 'wait1'; echo 'b branch'; } )\n" +
             "echo 'Second message'\n" +
         "}"));
         WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
 
         SynchronousNonBlockingStep.waitForStart("wait0", b);
+        SemaphoreStep.waitForStart("wait1/1", b);
+        SemaphoreStep.success("wait1/1", null);
 
         // Wait for "b" branch to print its message
         j.waitForMessage("b branch", b);
@@ -171,8 +173,7 @@ public class SynchronousNonBlockingStepTest {
         public static final void notify(String id) {
             State s = State.get();
             synchronized (s) {
-                if (s.started.contains(id)) {
-                    s.started.remove(id);
+                if (s.started.remove(id)) {
                     s.notifyAll();
                 }
             }
@@ -181,26 +182,21 @@ public class SynchronousNonBlockingStepTest {
         public static class StepExecutionImpl extends AbstractSynchronousNonBlockingStepExecution<Void> {
 
             @Inject(optional=true) 
-            private SynchronousNonBlockingStep step;
+            private transient SynchronousNonBlockingStep step;
+
+            @StepContextParameter
+            private transient TaskListener listener;
 
             @Override
             protected Void run() throws Exception {
                 System.out.println("Starting syncnonblocking " + step.getId());
                 // Send a test message to the listener
-                getContext().get(TaskListener.class).getLogger().println("Test Sync Message");
+                listener.getLogger().println("Test Sync Message");
 
                 State s = State.get();
                 synchronized (s) {
                     s.started.add(step.getId());
                     s.notifyAll();
-                }
-                if (step.getId().equals("waitinterrupt")) {
-                    while (true) {
-                        // Keep in an interruptible state
-                        if (Thread.interrupted()) {
-                            getContext().get(TaskListener.class).getLogger().println("Run thread interrupted");
-                        }
-                    }
                 }
 
                 // Wait until somone (main test thread) notify us
@@ -240,6 +236,4 @@ public class SynchronousNonBlockingStepTest {
         private static final long serialVersionUID = 1L;
 
     }
-
-
 }
