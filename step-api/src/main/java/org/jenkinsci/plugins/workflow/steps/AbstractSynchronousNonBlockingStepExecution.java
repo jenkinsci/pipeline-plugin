@@ -16,7 +16,7 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
 
     private transient volatile Future<?> task;
 
-    private transient static ExecutorService executorService;
+    private static ExecutorService executorService;
 
     protected AbstractSynchronousNonBlockingStepExecution() {
     }

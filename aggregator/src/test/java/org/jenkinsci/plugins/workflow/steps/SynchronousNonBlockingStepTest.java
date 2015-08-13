@@ -5,10 +5,15 @@ import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.Run;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+
+import jenkins.model.Jenkins;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepNode;
@@ -18,8 +23,10 @@ import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -30,6 +37,9 @@ public class SynchronousNonBlockingStepTest {
 
     @Rule
     public JenkinsRule j = new JenkinsRule();
+
+    @ClassRule
+    public static BuildWatcher buildWatcher = new BuildWatcher();
 
     @Test
     public void basicNonBlockingStep() throws Exception {
@@ -96,9 +106,7 @@ public class SynchronousNonBlockingStepTest {
         FlowExecution e = b.getExecutionPromise().get();
         // Let's force a call to stop. This will try to send an interruption to the run Thread
         e.interrupt(Result.ABORTED);
-        System.out.println("Looking for interruption received log message");
-        j.waitForMessage("Interrupted!", b);
-        System.out.println("Waiting for build completion");
+        System.out.println("Waiting for interruption");
         j.waitForCompletion(b);
     }
 
@@ -135,11 +143,13 @@ public class SynchronousNonBlockingStepTest {
     public static final class SynchronousNonBlockingStep extends AbstractStepImpl implements Serializable {
 
         public static final class State {
-            private static State state;
+            private static final Map<File,State> states = new HashMap<File,State>();
             static synchronized State get() {
+                File home = Jenkins.getActiveInstance().getRootDir();
+                State state = states.get(home);
                 if (state == null) {
                     state = new State();
-                    return state;
+                    states.put(home, state);
                 }
                 return state;
             }
@@ -163,7 +173,7 @@ public class SynchronousNonBlockingStepTest {
             synchronized (s) {
                 while (!s.started.contains(id)) {
                     if (b != null && !b.isBuilding()) {
-                        throw new AssertionError(JenkinsRule.getLog(b));
+                        throw new AssertionError();
                     }
                     s.wait(1000);
                 }
