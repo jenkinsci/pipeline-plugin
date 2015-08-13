@@ -57,6 +57,9 @@ public class FlowGraphWalker implements Iterable<FlowNode> {
         return null;
     }
 
+    /**
+     * Unlike {@link Iterable#iterator()}, this may be iterated only once.
+     */
     @Override
     public Iterator<FlowNode> iterator() {
         return new FlowGraphWalkerIterator();
@@ -86,7 +89,7 @@ public class FlowGraphWalker implements Iterable<FlowNode> {
 
         @Override
         public void remove() {
-            getNext();
+            throw new UnsupportedOperationException();
         }
 
         private FlowNode getNext() {
