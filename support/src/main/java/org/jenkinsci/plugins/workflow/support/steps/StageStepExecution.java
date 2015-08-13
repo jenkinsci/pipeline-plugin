@@ -145,16 +145,15 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         }
         // Interrupts any build in the holding state
         if (eager != null && eager) {
-            for (Integer i : stage.holding) {
-                try {
-                    Executor ex = job.getBuildByNumber(i).getExecutor();
-                    if (ex != null) {
-                        ex.interrupt(Result.ABORTED);
-                    }
-                    stage.holding.remove(i);
-                } catch (Exception x) {
-                    LOGGER.log(Level.WARNING, null, x);
+            Iterator<Integer> it = stage.holding.iterator();
+            while (it.hasNext()) {
+                Integer i = it.next();
+                Executor ex = job.getBuildByNumber(i).getExecutor();
+                if (ex != null) {
+                    ex.interrupt(Result.NOT_BUILT, new CanceledCause(r));
+
                 }
+                it.remove();
             }
         }
         for (Map.Entry<String,Stage> entry : stagesByName.entrySet()) {
