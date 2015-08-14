@@ -57,6 +57,7 @@ public final class POSTHyperlinkNote extends HyperlinkNote {
         super("#", length);
         if (url.startsWith("/")) {
             StaplerRequest req = Stapler.getCurrentRequest();
+            // When req is not null?
             if (req != null) {
                 url = req.getContextPath() + url;
             } else {
@@ -66,8 +67,10 @@ public final class POSTHyperlinkNote extends HyperlinkNote {
                     if (rootUrl != null) {
                         url = rootUrl + url.substring(1);
                     } else {
-                        LOGGER.warning("You need to define the root URL of Jenkins");
                         // hope that / works, i.e., that there is no context path
+                        // TODO: Does not works when there is a content path, p.e. http://localhost:8080/jenkins
+                        // This message log should be an error.
+                        LOGGER.warning("You need to define the root URL of Jenkins");
                     }
                 }
             }
