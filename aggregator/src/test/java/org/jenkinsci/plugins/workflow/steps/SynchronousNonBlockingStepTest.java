@@ -107,7 +107,8 @@ public class SynchronousNonBlockingStepTest {
         FlowExecution e = b.getExecutionPromise().get();
         // Let's force a call to stop. This will try to send an interruption to the run Thread
         e.interrupt(Result.ABORTED);
-        System.out.println("Waiting for interruption");
+        System.out.println("Looking for interruption received log message");
+        j.waitForMessage("Interrupted!", b);
         j.waitForCompletion(b);
     }
 
