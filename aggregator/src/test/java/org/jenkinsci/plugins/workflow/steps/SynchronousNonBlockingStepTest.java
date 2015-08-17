@@ -123,7 +123,6 @@ public class SynchronousNonBlockingStepTest {
         WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
 
         SynchronousNonBlockingStep.waitForStart("wait0", b);
-        SemaphoreStep.waitForStart("wait1/1", b);
         SemaphoreStep.success("wait1/1", null);
 
         // Wait for "b" branch to print its message
