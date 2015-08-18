@@ -30,7 +30,7 @@ THE SOFTWARE.
         <artifactId>workflow-pom</artifactId>
         <version>1.9</version>
     </parent>
-    <version>1.9-beta-2</version> <!-- TODO cannot release a non-beta until branch-api dep is out of beta -->
+    <version>1.9-beta-3-SNAPSHOT</version> <!-- TODO cannot release a non-beta until branch-api dep is out of beta -->
     <properties>
         <workflow.version>${project.parent.version}</workflow.version> <!-- TODO see above -->
     </properties>
@@ -42,7 +42,7 @@ THE SOFTWARE.
         <connection>scm:git:git://github.com/jenkinsci/workflow-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/workflow-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/workflow-plugin</url>
-      <tag>workflow-multibranch-1.9-beta-2</tag>
+      <tag>HEAD</tag>
   </scm>
     <dependencies>
         <dependency>
