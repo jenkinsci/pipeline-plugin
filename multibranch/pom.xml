@@ -38,6 +38,11 @@ THE SOFTWARE.
     <packaging>hpi</packaging>
     <name>Workflow: Multibranch</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
+    <scm> <!-- TODO necessary so long as releasing independently -->
+        <connection>scm:git:git://github.com/jenkinsci/workflow-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/workflow-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/workflow-plugin</url>
+    </scm>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
