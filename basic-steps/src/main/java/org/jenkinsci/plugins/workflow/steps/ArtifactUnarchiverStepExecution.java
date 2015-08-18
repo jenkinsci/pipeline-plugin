@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.inject.Inject;
+
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.model.Run;
@@ -16,7 +17,7 @@ import java.util.Map.Entry;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class ArtifactUnarchiverStepExecution extends AbstractSynchronousStepExecution<List<FilePath>> {
+public class ArtifactUnarchiverStepExecution extends AbstractSynchronousNonBlockingStepExecution<List<FilePath>> {
     @StepContextParameter
     private transient FilePath ws;
 

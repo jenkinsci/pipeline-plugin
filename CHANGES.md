@@ -5,6 +5,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 ## 1.10 (upcoming)
 
 * [JENKINS-29890](https://issues.jenkins-ci.org/browse/JENKINS-29890): `input` step submitter was not being consistently logged.
+* [JENKINS-25879](https://issues.jenkins-ci.org/browse/JENKINS-25879), [JENKINS-29875](https://issues.jenkins-ci.org/browse/JENKINS-29875): New API to run long lived tasks that could block on I/O in a separate thread avoiding to block main CPS VM thread.
 
 ## 1.9 (Aug 06 2015)
 
