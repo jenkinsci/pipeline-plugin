@@ -61,7 +61,7 @@ THE SOFTWARE.
         <j:set var="id" value="${h.generateId()}"/>
         <f:block>
             <input type="button" value="Generate Groovy" onclick="handlePrototype_${id}(); return false" class="submit-button primary"/>
-            <f:textarea id="prototypeText_${id}" readonly="true"/>
+            <f:textarea id="prototypeText_${id}" readonly="true" style="margin-top: 10px" />
         </f:block>
         <script>
             function handlePrototype_${id}() {
