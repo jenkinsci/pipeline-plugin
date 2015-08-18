@@ -2,7 +2,9 @@ package org.jenkinsci.plugins.workflow.graph;
 
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 
+import java.util.ConcurrentModificationException;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
@@ -13,8 +15,7 @@ import java.util.Stack;
  * @author Kohsuke Kawaguchi
  */
 // TODO guarantee DFS order (is it not already in DFS order?)
-// TODO implement Iterable<FlowNode>
-public class FlowGraphWalker {
+public class FlowGraphWalker implements Iterable<FlowNode> {
     // queue of nodes to visit.
     // it's a stack and not queue to visit nodes in DFS
     Stack<FlowNode> q = new Stack<FlowNode>();
@@ -41,7 +42,9 @@ public class FlowGraphWalker {
     /**
      * Each time this method is called, it returns a new node until all the nodes are visited,
      * in which case this method returns null.
+     * @deprecated This class is {@link Iterable} now. Use {@link #iterator()} instead.
      */
+    @Deprecated
     public FlowNode next() {
         while (!q.isEmpty()) {
             FlowNode n = q.pop();
@@ -52,5 +55,63 @@ public class FlowGraphWalker {
             return n;
         }
         return null;
+    }
+
+    /**
+     * Unlike {@link Iterable#iterator()}, this may be iterated only once.
+     */
+    @Override
+    public Iterator<FlowNode> iterator() {
+        return new FlowGraphWalkerIterator();
+    }
+
+    private class FlowGraphWalkerIterator implements Iterator<FlowNode> {
+
+        private FlowNode next;
+        private int expectedCount;
+
+        public FlowGraphWalkerIterator() {
+            expectedCount = q.size();
+            next = getNext();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return next != null;
+        }
+
+        @Override
+        public FlowNode next() {
+            FlowNode temp = next;
+            next = getNext();
+            return temp;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        private FlowNode getNext() {
+            checkForComodification();
+            while (!q.isEmpty()) {
+                FlowNode n = q.pop();
+                if (!visited.add(n)) {
+                    continue;
+                }
+
+                List<FlowNode> parents = n.getParents();
+                addHeads(parents);
+                expectedCount = q.size();
+                return n;
+            }
+            return null;
+        }
+
+        private final void checkForComodification() {
+            if (q.size() != expectedCount) {
+                throw new ConcurrentModificationException();
+            }
+        }
     }
 }

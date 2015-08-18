@@ -110,7 +110,7 @@ public class ExecutorStepTest extends SingleJobTestBase {
 
                 FlowGraphWalker walker = new FlowGraphWalker(e);
                 List<WorkspaceAction> actions = new ArrayList<WorkspaceAction>();
-                for (FlowNode n = walker.next(); n != null; n = walker.next()) {
+                for (FlowNode n : walker) {
                     WorkspaceAction a = n.getAction(WorkspaceAction.class);
                     if (a != null) {
                         actions.add(a);
