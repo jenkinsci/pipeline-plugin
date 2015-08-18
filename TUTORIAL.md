@@ -579,7 +579,7 @@ You may also have noticed that we are running `JUnitResultArchiver` several time
 The test results recorded in the build are cumulative.
 
 When you view the log for a build with multiple branches, the output from each will be intermixed.
-It can be useful to click on the _Running Steps_ link on the build’s sidebar.
+It can be useful to click on the _Workflow Steps_ link on the build’s sidebar.
 This will display a tree-table view of all the steps run so far in the build, grouped by logical block, for example `parallel` branch.
 You can click on individual steps and get more details, such as the log output for that step in isolation, the workspace associated with a `node` step, and so on.
 
@@ -672,6 +672,26 @@ In this case `devQAStaging` runs on the same node as the main source code checko
 
 Injection of function and class names into a flow before it runs is handled by plugins, and one is bundled with workflow that allows you to get rid of the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
 A [separate document](cps-global-lib/README.md) has details on this system.
+
+## Multibranch projects
+
+A new _Workflow: Multibranch_ plugin (as of this writing still in beta) offers an even better way of versioning your Workflow, and managing your project generally.
+You need to create a distinct project type, _Multibranch Workflow_.
+
+When you have a multibranch workflow, the configuration screen will resemble _Groovy CPS DSL from SCM_ in that your Workflow script comes from source control, not the Jenkins job configuration.
+The difference is that you do not configure a single branch, but a _set_ of branches, and Jenkins creates a subproject for each branch it finds in your repository.
+
+For example, if you select _Git_ as the branch source (Subversion and Mercurial are also supported already), you will be prompted for the usual connection information,
+but then rather than a fixed refspec you will enter a branch name pattern (use the defaults to look for any branch).
+Jenkins expects to find a script named `Jenkinsfile` in branches it can build.
+From this script, the command `checkout scm` suffices to check out your project’s source code inside some `node {}`.
+
+Say you start with just a `master` branch, then you want to experiment with some changes, so you `git checkout -b newfeature` and push some commits.
+Jenkins will automatically detect the new branch in your repository and create a new subproject for it—with its own build history unrelated to trunk, so no one will mind if it has red/yellow balls for a while.
+(If you like, you can ask for the subproject to be automatically removed after the branch is merged and deleted.)
+
+The neat thing is that if you want to change your Workflow script—for example, to add a new Jenkins publisher step corresponding to reports your `Makefile`/`pom.xml`/etc. is newly creating—you just edit `Jenkinsfile` in your change.
+The Workflow script is always synchronized with the rest of the source code you are working on: `checkout scm` checks out the same revision as the script is loaded from.
 
 # Exploring available steps
 

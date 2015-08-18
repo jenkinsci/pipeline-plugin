@@ -93,6 +93,7 @@ public final class WaitForConditionStep extends AbstractStepImpl {
 
         private void retry(StepContext perBodyContext) {
             body = null;
+            getContext().saveState();
             try {
                 perBodyContext.get(TaskListener.class).getLogger().println("Will try again after " + Util.getTimeSpanString(recurrencePeriod));
             } catch (Exception x) {

@@ -6,7 +6,7 @@ It highlights key parts of the workflow plugin:
 
 Run it like:
 
-    docker run -p 8080:8080 -p 8081:8081 -ti jenkinsci/workflow-demo
+    docker run -p 8080:8080 -p 8081:8081 -p 9418:9418 -ti jenkinsci/workflow-demo
 
 Jenkins runs on port 8080, and Jetty runs on port 8081.
 
@@ -15,16 +15,19 @@ VM's IP (instead of `localhost`).  You can get this by running `boot2docker ip` 
 
 The continuous delivery pipeline consists of the following sequence.
 
-* Loads the workflow script from [flow.groovy](https://github.com/jenkinsci/workflow-plugin/blob/master/demo/repo/flow.groovy) in the repository.
-* Checks out source code from the same repository and build it via Maven with unit testing.
+* Loads the workflow script from [Jenkinsfile](https://github.com/jenkinsci/workflow-plugin/blob/master/demo/repo/Jenkinsfile) in a local Git repository.
+  You may clone from, edit, and push to `git://localhost/repo`.
+  Each branch automatically creates a matching subproject that builds that branch.
+* Checks out source code from the same repository and commit as `Jenkinsfile`.
+* Builds sources via Maven with unit testing.
 * Run two parallel integration tests that involve deploying the app to a PaaS-like ephemeral server instances, which get
   thrown away when tests are done (this is done by using auto-deployment of Jetty)
 * Once integration tests are successful, the webapp gets to the staging server at http://localhost:8081/staging/
 * Human will manually inspect the staging instance, and when ready, approves the deployment to the production server at http://localhost:8081/production/
 * Workflow completes
 
-You can log in as root in the demo container via `ssh -p 8022 root@localhost` if you add `-p 8022:22`. The password is `root`.
-(If you have `nsenter`, [you can use docker-enter instead of ssh for a smoother demo](http://jpetazzo.github.io/2014/06/23/docker-ssh-considered-evil/)
+To log in to the container, get `nsenter` and [you can use docker-enter](http://jpetazzo.github.io/2014/06/23/docker-ssh-considered-evil/),
+or just use `docker exec -ti $container /bin/bash`.
 This is useful to kill Jetty to simulate a failure in the production deployment (via `pkill -9 -f jetty`) or restart it (via `jetty &`)
 
 [Binary image page](https://registry.hub.docker.com/u/jenkinsci/workflow-demo/)

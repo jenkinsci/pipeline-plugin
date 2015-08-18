@@ -72,8 +72,7 @@ public class FlowGraphTable {
         // nodes that we've visited
         Map<FlowNode,Row> rows = new LinkedHashMap<FlowNode, Row>();
 
-        FlowNode n;
-        while ((n=walker.next())!=null) {
+        for (FlowNode n : walker) {
             Row row = new Row(n);
             rows.put(n, row);
         }

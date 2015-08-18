@@ -99,14 +99,28 @@ public abstract class FlowExecution implements FlowActionStorage {
     public abstract List<FlowNode> getCurrentHeads();
 
     /**
-     * Yields the inner-most {@link StepExecution}s that are currently executing.
+     * Yields the {@link StepExecution}s that are currently executing.
      *
-     * {@link StepExecution}s are persisted as a part of the program state, so its lifecycle
+     * <p>{@link StepExecution}s are persisted as a part of the program state, so its lifecycle
      * is independent of {@link FlowExecution}, hence the asynchrony.
      *
-     * Think of this as program counters of all the virtual threads.
+     * <p>Think of this as program counters of all the virtual threads.
+     *
+     * <p>The implementation should return results in the order that steps were started, insofar as that makes sense.
+     * @param innerMostOnly if true, only return the innermost steps; if false, include any block-scoped steps running around them
      */
-    public abstract ListenableFuture<List<StepExecution>> getCurrentExecutions();
+    public /*abstract*/ ListenableFuture<List<StepExecution>> getCurrentExecutions(boolean innerMostOnly) {
+        if (Util.isOverridden(FlowExecution.class, getClass(), "getCurrentExecutions") && innerMostOnly) {
+            return getCurrentExecutions();
+        } else {
+            throw new AbstractMethodError("you must implement the new overload of getCurrentExecutions");
+        }
+    }
+
+    @Deprecated
+    public ListenableFuture<List<StepExecution>> getCurrentExecutions() {
+        throw new AbstractMethodError("you must implement the new overload of getCurrentExecutions");
+    }
 
     // TODO: there should be navigation between FlowNode <-> StepExecution
 

@@ -1,14 +1,14 @@
 package org.jenkinsci.plugins.workflow.steps;
 
+import com.google.inject.Inject;
 import hudson.AbortException;
 import hudson.model.TaskListener;
-import javax.inject.Inject;
 
 /**
  * @author Kohsuke Kawaguchi
  */
 public class RetryStepExecution extends AbstractStepExecutionImpl {
-    @Inject // TODO does this need to be optional=true? Not according to WorkflowTest.invokeBodyLaterAfterRestart.
+    @Inject(optional=true)
     private transient RetryStep step;
     private volatile BodyExecution body;
 

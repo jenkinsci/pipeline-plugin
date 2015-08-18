@@ -1,4 +1,5 @@
-durable-task:1.5
+branch-api:0.2-beta-4
+durable-task:1.6
 git:2.3.5
 git-client:1.17.0
 git-server:1.6
@@ -6,7 +7,8 @@ javadoc:1.3
 junit:1.5
 mailer:1.15
 mapdb-api:1.0.6.0
-mercurial:1.52
+mercurial:1.54
+mock-slave:1.8
 scm-api:0.2
 script-security:1.14
 subversion:2.5
@@ -17,6 +19,7 @@ workflow-cps:@VERSION@
 workflow-cps-global-lib:@VERSION@
 workflow-durable-task-step:@VERSION@
 workflow-job:@VERSION@
+workflow-multibranch:1.9-beta-1
 workflow-scm-step:@VERSION@
 workflow-step-api:@VERSION@
 workflow-support:@VERSION@

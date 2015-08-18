@@ -304,7 +304,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         }
         return null;
     }
-    // TODO delete when https://github.com/jenkinsci/jenkins/pull/1747 is available
+    // TODO use BlockedBecauseOfBuildInProgress in 1.624
     public static class BecauseOfBuildInProgress extends CauseOfBlockage {
         private final Run<?,?> build;
 
@@ -439,7 +439,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             return Collections.emptySet();
         }
         List<SCM> scms = new LinkedList<SCM>();
-        for (WorkflowRun.SCMCheckout co : b.checkouts) {
+        for (WorkflowRun.SCMCheckout co : b.checkouts(null)) {
             scms.add(co.scm);
         }
         return scms;
@@ -464,7 +464,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             listener.getLogger().println("no previous build to compare to");
             return PollingResult.NO_CHANGES;
         }
-        for (WorkflowRun.SCMCheckout co : b.checkouts) {
+        for (WorkflowRun.SCMCheckout co : b.checkouts(listener)) {
             if (!co.scm.supportsPolling()) {
                 listener.getLogger().println("polling not supported from " + co.workspace + " on " + co.node);
             }

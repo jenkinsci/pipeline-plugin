@@ -32,7 +32,7 @@
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
-    <version>1.9-SNAPSHOT</version>
+    <version>1.10-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Workflow: Parent</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
@@ -65,7 +65,9 @@
         -->
         <module>job</module>
         <module>aggregator</module>
+        <!-- TODO excluded since we cannot release a nonbeta of it while it has beta dependencies:
         <module>multibranch</module>
+        -->
     </modules>
     <dependencyManagement>
         <dependencies>

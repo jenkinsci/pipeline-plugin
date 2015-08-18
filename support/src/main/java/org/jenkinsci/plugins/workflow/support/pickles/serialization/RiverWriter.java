@@ -27,7 +27,6 @@ package org.jenkinsci.plugins.workflow.support.pickles.serialization;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.pickles.Pickle;
 import org.jenkinsci.plugins.workflow.pickles.PickleFactory;
-import com.trilead.ssh2.util.IOUtils;
 import hudson.ExtensionList;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.Marshalling;
@@ -157,7 +156,7 @@ public class RiverWriter implements Closeable {
             raf.seek(ephemeralsBackptr);
             raf.writeInt(ephemeralsOffset);
         } finally {
-            IOUtils.closeQuietly(raf);
+            raf.close();
         }
     }
 

@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.inject.Inject;
+
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.model.Run;
@@ -13,12 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import static com.trilead.ssh2.util.IOUtils.closeQuietly;
-
 /**
  * @author Kohsuke Kawaguchi
  */
-public class ArtifactUnarchiverStepExecution extends AbstractSynchronousStepExecution<List<FilePath>> {
+public class ArtifactUnarchiverStepExecution extends AbstractSynchronousNonBlockingStepExecution<List<FilePath>> {
     @StepContextParameter
     private transient FilePath ws;
 
@@ -68,7 +67,7 @@ public class ArtifactUnarchiverStepExecution extends AbstractSynchronousStepExec
         try {
             dst.copyFrom(in);
         } finally {
-            closeQuietly(in);
+            in.close();
         }
         return dst;
     }

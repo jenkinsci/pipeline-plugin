@@ -1,8 +1,24 @@
 # Changelog
 
-Only noting significant user-visible or major API changes, not internal code cleanups and minor bug fixes.
+Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.9 (upcoming)
+## 1.10 (upcoming)
+
+* [JENKINS-29890](https://issues.jenkins-ci.org/browse/JENKINS-29890): `input` step submitter was not being consistently logged.
+* [JENKINS-25879](https://issues.jenkins-ci.org/browse/JENKINS-25879), [JENKINS-29875](https://issues.jenkins-ci.org/browse/JENKINS-29875): New API to run long lived tasks that could block on I/O in a separate thread avoiding to block main CPS VM thread.
+* [JENKINS-29653](https://issues.jenkins-ci.org/browse/JENKINS-29653): visual tweak to _Snippet Generator_.
+
+## 1.9 (Aug 06 2015)
+
+* _Running Steps_ link is now called _Workflow Steps_ as it will show steps for workflows that have long since completed.
+* [JENKINS-29738](https://issues.jenkins-ci.org/browse/JENKINS-29738): TimeoutStep restarts the timeout value when `onResume` method is invoked
+* [JENKINS-26163](https://issues.jenkins-ci.org/browse/JENKINS-26163): `AbstractStepExecutionImpl.onResume` was not (usually) being called for block-scoped steps, leading to incorrect behavior after Jenkins restart for flows inside `timeout` or `waitUntil`.
+* [JENKINS-26761](https://issues.jenkins-ci.org/browse/JENKINS-26761): `NullPointerException` from Git commit notification requests under unknown circumstances; improved robustness and logging.
+* Improvements to JENKINS-29221 fix from 1.9-beta-1.
+
+Note: if you also have _CloudBees Workflow: Groovy Checkpoint_ installed, you _must_ upgrade it to 1.4.
+
+## 1.9-beta-1 (Jul 27 2015)
 
 * [JENKINS-26135](https://issues.jenkins-ci.org/browse/JENKINS-26135): User-defined global variables/functions in git-global-lib
 * [JENKINS-26129](https://issues.jenkins-ci.org/browse/JENKINS-26129): Experimental support for multibranch workflows. (For now, in a separate plugin, not included in _Workflow: Aggregator_, since it depends on the Branch API plugin which does not have a non-beta release and so is available only from the experimental update center.)
@@ -43,6 +59,14 @@ Only noting significant user-visible or major API changes, not internal code cle
 * [JENKINS-26552](https://issues.jenkins-ci.org/browse/JENKINS-26552) and thus [JENKINS-27389](https://issues.jenkins-ci.org/browse/JENKINS-27389): problems with environment variables fixed.
 * Avoid some possible name clashes with function names in scripts (`build` reported).
 * API addition: block-scoped steps can now pass in `EnvironmentExpander` and/or `ConsoleLogFilter` to better customize processing of nested code.
+
+## 1.4.2 (Jul 21 2015)
+
+* JENKINS-28131 backport from 1.9.
+
+## 1.4.1 (Jul 29 2015)
+
+* JENKINS-26761 robustness/diagnostics backport from 1.9.
 
 ## 1.4 (Mar 16 2015)
 

@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
 import com.google.inject.Inject;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -53,7 +54,6 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import static java.util.logging.Level.*;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ExecutorStepExecution extends AbstractStepExecutionImpl {
@@ -133,14 +133,10 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
     /** Transient handle of a running executor task. */
     private static final class RunningTask {
-        final @Nonnull StepContext context;
         /** null until placeholder executable runs */
         @Nullable AsynchronousExecution execution;
         /** null until placeholder executable runs */
         @Nullable Launcher launcher;
-        RunningTask(StepContext context) {
-            this.context = context;
-        }
     }
 
     private static final String COOKIE_VAR = "JENKINS_SERVER_COOKIE";
@@ -170,7 +166,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             LOGGER.log(FINE, "deserialized {0}", cookie);
             if (cookie != null) {
                 synchronized (runningTasks) {
-                    runningTasks.put(cookie, new RunningTask(context));
+                    runningTasks.put(cookie, new RunningTask());
                 }
             }
             return this;
@@ -329,15 +325,15 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             return cookie != null; // in which case this is after a restart and we still claim the executor
         }
 
-        private static @CheckForNull StepContext finish(@CheckForNull String cookie) {
+        private static void finish(@CheckForNull String cookie) {
             if (cookie == null) {
-                return null;
+                return;
             }
             synchronized (runningTasks) {
                 RunningTask runningTask = runningTasks.remove(cookie);
                 if (runningTask == null) {
                     LOGGER.log(FINE, "no running task corresponds to {0}", cookie);
-                    return null;
+                    return;
                 }
                 assert runningTask.execution != null && runningTask.launcher != null;
                 runningTask.execution.completed(null);
@@ -350,15 +346,14 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 } catch (Exception x) {
                     LOGGER.log(Level.WARNING, "failed to shut down " + cookie, x);
                 }
-                return runningTask.context;
             }
         }
 
         /**
          * Called when the body closure is complete.
          */
-        @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // lease is pickled
-        private static final class Callback extends BodyExecutionCallback {
+        @SuppressFBWarnings(value="SE_BAD_FIELD", justification="lease is pickled")
+        private static final class Callback extends BodyExecutionCallback.TailCall {
 
             private final String cookie;
             private WorkspaceList.Lease lease;
@@ -368,24 +363,11 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 this.lease = lease;
             }
 
-            @Override public void onSuccess(StepContext _, Object returnValue) {
-                LOGGER.log(FINE, "onSuccess {0}", cookie);
+            @Override protected void finished(StepContext context) throws Exception {
+                LOGGER.log(FINE, "finished {0}", cookie);
                 lease.release();
                 lease = null;
-                StepContext context = finish(cookie);
-                if (context != null) {
-                    context.onSuccess(returnValue);
-                }
-            }
-
-            @Override public void onFailure(StepContext _, Throwable t) {
-                LOGGER.log(FINE, "onFailure {0}", cookie);
-                lease.release();
-                lease = null;
-                StepContext context = finish(cookie);
-                if (context != null) {
-                    context.onFailure(t);
-                }
+                finish(cookie);
             }
 
         }
@@ -431,7 +413,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         }
 
                         synchronized (runningTasks) {
-                            runningTasks.put(cookie, new RunningTask(context));
+                            runningTasks.put(cookie, new RunningTask());
                         }
                         // For convenience, automatically allocate a workspace, like WorkspaceStep would:
                         Job<?,?> j = r.getParent();

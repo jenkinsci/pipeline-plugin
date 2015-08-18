@@ -97,6 +97,7 @@ import hudson.init.Terminator;
 import hudson.model.User;
 import hudson.security.ACL;
 import java.beans.Introspector;
+import java.util.LinkedHashMap;
 import javax.annotation.CheckForNull;
 import javax.annotation.concurrent.GuardedBy;
 
@@ -268,7 +269,7 @@ public class CpsFlowExecution extends FlowExecution {
         this(script, false, owner);
     }
 
-    CpsFlowExecution(String script, boolean sandbox, FlowExecutionOwner owner) throws IOException {
+    protected CpsFlowExecution(String script, boolean sandbox, FlowExecutionOwner owner) throws IOException {
         this.owner = owner;
         this.script = script;
         this.sandbox = sandbox;
@@ -386,9 +387,7 @@ public class CpsFlowExecution extends FlowExecution {
         return iota.incrementAndGet();
     }
 
-    @Override
-    public void onLoad(FlowExecutionOwner owner) throws IOException {
-        this.owner = owner;
+    protected void initializeStorage() throws IOException {
         storage = createStorage();
         synchronized (this) {
             // heads could not be restored in unmarshal, so doing that now:
@@ -406,6 +405,12 @@ public class CpsFlowExecution extends FlowExecution {
             }
             startNodesSerial = null;
         }
+    }
+
+    @Override
+    public void onLoad(FlowExecutionOwner owner) throws IOException {
+        this.owner = owner;
+        initializeStorage();
         try {
             if (!isComplete())
                 loadProgramAsync(getProgramDataFile());
@@ -591,24 +596,36 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     @Override
-    public ListenableFuture<List<StepExecution>> getCurrentExecutions() {
-        if (programPromise==null)
+    public ListenableFuture<List<StepExecution>> getCurrentExecutions(final boolean innerMostOnly) {
+        if (programPromise == null || isComplete()) {
             return Futures.immediateFuture(Collections.<StepExecution>emptyList());
+        }
 
         final SettableFuture<List<StepExecution>> r = SettableFuture.create();
         runInCpsVmThread(new FutureCallback<CpsThreadGroup>() {
             @Override
             public void onSuccess(CpsThreadGroup g) {
-                // to exclude outer StepExecutions, first build a map by FlowHead
-                // younger threads with their StepExecutions will overshadow old threads, leaving inner-most threads alone.
-                Map<FlowHead,StepExecution> m = new HashMap<FlowHead, StepExecution>();
-                for (CpsThread t : g.threads.values()) {
-                    StepExecution e = t.getStep();
-                    if (e!=null)
-                        m.put(t.head,e);
+                if (innerMostOnly) {
+                    // to exclude outer StepExecutions, first build a map by FlowHead
+                    // younger threads with their StepExecutions will overshadow old threads, leaving inner-most threads alone.
+                    Map<FlowHead, StepExecution> m = new LinkedHashMap<FlowHead, StepExecution>();
+                    for (CpsThread t : g.threads.values()) {
+                        StepExecution e = t.getStep();
+                        if (e != null) {
+                            m.put(t.head, e);
+                        }
+                    }
+                    r.set(ImmutableList.copyOf(m.values()));
+                } else {
+                    List<StepExecution> es = new ArrayList<StepExecution>();
+                    for (CpsThread t : g.threads.values()) {
+                        StepExecution e = t.getStep();
+                        if (e != null) {
+                            es.add(e);
+                        }
+                    }
+                    r.set(Collections.unmodifiableList(es));
                 }
-
-                r.set(ImmutableList.copyOf(m.values()));
             }
 
             @Override
@@ -678,7 +695,7 @@ public class CpsFlowExecution extends FlowExecution {
         final FlowInterruptedException ex = new FlowInterruptedException(result,causes);
 
         // stop all ongoing activities
-        Futures.addCallback(getCurrentExecutions(), new FutureCallback<List<StepExecution>>() {
+        Futures.addCallback(getCurrentExecutions(/* cf. JENKINS-26148 */true), new FutureCallback<List<StepExecution>>() {
             @Override
             public void onSuccess(List<StepExecution> l) {
                 for (StepExecution e : Iterators.reverse(l)) {

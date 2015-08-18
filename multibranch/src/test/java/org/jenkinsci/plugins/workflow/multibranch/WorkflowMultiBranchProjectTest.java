@@ -48,9 +48,9 @@ public class WorkflowMultiBranchProjectTest {
 
     @Test public void basicBranches() throws Exception {
         sampleRepo.init();
-        sampleRepo.write("jenkins.groovy", "node {checkout scm; echo readFile('file')}");
+        sampleRepo.write("Jenkinsfile", "node {checkout scm; echo readFile('file')}");
         sampleRepo.write("file", "initial content");
-        sampleRepo.git("add", "jenkins.groovy");
+        sampleRepo.git("add", "Jenkinsfile");
         sampleRepo.git("commit", "--all", "--message=flow");
         WorkflowMultiBranchProject mp = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
         mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
@@ -61,7 +61,7 @@ public class WorkflowMultiBranchProjectTest {
         assertEquals(1, b1.getNumber());
         r.assertLogContains("initial content", b1);
         sampleRepo.git("checkout", "-b", "feature");
-        sampleRepo.write("jenkins.groovy", "node {checkout scm; echo readFile('file').toUpperCase()}");
+        sampleRepo.write("Jenkinsfile", "node {checkout scm; echo readFile('file').toUpperCase()}");
         ScriptApproval.get().approveSignature("method java.lang.String toUpperCase");
         sampleRepo.write("file", "subsequent content");
         sampleRepo.git("commit", "--all", "--message=tweaked");

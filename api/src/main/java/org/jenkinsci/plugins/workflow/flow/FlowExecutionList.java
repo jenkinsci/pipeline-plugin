@@ -169,7 +169,7 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
         public void onLoaded() {
             for (FlowExecution e : list) {
                 LOGGER.log(FINE, "Eager loading {0}", e);
-                Futures.addCallback(e.getCurrentExecutions(), new FutureCallback<List<StepExecution>>() {
+                Futures.addCallback(e.getCurrentExecutions(false), new FutureCallback<List<StepExecution>>() {
                     @Override
                     public void onSuccess(List<StepExecution> result) {
                         for (StepExecution se : result) {
@@ -199,7 +199,7 @@ public class FlowExecutionList implements Iterable<FlowExecution> {
             List<ListenableFuture<?>> all = new ArrayList<ListenableFuture<?>>();
 
             for (FlowExecution e : list) {
-                ListenableFuture<List<StepExecution>> execs = e.getCurrentExecutions();
+                ListenableFuture<List<StepExecution>> execs = e.getCurrentExecutions(false);
                 all.add(execs);
                 Futures.addCallback(execs,new FutureCallback<List<StepExecution>>() {
                     @Override

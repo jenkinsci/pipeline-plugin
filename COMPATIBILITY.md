@@ -57,15 +57,17 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 
 ## Build wrappers
 
-- [X] `ConfigFileBuildWrapper` (`config-file-provider`): scheduled for 2.9.1 release
+- [X] `ConfigFileBuildWrapper` (`config-file-provider`): supported as of 2.9.1
 - [X] `Xvnc` (`xvnc`) supported as of 1.22
 - [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
 - [ ] `DashboardBuilder` (`environment-dashboard`): [issue 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
 - [X] `TimestamperBuildWrapper` (`timestamper`): supported as of 1.7
 - [ ] `MaskPasswordsBuildWrapper` (`mask-passwords`): [PR 3](https://github.com/jenkinsci/mask-passwords-plugin/pull/3)
-- [ ] `SSHAgentBuildWrapper` (`ssh-agent`): [JENKINS-28689](https://issues.jenkins-ci.org/browse/JENKINS-28689)
+- [X] `SSHAgentBuildWrapper` (`ssh-agent`): supported as of 1.8
 - [ ] `XvfbBuildWrapper` (`xvfb`): [JENKINS-28928](https://issues.jenkins-ci.org/browse/JENKINS-28928)
 - [ ] `LockWrapper` (`locks-and-latches`): [JENKINS-29461](https://issues.jenkins-ci.org/browse/JENKINS-29461)
+- [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
+- [ ] `NpmPackagesBuildWrapper` (`nodejs`): [JENKINS-29980](https://issues.jenkins-ci.org/browse/JENKINS-29980)
 
 ## Triggers
 
@@ -75,7 +77,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
 - [ ] `deployment-notification`: [JENKINS-28632](https://issues.jenkins-ci.org/browse/JENKINS-28632)
 - [ ] `gitlab-plugin`: [issue 89](https://github.com/DABSquared/gitlab-plugin/issues/89)
-- [ ] `bitbucket`: [JENKINS-28882](https://issues.jenkins-ci.org/browse/JENKINS-28882)
+- [X] `bitbucket`: supported as of 1.1.2
 
 ## Clouds
 
@@ -220,8 +222,8 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 
 ## Custom steps
 
-Plugins can also implement custom Workflow steps with specialized behavior by adding a dependency on `workflow-step-api`.
-Generally you will extend `AbstractStepImpl`, `AbstractStepDescriptorImpl`, and `AbstractStepExecutionImpl` (or `AbstractSynchronousStepExecution`).
+Plugins can also implement custom Workflow steps with specialized behavior.
+See [here](step-api/README.md) for more.
 
 ## Historical background
 

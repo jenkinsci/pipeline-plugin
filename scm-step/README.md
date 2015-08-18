@@ -86,8 +86,8 @@ The `checkout` step may be used to run any other SCM plugin, provided that it ha
 It could also be used to run an SCM for which there is a special integration that lacks support for an exotic feature.
 The step takes an `scm` parameter which is a map containing at least a `$class` parameter giving the full or simple class name of the desired `SCM` implementation, and the standard `poll` and `changelog` parameters.
 
-It also takes any other parameters supported by the SCM plugin in its configuration form, using their internal names and values, which you can see examples of in the `config.xml` of a freestyle project.
-Optional parameters can be omitted and will take their default values.
+It also takes any other parameters supported by the SCM plugin in its configuration form, using their internal names and values; use _Snippet Generator_ to get a detailed example for your SCM.
+Optional parameters can be omitted and will take their default values (to the extent supported by the SCM plugin).
 For example, to run Mercurial (1.51-beta-2 or higher):
 
     checkout scm: [$class: 'MercurialSCM', source: 'ssh://hg@bitbucket.org/user/repo', clean: true, credentialsId: '1234-5678-abcd'], poll: false
@@ -97,7 +97,7 @@ Note that if `scm` is the only parameter, you can omit its name as usual, but Gr
     checkout([$class: 'MercurialSCM', source: 'ssh://hg@bitbucket.org/user/repo'])
 
 Here `source` is a mandatory parameter (_Repository URL_ in the UI), and `clean` (_Clean Build_) and `credentialsId` (_Credentials_) are optional parameters.
-This would correspond roughly to a freestyle project configured as follows:
+This would correspond roughly to a freestyle project whose `config.xml` includes:
 
 ```
   <scm class="hudson.plugins.mercurial.MercurialSCM">

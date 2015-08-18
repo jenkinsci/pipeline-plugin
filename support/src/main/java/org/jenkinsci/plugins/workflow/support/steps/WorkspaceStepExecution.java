@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.support.steps;
 
 import com.google.inject.Inject;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Job;
@@ -63,7 +64,7 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
         listener.getLogger().println("Running in " + workspace);
         body = getContext().newBodyInvoker()
                 .withContext(workspace)
-                .withCallback(new Callback(getContext(), lease))
+                .withCallback(new Callback(lease))
                 .withDisplayName(null)
                 .start();
         return false;
@@ -75,25 +76,17 @@ public class WorkspaceStepExecution extends AbstractStepExecutionImpl {
             body.cancel(cause);
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // lease is pickled
-    private static final class Callback extends BodyExecutionCallback {
+    @SuppressFBWarnings(value="SE_BAD_FIELD", justification="lease is pickled")
+    private static final class Callback extends BodyExecutionCallback.TailCall {
 
-        private final StepContext context;
         private final WorkspaceList.Lease lease;
 
-        Callback(StepContext context, WorkspaceList.Lease lease) {
-            this.context = context;
+        Callback(WorkspaceList.Lease lease) {
             this.lease = lease;
         }
 
-        @Override public void onSuccess(StepContext context, Object result) {
+        @Override protected void finished(StepContext context) throws Exception {
             lease.release();
-            this.context.onSuccess(result);
-        }
-
-        @Override public void onFailure(StepContext context, Throwable t) {
-            lease.release();
-            this.context.onFailure(t);
         }
 
     }
