@@ -56,22 +56,26 @@ public class CpsFlowExecutionTest {
     public static void register(Object o) {
         LOADER = new WeakReference<ClassLoader>(o.getClass().getClassLoader());
     }
-    @Test public void loaderReleased() throws Exception {
-        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition(CpsFlowExecutionTest.class.getName() + ".register(this)"));
-        r.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        assertNotNull(LOADER);
-        System.err.println(LOADER.get());
-        try {
-            // TODO in Groovy 1.8.9 this keeps static state, but only for the last script (as also noted in JENKINS-23762).
-            // The fix of GROOVY-5025 (62bfb68) in 1.9 addresses this, which we would get if JENKINS-21249 is implemented.
-            Field f = ASTTransformationVisitor.class.getDeclaredField("compUnit");
-            f.setAccessible(true);
-            f.set(null, null);
-        } catch (NoSuchFieldException e) {
-            // assuming that Groovy version is newer
-        }
-        MemoryAssert.assertGC(LOADER);
+    @Test public void loaderReleased() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(CpsFlowExecutionTest.class.getName() + ".register(this)"));
+                story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                assertNotNull(LOADER);
+                System.err.println(LOADER.get());
+                try {
+                    // TODO in Groovy 1.8.9 this keeps static state, but only for the last script (as also noted in JENKINS-23762).
+                    // The fix of GROOVY-5025 (62bfb68) in 1.9 addresses this, which we would get if JENKINS-21249 is implemented.
+                    Field f = ASTTransformationVisitor.class.getDeclaredField("compUnit");
+                    f.setAccessible(true);
+                    f.set(null, null);
+                } catch (NoSuchFieldException e) {
+                    // assuming that Groovy version is newer
+                }
+                MemoryAssert.assertGC(LOADER);
+            }
+        });
     }
 
     /* Failed attempt to make the test print soft references it has trouble clearing. The test ultimately passes, but cannot find the soft references via any root path.
