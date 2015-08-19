@@ -11,7 +11,6 @@ import java.util.Iterator;
 /**
  * Extension point that defines a collection of global variables.
  * 
- * @since 1.7
  * @author Kohsuke Kawaguchi
  * @see GlobalVariable#ALL
  */
