@@ -15,12 +15,11 @@ import java.util.List;
  * instead of {@link DefaultGroovyStaticMethods#sleep(Object, long)} that Groovy adds to {@code Object}.
  *
  * <p>
- * We had to do this because we made a mistake of having the 'sleep' step pick the same name as
- * a method defined on {@code Object}. Granted, it is a method added by Groovy, not by JDK, but the end result
- * is still the same, and the consequence is as severe as trying to override {@code hashCode()} method
- * and use it for something completely different. We ended up doing this because when we did it, a bug masked
- * the severity of the problem. In hindsight, we should have thought twice before adding a work around
- * like {@link CpsScript#sleep(long)}.
+ * We have to do this because the {@code sleep} step (intentionally) picks the same name
+ * as a method defined on {@code Object}, which {@link CpsScript#sleep(long)} delegates.
+ * Granted, it is a method added by Groovy, not by JDK, but the end result is still the same,
+ * and the consequence is as severe as trying to override {@code hashCode()} method and use it for something completely different.
+ * (At the time a bug masked the severity of the problem.)
  *
  * @author Kohsuke Kawaguchi
  */
