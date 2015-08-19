@@ -1,8 +1,6 @@
 package org.jenkinsci.plugins.workflow.cps;
 
-import hudson.ExtensionList;
 import org.codehaus.groovy.runtime.GStringImpl;
-import org.codehaus.groovy.runtime.InvokerInvocationException;
 import org.codehaus.groovy.runtime.ScriptBytecodeAdapter;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.Whitelist;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.AbstractWhitelist;
