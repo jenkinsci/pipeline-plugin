@@ -100,19 +100,18 @@ public class WorkflowLibRepositoryTest {
     public void userDefinedGlobalVariable() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                File f = new File(repo.workspace, UserDefinedGlobalVariable.PREFIX+"/acme.groovy");
-                f.getParentFile().mkdirs();
-
-                FileUtils.writeStringToFile(f, StringUtils.join(Arrays.asList(
+                File vars = new File(repo.workspace, UserDefinedGlobalVariable.PREFIX);
+                vars.mkdirs();
+                FileUtils.writeStringToFile(new File(vars, "acmeVar.groovy"), StringUtils.join(Arrays.asList(
                         "def hello(name) {echo \"Hello ${name}\"}",
                         "def foo(x) { this.x = x+'-set'; }",
-                        "def bar() { return x+'-get' }",
-
-                        // test invocation as a function
-                        "def call(a,b) { echo \"call($a,$b)\" }",
-
-                        // test closure invocation from body
-                        "def bodyCall(body) { ",
+                        "def bar() { return x+'-get' }")
+                        , "\n"));
+                FileUtils.writeStringToFile(new File(vars, "acmeFunc.groovy"), StringUtils.join(Arrays.asList(
+                        "def call(a,b) { echo \"call($a,$b)\" }")
+                        , "\n"));
+                FileUtils.writeStringToFile(new File(vars, "acmeBody.groovy"), StringUtils.join(Arrays.asList(
+                        "def call(body) { ",
                         "  def config = [:]",
                         "  body.resolveStrategy = Closure.DELEGATE_FIRST",
                         "  body.delegate = config",
@@ -127,11 +126,12 @@ public class WorkflowLibRepositoryTest {
                 WorkflowJob p = jenkins.createProject(WorkflowJob.class, "p");
 
                 p.setDefinition(new CpsFlowDefinition(
-                        "acme.hello('Workflow');" +
-                        "acme.foo('seed');" +
-                        "echo '['+acme.bar()+']';"+
-                        "acme(1,2);"+
-                        "acme.bodyCall { title = 'yolo' }",true));
+                        "acmeVar.hello('Workflow');" +
+                        "acmeVar.foo('seed');" +
+                        "echo '['+acmeVar.bar()+']';"+
+                        "acmeFunc(1,2);"+
+                        "acmeBody { title = 'yolo' }",
+                    true));
 
                 // build this workflow
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
