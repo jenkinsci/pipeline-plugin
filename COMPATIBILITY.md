@@ -151,6 +151,68 @@ This allows most parameters to be left at their default values in a workflow scr
 For Java-level compatibility, leave any previous constructors in place, but mark them `@Deprecated`.
 Also remove `@DataBoundConstructor` from them (there can be only one).
 
+##### Handling default values
+
+To ensure _Snippet Generator_ enumerates only those options the user has actually customized from their form defaults, ensure that Jelly `default` attributes match the property defaults as seen from the getter.
+For a cleaner XStream serial form in freestyle projects, it is best for the default value to also be represented as a null in the Java field.
+So for example if you want a textual property which can sensibly default to blank, your configuration form would look like
+
+```xml
+<f:entry field="stuff" title="${%Stuff}">
+    <f:textbox/>
+</f:entry>
+```
+
+and your `Describable` should use
+
+```java
+private @CheckForNull String stuff;
+public @CheckForNull String getStuff() {
+    return stuff;
+}
+@DataBoundSetter public void setStuff(@CheckForNull String stuff) {
+    this.stuff = Util.fixNull(stuff);
+}
+```
+
+If you want a nonblank default, it is a little more complicated.
+If you do not care about XStream hygiene, for example because the `Describable` is a Workflow `Step` (or is only being used as part of one):
+
+```xml
+<f:entry field="stuff" title="${%Stuff}">
+    <f:textbox default="${descriptor.defaultStuff}"/>
+</f:entry>
+```
+
+```java
+private @Nonnull String stuff = DescriptorImpl.defaultStuff;
+public @Nonnull String getStuff() {
+    return stuff;
+}
+@DataBoundSetter public void setStuff(@Nonnull String stuff) {
+    this.stuff = stuff;
+}
+@Extension public static class DescriptorImpl extends Descriptor<Whatever> {
+    public static final String defaultStuff = "junk";
+    // …
+}
+```
+
+To make sure the field is omitted from the XStream form when unmodified, you can use the same `Descriptor` and configuration form but null out the default:
+
+```java
+private @CheckForNull String stuff;
+public @Nonnull String getStuff() {
+    return stuff == null ? DescriptorImpl.defaultStuff : stuff;
+}
+@DataBoundSetter public void setStuff(@Nonnull String stuff) {
+    this.stuff = stuff.equals(DescriptorImpl.defaultStuff) ? null : stuff;
+}
+```
+
+None of these considerations apply to mandatory parameters with no default, which should be requested in the `@DataBoundConstructor` and have a simple getter.
+(You could still have a `default` in the configuration form as a hint to new users, as a complement to a full description in `help-stuff.html`, but the value chosen will always be saved.)
+
 ### SCMs
 
 See the [user documentation](scm-step/README.md) for background. The `checkout` metastep uses an `SCM`.
