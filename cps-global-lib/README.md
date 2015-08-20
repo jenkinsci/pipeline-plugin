@@ -26,6 +26,9 @@ This directory is added to the classpath when executing workflows.
 
 The `vars` directory hosts scripts that define global variables accessible from
 workflow scripts.
+The basename of each `*.groovy` file should be a Groovy (~ Java) identifier, conventionally `camelCased`.
+The matching `*.txt`, if present, can contain documentation, processed through the system’s configured markup formatter
+(so may really be HTML, Markdown, etc., though the `txt` extension is required).
 
 The groovy source files in these directories get the same sandbox / CPS
 transformation just like your workflow scripts.
