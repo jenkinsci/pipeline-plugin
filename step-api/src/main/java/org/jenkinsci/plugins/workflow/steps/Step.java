@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
+import hudson.ExtensionPoint;
 import hudson.model.AbstractDescribableImpl;
 
 import hudson.model.Describable;
@@ -43,7 +44,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  * It may also use {@link DataBoundSetter} for optional properties.
  * All properties also need public getters (or to be public fields) for data binding to work.
  */
-public abstract class Step extends AbstractDescribableImpl<Step> {
+public abstract class Step extends AbstractDescribableImpl<Step> implements ExtensionPoint {
     /**
      * Start execution of something and report the end result back to the given callback.
      *
