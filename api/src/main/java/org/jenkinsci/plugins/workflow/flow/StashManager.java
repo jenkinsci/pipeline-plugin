@@ -101,6 +101,7 @@ public class StashManager {
      * @param workspace a directory to copy into
      */
     public static void unstash(@Nonnull Run<?,?> build, @Nonnull String name, @Nonnull FilePath workspace, @Nonnull TaskListener listener) throws IOException, InterruptedException {
+        Jenkins.checkGoodName(name);
         InputStream is = new FileInputStream(storage(build, name));
         try {
             workspace.untarFrom(is, FilePath.TarCompression.GZIP);
@@ -180,7 +181,12 @@ public class StashManager {
     }
 
     private static @Nonnull File storage(@Nonnull Run<?,?> build, @Nonnull String name) {
-        return new File(storage(build), name + SUFFIX);
+        File dir = storage(build);
+        File f = new File(dir, name + SUFFIX);
+        if (!f.getParentFile().equals(dir)) {
+            throw new IllegalArgumentException();
+        }
+        return f;
     }
 
     private static final String SUFFIX = ".tar.gz";
