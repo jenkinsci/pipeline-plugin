@@ -102,7 +102,11 @@ public class StashManager {
      */
     public static void unstash(@Nonnull Run<?,?> build, @Nonnull String name, @Nonnull FilePath workspace, @Nonnull TaskListener listener) throws IOException, InterruptedException {
         Jenkins.checkGoodName(name);
-        InputStream is = new FileInputStream(storage(build, name));
+        File storage = storage(build, name);
+        if (!storage.isFile()) {
+            throw new AbortException("No such saved stash ‘" + name + "’");
+        }
+        InputStream is = new FileInputStream(storage);
         try {
             workspace.untarFrom(is, FilePath.TarCompression.GZIP);
             // currently nothing to print; listener is a placeholder
