@@ -453,7 +453,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         try {
             StashManager.maybeClearAll(this);
         } catch (IOException x) {
-            LOGGER.log(Level.WARNING, null, x);
+            LOGGER.log(Level.WARNING, "failed to clean up stashes from " + this, x);
         }
     }
 
