@@ -79,6 +79,9 @@ public class StashManager {
         Jenkins.checkGoodName(name);
         File storage = storage(build, name);
         storage.getParentFile().mkdirs();
+        if (storage.isFile()) {
+            listener.getLogger().println("Warning: overwriting stash ‘" + name + "’");
+        }
         OutputStream os = new FileOutputStream(storage);
         try {
             int count = workspace.archive(ArchiverFactory.TARGZ, os, new DirScanner.Glob(Util.fixEmpty(includes) == null ? "**" : includes, excludes));
