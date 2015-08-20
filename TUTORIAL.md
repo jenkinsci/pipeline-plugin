@@ -2,32 +2,38 @@ This document is intended for new users of the CloudBees Workflow feature to lea
 
 # Getting Started
 
-Note: You need to be running Jenkins 1.580.1 or later (1.596.1 or later for more recent features).
-If you have not already done so, make sure Workflow is installed: go to the Plugin Manager and install _Workflow: Aggregator_ and restart Jenkins.
-Also make sure the _Git_ and _JUnit_ plugins are installed and up to date.
+Before you begin, ensure you have the following installed or running:
 
-If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Workflow (plus some extra associated features).
++ You must be running Jenkins 1.580.1 or later (1.596.1 or later for more recent features).
 
-If you want to play with Workflow without installing Jenkins separately (or touching your production system), try running the [Docker demo](demo/README.md).
++ Ensure Workflow is installed: navigate to Plugin Manager and install _Workflow: Aggregator_ and restart Jenkins.
 
-# Creating a workflow
++  _Git_ and _JUnit_ plugins are installed and up to date.
 
-Click _New Item_, pick a name for your flow, select _Workflow_, and click _OK_.
+**Note** If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Workflow (plus additional associated features).
+
+If you want to play with Workflow without installing Jenkins separately (or accessing your production system), try running the [Docker demo](demo/README.md).
+
+# Creating a Workflow
+
+To crete a workflow, perform the following steps:
+
+1. Click **New Item**, pick a name for your flow, select **Workflow**, and click **OK**.
 You will be taken to the configuration screen for the flow.
 
-The most important part here is the _Script_ textarea, where your flow script will be defined.
-(Later we will learn about other options.)
-Let us start with a trivial script:
+The _Script_ text area is important as this is where your flow script is defined. We'll start with a trivial script:
 
 ```groovy
 echo 'hello from Workflow'
 ```
+**Note** if you are not a Jenkins administrator, click the **Use Groovy Sandbox** option (read [here](https://wiki.jenkins-ci.org/display/JENKINS/Script+Security+Plugin#ScriptSecurityPlugin-GroovySandboxing) to learn more about this option).
 
-Also you should click the _Use Groovy Sandbox_ option if you are not a Jenkins administrator (read [here](https://wiki.jenkins-ci.org/display/JENKINS/Script+Security+Plugin#ScriptSecurityPlugin-GroovySandboxing) if you are curious what this means).
+2. **Save** your workflow when you are done.
 
-_Save_ your workflow when you are done.
-Click _Build Now_ to run it.
-You should see `#1` under _Build History_; click the ▾ and select _Console Output_ to see the output:
+3. Click **Build Now** to run it.
+You should see `#1` under _Build History_.
+
+4. Click  ▾ and select **Console Output** to see the output:
 
 ```
 Started by user anonymous
@@ -37,22 +43,30 @@ Running: End of Workflow
 Finished: SUCCESS
 ```
 
-## Flow scripts explained
 
-A workflow is a Groovy script which tells Jenkins what to do when your flow is run.
-If you are not familiar with Groovy, it is a scripting-friendly language related to Java ([documentation](http://groovy-lang.org/documentation.html)).
-You do not need to know much general Groovy to use Workflow; relevant bits of syntax will be introduced as needed.
 
-For this example, it suffices to know that `echo` is a _step_: a function defined in a Jenkins plugin and made available to all workflows.
-Groovy functions can use a C/Java-like syntax:
+
+
+
+
+## Understanding Flow Scripts
+
+A workflow is a [Groovy](http://groovy-lang.org/documentation.html) script that tells Jenkins what to do when your flow is run.
+You do not need to know much general Groovy to use Workflow - relevant bits of syntax are introduced as needed.
+
+**Example** In this example, `echo` is a _step_: a function defined in a Jenkins plugin and made available to all workflows.
+Groovy functions can use a C/Java-like syntax such as:
 
 ```groovy
 echo("hello from Workflow");
 ```
 
-but you can also drop the semicolon (`;`), drop the parentheses (`(` and `)`), and use single quotes (`'`) instead of double (`"`) if you do not need to perform variable substitutions.
+If you do not need to perform variable substitutions, you can:
+* drop the semicolon (`;`)
+* drop the parentheses (`(` and `)`)
+* use single quotes (`'`) instead of double (`"`)
 
-Comments in Groovy, like in Java, can use single-line or multiline styles:
+Comments in Groovy, as in Java, can use single-line or multiline styles:
 
 ```groovy
 /*
@@ -61,22 +75,23 @@ Comments in Groovy, like in Java, can use single-line or multiline styles:
 // FIXME write this flow
 ```
 
-# A simple flow
+# Creating a Simple Flow
 
-So now let us do something useful, but no more complex than what you could do with a freestyle project.
+The following sections guide you through creating a simple flow.
 
-## Some setup
+## Setting Up
+To set up for creating a flow, ensure you have the following:
 
-First, make sure a Maven installation is available to do builds with.
-Go to _Jenkins » Manage Jenkins » Configure System_, click _Add Maven_, give it the name _M3_ and let it be installed automatically.
+1. First, you need a Maven installation available to do builds with.
+Go to _Jenkins » Manage Jenkins » Configure System_, click **Add Maven**, give it the name **M3** and allow it to install automatically.
 
-Also if you do not have Git installed on your Jenkins server, try clicking _Delete Git_ on the default Git installation, and _Add Git » JGit_ to replace it.
+2. Only if you do not have Git installed on your Jenkins server: click **Delete Git** on the default Git installation and _Add Git » JGit_ to replace it.
 
-Finally _Save_.
+3. Click **Save**.
 
-## Checking out and building sources
+## Checking out and Building Sources
 
-Now click on your flow and _Configure_ it to edit its script.
+Now, click on your flow and **Configure** it to edit its script.
 
 ```groovy
 node {
@@ -86,39 +101,39 @@ node {
 }
 ```
 
-If you run this script, it should check out a Git repository and run Maven to build it.
-Some tests will be run, which might (at random) pass or fail or be skipped.
-If they fail, the `mvn` command will fail and your flow run will end with
+When you run this script:
+*  it should check out a Git repository and run Maven to build it.
+* it will run some tests that might (at random) pass, fail, or be skipped.
+If they fail, the `mvn` command will fail and your flow run will end with:
 
 ```
 ERROR: script returned exit code 1
 Finished: FAILURE
 ```
 
-### Windows variations
+### Modifying for Windows Variations
 
-The instructions in this tutorial assume Jenkins is running on Linux or another Unix-like operating system.
-If your Jenkins server (or, later, slave) are running on Windows, try using `bat` in place of `sh`, and use backslashes as the file separator where needed.
-(Backslashes do generally need to be escaped inside strings.)
-For example, rather than
+This documentation assumes Jenkins is running on Linux or another Unix-like operating system. If your Jenkins server (or, later, slave) is running on Windows, try using `bat` in place of `sh`, and use backslashes as the file separator where needed (backslashes do generally need to be escaped inside strings).
+
+**Example**: rather than:
 
 ```groovy
 sh "${mvnHome}/bin/mvn -B verify"
 ```
 
-you could use
+you could use:
 
 ```groovy
 bat "${mvnHome}\\bin\\mvn -B verify"
 ```
 
-## Syntax explained
+## Understanding Syntax
 
 `node` is a step which schedules a task to run by adding it to the Jenkins build queue.
-As soon as an executor slot is available on some _node_ (the Jenkins master, or a slave), the task is run on that node.
-`node` also allocates a _workspace_ (file directory) on that node for the duration of the task (more on this later).
+As soon as an executor slot is available on some **node** (the Jenkins master, or a slave), the task is run on that node.
+`node` also allocates a **workspace** (file directory) on that node for the duration of the task (more on this later).
 
-Groovy functions can accept _closures_ (blocks of code), and some steps expect a block.
+Groovy functions can accept **closures** (blocks of code), and some steps expect a block.
 In this case the code between the braces (`{` and `}`) is the body of the `node` step.
 Many steps (like `git` and `sh` in this example) can only run in the context of a node, so trying to run just
 
@@ -178,7 +193,7 @@ We could also use a more Java-like syntax with a static type:
 String mvnHome = tool("M3");
 ```
 
-Finally, we want to run our Maven build. When Groovy encounters `$` inside a double-quoted string
+Finally, we want to run our Maven build. When Groovy encounters `$` inside a double-quoted string:
 
 ```groovy
 "${mvnHome}/bin/mvn -B verify"
@@ -191,16 +206,18 @@ The more verbose Java-like syntax would be
 mvnHome + "/bin/mvn -B verify"
 ```
 
-In the console output you will see the final command being run, for example
+In the console output you will see the final command being run.
+
+**Example**:
 
 ```
 [flow] Running shell script
 + /path/to/jenkins/tools/hudson.tasks.Maven_MavenInstallation/M3/bin/mvn -B verify
 ```
 
-## Managing the environment
+## Managing the Environment
 
-Another way to use tools by default is to add them to your executable path, by using the special variable `env` defined for all workflows:
+One way to use tools by default is to add them to your executable path - by using the special variable `env` that is defined for all workflows:
 
 ```groovy
 node {
@@ -211,11 +228,11 @@ node {
 }
 ```
 
-Properties of this variable will be environment variables on the current node.
-You can also override certain environment variables, and the overrides will be seen by subsequent `sh` steps (or anything else that pays attention to environment variables).
-This is convenient because now we can run `mvn` without a fully-qualified path.
+* Properties of this variable are environment variables on the current node.
+* You can also override certain environment variables, and the overrides will be seen by subsequent `sh` steps (or anything else that pays attention to environment variables).
+* You can run `mvn` without a fully-qualified path.
 
-Setting a variable like `PATH` in this way is of course only safe if you are using a single slave for this build, so we will not do so below.
+Setting a variable like `PATH` in this way is only safe if you are using a single slave for this build, so we will not do so below.
 As an alternative you can use the `withEnv` step to set a variable within a scope:
 
 ```groovy
@@ -227,19 +244,20 @@ node {
 }
 ```
 
-Some environment variables are defined by Jenkins by default, as for freestyle builds.
-For example, `env.BUILD_TAG` can be used to get a tag like `jenkins-projname-1` from Groovy code, or `$BUILD_TAG` can be used from a `sh` script.
+Some environment variables are defined by Jenkins by default.
 
-See the help in the _Snippet Generator_ for the `withEnv` step for more details on this topic.
+**Example**: `env.BUILD_TAG` can be used to get a tag like `jenkins-projname-1` from Groovy code, or `$BUILD_TAG` can be used from a `sh` script.
 
-## Build parameters
+See  Help in the **Snippet Generator** for the `withEnv` step for more details on this topic.
 
-If you have configured your workflow to accept parameters when it is built (_Build with Parameters_), these will be accessible as Groovy variables of the same name.
+## Configuring to Accept Build Parameters
 
-# Recording test results and artifacts
+If you have configured your workflow to accept parameters when it is built - **Build with Parameters** - they are accessible as Groovy variables of the same name.
 
-Rather than failing the build if there are some test failures, we would like Jenkins to record them, but then proceed.
-We would also like to capture the JAR that we built.
+# Recording Test Results and Artifacts
+
+Rather than failing the build if there are test failures, you want Jenkins to record them -- and then proceed.
+You must capture the JAR that you built.
 
 ```groovy
 node {
@@ -251,17 +269,18 @@ node {
 }
 ```
 
-Now if tests fail, the flow will just be marked unstable (yellow ball), and you can browse the _Test Result Trend_ to see the history.
-You should also see _Last Successful Artifacts_ on the flow index page.
+* If tests fail, the flow is marked unstable (yellow ball), and you can browse the **Test Result Trend** to see the history.
+* You should  see **Last Successful Artifacts** on the flow index page.
 
-## Syntax explained
+## Understanding Syntax
 
-`-Dmaven.test.failure.ignore` is a Maven option to allow the `mvn` command to exit normally (status 0), so that the flow continues, even when some test failures are recorded on disk.
+`-Dmaven.test.failure.ignore` is a Maven option that allows the `mvn` command to exit normally (status 0), so that the flow continues - even when test failures are recorded on disk.
 
-Next we run the `step` step twice.
+Next, run the `step` step twice.
 This step just allows you to use certain build (or post-build) steps already defined in Jenkins for use in traditional projects.
 It takes one parameter (called `delegate` but omitted here), whose value is a standard Jenkins build step.
-We could create the delegate using Java constructor/method calls, using Groovy or Java syntax:
+
+You could create the delegate using Java constructor/method calls, using Groovy or Java syntax:
 
 ```groovy
 def aa = new hudson.tasks.ArtifactArchiver('**/target/*.jar')
@@ -270,30 +289,33 @@ step aa
 ```
 
 but this is cumbersome and does not work well with Groovy sandbox security, so any object-valued argument to a step may instead be given as a map.
-Here
+
+The following:
 
 ```groovy
 [$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true]
 ```
 
-specifies the values of the `artifacts` and `fingerprint` properties (controlling what files to save, and whether to also record fingerprints for them).
-`$class` is used to pick the kind of object to create.
+* specifies the values of the `artifacts` and `fingerprint` properties (controls what files to save and records fingerprints for them).
+
+* `$class` is used to pick the kind of object to create.
 It may be a fully-qualified class name (`hudson.tasks.ArtifactArchiver`), but the simple name may be used when unambiguous.
 
-In some cases part of a step configuration will force an object at a certain point to be of a fixed class, so `$class` can be omitted entirely.
-For example, rather than using the simple `git` step, you can use the more general `checkout` step and specify any complex configuration supported by the Git plugin:
+In some cases, part of a step configuration will force an object to be of a fixed class. Thus, `$class` can be omitted entirely.
+
+**Example**: rather than using the simple `git` step, you can use the more general `checkout` step and specify any complex configuration supported by the Git plugin:
 
 ```groovy
 checkout scm: [$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfigs: [[url: 'https://github.com/jglick/simple-maven-project-with-tests']]]
 ```
 
-Here `[[name: '*/master']]` is an array with one map element, `[name: '*/master']`, which is an object of type `hudson.plugins.git.BranchSpec`, but we can omit `$class: 'BranchSpec'` since `branches` can only hold this kind of object.
+Here, `[[name: '*/master']]`is an array with one map element, `[name: '*/master']`, which is an object of type `hudson.plugins.git.BranchSpec`, but we can omit `$class: 'BranchSpec'` since `branches` can only hold this kind of object.
 Similarly, the elements of `userRemoteConfigs` are declared to be of type `UserRemoteConfig`, so this need not be mentioned.
 
-# Using slaves
+# Using Slaves
 
-So far our workflow has run only on the Jenkins master, assuming you had no slaves configured.
-You can even force it to run on the master by telling the `node` step this:
+Thus far, workflow has run only on the Jenkins master - assuming you had no slaves configured.
+You can even force it to run on the master by telling the `node` step the following:
 
 ```groovy
 node('master') {
@@ -301,15 +323,20 @@ node('master') {
 }
 ```
 
-(Here we are passing a value for the optional `label` parameter of the step, as well as a body block.)
+Here, you pass a value for the optional `label` parameter of the step, as well as a body block.
 
-To create a simple slave, select _Manage Jenkins » Manage Nodes » New Node_ and create a _Dumb Slave_.
+To create a simple slave:
+
+1.  Select _Manage Jenkins » Manage Nodes » New Node_ and create a _Dumb Slave_.
 Leave _# of executors_ as 1.
-Pick some _Remote root directory_ such as `/tmp/slave`.
-Type `remote` in the _Labels_ field and set the _Launch method_ to _Launch slave agents via Java Web Start_.
-_Save_, then click on the new slave and _Launch_.
 
-Now go back to your flow definition and request this slave’s label:
+2. Pick a **Remote root directory** such as `/tmp/slave`.
+
+3. Enter `remote` in the **Labels** field and set the _Launch method_ to _Launch slave agents via Java Web Start_.
+
+4. **Save**, then click on the new slave and **Launch**.
+
+5. Now, go back to your flow definition and request this slave’s label:
 
 ```groovy
 node('remote') {
@@ -325,7 +352,7 @@ node('unix && 64bit') {
 }
 ```
 
-When you _Build Now_ you should see
+When you **Build Now**, you see:
 
 ```
 Running on <yourslavename> in /<slaveroot>/workspace/<flowname>
@@ -333,9 +360,9 @@ Running on <yourslavename> in /<slaveroot>/workspace/<flowname>
 
 and the `M3` Maven installation being unpacked to this slave root.
 
-## Pausing; flyweight vs. heavyweight executors
+## Pausing: Flyweight vs. Heavyweight Executors
 
-Let us pause the script so we can take a better look at what is happening.
+Pause the script to take a better look at what is happening:
 
 ```groovy
 node('remote') {
@@ -345,10 +372,10 @@ node('remote') {
 ```
 
 The `input` step pauses flow execution.
-Its default `message` parameter gives a prompt which will be shown to a human.
-(You can optionally request information back, hence the name of the step.)
+Its default `message` parameter gives a prompt, which is shown to a human.
+You can, optionally, request information back.
 
-When you run a new build, you should see
+When you run a new build, you wil see
 
 ```
 Running: Input
@@ -375,7 +402,7 @@ But only the first will have grabbed the one available executor on the slave; th
 To finish up, click the ▾ beside either executor entry for any running flow and select _Paused for Input_, then click _Proceed_.
 (You can also click the link in the console output.)
 
-## Workspaces
+## Allocating Workspaces
 
 Besides waiting to allocate an executor on a node, the `node` step also automatically allocates a _workspace_: a directory specific to this job where you can check out sources, run commands, and do other work.
 Workspaces are _locked_ for the duration of the step: only one build at a time can use a given workspace.
@@ -402,7 +429,7 @@ You can also use the `ws` step to explicitly ask for another workspace on the cu
 Inside its body all commands run in the second workspace.
 The `dir` step can be used to run a block with a different working directory (typically a subdirectory of the workspace) without allocating a new workspace.
 
-# Adding more complex logic
+# Adding More Complex Logic
 
 Your Groovy script can include functions, conditional tests, loops, `try`/`catch`/`finally` blocks, and so on.
 Save this flow definition:
@@ -442,7 +469,7 @@ Building version 1.0-SNAPSHOT
 If so, a Jenkins administrator will need to go to _Manage Jenkins » In-process Script Approval_ and _Approve_ `staticMethod org.codehaus.groovy.runtime.ScriptBytecodeAdapter findRegex java.lang.Object java.lang.Object`.
 Then try running your script again and it should work.)
 
-## Serialization of local variables
+## Serializing Local Variables
 
 If you tried inlining the `version` function as follows
 
@@ -491,7 +518,7 @@ node('remote') {
 }
 ```
 
-## Multiple threads
+## Creating Multiple Threads
 
 Workflows can use a `parallel` step to perform multiple actions at once.
 This special step takes a map as its argument; keys are “branch names” (labels for your own benefit), and values are blocks to run.
@@ -583,7 +610,7 @@ It can be useful to click on the _Workflow Steps_ link on the build’s sidebar.
 This will display a tree-table view of all the steps run so far in the build, grouped by logical block, for example `parallel` branch.
 You can click on individual steps and get more details, such as the log output for that step in isolation, the workspace associated with a `node` step, and so on.
 
-# Stages
+# Creating Stages
 
 By default, flow builds can run concurrently.
 The `stage` command lets you mark certain sections of a build as being constrained by limited concurrency (or, later, unconstrained).
@@ -599,18 +626,18 @@ Yet each build runs linearly and can even retain a single workspace, avoiding th
 
 Consult the [Docker demo](demo/README.md) for an example of a flow using multiple `stage`s.
 
-# Loading script text from version control
+# Loading Script Text from Version Control
 
 Complex flows would be cumbersome to write and maintain in the textarea provided in the Jenkins job configuration.
 Therefore it makes sense to load the program from another source, one that you can maintain using version control and standalone Groovy editors.
 
-## Entire script from SCM
+## Building Entire Script from SCM
 
 The easiest way to do this is to select _Groovy CPS DSL from SCM_ when defining the workflow.
 In that case you do not enter any Groovy code in the Jenkins UI; you just indicate where in source code you want to retrieve the program.
 (If you update this repository, a new build will be triggered, so long as your job is configured with an SCM polling trigger.)
 
-## Manual loading
+## Triggering Manual Loading
 
 For some cases you may prefer to explicitly load Groovy script text from some source.
 The standard Groovy `evaluate` function can be used, but most likely you will want to load a flow definition from a workspace.
@@ -668,12 +695,12 @@ return this;
 
 In this case `devQAStaging` runs on the same node as the main source code checkout, while `production` runs outside of that block (and in fact allocates a different node).
 
-## Global libraries
+## Retaining Global Libraries
 
 Injection of function and class names into a flow before it runs is handled by plugins, and one is bundled with workflow that allows you to get rid of the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
 A [separate document](cps-global-lib/README.md) has details on this system.
 
-## Multibranch projects
+## Creating Multibranch Projects
 
 A new _Workflow: Multibranch_ plugin (as of this writing still in beta) offers an even better way of versioning your Workflow, and managing your project generally.
 You need to create a distinct project type, _Multibranch Workflow_.
@@ -693,9 +720,8 @@ Jenkins will automatically detect the new branch in your repository and create a
 The neat thing is that if you want to change your Workflow script—for example, to add a new Jenkins publisher step corresponding to reports your `Makefile`/`pom.xml`/etc. is newly creating—you just edit `Jenkinsfile` in your change.
 The Workflow script is always synchronized with the rest of the source code you are working on: `checkout scm` checks out the same revision as the script is loaded from.
 
-# Exploring available steps
-
-There are a number of workflow steps not discussed in this document, and plugins can add more.
+# Exploring Available Steps
+SThere are a number of workflow steps not discussed in this document, and plugins can add more.
 Even steps discussed here can take various special options that can be added from release to release.
 To make it possible to browse all available steps and their syntax, a help tool is built into the flow definition screen.
 
