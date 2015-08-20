@@ -25,15 +25,23 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import groovy.lang.GroovyObject;
+import hudson.ExtensionList;
 import hudson.ExtensionPoint;
-import javax.annotation.Nonnull;
+import hudson.util.Iterators.FlattenIterator;
 import jenkins.model.RunAction2;
+
+import javax.annotation.Nonnull;
+import java.util.Iterator;
 
 /**
  * Defines a provider of a global variable offered to flows.
  * Within a given flow execution, the variable is assumed to be a singleton.
  * It is created on demand if the script refers to it by name.
- * <p>Should have a view named {@code help} offering usage.
+ *
+ * <p>
+ * Should have a view named {@code help} offering usage.
+ * 
+ * @see GlobalVariableSet
  */
 public abstract class GlobalVariable implements ExtensionPoint {
 
@@ -54,4 +62,18 @@ public abstract class GlobalVariable implements ExtensionPoint {
      */
     public abstract @Nonnull Object getValue(@Nonnull CpsScript script) throws Exception;
 
+    /**
+     * Returns all the registered {@link GlobalVariable}s.
+     */
+    public static final Iterable<GlobalVariable> ALL = new Iterable<GlobalVariable>() {
+        @Override
+        public Iterator<GlobalVariable> iterator() {
+            return new FlattenIterator<GlobalVariable,GlobalVariableSet>(ExtensionList.lookup(GlobalVariableSet.class).iterator()) {
+                @Override
+                protected Iterator<GlobalVariable> expand(GlobalVariableSet vs) {
+                    return vs.iterator();
+                }
+            };
+        }
+    };
 }

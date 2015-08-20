@@ -1,7 +1,10 @@
 package org.jenkinsci.plugins.workflow.cps.global;
 
 import java.io.File;
+import java.util.Arrays;
+
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -30,6 +33,9 @@ public class WorkflowLibRepositoryTest {
 
     @Inject
     WorkflowLibRepository repo;
+
+    @Inject
+    UserDefinedGlobalVariableList uvl;
 
     /**
      * Have some global libs
@@ -83,6 +89,57 @@ public class WorkflowLibRepositoryTest {
                 story.j.assertBuildStatusSuccess(b);
 
                 story.j.assertLogContains("o=42", b);
+            }
+        });
+    }
+
+    /**
+     * User can define global variables.
+     */
+    @Test
+    public void userDefinedGlobalVariable() throws Exception {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                File vars = new File(repo.workspace, UserDefinedGlobalVariable.PREFIX);
+                vars.mkdirs();
+                FileUtils.writeStringToFile(new File(vars, "acmeVar.groovy"), StringUtils.join(Arrays.asList(
+                        "def hello(name) {echo \"Hello ${name}\"}",
+                        "def foo(x) { this.x = x+'-set'; }",
+                        "def bar() { return x+'-get' }")
+                        , "\n"));
+                FileUtils.writeStringToFile(new File(vars, "acmeFunc.groovy"), StringUtils.join(Arrays.asList(
+                        "def call(a,b) { echo \"call($a,$b)\" }")
+                        , "\n"));
+                FileUtils.writeStringToFile(new File(vars, "acmeBody.groovy"), StringUtils.join(Arrays.asList(
+                        "def call(body) { ",
+                        "  def config = [:]",
+                        "  body.resolveStrategy = Closure.DELEGATE_FIRST",
+                        "  body.delegate = config",
+                        "  body()",
+                        "  echo 'title was '+config.title",
+                        "}")
+                        , "\n"));
+
+                // simulate the effect of push
+                uvl.rebuild();
+
+                WorkflowJob p = jenkins.createProject(WorkflowJob.class, "p");
+
+                p.setDefinition(new CpsFlowDefinition(
+                        "acmeVar.hello('Workflow');" +
+                        "acmeVar.foo('seed');" +
+                        "echo '['+acmeVar.bar()+']';"+
+                        "acmeFunc(1,2);"+
+                        "acmeBody { title = 'yolo' }",
+                    true));
+
+                // build this workflow
+                WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+
+                story.j.assertLogContains("Hello Workflow", b);
+                story.j.assertLogContains("[seed-set-get]", b);
+                story.j.assertLogContains("call(1,2)", b);
+                story.j.assertLogContains("title was yolo", b);
             }
         });
     }

@@ -25,7 +25,6 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import hudson.Extension;
-import hudson.ExtensionList;
 import hudson.Functions;
 import hudson.model.Descriptor;
 import hudson.model.RootAction;
@@ -184,10 +183,10 @@ import org.kohsuke.stapler.StaplerResponse;
         return ds;
     }
 
-    @Restricted(DoNotUse.class)
-    public Collection<GlobalVariable> getGlobalVariables() {
+    @Restricted(DoNotUse.class) // for stapler
+    public Iterable<GlobalVariable> getGlobalVariables() {
         // TODO order TBD. Alphabetical? Extension.ordinal?
-        return ExtensionList.lookup(GlobalVariable.class);
+        return GlobalVariable.ALL;
     }
 
     @Restricted(NoExternalUse.class)
