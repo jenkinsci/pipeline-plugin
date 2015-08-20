@@ -43,7 +43,6 @@ import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -117,7 +116,6 @@ public class SCMBinderTest {
         });
     }
 
-    @Ignore("TODO fails without https://github.com/jenkinsci/subversion-plugin/pull/129 in 2.5.2")
     @Test public void exactRevisionSubversion() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
