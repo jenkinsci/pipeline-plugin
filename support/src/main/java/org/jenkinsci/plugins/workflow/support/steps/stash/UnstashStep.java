@@ -53,6 +53,8 @@ public class UnstashStep extends AbstractStepImpl {
 
     public static class Execution extends AbstractSynchronousNonBlockingStepExecution<Void> {
 
+        private static final long serialVersionUID = 1L;
+
         @Inject private transient UnstashStep step;
         @StepContextParameter private transient Run<?,?> build;
         @StepContextParameter private transient FilePath workspace;

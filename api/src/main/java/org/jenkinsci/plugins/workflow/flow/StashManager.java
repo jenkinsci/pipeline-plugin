@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.flow;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import hudson.ExtensionList;
 import hudson.ExtensionPoint;
@@ -73,6 +74,7 @@ public class StashManager {
      * @param includes a set of Ant-style file includes, separated by commas; null/blank is allowed as a synonym for {@code **} (i.e., everything)
      * @param excludes an optional set of Ant-style file excludes
      */
+    @SuppressFBWarnings(value="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE", justification="fine if mkdirs returns false")
     public static void stash(@Nonnull Run<?,?> build, @Nonnull String name, @Nonnull FilePath workspace, @Nonnull TaskListener listener, @CheckForNull String includes, @CheckForNull String excludes) throws IOException, InterruptedException {
         Jenkins.checkGoodName(name);
         File storage = storage(build, name);
@@ -141,6 +143,7 @@ public class StashManager {
     }
 
     @Restricted(DoNotUse.class) // currently just for tests
+    @SuppressFBWarnings(value="DM_DEFAULT_ENCODING", justification="test code")
     public static Map<String,Map<String,String>> stashesOf(@Nonnull Run<?,?> build) throws IOException {
         Map<String,Map<String,String>> result = new TreeMap<String,Map<String,String>>();
         File[] kids = storage(build).listFiles();
