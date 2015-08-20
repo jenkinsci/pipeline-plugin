@@ -10,7 +10,7 @@ mapdb-api:1.0.6.0
 mercurial:1.54
 mock-slave:1.8
 scm-api:0.2
-script-security:1.14
+script-security:1.15
 subversion:2.5
 workflow-aggregator:@VERSION@
 workflow-api:@VERSION@
