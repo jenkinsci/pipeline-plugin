@@ -4,7 +4,7 @@ stage 'Dev'
 node {
     checkout scm
     mvn '-o clean package'
-    archive 'target/x.war'
+    dir('target') {stash name: 'war', includes: 'x.war'}
 }
 
 stage 'QA'
@@ -48,7 +48,7 @@ def runTests(duration) {
 }
 
 def deploy(id) {
-    unarchive mapping: ['target/x.war' : 'x.war']
+    unstash 'war'
     sh "cp x.war /tmp/webapps/${id}.war"
 }
 
