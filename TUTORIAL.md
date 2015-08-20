@@ -606,7 +606,7 @@ Therefore it makes sense to load the program from another source, one that you c
 
 ## Entire script from SCM
 
-The easiest way to do this is to select _Groovy CPS DSL from SCM_ when defining the workflow.
+The easiest way to do this is to select _Workflow script from SCM_ when defining the workflow.
 In that case you do not enter any Groovy code in the Jenkins UI; you just indicate where in source code you want to retrieve the program.
 (If you update this repository, a new build will be triggered, so long as your job is configured with an SCM polling trigger.)
 
@@ -678,7 +678,7 @@ A [separate document](cps-global-lib/README.md) has details on this system.
 A new _Workflow: Multibranch_ plugin (as of this writing still in beta) offers an even better way of versioning your Workflow, and managing your project generally.
 You need to create a distinct project type, _Multibranch Workflow_.
 
-When you have a multibranch workflow, the configuration screen will resemble _Groovy CPS DSL from SCM_ in that your Workflow script comes from source control, not the Jenkins job configuration.
+When you have a multibranch workflow, the configuration screen will resemble _Workflow script from SCM_ in that your Workflow script comes from source control, not the Jenkins job configuration.
 The difference is that you do not configure a single branch, but a _set_ of branches, and Jenkins creates a subproject for each branch it finds in your repository.
 
 For example, if you select _Git_ as the branch source (Subversion and Mercurial are also supported already), you will be prompted for the usual connection information,
