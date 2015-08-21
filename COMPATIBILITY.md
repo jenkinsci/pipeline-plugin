@@ -8,8 +8,6 @@ Entries list the class name serving as the entry point to the relevant functiona
 
 ## SCMs
 
-See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for making `SCM`s compatible.
-
 - [X] `GitSCM` (`git`): supported as of 2.3; native `git` step also bundled
 - [X] `SubversionSCM` (`subversion`): supported as of 2.5; native `svn` step also bundled
 - [X] `MercurialSCM` (`mercurial`): supported as of 1.51
