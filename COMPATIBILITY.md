@@ -64,7 +64,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [X] `TimestamperBuildWrapper` (`timestamper`): supported as of 1.7
 - [ ] `MaskPasswordsBuildWrapper` (`mask-passwords`): [PR 3](https://github.com/jenkinsci/mask-passwords-plugin/pull/3)
 - [X] `SSHAgentBuildWrapper` (`ssh-agent`): supported as of 1.8
-- [ ] `XvfbBuildWrapper` (`xvfb`): [JENKINS-28928](https://issues.jenkins-ci.org/browse/JENKINS-28928)
+- [X] `XvfbBuildWrapper` (`xvfb`): supported as of 1.1.0-beta-1
 - [ ] `LockWrapper` (`locks-and-latches`): [JENKINS-29461](https://issues.jenkins-ci.org/browse/JENKINS-29461)
 - [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
 - [ ] `NpmPackagesBuildWrapper` (`nodejs`): [JENKINS-29980](https://issues.jenkins-ci.org/browse/JENKINS-29980)
