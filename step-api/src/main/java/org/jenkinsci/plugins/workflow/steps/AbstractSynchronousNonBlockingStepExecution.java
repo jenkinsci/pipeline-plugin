@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
 
 /**
  * Similar to {@link AbstractSynchronousStepExecution} (it executes synchronously too) but it does not block the CPS VM thread.
- * @see {@link StepExecution}
+ * @see StepExecution
  * @param <T> the type of the return value (may be {@link Void})
  */
 public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends AbstractStepExecutionImpl {
