@@ -139,7 +139,7 @@ public class StashManager {
 
     /**
      * Copy any stashes from one build to another.
-     * @param build a build possibly passed to {@link #stash} in the past
+     * @param from a build possibly passed to {@link #stash} in the past
      * @param to a new build
      */
     public static void copyAll(@Nonnull Run<?,?> from, @Nonnull Run<?,?> to) throws IOException {
