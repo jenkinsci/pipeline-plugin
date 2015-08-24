@@ -206,7 +206,7 @@ import org.kohsuke.stapler.StaplerResponse;
         JSONObject jsonO = JSONObject.fromObject(json);
         Jenkins j = Jenkins.getActiveInstance();
         Class<?> c = j.getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
-        Descriptor<?> descriptor = j.getDescriptor(c.asSubclass(Step.class));
+        StepDescriptor descriptor = (StepDescriptor) j.getDescriptor(c.asSubclass(Step.class));
         Object o;
         try {
             o = descriptor.newInstance(req, jsonO);
@@ -214,7 +214,12 @@ import org.kohsuke.stapler.StaplerResponse;
             return HttpResponses.plainText(Functions.printThrowable(x));
         }
         try {
-            return HttpResponses.plainText(object2Groovy(o));
+            String groovy = object2Groovy(o);
+            if (descriptor.isAdvanced()) {
+                String warning = Messages.Snippetizer_this_step_should_not_normally_be_used_in();
+                groovy = "// " + warning + "\n" + groovy;
+            }
+            return HttpResponses.plainText(groovy);
         } catch (UnsupportedOperationException x) {
             Logger.getLogger(CpsFlowExecution.class.getName()).log(Level.WARNING, "failed to render " + json, x);
             return HttpResponses.plainText(x.getMessage());
