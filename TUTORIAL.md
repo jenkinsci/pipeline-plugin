@@ -6,11 +6,11 @@ Before you begin, ensure you have the following installed or running:
 
 + You must be running Jenkins 1.580.1 or later (1.596.1 or later for more recent features).
 
-+ Ensure Workflow is installed: navigate to Plugin Manager and install _Workflow: Aggregator_ and restart Jenkins.
++ Ensure Workflow is installed: navigate to **Plugin Manager**, install **Workflow: Aggregator** and restart Jenkins.
 
-+  _Git_ and _JUnit_ plugins are installed and up to date.
++  Git and JUnit plugins are installed and up to date.
 
-**Note** If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Workflow (plus additional associated features).
+**Note**: If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Workflow (plus additional associated features).
 
 If you want to play with Workflow without installing Jenkins separately (or accessing your production system), try running the [Docker demo](demo/README.md).
 
@@ -26,7 +26,7 @@ The _Script_ text area is important as this is where your flow script is defined
 ```groovy
 echo 'hello from Workflow'
 ```
-**Note** if you are not a Jenkins administrator, click the **Use Groovy Sandbox** option (read [here](https://wiki.jenkins-ci.org/display/JENKINS/Script+Security+Plugin#ScriptSecurityPlugin-GroovySandboxing) to learn more about this option).
+**Note**: if you are not a Jenkins administrator, click the **Use Groovy Sandbox** option (read [here](https://wiki.jenkins-ci.org/display/JENKINS/Script+Security+Plugin#ScriptSecurityPlugin-GroovySandboxing) to learn more about this option).
 
 2. **Save** your workflow when you are done.
 
@@ -375,7 +375,7 @@ The `input` step pauses flow execution.
 Its default `message` parameter gives a prompt, which is shown to a human.
 You can, optionally, request information back.
 
-When you run a new build, you wil see
+When you run a new build, you see:
 
 ```
 Running: Input
@@ -383,32 +383,32 @@ Ready to go?
 Proceed or Abort
 ```
 
-If you click _Proceed_ the build will proceed as before.
-But first go to the Jenkins main page and look at the _Build Executor Status_ widget.
-You will see an unnumbered entry under _master_ called something like _flowname #10_; executors #1 and #2 on the master will be idle.
-You will also see an entry under your slave, in a numbered row (probably #1) called _Building part of flowname #10_.
+If you click **Proceed**, the build will proceed as before.
+First, go to the Jenkins main page and look at the **Build Executor Status** widget.
+You will see an unnumbered entry under **master** called something like **flowname #10**; executors #1 and #2 on the master will be idle.
+You will also see an entry under your slave, in a numbered row (probably #1) called **Building part of flowname #10**.
 
 Why are there two executors consumed by one flow build?
-Every flow build itself runs on the master, using a _flyweight executor_: an uncounted slot that is assumed to not take any significant computational power.
+Every flow build itself runs on the master, using a **flyweight executor**: an uncounted slot that is assumed to not take any significant computational power.
 This executor represents the actual Groovy script, which almost all of the time is idle, waiting for a step to complete.
 Flyweight executors are always available.
 
 When you run a `node` step, a regular heavyweight executor is allocated on a node (usually a slave) matching the label expression, as soon as one is available.
 This executor represents the real work being done on the node.
 If you start a second build of the flow while the first is still paused with the one available executor, you will see both flow builds running on master.
-But only the first will have grabbed the one available executor on the slave; the other _part of flowname #11_ will be shown in _Build Queue (1)_.
-(After a moment the console log for the second build will note that it is still waiting for an available executor.)
+But only the first will have grabbed the one available executor on the slave; the other **part of flowname #11** will be shown in **Build Queue (1)**.
+(shortly after, the console log for the second build will note that it is still waiting for an available executor).
 
-To finish up, click the ▾ beside either executor entry for any running flow and select _Paused for Input_, then click _Proceed_.
-(You can also click the link in the console output.)
+To finish up, click the ▾ beside either executor entry for any running flow and select **Paused for Input**, then click **Proceed**
+(you can also click the link in the console output).
 
 ## Allocating Workspaces
 
-Besides waiting to allocate an executor on a node, the `node` step also automatically allocates a _workspace_: a directory specific to this job where you can check out sources, run commands, and do other work.
-Workspaces are _locked_ for the duration of the step: only one build at a time can use a given workspace.
-So if multiple builds need a workspace on the same node, additional workspaces will be allocated.
+In addition to waiting to allocate an executor on a node, the `node` step also automatically allocates a **workspace**: a directory specific to this job - where you can check out sources, run commands, and do other work.
+Workspaces are locked for the duration of the step: only one build at a time can use a given workspace.
+If multiple builds need a workspace on the same node, additional workspaces will be allocated.
 
-_Configure_ your slave, and set _# of executors_ to 2 (and _Save_).
+**Configure** your slave, set **# of executors** to two and **Save**.
 Now start your build twice in a row.
 The log for the second build will show
 
