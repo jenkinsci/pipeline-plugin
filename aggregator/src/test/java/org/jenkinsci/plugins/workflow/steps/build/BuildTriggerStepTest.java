@@ -25,7 +25,6 @@ import org.jvnet.hudson.test.MockFolder;
 
 import java.util.Arrays;
 import java.util.List;
-import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.junit.ClassRule;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.FailureBuilder;
@@ -233,9 +232,7 @@ public class BuildTriggerStepTest {
     @Test public void buildVariables() throws Exception {
         j.createFreeStyleProject("ds").addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("param", "default")));
         WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
-        // TODO apparent sandbox bug using buildVariables.param: unclassified field java.util.HashMap param
-        ScriptApproval.get().approveSignature("method java.util.Map get java.lang.Object"); // TODO should be prewhitelisted
-        us.setDefinition(new CpsFlowDefinition("echo \"build var: ${build(job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'param', value: 'override']]).buildVariables.get('param')}\"", true));
+        us.setDefinition(new CpsFlowDefinition("echo \"build var: ${build(job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'param', value: 'override']]).buildVariables.param}\"", true));
         j.assertLogContains("build var: override", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
     }
 
