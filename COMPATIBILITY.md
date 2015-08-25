@@ -34,7 +34,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `XShellBuilder` (`xshell`): [JENKINS-26169](https://issues.jenkins-ci.org/browse/JENKINS-26169)
 - [ ] `DockerBuilder` (`docker-build-step`): [JENKINS-26178](https://issues.jenkins-ci.org/browse/JENKINS-26178)
 - [ ] `CucumberTestResultArchiver` (`cucumber-testresult-plugin`): [JENKINS-26340](https://issues.jenkins-ci.org/browse/JENKINS-26340)
-- [ ] `HtmlPublisher` (`htmlpublisher`): [JENKINS-26343](https://issues.jenkins-ci.org/browse/JENKINS-26343)
+- [X] `HtmlPublisher` (`htmlpublisher`): supported as of 1.6
 - [ ] `JaCoCoPublisher` (`jacoco`): [JENKINS-27120](https://issues.jenkins-ci.org/browse/JENKINS-27120)
 - [ ] `Publisher` (`testng`): [JENKINS-27121](https://issues.jenkins-ci.org/browse/JENKINS-27121)
 - [ ] `GroovyPostbuildRecorder` (`groovy-postbuild`): [JENKINS-26918](https://issues.jenkins-ci.org/browse/JENKINS-26918)
@@ -51,7 +51,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `GitPublisher` (`git`) or a custom step: [JENKINS-28335](https://issues.jenkins-ci.org/browse/JENKINS-28335)
 - [ ] SonarQube Jenkins: [SONARJNKNS-213](http://jira.sonarsource.com/browse/SONARJNKNS-213)
 - [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
-- [X] `ScoveragePublisher` (`scoverage`): supported in 1.2.0
+- [X] `ScoveragePublisher` (`scoverage`): supported as of 1.2.0
 
 ## Build wrappers
 
