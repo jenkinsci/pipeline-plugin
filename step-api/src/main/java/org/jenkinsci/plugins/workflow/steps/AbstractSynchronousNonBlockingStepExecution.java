@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.steps;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.security.ACL;
 import hudson.util.DaemonThreadFactory;
 import hudson.util.NamingThreadFactory;
@@ -40,6 +41,7 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
     public final boolean start() throws Exception {
         final Authentication auth = Jenkins.getAuthentication();
         task = getExecutorService().submit(new Runnable() {
+            @SuppressFBWarnings(value="SE_BAD_FIELD", justification="not serializing anything here")
             @Override public void run() {
                 try {
                     getContext().onSuccess(ACL.impersonate(auth, new NotReallyRoleSensitiveCallable<T, Exception>() {
