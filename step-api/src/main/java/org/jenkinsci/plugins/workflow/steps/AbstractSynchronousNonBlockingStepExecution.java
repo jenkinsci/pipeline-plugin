@@ -34,7 +34,15 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
 
     @Override
     public final boolean start() throws Exception {
-        task = getExecutorService().submit(new StepRunner(this));
+        task = getExecutorService().submit(new Runnable() {
+            @Override public void run() {
+                try {
+                    getContext().onSuccess(AbstractSynchronousNonBlockingStepExecution.this.run());
+                } catch (Exception e) {
+                    getContext().onFailure(e);
+                }
+            }
+        });
         return false;
     }
 
@@ -61,21 +69,4 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
         return executorService;
     }
 
-    private static class StepRunner implements Runnable {
-
-        private final AbstractSynchronousNonBlockingStepExecution<?> step;
-
-        public StepRunner(AbstractSynchronousNonBlockingStepExecution<?> step) {
-            this.step = step;
-        }
-
-        @Override
-        public void run() {
-            try {
-                step.getContext().onSuccess(step.run());
-            } catch (Exception e) {
-                step.getContext().onFailure(e);
-            }
-        }
-    }
 }
