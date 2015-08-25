@@ -123,6 +123,25 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>animal-sniffer-maven-plugin</artifactId>
+                <version>1.14</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <id>check</id>
+                    </execution>
+                </executions>
+                <configuration>
+                    <signature>
+                        <groupId>org.codehaus.mojo.signature</groupId>
+                        <artifactId>java16</artifactId>
+                    </signature>
+                </configuration>
+            </plugin>
+            <plugin>
                 <!-- why is this necessary!? -->
                 <!-- fix attempted at https://github.com/jenkinsci/jenkins/commit/101507f49873de0239ccb7839649ea71187712b2 but apparently failed. -->
                 <groupId>org.codehaus.gmaven</groupId>
