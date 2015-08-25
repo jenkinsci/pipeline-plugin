@@ -85,7 +85,8 @@ public class BuildTriggerStep extends AbstractStepImpl {
         @Override public Step newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             BuildTriggerStep step = (BuildTriggerStep) super.newInstance(req, formData);
             // Cf. ParametersDefinitionProperty._doBuild:
-            JSONArray params = JSONArray.fromObject(formData.get("parameter"));
+            Object parameter = formData.get("parameter");
+            JSONArray params = parameter != null ? JSONArray.fromObject(parameter) : null;
             if (params != null) {
                 Jenkins jenkins = Jenkins.getInstance();
                 Job<?,?> context = StaplerReferer.findItemFromRequest(Job.class);
