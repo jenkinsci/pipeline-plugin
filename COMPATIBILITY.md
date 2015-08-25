@@ -52,6 +52,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] SonarQube Jenkins: [SONARJNKNS-213](http://jira.sonarsource.com/browse/SONARJNKNS-213)
 - [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
 - [X] `ScoveragePublisher` (`scoverage`): supported in 1.2.0
+- [ ] `Artifactory` (`artifactory-plugin`): [JENKINS-30121](https://issues.jenkins-ci.org/browse/JENKINS-30121)
 
 ## Build wrappers
 
