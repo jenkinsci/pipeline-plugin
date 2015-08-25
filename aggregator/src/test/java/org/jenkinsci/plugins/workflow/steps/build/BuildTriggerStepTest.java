@@ -236,6 +236,14 @@ public class BuildTriggerStepTest {
         j.assertLogContains("build var: override", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
     }
 
+    @Issue("JENKINS-29169")
+    @Test public void buildVariablesWorkflow() throws Exception {
+        j.jenkins.createProject(WorkflowJob.class, "ds").setDefinition(new CpsFlowDefinition("env.RESULT = \"ds-${env.BUILD_NUMBER}\"", true));
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("def vars = build('ds').buildVariables; echo \"received RESULT=${vars.RESULT} vs. BUILD_NUMBER=${vars.BUILD_NUMBER}\"", true));
+        j.assertLogContains("received RESULT=ds-1 vs. BUILD_NUMBER=null", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
+    }
+
     @Issue("JENKINS-28063")
     @Test public void coalescedQueue() throws Exception {
         FreeStyleProject ds = j.createFreeStyleProject("ds");
