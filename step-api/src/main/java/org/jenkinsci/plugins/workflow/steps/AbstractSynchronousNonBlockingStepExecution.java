@@ -1,11 +1,15 @@
 package org.jenkinsci.plugins.workflow.steps;
 
+import hudson.security.ACL;
 import hudson.util.DaemonThreadFactory;
 import hudson.util.NamingThreadFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import jenkins.model.Jenkins;
+import jenkins.security.NotReallyRoleSensitiveCallable;
+import org.acegisecurity.Authentication;
 
 /**
  * Similar to {@link AbstractSynchronousStepExecution} (it executes synchronously too) but it does not block the CPS VM thread.
@@ -34,10 +38,15 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
 
     @Override
     public final boolean start() throws Exception {
+        final Authentication auth = Jenkins.getAuthentication();
         task = getExecutorService().submit(new Runnable() {
             @Override public void run() {
                 try {
-                    getContext().onSuccess(AbstractSynchronousNonBlockingStepExecution.this.run());
+                    getContext().onSuccess(ACL.impersonate(auth, new NotReallyRoleSensitiveCallable<T, Exception>() {
+                        @Override public T call() throws Exception {
+                            return AbstractSynchronousNonBlockingStepExecution.this.run();
+                        }
+                    }));
                 } catch (Exception e) {
                     getContext().onFailure(e);
                 }
