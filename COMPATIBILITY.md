@@ -197,6 +197,9 @@ public @Nonnull String getStuff() {
 }
 ```
 
+(The `Descriptor` is the most convenient place to put a constant for use from a Jelly view: `descriptor` is always defined even if `instance` is null, and Jelly/JEXL allows a `static` field to be loaded using instance-field notation.
+From a Groovy view you could use any syntax supported by Java to refer to a constant, but Jelly in Jenkins is weaker: `getStatic` will not work on classes defined in plugins.)
+
 To make sure the field is omitted from the XStream form when unmodified, you can use the same `Descriptor` and configuration form but null out the default:
 
 ```java
