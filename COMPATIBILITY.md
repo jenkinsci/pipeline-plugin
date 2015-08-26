@@ -74,7 +74,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `github`: [JENKINS-27136](https://issues.jenkins-ci.org/browse/JENKINS-27136)
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
 - [ ] `deployment-notification`: [JENKINS-28632](https://issues.jenkins-ci.org/browse/JENKINS-28632)
-- [ ] `gitlab-plugin`: [issue 89](https://github.com/DABSquared/gitlab-plugin/issues/89)
+- [X] `gitlab-plugin`: supported as of 1.1.26
 - [X] `bitbucket`: supported as of 1.1.2
 
 ## Clouds
