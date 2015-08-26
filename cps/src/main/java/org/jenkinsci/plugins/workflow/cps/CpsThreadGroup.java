@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.workflow.cps;
 import com.cloudbees.groovy.cps.Continuable;
 import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.Futures;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import groovy.lang.Closure;
 import groovy.lang.Script;
 import hudson.Util;
@@ -51,6 +52,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -67,7 +69,7 @@ import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.
  * @author Kohsuke Kawaguchi
  */
 @PersistIn(PROGRAM)
-@edu.umd.cs.findbugs.annotations.SuppressWarnings("SE_BAD_FIELD") // bogus warning about closures
+@SuppressFBWarnings("SE_BAD_FIELD") // bogus warning about closures
 public final class CpsThreadGroup implements Serializable {
     /**
      * {@link CpsThreadGroup} always belong to the same {@link CpsFlowExecution}.
@@ -97,6 +99,20 @@ public final class CpsThreadGroup implements Serializable {
     transient boolean busy;
 
     /**
+     * True if the execution suspension is requested.
+     *
+     * <p>
+     * This doesn't necessarily mean the CPS VM has responded and suspended the execution.
+     * For that you need to do {@code scheduleRun().get()}.
+     *
+     * <p>
+     * This state is intended for a use by humans to put the state of workflow execution
+     * on hold (for example while inspecting a suspicious state or to perform a maintenance
+     * when a failure is predictable.)
+     */
+    private /*almost final*/ AtomicBoolean paused = new AtomicBoolean();
+
+    /**
      * "Exported" closures that are referenced by live {@link CpsStepContext}s.
      */
     public final Map<Integer,Closure> closures = new HashMap<Integer,Closure>();
@@ -119,6 +135,8 @@ public final class CpsThreadGroup implements Serializable {
 
     private void setupTransients() {
         runner = new CpsVmExecutorService(this);
+        if (paused==null) // earlier versions did not have this field.
+            paused = new AtomicBoolean();
     }
 
     @CpsVmThreadOnly
@@ -171,12 +189,21 @@ public final class CpsThreadGroup implements Serializable {
 
     /**
      * Schedules the execution of all the runnable threads.
+     *
+     * @return
+     *      {@link Future} object that represents when the CPS VM is executed.
      */
     public Future<?> scheduleRun() {
         final Future<Future<?>> f;
         try {
         f = runner.submit(new Callable<Future<?>>() {
             public Future<?> call() throws Exception {
+                if (paused.get()) {
+                    // by doing the pause check inside, we make sure that scheduleRun() returns a
+                    // future that waits for any previously scheduled tasks to be completed.
+                    return Futures.immediateFuture(null);
+                }
+
                 run();
                 // we ensure any tasks submitted during run() will complete before we declare us complete
                 // those include things like notifying listeners or updating various other states
@@ -255,6 +282,37 @@ public final class CpsThreadGroup implements Serializable {
                 return f.get(timeout,unit).get(timeout,unit);
             }
         };
+    }
+
+    /**
+     * Pauses the execution.
+     *
+     * @return
+     *      {@link Future} object that represents the actual suspension of the CPS VM.
+     *      When the {@link #pause()} method is called, CPS VM might be still executing.
+     */
+    public Future<?> pause() {
+        paused.set(true);
+        // CPS VM might have a long queue in its task list, so to properly ensure
+        // that the execution has actually suspended, call scheduleRun() excessively
+        return scheduleRun();
+    }
+
+    /**
+     * If the execution is {@linkplain #pause() paused}, cancel the pause state.
+     */
+    public void unpause() {
+        if (paused.getAndSet(false)) {
+            // some threads might have became executable while we were pausing.
+            scheduleRun();
+        }
+    }
+
+    /**
+     * Returns true if pausing has been requested.
+     */
+    public boolean isPaused() {
+        return paused.get();
     }
 
     /**

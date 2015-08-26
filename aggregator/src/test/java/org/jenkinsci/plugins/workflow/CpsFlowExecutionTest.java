@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.ListIterator;
 import org.codehaus.groovy.transform.ASTTransformationVisitor;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -188,6 +189,31 @@ public class CpsFlowExecutionTest {
             r.add(d.getFunctionName());
         }
         return r;
+    }
+    @Test public void pause() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                        "echo 'before'; semaphore 'one';  echo 'after';"));
+                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+                SemaphoreStep.waitForStart("one/1", b);
+                CpsFlowExecution e = (CpsFlowExecution) b.getExecution();
+                e.pause(true);
+                e.waitForSuspension();
+                story.j.assertLogContains("before", b);
+                SemaphoreStep.success("one/1", b);
+
+                // not a very strong way of ensuring that the pause actually happens
+                e.waitForSuspension();
+                Thread.sleep(1000);
+                assertTrue(!e.isComplete());
+
+                e.pause(false);
+                e.waitForSuspension();
+                story.j.assertBuildStatusSuccess(b);
+            }
+        });
     }
 
 }
