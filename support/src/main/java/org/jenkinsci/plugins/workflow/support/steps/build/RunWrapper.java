@@ -38,6 +38,7 @@ import javax.annotation.Nonnull;
 import org.acegisecurity.context.SecurityContext;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted;
+import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 
 /**
  * Allows {@link Whitelisted} access to selected attributes of a {@link Run} without requiring Jenkins API imports.
@@ -160,7 +161,12 @@ public final class RunWrapper implements Serializable {
         if (build instanceof AbstractBuild) {
             return Collections.unmodifiableMap(((AbstractBuild<?,?>) build).getBuildVariables());
         } else { // not applicable
-            return Collections.emptyMap();
+            EnvironmentAction.IncludingOverrides env = build.getAction(EnvironmentAction.IncludingOverrides.class);
+            if (env != null) {
+                return env.getOverriddenEnvironment();
+            } else { // who knows
+                return Collections.emptyMap();
+            }
         }
     }
 

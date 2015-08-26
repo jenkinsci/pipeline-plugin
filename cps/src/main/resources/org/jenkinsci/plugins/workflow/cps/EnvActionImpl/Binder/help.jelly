@@ -12,6 +12,10 @@ node {
 }</pre>
     </p>
     <p>
+        These definitions will also be available via the REST API during the build or after its completion,
+        and from upstream Workflow builds using the <code>build</code> step.
+    </p>
+    <p>
         However any variables set this way are global to the workflow build.
         For variables with node-specific content (such as file paths),
         you should instead use the <code>withEnv</code> step,

@@ -43,7 +43,7 @@ import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 
 @ExportedBean
-public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAction, Serializable, RunAction2 {
+public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAction.IncludingOverrides, Serializable, RunAction2 {
 
     private static final Logger LOGGER = Logger.getLogger(EnvActionImpl.class.getName());
     private static final long serialVersionUID = 1;
@@ -66,7 +66,7 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
     }
 
     @Exported(name="environment")
-    public Map<String,String> getOverriddenEnvironment() {
+    @Override public Map<String,String> getOverriddenEnvironment() {
         return Collections.unmodifiableMap(env);
     }
 
