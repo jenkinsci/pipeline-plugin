@@ -160,9 +160,9 @@ public final class RunWrapper implements Serializable {
         Run<?,?> build = build();
         if (build instanceof AbstractBuild) {
             return Collections.unmodifiableMap(((AbstractBuild<?,?>) build).getBuildVariables());
-        } else { // not applicable
+        } else {
             EnvironmentAction.IncludingOverrides env = build.getAction(EnvironmentAction.IncludingOverrides.class);
-            if (env != null) {
+            if (env != null) { // downstream is also WorkflowRun
                 return env.getOverriddenEnvironment();
             } else { // who knows
                 return Collections.emptyMap();
