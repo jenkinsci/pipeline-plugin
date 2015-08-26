@@ -42,12 +42,14 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockQueueItemAuthenticator;
 import org.jvnet.hudson.test.TestExtension;
@@ -246,6 +248,40 @@ public class WorkflowTest extends SingleJobTestBase {
                     return null;
                 }
             });
+        }
+    }
+
+    @Issue("JENKINS-30122")
+    @Test public void authenticationInSynchronousStep() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                jenkins().setSecurityRealm(story.j.createDummySecurityRealm());
+                jenkins().save();
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new MockQueueItemAuthenticator(Collections.singletonMap("demo", User.get("someone").impersonate())));
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition("echo \"ran as ${auth()}\"", true));
+                b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                story.j.assertLogContains("ran as someone", b);
+            }
+        });
+    }
+    public static final class CheckAuthSync extends AbstractStepImpl {
+        @DataBoundConstructor public CheckAuthSync() {}
+        @TestExtension("authenticationInSynchronousStep") public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+            public DescriptorImpl() {
+                super(Execution.class);
+            }
+            @Override public String getFunctionName() {
+                return "auth";
+            }
+            @Override public String getDisplayName() {
+                return getFunctionName();
+            }
+        }
+        public static final class Execution extends AbstractSynchronousNonBlockingStepExecution<String> {
+            @Override protected String run() throws Exception {
+                return Jenkins.getAuthentication().getName();
+            }
         }
     }
 
