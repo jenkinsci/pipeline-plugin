@@ -265,4 +265,26 @@ public class BuildTriggerStepTest {
         assertEquals(2, ds1.getCauses().size()); // 2× UpstreamCause
     }
 
+    @Issue("http://stackoverflow.com/q/32228590/12916")
+    @Test public void nonCoalescedQueueParallel() throws Exception {
+        j.jenkins.setNumExecutors(5);
+        FreeStyleProject ds = j.createFreeStyleProject("ds");
+        ds.setConcurrentBuild(true);
+        ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("which", null)));
+        ds.getBuildersList().add(new SleepBuilder(3000));
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition(
+            "def branches = [:]\n" +
+            "for (int i = 0; i < 5; i++) {\n" +
+            "  def which = \"${i}\"\n" +
+            "  branches[\"branch${i}\"] = {\n" +
+            "    build job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'which', value: which]]\n" +
+            "  }\n" +
+            "}\n" +
+            "parallel branches", true));
+        j.assertBuildStatusSuccess(us.scheduleBuild2(0));
+        FreeStyleBuild ds1 = ds.getLastBuild();
+        assertEquals(5, ds1.getNumber());
+    }
+
 }
