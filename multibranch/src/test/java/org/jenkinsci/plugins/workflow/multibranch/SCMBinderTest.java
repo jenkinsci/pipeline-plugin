@@ -217,6 +217,7 @@ public class SCMBinderTest {
                 sampleGitRepo.write("Jenkinsfile", "standardJob {file = 'resource'}");
                 sampleGitRepo.write("resource", "resource content");
                 sampleGitRepo.git("add", "Jenkinsfile");
+                sampleGitRepo.git("add", "resource");
                 sampleGitRepo.git("commit", "--all", "--message=flow");
                 // And run:
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
