@@ -24,16 +24,21 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import hudson.ExtensionList;
+import hudson.model.RootAction;
 import hudson.plugins.mercurial.MercurialInstallation;
 import hudson.plugins.mercurial.MercurialSCMSource;
 import hudson.tools.ToolProperty;
+import java.io.File;
 import java.util.Collections;
 import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.GitSCMSource;
 import jenkins.scm.impl.subversion.SubversionSCMSource;
+import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.jenkinsci.plugins.workflow.cps.global.WorkflowLibRepository;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
@@ -43,6 +48,7 @@ import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -183,6 +189,41 @@ public class SCMBinderTest {
                 assertEquals(2, b2.getNumber());
                 story.j.assertLogContains("initial content", story.j.waitForCompletion(b1));
                 story.j.assertLogContains("SUBSEQUENT CONTENT", b2);
+            }
+        });
+    }
+
+    @Ignore("TODO fails with: groovy.lang.MissingPropertyException: No such property: scm for class: groovy.lang.Binding")
+    @Test public void globalVariable() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                // Set up a standardJob definition:
+                WorkflowLibRepository repo = ExtensionList.lookup(RootAction.class).get(WorkflowLibRepository.class);
+                File vars = new File(repo.workspace, /*UserDefinedGlobalVariable.PREFIX*/ "vars");
+                vars.mkdirs();
+                FileUtils.writeStringToFile(new File(vars, "standardJob.groovy"),
+                    "def call(body) {\n" +
+                    "  def config = [:]\n" +
+                    "  body.resolveStrategy = Closure.DELEGATE_FIRST\n" +
+                    "  body.delegate = config\n" +
+                    "  body()\n" +
+                    "  node {\n" +
+                    "    checkout scm\n" +
+                    "    echo \"loaded ${readFile config.file}\"\n" +
+                    "  }\n" +
+                    "}\n");
+                // Then a project using it:
+                sampleGitRepo.init();
+                sampleGitRepo.write("Jenkinsfile", "standardJob {file = 'resource'}");
+                sampleGitRepo.write("resource", "resource content");
+                sampleGitRepo.git("add", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=flow");
+                // And run:
+                WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+                mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+                WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject(mp, "master");
+                WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                story.j.assertLogContains("loaded resource content", b);
             }
         });
     }
