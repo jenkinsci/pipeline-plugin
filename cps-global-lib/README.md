@@ -174,7 +174,7 @@ built and tested in the same way, so we might write a global function named `jen
 
 ```groovy
 // vars/jenkinsPlugin.groovy
-def call() {
+def call(body) {
     // evaluate the body block, and collect configuration into the object
     def config = [:]
     body.resolveStrategy = Closure.DELEGATE_FIRST
