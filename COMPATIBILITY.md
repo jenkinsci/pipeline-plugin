@@ -15,7 +15,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `DimensionsSCM` (`dimensionsscm`): [JENKINS-26165](https://issues.jenkins-ci.org/browse/JENKINS-26165)
 - [ ] `IntegritySCM` (`integrity-plugin`): [JENKINS-27140](https://issues.jenkins-ci.org/browse/JENKINS-27140)
 - [ ] `RepoScm` (`repo`): [JENKINS-26836](https://issues.jenkins-ci.org/browse/JENKINS-26836)
-- [ ] `teamconcert`: [JENKINS-27464](https://issues.jenkins-ci.org/browse/JENKINS-27464)
+- [X] `teamconcert`: supported as of 1.9.4
 - [X] `CVSSCM` (`cvs`): scheduled to be supported in 2.13
 
 ## Build steps and post-build actions
