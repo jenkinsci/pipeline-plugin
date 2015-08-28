@@ -48,7 +48,6 @@ import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -193,7 +192,6 @@ public class SCMBinderTest {
         });
     }
 
-    @Ignore("TODO fails with: groovy.lang.MissingPropertyException: No such property: scm for class: groovy.lang.Binding")
     @Test public void globalVariable() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -201,6 +199,8 @@ public class SCMBinderTest {
                 WorkflowLibRepository repo = ExtensionList.lookup(RootAction.class).get(WorkflowLibRepository.class);
                 File vars = new File(repo.workspace, /*UserDefinedGlobalVariable.PREFIX*/ "vars");
                 vars.mkdirs();
+                // TODO is this safe to add to generic-whitelist? (Why are global libs even being run through the sandbox to begin with?)
+                ScriptApproval.get().approveSignature("method groovy.lang.Closure getOwner");
                 FileUtils.writeStringToFile(new File(vars, "standardJob.groovy"),
                     "def call(body) {\n" +
                     "  def config = [:]\n" +
@@ -208,7 +208,7 @@ public class SCMBinderTest {
                     "  body.delegate = config\n" +
                     "  body()\n" +
                     "  node {\n" +
-                    "    checkout scm\n" +
+                    "    checkout body.owner.scm\n" +
                     "    echo \"loaded ${readFile config.file}\"\n" +
                     "  }\n" +
                     "}\n");
