@@ -81,10 +81,10 @@ Entries list the class name serving as the entry point to the relevant functiona
 
 - [ ] `elasticbox`: [JENKINS-25978](https://issues.jenkins-ci.org/browse/JENKINS-25978) (could also include build wrapper integration)
 - [ ] `mansion-cloud`: [JENKINS-24815](https://issues.jenkins-ci.org/browse/JENKINS-24815)
-- [ ] `mock-slave` (for prototyping): [JENKINS-25090](https://issues.jenkins-ci.org/browse/JENKINS-25090)
+- [X] `mock-slave` (for prototyping): supported as of 1.7
 - [X] `docker`: supported as of 0.8
 - [X] `nectar-vmware` (CloudBees Jenkins Enterprise): supported as of 4.3.2
-- [ ] `operations-center-cloud` (CloudBees Jenkins Enterprise/Operations Center): RM-2642
+- [ ] `operations-center-cloud` (CloudBees Jenkins Enterprise/Operations Center): CJP-2951
 - [X] `ec2`: known to work as is
 
 ## Miscellaneous
