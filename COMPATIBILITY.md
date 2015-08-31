@@ -90,7 +90,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 ## Miscellaneous
 
 - [X] `rebuild`: supported as of 1.24
-- [ ] `parameterized-trigger` (to support a workflow as downstream): [JENKINS-26050](https://issues.jenkins-ci.org/browse/JENKINS-26050)
+- [X] `parameterized-trigger` (to support a workflow as downstream): supported as of 2.28
 - [X] `build-token-root`: [JENKINS-26693](https://issues.jenkins-ci.org/browse/JENKINS-26693)
 - [X] `credentials-binding`: `withCredentials` step as of 1.3
 - [ ] `build-failure-analyzer`: [JENKINS-27123](https://issues.jenkins-ci.org/browse/JENKINS-27123)
