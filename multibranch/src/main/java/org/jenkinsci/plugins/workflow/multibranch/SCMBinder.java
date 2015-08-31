@@ -86,6 +86,8 @@ class SCMBinder extends FlowDefinition {
         SCMHead head = branch.getHead();
         SCMRevision tip = scmSource.fetch(SCMHeadObserver.select(head), listener).result();
         if (tip == null) {
+            // TODO observed (but not now reproducible) after trying to rebuild projects without rerunning branch indexing
+            // Perhaps because above we are calling the wrong `fetch` overload? (Simpler to pass SCMHead + TaskListener.)
             throw new IllegalStateException("could not find branch tip on " + head);
         }
         SCM scm = scmSource.build(head, tip);
