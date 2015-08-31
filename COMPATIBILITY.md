@@ -65,7 +65,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `XvfbBuildWrapper` (`xvfb`): supported as of 1.1.0-beta-1
 - [ ] `LockWrapper` (`locks-and-latches`): [JENKINS-29461](https://issues.jenkins-ci.org/browse/JENKINS-29461)
 - [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
-- [ ] `NpmPackagesBuildWrapper` (`nodejs`): [JENKINS-29980](https://issues.jenkins-ci.org/browse/JENKINS-29980)
+- [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
 
 ## Triggers
 
