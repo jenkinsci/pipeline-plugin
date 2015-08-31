@@ -61,7 +61,6 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `DashboardBuilder` (`environment-dashboard`): [issue 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
 - [X] `TimestamperBuildWrapper` (`timestamper`): supported as of 1.7
 - [ ] `MaskPasswordsBuildWrapper` (`mask-passwords`): [PR 3](https://github.com/jenkinsci/mask-passwords-plugin/pull/3)
-- [X] `SSHAgentBuildWrapper` (`ssh-agent`): supported as of 1.8
 - [X] `XvfbBuildWrapper` (`xvfb`): supported as of 1.1.0-beta-1
 - [ ] `LockWrapper` (`locks-and-latches`): [JENKINS-29461](https://issues.jenkins-ci.org/browse/JENKINS-29461)
 - [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
@@ -91,24 +90,25 @@ Entries list the class name serving as the entry point to the relevant functiona
 
 - [X] `rebuild`: supported as of 1.24
 - [X] `parameterized-trigger` (to support a workflow as downstream): supported as of 2.28
-- [X] `build-token-root`: [JENKINS-26693](https://issues.jenkins-ci.org/browse/JENKINS-26693)
-- [X] `credentials-binding`: `withCredentials` step as of 1.3
+- [X] `build-token-root`: supported as of 1.2
 - [ ] `build-failure-analyzer`: [JENKINS-27123](https://issues.jenkins-ci.org/browse/JENKINS-27123)
 - [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
-- [X] `job-dsl`: implemented in 1.29
+- [X] `job-dsl`: Workflow creation supported as of 1.29
 - [X] `zentimestamp`: basic compatibility in 4.2
 - [ ] `claim`: [JENKINS-27206](https://issues.jenkins-ci.org/browse/JENKINS-27206)
 - [ ] `ListSubversionTagsParameterValue` (`subversion`): [JENKINS-27718](https://issues.jenkins-ci.org/browse/JENKINS-27718)
-- [X] `authorize-project`: scheduled for 1.0.4
+- [X] `authorize-project`: supported as of 1.1.0
 
 ## Custom steps
 
 For cases when a first-class Workflow step (rather than an adaptation of functionality applicable to freestyle projects) makes sense.
 
-- [X] `docker-workflow`
-- [X] `parallel-test-executor`: supported with `splitTests` step since 1.6
+- [X] `docker-workflow`: DSL based on `docker` global variable
+- [X] `credentials-binding`: `withCredentials` step as of 1.3
+- [X] `ssh-agent`: `sshagent` step as of 1.8
+- [X] `parallel-test-executor`: `splitTests` step since 1.6
 - [ ] `gerrit-trigger`: [JENKINS-26102](https://issues.jenkins-ci.org/browse/JENKINS-26102), [JENKINS-26103](https://issues.jenkins-ci.org/browse/JENKINS-26103)
-- [X] `mailer`: [JENKINS-26104](https://issues.jenkins-ci.org/browse/JENKINS-26104) in Workflow 1.2
+- [X] `mailer`: `mail` step in Workflow 1.2
 - [ ] `artifactory`: [JENKINS-30121](https://issues.jenkins-ci.org/browse/JENKINS-30121)
 
 # Plugin Developer Guide
