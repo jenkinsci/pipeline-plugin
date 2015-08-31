@@ -32,7 +32,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `Ant` (`ant`): [JENKINS-26056](https://issues.jenkins-ci.org/browse/JENKINS-26056)
 - [ ] `Maven` (home TBD): [JENKINS-26057](https://issues.jenkins-ci.org/browse/JENKINS-26057)
 - [ ] `XShellBuilder` (`xshell`): [JENKINS-26169](https://issues.jenkins-ci.org/browse/JENKINS-26169)
-- [ ] `DockerBuilder` (`docker-build-step`): [JENKINS-26178](https://issues.jenkins-ci.org/browse/JENKINS-26178)
+- [ ] ~~`DockerBuilder` (`docker-build-step`): [JENKINS-26178](https://issues.jenkins-ci.org/browse/JENKINS-26178)~~
 - [ ] `CucumberTestResultArchiver` (`cucumber-testresult-plugin`): [JENKINS-26340](https://issues.jenkins-ci.org/browse/JENKINS-26340)
 - [X] `HtmlPublisher` (`htmlpublisher`): supported as of 1.6
 - [ ] `JaCoCoPublisher` (`jacoco`): [JENKINS-27120](https://issues.jenkins-ci.org/browse/JENKINS-27120)
@@ -105,6 +105,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 
 For cases when a first-class Workflow step (rather than an adaptation of functionality applicable to freestyle projects) makes sense.
 
+- [X] `docker-workflow`
 - [X] `parallel-test-executor`: supported with `splitTests` step since 1.6
 - [ ] `gerrit-trigger`: [JENKINS-26102](https://issues.jenkins-ci.org/browse/JENKINS-26102), [JENKINS-26103](https://issues.jenkins-ci.org/browse/JENKINS-26103)
 - [X] `mailer`: [JENKINS-26104](https://issues.jenkins-ci.org/browse/JENKINS-26104) in Workflow 1.2
