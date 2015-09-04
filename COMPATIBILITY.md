@@ -27,7 +27,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `Mailer` (`mailer`)
 - [X] `CopyArtifact` (`copyartifact`): [JENKINS-24887](https://issues.jenkins-ci.org/browse/JENKINS-24887) in 1.34
 - [ ] `DeployPublisher` (`deployer-framework`): [JENKINS-25976](https://issues.jenkins-ci.org/browse/JENKINS-25976)
-- [ ] `FindBugsPublisher` and similar (`analysis-core` and downstream): [JENKINS-25977](https://issues.jenkins-ci.org/browse/JENKINS-25977)
+- [X] Analysis publishers (e.g., `FindBugsPublisher`): supported as of `analysis-core` 1.73 and downstream plugins (e.g., `findbugs` 4.62)
 - [ ] `ExtendedEmailPublisher` (`email-ext`): [PR 97](https://github.com/jenkinsci/email-ext-plugin/pull/97)
 - [ ] `Ant` (`ant`): [JENKINS-26056](https://issues.jenkins-ci.org/browse/JENKINS-26056)
 - [ ] `Maven` (home TBD): [JENKINS-26057](https://issues.jenkins-ci.org/browse/JENKINS-26057)
@@ -70,7 +70,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 
 - [X] `gerrit-trigger`: supported as of 2.15.0
 - [ ] `ghprb`: [JENKINS-26591](https://issues.jenkins-ci.org/browse/JENKINS-26591)
-- [ ] `github`: [JENKINS-27136](https://issues.jenkins-ci.org/browse/JENKINS-27136)
+- [X] `github`: scheduled to be supported as of 1.14
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
 - [ ] `deployment-notification`: [JENKINS-28632](https://issues.jenkins-ci.org/browse/JENKINS-28632)
 - [X] `gitlab-plugin`: supported as of 1.1.26
