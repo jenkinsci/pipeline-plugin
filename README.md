@@ -66,7 +66,7 @@ and browse [localhost:8080](http://localhost:8080/).
 
 Jenkins Workflow: What’s Up? (JUC West) (Sep 2015): [slides](http://www.slideshare.net/jgcloudbees/juc-west-15-jenkins-workflow-whats-up)
 
-Jenkins Office Hour on Workflow for plugin developers (Auth 2015): [video](https://www.youtube.com/watch?v=4zdy7XGx3PA)
+Jenkins Office Hour on Workflow for plugin developers (Aug 2015): [video](https://www.youtube.com/watch?v=4zdy7XGx3PA)
 
 Workflow Meetup London (Mar 2015): [slides](http://www.slideshare.net/jgcloudbees/london-workflow-summit-kkjg)
 
