@@ -344,7 +344,9 @@ node('remote') {
 }
 ```
 
-The `input` step pauses flow execution.
+The `input` step pauses flow execution. More detailed information about the input step is available in the [basic-steps documentation](basic-steps/input.md)
+
+
 Its default `message` parameter gives a prompt which will be shown to a human.
 (You can optionally request information back, hence the name of the step.)
 
