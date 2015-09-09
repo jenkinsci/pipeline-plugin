@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2014 Jesse Glick.
+ * Copyright 2015 Cloudbees, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,9 @@ import hudson.FilePath;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+/**
+ * Simple step that will wipe out the current working directory in a workflows workspace.
+ */
 public final class DeleteDirStep extends AbstractStepImpl {
 
 

@@ -37,6 +37,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import hudson.FilePath;
 import hudson.model.queue.QueueTaskFuture;
 
 public class DeleteDirStepTest {
@@ -45,13 +46,13 @@ public class DeleteDirStepTest {
     public JenkinsRule r = new JenkinsRule();
 
     @Test
-    public void testDeleteEmptyWorkslapce() throws Exception {
+    public void testDeleteEmptyWorkspace() throws Exception {
         String workspace = runAndGetWorkspaceDir(
                 "node {\n" +
                 "  deleteDir()\n" + 
                 "}");
         File f = new File(workspace);
-        Assert.assertFalse("Workspace driectory should no longer exist", f.exists());
+        Assert.assertFalse("Workspace directory should no longer exist", f.exists());
     }
 
     @Test
@@ -68,7 +69,7 @@ public class DeleteDirStepTest {
                 "  deleteDir()\n" + 
                 "}");
         File f = new File(workspace);
-        Assert.assertFalse("Workspace driectory should no longer exist", f.exists());
+        Assert.assertFalse("Workspace directory should no longer exist", f.exists());
     }
 
     @Test
@@ -106,22 +107,10 @@ public class DeleteDirStepTest {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
 
         p.setDefinition(new CpsFlowDefinition(flow));
-        QueueTaskFuture<WorkflowRun> future = p.scheduleBuild2(0);
-        r.assertBuildStatusSuccess(future);
-        WorkflowRun run = future.get();
-        
-        String workspace = null;
-        // what would be really nice is the equivalent of a head rather than a tail...
-        List<String> logs = run.getLog(50);
-        String regexp = "Running on master in (.*)";
-        Pattern pattern = Pattern.compile(regexp);
-        for (String log : logs) {
-            Matcher m = pattern.matcher(log);
-            if (m.matches()) {
-                workspace = m.group(1);
-                break;
-            }
-        }
+        r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+
+        FilePath ws = r.jenkins.getWorkspaceFor(p);
+        String workspace = ws.getRemote();
         Assert.assertNotNull("Unable to locate workspace", workspace);
         return workspace;
     }
