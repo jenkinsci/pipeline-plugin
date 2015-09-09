@@ -1,4 +1,6 @@
-This document is intended for new users of the CloudBees Workflow feature to learn how to write and understand flows.
+ This document is intended for new users of the Workflow feature to learn how to write and understand flows.
+
+# Why Workflow?
 
 # Getting Started
 
@@ -19,10 +21,9 @@ If you want to play with Workflow without installing Jenkins separately (or acce
 To crete a workflow, perform the following steps:
 
 1. Click **New Item**, pick a name for your flow, select **Workflow**, and click **OK**.
-You will be taken to the configuration screen for the flow.
 
+  You will be taken to the configuration screen for the flow.
 The _Script_ text area is important as this is where your flow script is defined. We'll start with a trivial script:
-
 ```groovy
 echo 'hello from Workflow'
 ```
@@ -129,13 +130,13 @@ bat "${mvnHome}\\bin\\mvn -B verify"
 
 ## Understanding Syntax
 
-`node` is a step which schedules a task to run by adding it to the Jenkins build queue.
-As soon as an executor slot is available on some **node** (the Jenkins master, or a slave), the task is run on that node.
-`node` also allocates a **workspace** (file directory) on that node for the duration of the task (more on this later).
+A `node` is a step that schedules a task to run by adding it to the Jenkins build queue.
+* As soon as an executor slot is available on a **node** (the Jenkins master, or a slave), the task is run on that node.
+* A `node` also allocates a **workspace** (file directory) on that node for the duration of the task (more on this later).
 
-Groovy functions can accept **closures** (blocks of code), and some steps expect a block.
-In this case the code between the braces (`{` and `}`) is the body of the `node` step.
-Many steps (like `git` and `sh` in this example) can only run in the context of a node, so trying to run just
+Groovy functions  accept **closures** (blocks of code) and some steps expect a block.
+In this case, the code between the braces (`{` and `}`) is the body of the `node` step.
+Many steps (such as: `git` and `sh` in this example) can only run in the context of a node, so trying to run just:
 
 ```groovy
 sh 'echo oops'
@@ -143,13 +144,13 @@ sh 'echo oops'
 
 as a flow script will not work: Jenkins does not know what system to run commands on.
 
-Unlike user-defined functions, workflow steps always take named parameters. So
+Unlike user-defined functions, workflow steps always take named parameters. Thus:
 
 ```groovy
 git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
 ```
 
-is passing one parameter, named `url` (the Git source code repository to check out).
+is passing one parameter named: `url` (the Git source code repository to check out).
 This parameter happens to be mandatory; it also takes some other optional parameters such as `branch`.
 You can pass as many as you need:
 
@@ -164,49 +165,51 @@ The named-parameter syntax is also a shorthand for creating a _map_, which in Gr
 git([url: 'https://github.com/jglick/simple-maven-project-with-tests.git', branch: 'master'])
 ```
 
-For convenience, when calling steps taking only one parameter (or only one mandatory parameter) you can omit the parameter name; so
+For convenience, when calling steps taking only one parameter (or only one mandatory parameter) you can omit the parameter name. For example:
 
 ```groovy
 sh 'echo hello'
 ```
 
-is really shorthand for
+is really shorthand for:
 
 ```groovy
 sh([script: 'echo hello'])
 ```
 
 The `tool` step makes sure a tool with the given name (in this case, a specific version of the Maven build tool) is installed on the current node.
-But merely running this step does not do much good; the script needs to know _where_ it was installed, so the tool can be run later.
-For this, we need a variable.
+But merely running this step does not do much good. The script needs to know _where_ it was installed - so the tool can be run later.
+For this, you need a variable.
 
-The `def` keyword in Groovy is the quickest way to define a new variable (with no specific type). So
+The `def` keyword in Groovy is the quickest way to define a new variable (with no specific type).
+
+Here:
 
 ```groovy
 def mvnHome = tool 'M3'
 ```
 
-makes sure `M3` is installed somewhere accessible to Jenkins, and assigns the return value of the step (an installation path) to the `mvnHome` variable.
-We could also use a more Java-like syntax with a static type:
+ensures `M3` is installed somewhere accessible to Jenkins and assigns the return value of the step (an installation path) to the `mvnHome` variable.
+You could also use a more Java-like syntax with a static type:
 
 ```groovy
 String mvnHome = tool("M3");
 ```
 
-Finally, we want to run our Maven build. When Groovy encounters `$` inside a double-quoted string:
+Finally, you run the Maven build. When Groovy encounters `$` inside a double-quoted string:
 
 ```groovy
 "${mvnHome}/bin/mvn -B verify"
 ```
 
 it replaces the `${mvnHome}` part with the value of that expression (here, just the variable value).
-The more verbose Java-like syntax would be
+The more verbose Java-like syntax would be:
 
 ```groovy
 mvnHome + "/bin/mvn -B verify"
 ```
 
-In the console output you will see the final command being run.
+In the console output, you see the final command being run.
 
 **Example**:
 
@@ -217,7 +220,7 @@ In the console output you will see the final command being run.
 
 ## Managing the Environment
 
-One way to use tools by default is to add them to your executable path - by using the special variable `env` that is defined for all workflows:
+One way to use tools by default, is to add them to your executable path - by using the special variable `env` that is defined for all workflows:
 
 ```groovy
 node {
@@ -229,11 +232,11 @@ node {
 ```
 
 * Properties of this variable are environment variables on the current node.
-* You can also override certain environment variables, and the overrides will be seen by subsequent `sh` steps (or anything else that pays attention to environment variables).
+* You can override certain environment variables and the overrides are seen by subsequent `sh` steps (or anything else that pays attention to environment variables).
 * You can run `mvn` without a fully-qualified path.
 
-Setting a variable like `PATH` in this way is only safe if you are using a single slave for this build, so we will not do so below.
-As an alternative you can use the `withEnv` step to set a variable within a scope:
+Setting a variable such as `PATH` in this way is only safe if you are using a single slave for this build.
+As an alternative, you can use the `withEnv` step to set a variable within a scope:
 
 ```groovy
 node {
@@ -256,7 +259,7 @@ If you have configured your workflow to accept parameters when it is built - **B
 
 # Recording Test Results and Artifacts
 
-Rather than failing the build if there are test failures, you want Jenkins to record them -- and then proceed.
+Instead of failing the build if there are test failures, you want Jenkins to record them -- and then proceed.
 You must capture the JAR that you built.
 
 ```groovy
@@ -274,11 +277,11 @@ node {
 
 ## Understanding Syntax
 
-`-Dmaven.test.failure.ignore` is a Maven option that allows the `mvn` command to exit normally (status 0), so that the flow continues - even when test failures are recorded on disk.
+The Maven option `-Dmaven.test.failure.ignore` allows the `mvn` command to exit normally (status 0) - so that the flow continues, even when test failures are recorded on disk.
 
-Next, run the `step` step twice.
-This step just allows you to use certain build (or post-build) steps already defined in Jenkins for use in traditional projects.
-It takes one parameter (called `delegate` but omitted here), whose value is a standard Jenkins build step.
+Run the `step` step twice.
+This step  allows you to use certain build (or post-build) steps already defined in Jenkins for use in traditional projects.
+It takes one parameter (called `delegate` but omitted here) - this parameter value is a standard Jenkins build step.
 
 You could create the delegate using Java constructor/method calls, using Groovy or Java syntax:
 
@@ -288,7 +291,7 @@ aa.fingerprint = true // i.e., aa.setFingerprint(true)
 step aa
 ```
 
-but this is cumbersome and does not work well with Groovy sandbox security, so any object-valued argument to a step may instead be given as a map.
+but this is cumbersome and does not work well with Groovy sandbox security - so any object-valued argument to a step may instead be given as a map.
 
 The following:
 
@@ -385,17 +388,20 @@ Proceed or Abort
 
 If you click **Proceed**, the build will proceed as before.
 First, go to the Jenkins main page and look at the **Build Executor Status** widget.
-You will see an unnumbered entry under **master** called something like **flowname #10**; executors #1 and #2 on the master will be idle.
-You will also see an entry under your slave, in a numbered row (probably #1) called **Building part of flowname #10**.
+
+* You will see an unnumbered entry under **master** named  **flowname #10**; executors #1 and #2 on the master are idle.
+* You will also see an entry under your slave, in a numbered row (probably #1) called **Building part of flowname #10**.
 
 Why are there two executors consumed by one flow build?
-Every flow build itself runs on the master, using a **flyweight executor**: an uncounted slot that is assumed to not take any significant computational power.
-This executor represents the actual Groovy script, which almost all of the time is idle, waiting for a step to complete.
-Flyweight executors are always available.
 
-When you run a `node` step, a regular heavyweight executor is allocated on a node (usually a slave) matching the label expression, as soon as one is available.
-This executor represents the real work being done on the node.
-If you start a second build of the flow while the first is still paused with the one available executor, you will see both flow builds running on master.
+* Every flow build itself runs on the master, using a **flyweight executor** - an uncounted slot that is assumed to not take any significant computational power.
+* This executor represents the actual Groovy script, which is almost always idle, waiting for a step to complete.
+* Flyweight executors are always available.
+
+When you run a `node` step:
+* A regular heavyweight executor is allocated on a node (usually a slave) matching the label expression, as soon as one is available. This executor represents the real work being done on the node.
+
+* If you start a second build of the flow while the first is still paused with the one available executor, you will see both flow builds running on master.
 But only the first will have grabbed the one available executor on the slave; the other **part of flowname #11** will be shown in **Build Queue (1)**.
 (shortly after, the console log for the second build will note that it is still waiting for an available executor).
 
@@ -406,7 +412,7 @@ To finish up, click the ▾ beside either executor entry for any running flow an
 
 In addition to waiting to allocate an executor on a node, the `node` step also automatically allocates a **workspace**: a directory specific to this job - where you can check out sources, run commands, and do other work.
 Workspaces are locked for the duration of the step: only one build at a time can use a given workspace.
-If multiple builds need a workspace on the same node, additional workspaces will be allocated.
+If multiple builds need a workspace on the same node, additional workspaces are allocated.
 
 **Configure** your slave, set **# of executors** to two and **Save**.
 Now start your build twice in a row.
@@ -452,26 +458,28 @@ def version() {
 }
 ```
 
-Here we are using the `def` keyword to define a function (you can also give a Java type in place of `def`, to make it look more like a Java method).
-`=~` is Groovy syntax to match text against a regular expression; `[0]` looks up the first match, and `[1]` the first `(…)` group within that match.
+Here, you use:
+* `def` keyword to define a function (you can also give a Java type in place of `def` to make it look more like a Java method)
+* `=~` is Groovy syntax to match text against a regular expression
+* `[0]` looks up the first match
+* `[1]` the first `(…)` group within that match
+* `readFile` step loads a text file from the workspace and returns its content (do not try to use `java.io.File` methods -  these will refer to files on the master where Jenkins is running, not in the current workspace).
+* There is also a `writeFile` step to save content to a text file in the workspace
+* `fileExists` step to check whether a file exists without loading it.
 
-The `readFile` step loads a text file from the workspace and returns its content.
-(Do _not_ try to use `java.io.File` methods, because these will refer to files on the master where Jenkins is running, not in the current workspace.)
-There is also a `writeFile` step to save content to a text file in the workspace, and a `fileExists` step to check whether a file exists without loading it.
-
-When you run the flow you should see
+When you run the flow you see:
 
 ```
 Building version 1.0-SNAPSHOT
 ```
 
-(Unless your _Script Security_ plugin is version 1.11 or higher, you may see a `RejectedAccessException` error at this point.
-If so, a Jenkins administrator will need to go to _Manage Jenkins » In-process Script Approval_ and _Approve_ `staticMethod org.codehaus.groovy.runtime.ScriptBytecodeAdapter findRegex java.lang.Object java.lang.Object`.
-Then try running your script again and it should work.)
+**Note**: Unless your Script Security plugin is version 1.11 or higher, you may see a `RejectedAccessException` error at this point.
+If so, a Jenkins administrator will need to navigate to **Manage Jenkins » In-process Script Approval** and **Approve** `staticMethod org.codehaus.groovy.runtime.ScriptBytecodeAdapter findRegex java.lang.Object java.lang.Object`.
+Then try running your script again and it should work.
 
 ## Serializing Local Variables
 
-If you tried inlining the `version` function as follows
+If you tried inlining the `version` function as follows:
 
 ```groovy
 node('remote') {
@@ -493,14 +501,15 @@ you would have noticed a problem:
 java.io.NotSerializableException: java.util.regex.Matcher
 ```
 
-This occurs because the `matcher` local variable is of a type (`Matcher`) not considered serializable by Java.
-Since workflows must survive Jenkins restarts, the state of the running program is periodically saved to disk so it can be resumed later.
-(Saves occur after every step, or in the middle of some steps like `sh`.)
-The “state” includes the whole control flow, including local variables, positions in loops, and so on.
-Therefore any variable values used in your program should be numbers, strings, or other serializable types, not “live” objects such as network connections.
+* This occurs because the `matcher` local variable is of a type (`Matcher`) not considered serializable by Java.
+Since workflows must survive Jenkins restarts, the state of the running program is periodically saved to disk so it can be resumed later
+(saves occur after every step or in the middle of  steps such as `sh`).
 
-If you must use a nonserializable value temporarily, discard it before doing anything else.
-When we kept the matcher only as a local variable inside a function, it was automatically discarded as soon as the function returned.
+* The “state” includes the whole control flow including: local variables, positions in loops, and so on. As such: any variable values used in your program should be numbers, strings, or other serializable types, not “live” objects such as network connections.
+
+* If you must use a nonserializable value temporarily: discard it before doing anything else.
+When you keep the matcher only as a local variable inside a function, it is automatically discarded as soon as the function returned.
+
 You can also explicitly discard a reference when you are done with it:
 
 ```groovy
@@ -523,9 +532,9 @@ node('remote') {
 Workflows can use a `parallel` step to perform multiple actions at once.
 This special step takes a map as its argument; keys are “branch names” (labels for your own benefit), and values are blocks to run.
 
-To see how this can be useful, let us install a new plugin, _Parallel Test Executor_ (version 1.6 or later).
+To see how this can be useful, install a new plugin: **Parallel Test Executor** (version 1.6 or later).
 This plugin includes a workflow step that lets you split apart slow test runs.
-Also make sure the JUnit plugin is at least version 1.3.
+Also make sure the JUnit plugin is at least version 1.3+.
 
 Now create a new workflow with the following script:
 
@@ -551,58 +560,57 @@ for (int i = 0; i < splits.size(); i++) {
 parallel branches
 ```
 
-(Note: to enable the Groovy sandbox on this script, be sure to update the Script Security plugin to version 1.11 or later.
+**Note**: to enable the Groovy sandbox on this script, be sure to update the Script Security plugin to version 1.11 or later.
 Even so, you may see a `RejectedAccessException` error at this point.
-If so, a Jenkins administrator will need to go to _Manage Jenkins » In-process Script Approval_ and _Approve_ `staticMethod org.codehaus.groovy.runtime.ScriptBytecodeAdapter compareLessThan java.lang.Object java.lang.Object`.
+If so, a Jenkins administrator will need to go to **Manage Jenkins » In-process Script Approval** and **Approve** `staticMethod org.codehaus.groovy.runtime.ScriptBytecodeAdapter compareLessThan java.lang.Object java.lang.Object`.
 Then try running your script again and it should work.
-A later version of the plugin may remove the need for this workaround.)
+A later version of the plugin may remove the need for this workaround.
 
 When you run this flow for the first time, it will check out a project and run all of its tests in sequence.
-The second time and subsequent times you run it, the `splitTests` task will partition your tests into two sets of roughly equal runtime.
-The rest of the flow then runs these in parallel, so if you look at _trend_ (in the _Build History_ widget) you will see the second and subsequent builds taking roughly half the time of the first.
-(If you only have the one slave configured with its two executors this would not really save any time, but you may have multiple slaves on different hardware matching the same label expression.)
+The second and subsequent times you run it, the `splitTests` task will partition your tests into two sets of roughly equal runtime.
+The rest of the flow then runs these in parallel - so if you look at **trend** (in the **Build History** widget) you will see the second and subsequent builds taking roughly half the time of the first.
+If you only have the one slave configured with its two executors, this won't save time, but you may have multiple slaves on different hardware matching the same label expression.
 
 This script is more complex than the previous ones so it bears some examination.
-We start by grabbing a slave, checking out sources, and making a copy of them using the `archive` step;
+You start by grabbing a slave, checking out sources, and making a copy of them using the `archive` step:
 
 ```groovy
 archive 'pom.xml, src/'
 ```
 
-is shorthand for the more general
+is shorthand for the more general:
 
 ```groovy
 step([$class: 'ArtifactArchiver', artifacts: 'pom.xml, src/'])
 ```
 
-Later we will `unarchive` these same files back into _other_ workspaces.
-We could have just run `git` anew in each slave’s workspace, but this would result in duplicated changelog entries, as well as contacting the Git server twice.
-(A flow build is permitted to run as many SCM checkouts as it needs to, which is useful for projects working with multiple repositories, but not what we want here.)
-More seriously, if someone pushed a new Git commit at just the wrong time, you might be testing different sources in some branches, which is prevented when we do the checkout just once and distribute sources to slaves ourselves.
+Later,  `unarchive` these same files back into **other** workspaces.
+You could have just run `git` anew in each slave’s workspace, but this would result in duplicated changelog entries, as well as contacting the Git server twice.
+* A flow build is permitted to run as many SCM checkouts as it needs to, which is useful for projects working with multiple repositories, but not what we want here.
+* More importantly, if anyone pushes a new Git commit at  the wrong time, you might be testing different sources in some branches - which is prevented when you do the checkout just once and distribute sources to slaves yourseldf.
 
-`splitTests` returns a list of lists of strings.
-From each (list) entry we construct one branch to run; the label (map key) is akin to a thread name, and will appear in the build log.
+The command `splitTests` returns a list of lists of strings.
+From each (list) entry, you construct one branch to run; the label (map key) is akin to a thread name, and will appear in the build log.
 The Maven project is set up to expect a file `exclusions.txt` at its root, and it will run all tests _not_ mentioned there, which we set up via the `writeFile` step.
-When we run the `parallel` step, each branch is started at the same time, and the overall step completes when all the branches finish: “fork & join”.
+When you run the `parallel` step, each branch is started at the same time, and the overall step completes when all the branches finish: “fork & join”.
 
-There are several new ideas at work here.
-First of all, you can see that a single flow build allocates several executors, potentially on different slaves, at the same time.
-(You can see these starting and finishing in the Jenkins executor widget on the main screen.)
-Each call to `node` gets its own workspace.
-This kind of flexibility is impossible in a freestyle project, each build of which is tied to exactly one workspace.
-(The Parallel Test Executor plugin works around that for its freestyle build step by triggering multiple builds of the project, making the history hard to follow.)
+There are several new ideas at work here:
+* A single flow build allocates several executors, potentially on different slaves, at the same time.
+You can see these starting and finishing in the Jenkins executor widget on the main screen.
 
-Note also that we run `tool` inside each branch, rather than at top level, since Maven might be installed in a different place on each slave.
-We would _not_ want to use `env` in this case
+* Each call to `node` gets its own workspace.
+This kind of flexibility is impossible in a freestyle project, each build of which is tied to exactly one workspace.The Parallel Test Executor plugin works around that for its freestyle build step by triggering multiple builds of the project, making the history hard to follow.
+
+Do not use `env` in this case:
 
 ```groovy
 env.PATH = "${mvnHome}/bin:${env.PATH}"
 ```
 
-since environment variable overrides are currently limited to being global to a workflow run, not local to the current thread (and thus slave).
-You could however use the `withEnv` step as noted above.
+because environment variable overrides are  limited to being global to a workflow run, not local to the current thread (and thus slave).
+You could, however, use the `withEnv` step as noted above.
 
-You may also have noticed that we are running `JUnitResultArchiver` several times, something that is not possible in a freestyle project.
+You may also have noticed that you are running `JUnitResultArchiver` several times, something that is not possible in a freestyle project.
 The test results recorded in the build are cumulative.
 
 When you view the log for a build with multiple branches, the output from each will be intermixed.
@@ -633,7 +641,7 @@ Therefore it makes sense to load the program from another source, one that you c
 
 ## Building Entire Script from SCM
 
-The easiest way to do this is to select _Groovy CPS DSL from SCM_ when defining the workflow.
+The easiest way to do this is to select **Groovy CPS DSL from SCM** when defining the workflow.
 In that case you do not enter any Groovy code in the Jenkins UI; you just indicate where in source code you want to retrieve the program.
 (If you update this repository, a new build will be triggered, so long as your job is configured with an SCM polling trigger.)
 
@@ -721,7 +729,7 @@ The neat thing is that if you want to change your Workflow script—for example,
 The Workflow script is always synchronized with the rest of the source code you are working on: `checkout scm` checks out the same revision as the script is loaded from.
 
 # Exploring Available Steps
-SThere are a number of workflow steps not discussed in this document, and plugins can add more.
+There are a number of workflow steps not discussed in this document, and plugins can add more.
 Even steps discussed here can take various special options that can be added from release to release.
 To make it possible to browse all available steps and their syntax, a help tool is built into the flow definition screen.
 
