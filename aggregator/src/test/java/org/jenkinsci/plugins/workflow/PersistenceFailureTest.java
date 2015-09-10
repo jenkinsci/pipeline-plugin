@@ -3,13 +3,18 @@ package org.jenkinsci.plugins.workflow;
 import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.Step;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.TestExtension;
+import org.kohsuke.stapler.DataBoundConstructor;
 
-/**
- * @author Kohsuke Kawaguchi
- */
 public class PersistenceFailureTest extends SingleJobTestBase {
+
     /**
      * When wokflow execution runs into a serialization problem, can we handle that situation gracefully?
      */
@@ -51,4 +56,47 @@ public class PersistenceFailureTest extends SingleJobTestBase {
             }
         });
     }
+    /**
+     * {@link Step} that fails to persist. Used to test the behaviour of error reporting/recovery.
+     */
+    public static class PersistenceProblemStep extends AbstractStepImpl {
+        @DataBoundConstructor
+        public PersistenceProblemStep() {
+            super();
+        }
+        @TestExtension("stepExecutionFailsToPersist")
+        public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+            public DescriptorImpl() {
+                super(PersistenceProblemStepExecution.class);
+            }
+            @Override
+            public String getFunctionName() {
+                return "persistenceProblem";
+            }
+            @Override
+            public String getDisplayName() {
+                return "Problematic Persistence";
+            }
+        }
+        /**
+         * {@link StepExecution} that fails to serialize.
+         *
+         * Used to test the error recovery path of {@link WorkflowJob}.
+         */
+        public static class PersistenceProblemStepExecution extends AbstractStepExecutionImpl {
+            public final Object notSerializable = new Object();
+            private Object writeReplace() {
+                throw new RuntimeException("testing the forced persistence failure behaviour");
+            }
+            @Override
+            public boolean start() throws Exception {
+                return false;
+            }
+            @Override
+            public void stop(Throwable cause) throws Exception {
+                // nothing to do here
+            }
+        }
+    }
+
 }
