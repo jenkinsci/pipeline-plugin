@@ -29,7 +29,6 @@ import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.model.TaskListener;
 import hudson.model.User;
-import hudson.slaves.DumbSlave;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -96,44 +95,6 @@ public class WorkflowTest extends SingleJobTestBase {
         assertEquals(e, b.getExecutor());
         assertTrue(e.isActive());
         assertFalse(e.isAlive());
-    }
-
-    /**
-     * Workflow captures a stateful object, and we verify that it survives the restart
-     */
-    @Test public void persistEphemeralObject() throws Exception {
-        story.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
-                jenkins().setNumExecutors(0);
-                DumbSlave s = createSlave(story.j);
-                String nodeName = s.getNodeName();
-
-                p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition(
-                    "def s = jenkins.model.Jenkins.instance.getComputer('" + nodeName + "')\n" +
-                    "def r = s.node.rootPath\n" +
-                    "def p = r.getRemote()\n" +
-
-                    "semaphore 'wait'\n" +
-
-                    // make sure these values are still alive
-                    "assert s.nodeName=='" + nodeName + "'\n" +
-                    "assert r.getRemote()==p : r.getRemote() + ' vs ' + p;\n" +
-                    "assert r.channel==s.channel : r.channel.toString() + ' vs ' + s.channel\n"));
-
-                startBuilding();
-                SemaphoreStep.waitForStart("wait/1", b);
-                assertTrue(b.isBuilding());
-            }
-        });
-        story.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
-                rebuildContext(story.j);
-                assertThatWorkflowIsSuspended();
-                SemaphoreStep.success("wait/1", null);
-                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
-            }
-        });
     }
 
     /**
