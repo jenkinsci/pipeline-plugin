@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.workflow;
 
 import hudson.model.Result;
 import hudson.slaves.DumbSlave;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
@@ -15,6 +16,8 @@ import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
 import static org.junit.Assert.assertTrue;
+import org.junit.Ignore;
+import org.jvnet.hudson.test.Issue;
 
 /**
  * Tests related to serialization of program state.
@@ -139,6 +142,45 @@ public class SerializationTest extends SingleJobTestBase {
                 assertThatWorkflowIsSuspended();
                 SemaphoreStep.success("wait/1", null);
                 story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
+            }
+        });
+    }
+
+    @Ignore("TODO java.io.NotSerializableException: java.util.ArrayList$Itr")
+    @Issue("JENKINS-27421")
+    @Test public void listIterator() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(
+                    "def arr = []; arr += 'one'; arr += 'two'\n" +
+                    "for (int i = 0; i < arr.size(); i++) {def elt = arr[i]; echo \"running C-style loop on ${elt}\"; semaphore \"C-${elt}\"}\n" +
+                    "for (def elt : arr) {echo \"running new-style loop on ${elt}\"; semaphore \"new-${elt}\"}"
+                    , true));
+                ScriptApproval.get().approveSignature("staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods plus java.util.Collection java.lang.Object"); // TODO ought to be in generic-whitelist
+                startBuilding();
+                SemaphoreStep.waitForStart("C-one/1", b);
+                story.j.waitForMessage("running C-style loop on one", b);
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                rebuildContext(story.j);
+                SemaphoreStep.success("C-one/1", null);
+                SemaphoreStep.success("C-two/1", null);
+                story.j.waitForMessage("running C-style loop on two", b);
+                SemaphoreStep.waitForStart("new-one/1", b);
+                story.j.waitForMessage("running new-style loop on one", b);
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                rebuildContext(story.j);
+                SemaphoreStep.success("new-one/1", null);
+                SemaphoreStep.success("new-two/1", null);
+                story.j.waitForCompletion(b);
+                story.j.assertBuildStatusSuccess(b);
+                story.j.assertLogContains("running new-style loop on two", b);
             }
         });
     }
