@@ -64,15 +64,16 @@ and browse [localhost:8080](http://localhost:8080/).
 
 # Presentations
 
-Jenkins Office Hour on Workflow for plugin developers: [video](https://www.youtube.com/watch?v=4zdy7XGx3PA)
+Jenkins Workflow: What’s Up? (JUC West) (Sep 2015): [slides](http://www.slideshare.net/jgcloudbees/juc-west-15-jenkins-workflow-whats-up) and accompanying [demo](https://youtu.be/yaEF3VAjWbk)
 
-Jenkins Workflow: What’s Up? (JUC DC) (Jun 2015): [slides](http://www.slideshare.net/jgcloudbees/juc-dc-2015-workflow-whats-up)
+Jenkins Office Hour on Workflow for plugin developers (Aug 2015): [video](https://www.youtube.com/watch?v=4zdy7XGx3PA)
 
 Workflow Meetup London (Mar 2015): [slides](http://www.slideshare.net/jgcloudbees/london-workflow-summit-kkjg)
 
+Jenkins Workflow Screencast (Jan 2015): [video](https://www.youtube.com/watch?v=Welwf1wTU-w)
+
 Webinar _Orchestrating the Continuous Delivery Process in Jenkins with Workflow_ (Dec 2014): [video](http://youtu.be/ZqfiW8eVcuQ)
 
-JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJY)
 
 # Detailed guides
 

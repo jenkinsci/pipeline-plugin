@@ -29,6 +29,7 @@ import com.gargoylesoftware.htmlunit.WebRequestSettings;
 import com.gargoylesoftware.htmlunit.WebResponse;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.GroovyShell;
+import hudson.model.BooleanParameterDefinition;
 import hudson.model.BooleanParameterValue;
 import hudson.model.FreeStyleProject;
 import hudson.model.ParametersDefinitionProperty;
@@ -149,8 +150,22 @@ public class SnippetizerTest {
         MockFolder d2 = r.createFolder("d2");
         // Really this would be a WorkflowJob, but we cannot depend on that here, and it should not matter since we are just looking for Job:
         FreeStyleProject us = d2.createProject(FreeStyleProject.class, "us");
+        ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("key", ""), new BooleanParameterDefinition("flag", false, "")));
+        assertGenerateSnippet("{'stapler-class':'" + BuildTriggerStep.class.getName() + "', 'job':'../d1/ds', 'parameter': [{'name':'key', 'value':'stuff'}, {'name':'flag', 'value':true}]}", "build job: '../d1/ds', parameters: [[$class: 'StringParameterValue', name: 'key', value: 'stuff'], [$class: 'BooleanParameterValue', name: 'flag', value: true]]", us.getAbsoluteUrl() + "configure");
+    }
+
+    @Issue("JENKINS-29739")
+    @Test public void generateSnippetForBuildTriggerSingle() throws Exception {
+        FreeStyleProject ds = r.jenkins.createProject(FreeStyleProject.class, "ds1");
+        FreeStyleProject us = r.jenkins.createProject(FreeStyleProject.class, "us1");
         ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("key", "")));
-        assertGenerateSnippet("{'stapler-class':'" + BuildTriggerStep.class.getName() + "', 'job':'../d1/ds', 'parameter':[{'name':'key', 'value':'stuff'}]}", "build job: '../d1/ds', parameters: [[$class: 'StringParameterValue', name: 'key', value: 'stuff']]", us.getAbsoluteUrl() + "configure");
+        assertGenerateSnippet("{'stapler-class':'" + BuildTriggerStep.class.getName() + "', 'job':'ds1', 'parameter': {'name':'key', 'value':'stuff'}}", "build job: 'ds1', parameters: [[$class: 'StringParameterValue', name: 'key', value: 'stuff']]", us.getAbsoluteUrl() + "configure");
+    }
+
+    @Test public void generateSnippetForBuildTriggerNone() throws Exception {
+        FreeStyleProject ds = r.jenkins.createProject(FreeStyleProject.class, "ds0");
+        FreeStyleProject us = r.jenkins.createProject(FreeStyleProject.class, "us0");
+        assertGenerateSnippet("{'stapler-class':'" + BuildTriggerStep.class.getName() + "', 'job':'ds0'}", "build 'ds0'", us.getAbsoluteUrl() + "configure");
     }
 
     @Test public void generateSnippetAdvancedDeprecated() throws Exception {

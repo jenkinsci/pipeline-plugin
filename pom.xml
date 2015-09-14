@@ -28,11 +28,11 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.609.2</version>
+        <version>1.609.2</version> <!-- but see Jenkins-Version override below -->
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
-    <version>1.10-SNAPSHOT</version>
+    <version>1.11-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Workflow: Parent</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
@@ -113,6 +113,21 @@
         </dependency>
     </dependencies>
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin> <!-- TODO remove when 1.609.2 more widely installed -->
+                    <groupId>org.jenkins-ci.tools</groupId>
+                    <artifactId>maven-hpi-plugin</artifactId>
+                    <configuration> <!-- only applies to hpi goal, but if I use <execution> here it tries to run that goal on the parent POM which fails -->
+                        <archive>
+                            <manifestEntries>
+                                <Jenkins-Version>1.609.1</Jenkins-Version>
+                            </manifestEntries>
+                        </archive>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <!-- TODO replace with java.level=6 once we have a better plugin parent POM: -->
             <plugin>

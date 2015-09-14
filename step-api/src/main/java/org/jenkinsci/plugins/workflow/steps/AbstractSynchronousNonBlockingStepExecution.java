@@ -1,11 +1,16 @@
 package org.jenkinsci.plugins.workflow.steps;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.security.ACL;
 import hudson.util.DaemonThreadFactory;
 import hudson.util.NamingThreadFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import jenkins.model.Jenkins;
+import jenkins.security.NotReallyRoleSensitiveCallable;
+import org.acegisecurity.Authentication;
 
 /**
  * Similar to {@link AbstractSynchronousStepExecution} (it executes synchronously too) but it does not block the CPS VM thread.
@@ -34,7 +39,21 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
 
     @Override
     public final boolean start() throws Exception {
-        task = getExecutorService().submit(new StepRunner(this));
+        final Authentication auth = Jenkins.getAuthentication();
+        task = getExecutorService().submit(new Runnable() {
+            @SuppressFBWarnings(value="SE_BAD_FIELD", justification="not serializing anything here")
+            @Override public void run() {
+                try {
+                    getContext().onSuccess(ACL.impersonate(auth, new NotReallyRoleSensitiveCallable<T, Exception>() {
+                        @Override public T call() throws Exception {
+                            return AbstractSynchronousNonBlockingStepExecution.this.run();
+                        }
+                    }));
+                } catch (Exception e) {
+                    getContext().onFailure(e);
+                }
+            }
+        });
         return false;
     }
 
@@ -61,21 +80,4 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
         return executorService;
     }
 
-    private static class StepRunner implements Runnable {
-
-        private final AbstractSynchronousNonBlockingStepExecution<?> step;
-
-        public StepRunner(AbstractSynchronousNonBlockingStepExecution<?> step) {
-            this.step = step;
-        }
-
-        @Override
-        public void run() {
-            try {
-                step.getContext().onSuccess(step.run());
-            } catch (Exception e) {
-                step.getContext().onFailure(e);
-            }
-        }
-    }
 }
