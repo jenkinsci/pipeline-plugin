@@ -19,6 +19,7 @@
 </ul>
 <p>
     For a non-Workflow downstream build, the <code>buildVariables</code> property offers access to a map of defined build variables.
+    For a Workflow downstream build, this property gives access to any variables set globally on <code>env</code>.
 </p>
 <p>
     Administrator-approved scripts outside the sandbox can use the <code>rawBuild</code> property to get access to a <code>hudson.model.Run</code> with further APIs.

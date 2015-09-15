@@ -55,7 +55,9 @@ public class BranchJobProperty extends WorkflowJobProperty {
             @Override public boolean hasPermission(Authentication a, Permission permission) {
                 // This project is managed by its parent and may not be directly configured or deleted.
                 // Note that Item.EXTENDED_READ may still be granted, so you can still see Snippet Generator, etc.
-                if (permission == Item.CONFIGURE || permission == Item.DELETE) {
+                if (ACL.SYSTEM.equals(a)) {
+                    return true; // e.g., DefaultDeadBranchStrategy.runDeadBranchCleanup
+                } else if (permission == Item.CONFIGURE || permission == Item.DELETE) {
                     return false;
                 } else {
                     return acl.hasPermission(a, permission);

@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.inject.Inject;
+
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -34,11 +35,14 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.Builder;
 import hudson.tasks.Publisher;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -52,7 +56,7 @@ public final class CoreStep extends AbstractStepImpl {
         this.delegate = delegate;
     }
 
-    private static final class Execution extends AbstractSynchronousStepExecution<Void> {
+    private static final class Execution extends AbstractSynchronousNonBlockingStepExecution<Void> {
 
         @Inject private transient CoreStep step;
         @StepContextParameter private transient Run<?,?> run;

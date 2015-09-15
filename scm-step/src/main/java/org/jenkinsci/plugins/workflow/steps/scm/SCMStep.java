@@ -31,13 +31,16 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.SCMListener;
 import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
+
 import java.io.File;
 import java.io.Serializable;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
-import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
+import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -67,7 +70,7 @@ public abstract class SCMStep extends AbstractStepImpl implements Serializable {
 
     protected abstract @Nonnull SCM createSCM();
 
-    public static final class StepExecutionImpl extends AbstractSynchronousStepExecution<Void> {
+    public static final class StepExecutionImpl extends AbstractSynchronousNonBlockingStepExecution<Void> {
 
         @Inject private transient SCMStep step;
         @StepContextParameter private transient Run<?,?> run;

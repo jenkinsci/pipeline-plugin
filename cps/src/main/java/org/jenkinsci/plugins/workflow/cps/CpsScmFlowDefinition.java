@@ -133,7 +133,7 @@ public class CpsScmFlowDefinition extends FlowDefinition {
         @Inject public Snippetizer snippetizer;
 
         @Override public String getDisplayName() {
-            return "Groovy CPS DSL from SCM";
+            return "Workflow script from SCM";
         }
 
         public Collection<? extends SCMDescriptor<?>> getApplicableDescriptors() {

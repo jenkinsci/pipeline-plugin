@@ -36,6 +36,10 @@ public class ArtifactUnarchiverStep extends AbstractStepImpl {
             return "Copy archived artifacts into the workspace";
         }
 
+        @Override public boolean isAdvanced() {
+            return true;
+        }
+
     }
 
 }

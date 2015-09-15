@@ -2,6 +2,23 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.11 (not yet released)
+* [JENKINS-30346](https://issues.jenkins-ci.org/browse/JENKINS-30346): added a cross platform `deleteDir` step to recursively delete a directory and its contents.
+
+## 1.10 (Aug 31 2015)
+
+* [JENKINS-30122](https://issues.jenkins-ci.org/browse/JENKINS-30122): regression in usage of the Authorize Project plugin in 1.10-beta-1.
+* [JENKINS-29739](https://issues.jenkins-ci.org/browse/JENKINS-29739): _Snippet Generator_ did not work for `build` with exactly one parameter.
+* [JENKINS-29169](https://issues.jenkins-ci.org/browse/JENKINS-29169): `build('otherWorkflow').buildVariables` can now be used to access variables set using `env.KEY = 'value'` notation.
+
+## 1.10-beta-1 (Aug 21 2015)
+
+* [JENKINS-26942](https://issues.jenkins-ci.org/browse/JENKINS-26942): added `stash` and `unstash` steps (deprecating `unarchive`).
+* [JENKINS-26135](https://issues.jenkins-ci.org/browse/JENKINS-26135): expand global library functionality to allow predefined variables and even custom DSLs.
+* [JENKINS-29890](https://issues.jenkins-ci.org/browse/JENKINS-29890): `input` step submitter was not being consistently logged.
+* [JENKINS-25879](https://issues.jenkins-ci.org/browse/JENKINS-25879), [JENKINS-29875](https://issues.jenkins-ci.org/browse/JENKINS-29875): New API to run long lived tasks that could block on I/O in a separate thread avoiding to block main CPS VM thread.
+* [JENKINS-29653](https://issues.jenkins-ci.org/browse/JENKINS-29653): visual tweak to _Snippet Generator_.
+
 ## 1.9 (Aug 06 2015)
 
 * _Running Steps_ link is now called _Workflow Steps_ as it will show steps for workflows that have long since completed.

@@ -111,7 +111,7 @@ public class CpsFlowDefinition extends FlowDefinition {
 
         @Override
         public String getDisplayName() {
-            return "Groovy CPS DSL";
+            return "Workflow script";
         }
 
         public FormValidation doCheckScript(@QueryParameter String value, @QueryParameter boolean sandbox) {

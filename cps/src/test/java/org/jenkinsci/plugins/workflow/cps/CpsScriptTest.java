@@ -92,8 +92,7 @@ public class CpsScriptTest extends AbstractCpsFlowTest {
         StringBuilder msg = new StringBuilder();
 
         FlowGraphWalker walker = new FlowGraphWalker(exec);
-        FlowNode n;
-        while ((n = walker.next()) != null) {
+        for (FlowNode n : walker) {
             ErrorAction e = n.getAction(ErrorAction.class);
             if (e != null) {
                 msg.append(Functions.printThrowable(e.getError()));
