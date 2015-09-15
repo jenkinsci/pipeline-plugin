@@ -1,14 +1,17 @@
-# Plugin Compatibility with Workflow
+# Workflow Compatibility Plugins
 
-For architectural reasons, plugins providing various extensions of interest to builds cannot be made automatically compatible with Workflow.
-Typically they require use of some newer APIs, large or small (see the bottom of this document for details).
-This document captures the ongoing status of plugins known to be compatible or incompatible.
+For architectural reasons, plugins that provide various extensions of interest to builds are not automatically compatible with Workflow.
+Typically, they require use of newer APIs - both large or small.
+This document details the ongoing status of plugins known to be compatible or incompatible.
 
-Entries list the class name serving as the entry point to the relevant functionality of the plugin (generally an `@Extension`), the plugin short name, and implementation status.
+Entries list:
+* the class name serving as the entry point to the relevant functionality of the plugin (generally an `@Extension`)
+* the plugin short name  
+* implementation status
 
-## SCMs
+## Compatible SCMs
 
-See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for making `SCM`s compatible.
+The following SCMs are compatible. See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for further details on making `SCM`s compatible.
 
 - [X] `GitSCM` (`git`): supported as of 2.3; native `git` step also bundled
 - [X] `SubversionSCM` (`subversion`): supported as of 2.5; native `svn` step also bundled
@@ -20,8 +23,8 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `teamconcert`: [JENKINS-27464](https://issues.jenkins-ci.org/browse/JENKINS-27464)
 - [X] `CVSSCM` (`cvs`): scheduled to be supported in 2.13
 
-## Build steps and post-build actions
-
+## Build Steps and Post-build Actions
+The following build steps and post-build steps are included:
 - [X] `ArtifactArchiver` (core)
 - [X] `Fingerprinter` (core)
 - [X] `JUnitResultArchiver` (`junit`)
@@ -55,8 +58,8 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
 - [X] `ScoveragePublisher` (`scoverage`): supported in 1.2.0
 
-## Build wrappers
-
+## Build Wrappers
+The following build wrappers are included:
 - [X] `ConfigFileBuildWrapper` (`config-file-provider`): supported as of 2.9.1
 - [X] `Xvnc` (`xvnc`) supported as of 1.22
 - [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
@@ -68,7 +71,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `LockWrapper` (`locks-and-latches`): [JENKINS-29461](https://issues.jenkins-ci.org/browse/JENKINS-29461)
 
 ## Triggers
-
+The following triggers are included:
 - [ ] `gerrit-trigger`: [JENKINS-26010](https://issues.jenkins-ci.org/browse/JENKINS-26010)
 - [ ] `ghprb`: [JENKINS-26591](https://issues.jenkins-ci.org/browse/JENKINS-26591)
 - [ ] `github`: [JENKINS-27136](https://issues.jenkins-ci.org/browse/JENKINS-27136)
@@ -78,7 +81,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [X] `bitbucket`: supported as of 1.1.2
 
 ## Clouds
-
+The following Clouds are delivered:
 - [ ] `elasticbox`: [JENKINS-25978](https://issues.jenkins-ci.org/browse/JENKINS-25978) (could also include build wrapper integration)
 - [ ] `mansion-cloud`: [JENKINS-24815](https://issues.jenkins-ci.org/browse/JENKINS-24815)
 - [ ] `mock-slave` (for prototyping): [JENKINS-25090](https://issues.jenkins-ci.org/browse/JENKINS-25090)
@@ -88,7 +91,7 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [X] `ec2`: known to work as is
 
 ## Miscellaneous
-
+The following miscellaneous items are included:
 - [X] `rebuild`: [JENKINS-26024](https://issues.jenkins-ci.org/browse/JENKINS-26024)
 - [ ] `parameterized-trigger` (to support a workflow as downstream): [JENKINS-26050](https://issues.jenkins-ci.org/browse/JENKINS-26050)
 - [X] `build-token-root`: [JENKINS-26693](https://issues.jenkins-ci.org/browse/JENKINS-26693)
@@ -101,9 +104,9 @@ See [this guide](scm-step/README.md#supporting-workflow-from-an-scm-plugin) for 
 - [ ] `ListSubversionTagsParameterValue` (`subversion`): [JENKINS-27718](https://issues.jenkins-ci.org/browse/JENKINS-27718)
 - [X] `authorize-project`: scheduled for 1.0.4
 
-## Custom steps
+## Custom Steps
 
-For cases when a first-class Workflow step (rather than an adaptation of functionality applicable to freestyle projects) makes sense.
+For cases when a first-class Workflow step - rather than an adaptation of functionality applicable to freestyle projects - is needed, the following are delivered:
 
 - [X] `parallel-test-executor`: supported with `splitTests` step since 1.6
 - [ ] `gerrit-trigger`: [JENKINS-26102](https://issues.jenkins-ci.org/browse/JENKINS-26102), [JENKINS-26103](https://issues.jenkins-ci.org/browse/JENKINS-26103)
@@ -111,12 +114,12 @@ For cases when a first-class Workflow step (rather than an adaptation of functio
 
 # Plugin Developer Guide
 
-If you are maintaining (or creating) a plugin and wish its features to work smoothly with Workflow, there are a number of special considerations.
+If you are maintaining (or creating) a plugin and want its features to work smoothly with Workflow, there are a number of special considerations.
 
-## Extension points accessible via metastep
+## Extension Points Accessible via Metastep
 
 Several common types of plugin features (`@Extension`s) can be invoked from a Workflow script without any special plugin dependencies so long as you use newer Jenkins core APIs.
-Then there is “metastep” in Workflow (`step`, `checkout`, `wrap`) which loads the extension by class name and calls it.
+ The “metastep” in Workflow (`step`, `checkout`, and `wrap`). It loads the extensions by class name and calls it.
 
 ### General guidelines
 
