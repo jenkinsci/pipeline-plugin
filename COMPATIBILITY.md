@@ -273,10 +273,42 @@ To add support for use of a `Builder` or `Publisher` from a workflow, depend on 
 Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
 Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](#constructor-vs-setters)).
 
+Note that a `SimpleBuildStep` is designed to work also in a freestyle project, and thus assumes that a `FilePath workspace` is available (as well as some associated services, like a `Launcher`).
+That is always true in a freestyle build, but is a potential limitation for use from a Workflow build.
+For example, you might legitimately want to take some action outside the context of any workspace:
+
+```groovy
+node('win64') {
+  bat 'make all'
+  archive 'myapp.exe'
+}
+input 'Ready to tell the world?' // could pause indefinitely, do not tie up a slave
+step([$class: 'FunkyNotificationBuilder', artifact: 'myapp.exe']) // ← FAILS!
+```
+
+Even if `FunkyNotificationBuilder` implements `SimpleBuildStep`, the above will fail, because the `workspace` required by `SimpleBuildStep.perform` is missing.
+You could grab an arbitrary workspace just to run the builder:
+
+```groovy
+node('win64') {
+  bat 'make all'
+  archive 'myapp.exe'
+}
+input 'Ready to tell the world?'
+node {
+  step([$class: 'FunkyNotificationBuilder', artifact: 'myapp.exe']) // OK
+}
+```
+
+but if the `workspace` is being ignored anyway (in this case because `FunkyNotificationBuilder` only cares about artifacts that have already been archived), it may be better to just write a custom step (described below).
+
 ### Build wrappers
 
 Here the metastep is `wrap`.
 To add support for a `BuildWrapper`, depend on Jenkins 1.599+ (typically 1.609.1), and implement `SimpleBuildWrapper`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildWrapper.html).
+
+Like `SimpleBuildStep`, wrappers written this way always require a workspace.
+If that would be constricting, consider writing a custom step instead.
 
 ## Triggers
 
