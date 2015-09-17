@@ -24,25 +24,21 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
-import hudson.model.DescriptorVisibilityFilter;
-import hudson.model.ParameterDefinition;
+import hudson.model.BooleanParameterDefinition;
+import hudson.model.JobProperty;
 import hudson.model.ParametersAction;
-import hudson.model.StringParameterDefinition;
+import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterValue;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import jenkins.branch.BranchProperty;
-import jenkins.branch.BranchPropertyDescriptor;
 import jenkins.branch.BranchSource;
-import jenkins.branch.BuildRetentionBranchProperty;
 import jenkins.branch.DefaultBranchPropertyStrategy;
-import jenkins.branch.RateLimitBranchProperty;
 import jenkins.plugins.git.GitSCMSource;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProjectTest.findBranchProject;
+import org.jenkinsci.plugins.workflow.steps.StepConfigTester;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -52,42 +48,46 @@ import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
-public class WorkflowParameterDefinitionBranchPropertyTest {
+public class JobPropertyStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public JenkinsRule r = new JenkinsRule();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
-    @Test public void propertyVisible() throws Exception {
-        WorkflowMultiBranchProject p = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
-        Set<Class<? extends BranchProperty>> clazzes = new HashSet<Class<? extends BranchProperty>>();
-        for (BranchPropertyDescriptor d : DescriptorVisibilityFilter.apply(p, BranchPropertyDescriptor.all())) {
-            clazzes.add(d.clazz);
-        }
-        @SuppressWarnings("unchecked")
-        Set<Class<? extends BranchProperty>> expected = new HashSet<Class<? extends BranchProperty>>(Arrays.asList(
-                WorkflowParameterDefinitionBranchProperty.class,
-                RateLimitBranchProperty.class,
-                BuildRetentionBranchProperty.class
-                /* UntrustedBranchProperty should not be here! */));
-        assertEquals(expected, clazzes);
+    @Issue("JENKINS-30519")
+    @Test public void configRoundTrip() throws Exception {
+        StepConfigTester tester = new StepConfigTester(r);
+        // TODO fails (returns null)
+        assertEquals(Collections.emptyList(), tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty<?>>emptyList())).getProperties());
+        List<JobProperty<?>> properties = tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty<?>>singletonList(new ParametersDefinitionProperty(new BooleanParameterDefinition("flag", true, null))))).getProperties();
+        assertEquals(1, properties.size());
+        assertEquals(ParametersDefinitionProperty.class, properties.get(0));
+        ParametersDefinitionProperty pdp = (ParametersDefinitionProperty) properties.get(0);
+        assertEquals(1, pdp.getParameterDefinitions().size());
+        assertEquals(BooleanParameterDefinition.class, pdp.getParameterDefinitions().get(0).getClass());
+        BooleanParameterDefinition bpd = (BooleanParameterDefinition) pdp.getParameterDefinitions().get(0);
+        assertEquals("flag", bpd.getName());
+        assertTrue(bpd.isDefaultValue());
+        // TODO Snippetizer fails with: NoStaplerConstructorException: There's no @DataBoundConstructor on any constructor of class hudson.model.ParametersDefinitionProperty
+        // TODO also JENKINS-29711 means it seems to omit the required ()
     }
 
     @Issue("JENKINS-30206")
     @Test public void useParameter() throws Exception {
         sampleRepo.init();
-        sampleRepo.write("Jenkinsfile", "echo \"received ${myparam}\"");
+        sampleRepo.write("Jenkinsfile",
+                "properties([[$class: 'ParametersDefinitionProperty', parameterDefinitions: [[$class: 'StringParameterDefinition', name: 'myparam', defaultValue: 'default value']]]])\n" +
+                "echo \"received ${myparam}\"");
         sampleRepo.git("add", "Jenkinsfile");
         sampleRepo.git("commit", "--all", "--message=flow");
         WorkflowMultiBranchProject mp = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
-        WorkflowParameterDefinitionBranchProperty prop = new WorkflowParameterDefinitionBranchProperty();
-        prop.setParameterDefinitions(Collections.<ParameterDefinition>singletonList(new StringParameterDefinition("myparam", "default value")));
-        mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[] {prop})));
+        mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
         WorkflowJob p = findBranchProject(mp, "master");
         assertEquals(1, mp.getItems().size());
         r.waitUntilNoActivity();
         WorkflowRun b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
+        // TODO fails due to JENKINS-28510
         r.assertLogContains("received default value", b1);
         WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("myparam", "special value"))));
         assertEquals(2, b2.getNumber());
