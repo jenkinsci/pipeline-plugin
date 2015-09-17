@@ -99,6 +99,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `ListSubversionTagsParameterValue` (`subversion`): [JENKINS-27718](https://issues.jenkins-ci.org/browse/JENKINS-27718)
 - [X] `authorize-project`: supported as of 1.1.0
 - [ ] `lockable-resources` : [JENKINS-30269](https://issues.jenkins-ci.org/browse/JENKINS-30269)
+- [X] `customize-build-now`: supported as of 1.1
 
 ## Custom steps
 
