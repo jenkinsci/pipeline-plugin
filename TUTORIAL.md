@@ -6,11 +6,9 @@
 
 Before you begin, ensure you have the following installed or running:
 
-+ You must be running Jenkins 1.580.1 or later (1.596.1 or later for more recent features).
++ You must be running Jenkins 1.580.1 or later (1.609.1+ for latest features).
 
 + Ensure Workflow is installed: navigate to **Plugin Manager**, install **Workflow: Aggregator** and restart Jenkins.
-
-+  Git and JUnit plugins are installed and up to date.
 
 **Note**: If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Workflow (plus additional associated features).
 
@@ -61,11 +59,7 @@ Groovy functions can use a C/Java-like syntax such as:
 ```groovy
 echo("hello from Workflow");
 ```
-
-If you do not need to perform variable substitutions, you can:
-* drop the semicolon (`;`)
-* drop the parentheses (`(` and `)`)
-* use single quotes (`'`) instead of double (`"`)
+You can drop the semicolon (`;`), drop the parentheses (`(` and `)`), and use single quotes (`'`) instead of double (`"`) if you do not need to perform variable substitutions.
 
 Comments in Groovy, as in Java, can use single-line or multiline styles:
 
@@ -253,13 +247,13 @@ Some environment variables are defined by Jenkins by default.
 
 See  Help in the **Snippet Generator** for the `withEnv` step for more details on this topic.
 
-## Configuring to Accept Build Parameters
+## Build Parameters
 
-If you have configured your workflow to accept parameters when it is built - **Build with Parameters** - they are accessible as Groovy variables of the same name.
+If you have configured your workflow to accept parameters when it is built — **Build with Parameters** — they are accessible as Groovy variables of the same name.
 
 # Recording Test Results and Artifacts
 
-Instead of failing the build if there are test failures, you want Jenkins to record them -- and then proceed.
+Instead of failing the build if there are test failures, you want Jenkins to record them — and then proceed.
 You must capture the JAR that you built.
 
 ```groovy
@@ -277,11 +271,11 @@ node {
 
 ## Understanding Syntax
 
-The Maven option `-Dmaven.test.failure.ignore` allows the `mvn` command to exit normally (status 0) - so that the flow continues, even when test failures are recorded on disk.
+The Maven option `-Dmaven.test.failure.ignore` allows the `mvn` command to exit normally (status 0) — so that the flow continues, even when test failures are recorded on disk.
 
 Run the `step` step twice.
 This step  allows you to use certain build (or post-build) steps already defined in Jenkins for use in traditional projects.
-It takes one parameter (called `delegate` but omitted here) - this parameter value is a standard Jenkins build step.
+It takes one parameter (called `delegate` but omitted here) — this parameter value is a standard Jenkins build step.
 
 You could create the delegate using Java constructor/method calls, using Groovy or Java syntax:
 
@@ -291,7 +285,7 @@ aa.fingerprint = true // i.e., aa.setFingerprint(true)
 step aa
 ```
 
-but this is cumbersome and does not work well with Groovy sandbox security - so any object-valued argument to a step may instead be given as a map.
+but this is cumbersome and does not work well with Groovy sandbox security — so any object-valued argument to a step may instead be given as a map.
 
 The following:
 
@@ -394,7 +388,7 @@ First, go to the Jenkins main page and look at the **Build Executor Status** wid
 
 Why are there two executors consumed by one flow build?
 
-* Every flow build itself runs on the master, using a **flyweight executor** - an uncounted slot that is assumed to not take any significant computational power.
+* Every flow build itself runs on the master, using a **flyweight executor** — an uncounted slot that is assumed to not take any significant computational power.
 * This executor represents the actual Groovy script, which is almost always idle, waiting for a step to complete.
 * Flyweight executors are always available.
 
@@ -410,7 +404,7 @@ To finish up, click the ▾ beside either executor entry for any running flow an
 
 ## Allocating Workspaces
 
-In addition to waiting to allocate an executor on a node, the `node` step also automatically allocates a **workspace**: a directory specific to this job - where you can check out sources, run commands, and do other work.
+In addition to waiting to allocate an executor on a node, the `node` step also automatically allocates a **workspace**: a directory specific to this job — where you can check out sources, run commands, and do other work.
 Workspaces are locked for the duration of the step: only one build at a time can use a given workspace.
 If multiple builds need a workspace on the same node, additional workspaces are allocated.
 
@@ -463,7 +457,7 @@ Here, you use:
 * `=~` is Groovy syntax to match text against a regular expression
 * `[0]` looks up the first match
 * `[1]` the first `(…)` group within that match
-* `readFile` step loads a text file from the workspace and returns its content (do not try to use `java.io.File` methods -  these will refer to files on the master where Jenkins is running, not in the current workspace).
+* `readFile` step loads a text file from the workspace and returns its content (do not try to use `java.io.File` methods —  these will refer to files on the master where Jenkins is running, not in the current workspace).
 * There is also a `writeFile` step to save content to a text file in the workspace
 * `fileExists` step to check whether a file exists without loading it.
 
@@ -568,7 +562,7 @@ A later version of the plugin may remove the need for this workaround.
 
 When you run this flow for the first time, it will check out a project and run all of its tests in sequence.
 The second and subsequent times you run it, the `splitTests` task will partition your tests into two sets of roughly equal runtime.
-The rest of the flow then runs these in parallel - so if you look at **trend** (in the **Build History** widget) you will see the second and subsequent builds taking roughly half the time of the first.
+The rest of the flow then runs these in parallel — so if you look at **trend** (in the **Build History** widget) you will see the second and subsequent builds taking roughly half the time of the first.
 If you only have the one slave configured with its two executors, this won't save time, but you may have multiple slaves on different hardware matching the same label expression.
 
 This script is more complex than the previous ones so it bears some examination.
