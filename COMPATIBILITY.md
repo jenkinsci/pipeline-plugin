@@ -70,7 +70,7 @@ The following build wrappers are included:
 - [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
 - [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
 
-## Triggers
+## Build Triggers
 The following triggers are included:
 - [X] `gerrit-trigger`: supported as of 2.15.0
 - [ ] `ghprb`: [JENKINS-26591](https://issues.jenkins-ci.org/browse/JENKINS-26591)
