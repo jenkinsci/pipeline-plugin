@@ -81,7 +81,7 @@ The following triggers are included:
 - [X] `bitbucket`: supported as of 1.1.2
 
 ## Clouds
-The following Clouds are delivered:
+Workflow supports on-demand node(s) provisioning from the following Cloud providers:
 - [ ] `elasticbox`: [JENKINS-25978](https://issues.jenkins-ci.org/browse/JENKINS-25978) (could also include build wrapper integration)
 - [ ] `mansion-cloud`: [JENKINS-24815](https://issues.jenkins-ci.org/browse/JENKINS-24815)
 - [X] `mock-slave` (for prototyping): supported as of 1.7
