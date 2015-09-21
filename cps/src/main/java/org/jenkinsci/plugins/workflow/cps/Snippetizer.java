@@ -31,9 +31,11 @@ import hudson.model.RootAction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.lang.model.SourceVersion;
@@ -174,13 +176,13 @@ import org.kohsuke.stapler.StaplerResponse;
 
     @Restricted(DoNotUse.class)
     public Collection<? extends StepDescriptor> getStepDescriptors(boolean advanced) {
-        List<StepDescriptor> ds = new ArrayList<StepDescriptor>();
+        TreeSet<StepDescriptor> t = new TreeSet<StepDescriptor>(new StepDescriptorComparator());
         for (StepDescriptor d : StepDescriptor.all()) {
             if (d.isAdvanced() == advanced) {
-                ds.add(d);
+                t.add(d);
             }
         }
-        return ds;
+        return t;
     }
 
     @Restricted(DoNotUse.class) // for stapler
@@ -223,6 +225,13 @@ import org.kohsuke.stapler.StaplerResponse;
         } catch (UnsupportedOperationException x) {
             Logger.getLogger(CpsFlowExecution.class.getName()).log(Level.WARNING, "failed to render " + json, x);
             return HttpResponses.plainText(x.getMessage());
+        }
+    }
+
+    private static class StepDescriptorComparator implements Comparator<StepDescriptor> {
+        @Override
+        public int compare(StepDescriptor o1, StepDescriptor o2) {
+            return o1.getFunctionName().compareTo(o2.getFunctionName());
         }
     }
 

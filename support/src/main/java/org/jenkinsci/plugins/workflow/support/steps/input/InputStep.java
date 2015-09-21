@@ -145,7 +145,7 @@ public class InputStep extends AbstractStepImpl implements Serializable {
 
         @Override
         public String getDisplayName() {
-            return "Input";
+            return "Wait for interactive input";
         }
     }
 }
