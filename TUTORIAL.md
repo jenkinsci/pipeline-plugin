@@ -2,12 +2,13 @@
 
 # Why Workflow?
 
-The Workflow Plugin was built with the community’s requirements for a flexible, extensible, and script-based pipeline in mind. The Workflow Plugin:
-* Supports complex processes: you can fork/join, loop, and parallel
-* More Resilient: survives master restarts
-* Is Pausable: waits for human input/approval
-* Provides Faster cycles: restarts from checkpoints
-* Is Visualized: provides status at-a-glance dashboards including trending
+Workflow was built with the community’s requirements for a flexible, extensible, and script-based CD pipeline capability for Jenkins in mind. To that end, Workflow:
+
+* Can support complex, real-world, CD Pipeline requirements: Workflow pipelines can fork/join, loop, *parallel*, to name a few
+* Is Resilient: Workflow pipeline executions can survive master restarts
+* Is Pausable: Workflow pipelines can pause and wait for human input/approval
+* Is Efficient: Workflow pipelines can restart from saved checkpoints
+* Is Visualized: Workflow StageView provides status at-a-glance dashboards including trending
 
 # Getting Started
 
