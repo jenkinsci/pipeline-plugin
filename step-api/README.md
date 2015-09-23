@@ -12,7 +12,8 @@ Define mandatory parameters in a `@DataBoundConstructor`.
 Define optional parameters using `@DataBoundSetter`.
 (Both need matching getters.)
 
-Extend `AbstractSynchronousStepExecution` (conventionally a nested `public static class Execution`), parameterized with the desired return value of the step (or `Void` if it need not return a value).
+Create a class, conventionally a nested `public static class Execution`, and extend `AbstractSynchronousNonBlockingStepExecution` (or `AbstractSynchronousStepExecution` in older versions of Workflow or for certain trivial steps).
+Parameterize it with the desired return value of the step (or `Void` if it need not return a value).
 The `run` method should do the work of the step.
 You can `@Inject` the step object to access its configuration.
 Use `@StepContextParameter` to inject contextual objects you require, as enumerated in `StepContext.get` Javadoc;

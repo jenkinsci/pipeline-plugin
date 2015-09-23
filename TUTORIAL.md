@@ -491,6 +491,31 @@ node('remote') {
 }
 ```
 
+However the safest approach is to isolate use of nonserializable state inside a method marked with the annotation `@NonCPS`.
+Such a method will be treated as “native” by the Workflow engine, and its local variables never saved.
+However it may _not_ make any calls to Workflow steps, so the `readFile` call must be pulled out:
+
+```groovy
+node('remote') {
+  git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
+  def v = version(readFile('pom.xml'))
+  if (v) {
+    echo "Building version ${v}"
+  }
+  def mvnHome = tool 'M3'
+  sh "${mvnHome}/bin/mvn -B -Dmaven.test.failure.ignore verify"
+  step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
+  step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+}
+@NonCPS
+def version(text) {
+  def matcher = text =~ '<version>(.+)</version>'
+  matcher ? matcher[0][1] : null
+}
+```
+
+Here the logic inside the `version` function is run by the normal Groovy runtime, so any local variables are permitted.
+
 ## Multiple threads
 
 Workflows can use a `parallel` step to perform multiple actions at once.

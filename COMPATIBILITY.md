@@ -32,7 +32,7 @@ The following build steps and post-build steps are included:
 - [X] `CopyArtifact` (`copyartifact`): [JENKINS-24887](https://issues.jenkins-ci.org/browse/JENKINS-24887) in 1.34
 - [ ] `DeployPublisher` (`deployer-framework`): [JENKINS-25976](https://issues.jenkins-ci.org/browse/JENKINS-25976)
 - [X] Analysis publishers (e.g., `FindBugsPublisher`): supported as of `analysis-core` 1.73 and downstream plugins (e.g., `findbugs` 4.62)
-- [ ] `ExtendedEmailPublisher` (`email-ext`): [PR 97](https://github.com/jenkinsci/email-ext-plugin/pull/97)
+- [ ] `ExtendedEmailPublisher` (`email-ext`): [PR 107](https://github.com/jenkinsci/email-ext-plugin/pull/107)
 - [ ] `Ant` (`ant`): [JENKINS-26056](https://issues.jenkins-ci.org/browse/JENKINS-26056)
 - [ ] `Maven` (home TBD): [JENKINS-26057](https://issues.jenkins-ci.org/browse/JENKINS-26057)
 - [ ] `XShellBuilder` (`xshell`): [JENKINS-26169](https://issues.jenkins-ci.org/browse/JENKINS-26169)
@@ -69,6 +69,7 @@ The following build wrappers are included:
 - [X] `XvfbBuildWrapper` (`xvfb`): supported as of 1.1.0-beta-1
 - [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
 - [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
+- [ ] `AnsiColorBuildWrapper` (`ansicolor`): https://github.com/dblock/jenkins-ansicolor-plugin/pull/54
 
 ## Triggers
 The following triggers are included:
@@ -103,6 +104,7 @@ The following miscellaneous items are included:
 - [ ] `ListSubversionTagsParameterValue` (`subversion`): [JENKINS-27718](https://issues.jenkins-ci.org/browse/JENKINS-27718)
 - [X] `authorize-project`: supported as of 1.1.0
 - [ ] `lockable-resources` : [JENKINS-30269](https://issues.jenkins-ci.org/browse/JENKINS-30269)
+- [X] `customize-build-now`: supported as of 1.1
 
 ## Custom Steps
 
@@ -277,10 +279,42 @@ To add support for use of a `Builder` or `Publisher` from a workflow, depend on 
 Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
 Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](#constructor-vs-setters)).
 
+Note that a `SimpleBuildStep` is designed to work also in a freestyle project, and thus assumes that a `FilePath workspace` is available (as well as some associated services, like a `Launcher`).
+That is always true in a freestyle build, but is a potential limitation for use from a Workflow build.
+For example, you might legitimately want to take some action outside the context of any workspace:
+
+```groovy
+node('win64') {
+  bat 'make all'
+  archive 'myapp.exe'
+}
+input 'Ready to tell the world?' // could pause indefinitely, do not tie up a slave
+step([$class: 'FunkyNotificationBuilder', artifact: 'myapp.exe']) // ← FAILS!
+```
+
+Even if `FunkyNotificationBuilder` implements `SimpleBuildStep`, the above will fail, because the `workspace` required by `SimpleBuildStep.perform` is missing.
+You could grab an arbitrary workspace just to run the builder:
+
+```groovy
+node('win64') {
+  bat 'make all'
+  archive 'myapp.exe'
+}
+input 'Ready to tell the world?'
+node {
+  step([$class: 'FunkyNotificationBuilder', artifact: 'myapp.exe']) // OK
+}
+```
+
+but if the `workspace` is being ignored anyway (in this case because `FunkyNotificationBuilder` only cares about artifacts that have already been archived), it may be better to just write a custom step (described below).
+
 ### Build wrappers
 
 Here the metastep is `wrap`.
 To add support for a `BuildWrapper`, depend on Jenkins 1.599+ (typically 1.609.1), and implement `SimpleBuildWrapper`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildWrapper.html).
+
+Like `SimpleBuildStep`, wrappers written this way always require a workspace.
+If that would be constricting, consider writing a custom step instead.
 
 ## Triggers
 
