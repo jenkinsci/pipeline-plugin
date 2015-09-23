@@ -1,4 +1,4 @@
-# Workflow Compatibility Plugins
+# Plugin Compatibility with Workflow  
 
 For architectural reasons, plugins that provide various extensions of interest to builds are not automatically compatible with Workflow.
 Typically, they require use of newer APIs - both large or small.
