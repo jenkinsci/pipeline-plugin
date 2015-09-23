@@ -2,15 +2,21 @@
 
 # Why Workflow?
 
+Workflow was built with the community’s requirements for a flexible, extensible, and script-based CD pipeline capability for Jenkins in mind. To that end, Workflow:
+
+* Can support complex, real-world, CD Pipeline requirements: Workflow pipelines can fork/join, loop, *parallel*, to name a few
+* Is Resilient: Workflow pipeline executions can survive master restarts
+* Is Pausable: Workflow pipelines can pause and wait for human input/approval
+* Is Efficient: Workflow pipelines can restart from saved checkpoints
+* Is Visualized: Workflow StageView provides status at-a-glance dashboards including trending
+
 # Getting Started
 
 Before you begin, ensure you have the following installed or running:
 
-+ You must be running Jenkins 1.580.1 or later (1.596.1 or later for more recent features).
++ You must be running Jenkins 1.580.1 or later (1.609.1+ for latest features).
 
 + Ensure Workflow is installed: navigate to **Plugin Manager**, install **Workflow: Aggregator** and restart Jenkins.
-
-+  Git and JUnit plugins are installed and up to date.
 
 **Note**: If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Workflow (plus additional associated features).
 
@@ -18,7 +24,7 @@ If you want to play with Workflow without installing Jenkins separately (or acce
 
 # Creating a Workflow
 
-To crete a workflow, perform the following steps:
+To create a workflow, perform the following steps:
 
 1. Click **New Item**, pick a name for your flow, select **Workflow**, and click **OK**.
 
@@ -61,11 +67,7 @@ Groovy functions can use a C/Java-like syntax such as:
 ```groovy
 echo("hello from Workflow");
 ```
-
-If you do not need to perform variable substitutions, you can:
-* drop the semicolon (`;`)
-* drop the parentheses (`(` and `)`)
-* use single quotes (`'`) instead of double (`"`)
+You can drop the semicolon (`;`), drop the parentheses (`(` and `)`), and use single quotes (`'`) instead of double (`"`) if you do not need to perform variable substitutions.
 
 Comments in Groovy, as in Java, can use single-line or multiline styles:
 
@@ -253,14 +255,14 @@ Some environment variables are defined by Jenkins by default.
 
 See  Help in the **Snippet Generator** for the `withEnv` step for more details on this topic.
 
-## Configuring to Accept Build Parameters
+## Build Parameters
 
-If you have configured your workflow to accept parameters when it is built - **Build with Parameters** - they are accessible as Groovy variables of the same name.
+If you have configured your workflow to accept parameters when it is built — **Build with Parameters** — they are accessible as Groovy variables of the same name.
 
 # Recording Test Results and Artifacts
 
-Instead of failing the build if there are test failures, you want Jenkins to record them -- and then proceed.
-You must capture the JAR that you built.
+Instead of failing the build if there are test failures, you want Jenkins to record them — and then proceed.
+If you want it saved, you must capture the JAR that you built.
 
 ```groovy
 node {
@@ -277,11 +279,11 @@ node {
 
 ## Understanding Syntax
 
-The Maven option `-Dmaven.test.failure.ignore` allows the `mvn` command to exit normally (status 0) - so that the flow continues, even when test failures are recorded on disk.
+The Maven option `-Dmaven.test.failure.ignore` allows the `mvn` command to exit normally (status 0) — so that the flow continues, even when test failures are recorded on disk.
 
 Run the `step` step twice.
 This step  allows you to use certain build (or post-build) steps already defined in Jenkins for use in traditional projects.
-It takes one parameter (called `delegate` but omitted here) - this parameter value is a standard Jenkins build step.
+It takes one parameter (called `delegate` but omitted here) — this parameter value is a standard Jenkins build step.
 
 You could create the delegate using Java constructor/method calls, using Groovy or Java syntax:
 
@@ -291,7 +293,7 @@ aa.fingerprint = true // i.e., aa.setFingerprint(true)
 step aa
 ```
 
-but this is cumbersome and does not work well with Groovy sandbox security - so any object-valued argument to a step may instead be given as a map.
+but this is cumbersome and does not work well with Groovy sandbox security — so any object-valued argument to a step may instead be given as a map.
 
 The following:
 
@@ -394,7 +396,7 @@ First, go to the Jenkins main page and look at the **Build Executor Status** wid
 
 Why are there two executors consumed by one flow build?
 
-* Every flow build itself runs on the master, using a **flyweight executor** - an uncounted slot that is assumed to not take any significant computational power.
+* Every flow build itself runs on the master, using a **flyweight executor** — an uncounted slot that is assumed to not take any significant computational power.
 * This executor represents the actual Groovy script, which is almost always idle, waiting for a step to complete.
 * Flyweight executors are always available.
 
@@ -410,11 +412,11 @@ To finish up, click the ▾ beside either executor entry for any running flow an
 
 ## Allocating Workspaces
 
-In addition to waiting to allocate an executor on a node, the `node` step also automatically allocates a **workspace**: a directory specific to this job - where you can check out sources, run commands, and do other work.
+In addition to waiting to allocate an executor on a node, the `node` step also automatically allocates a **workspace**: a directory specific to this job — where you can check out sources, run commands, and do other work.
 Workspaces are locked for the duration of the step: only one build at a time can use a given workspace.
 If multiple builds need a workspace on the same node, additional workspaces are allocated.
 
-**Configure** your slave, set **# of executors** to two and **Save**.
+**Configure** your slave, set **# of executors** to 2 and **Save**.
 Now start your build twice in a row.
 The log for the second build will show
 
@@ -463,7 +465,7 @@ Here, you use:
 * `=~` is Groovy syntax to match text against a regular expression
 * `[0]` looks up the first match
 * `[1]` the first `(…)` group within that match
-* `readFile` step loads a text file from the workspace and returns its content (do not try to use `java.io.File` methods -  these will refer to files on the master where Jenkins is running, not in the current workspace).
+* `readFile` step loads a text file from the workspace and returns its content (do not try to use `java.io.File` methods —  these will refer to files on the master where Jenkins is running, not in the current workspace).
 * There is also a `writeFile` step to save content to a text file in the workspace
 * `fileExists` step to check whether a file exists without loading it.
 
@@ -592,7 +594,7 @@ A later version of the plugin may remove the need for this workaround.
 
 When you run this flow for the first time, it will check out a project and run all of its tests in sequence.
 The second and subsequent times you run it, the `splitTests` task will partition your tests into two sets of roughly equal runtime.
-The rest of the flow then runs these in parallel - so if you look at **trend** (in the **Build History** widget) you will see the second and subsequent builds taking roughly half the time of the first.
+The rest of the flow then runs these in parallel — so if you look at **trend** (in the **Build History** widget) you will see the second and subsequent builds taking roughly half the time of the first.
 If you only have the one slave configured with its two executors, this won't save time, but you may have multiple slaves on different hardware matching the same label expression.
 
 This script is more complex than the previous ones so it bears some examination.
@@ -671,9 +673,9 @@ If you update this repository, a new build will be triggered, so long as your jo
 
 ## Triggering Manual Loading
 
-For some cases you may prefer to explicitly load Groovy script text from some source.
+For some cases, you may prefer to explicitly load Groovy script text from some source.
 The standard Groovy `evaluate` function can be used, but most likely you will want to load a flow definition from a workspace.
-For this purpose you can use the `load` step, which takes a filename in the workspace and runs it as Groovy source text.
+For this purpose, you can use the `load` step, which takes a filename in the workspace and runs it as Groovy source text.
 
 The loaded file can contain statements at top level, which are run immediately.
 That is fine if you only want to use a single executor and workspace, and do not mind hard-coding the slave label in the Jenkins job.
@@ -704,7 +706,7 @@ def hello(whom) {
 }
 ```
 
-Note that while it can contain helper functions, the only code at top level is a Groovy `Closure`, which is the return value of the script, and thus of the main script’s `load` step.
+**Note**: While it can contain helper functions, the only code at top level is a Groovy `Closure`, which is the return value of the script, and thus of the main script’s `load` step.
 
 The helper script can alternately define functions and return `this`, in which case the result of the `load` step can be used to invoke those functions like object methods.
 An older version of the [Docker demo](demo/README.md) showed this technique in practice:
@@ -729,40 +731,40 @@ In this case `devQAStaging` runs on the same node as the main source code checko
 
 ## Retaining Global Libraries
 
-Injection of function and class names into a flow before it runs is handled by plugins, and one is bundled with workflow that allows you to get rid of the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
+Plugins inject function and class names into a flow before it runs. The plugin bundled with Workflow allows you to eliminate the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
 A [separate document](cps-global-lib/README.md) has details on this system.
 
 ## Creating Multibranch Projects
 
-A new _Workflow: Multibranch_ plugin (as of this writing still in beta) offers an even better way of versioning your Workflow, and managing your project generally.
-You need to create a distinct project type, _Multibranch Workflow_.
+A new **Workflow: Multibranch** plugin (as of this writing still in beta) offers a better way of versioning your Workflow and managing your project.
+You need to create a distinct project type, **Multibranch Workflow**.
 
-When you have a multibranch workflow, the configuration screen will resemble _Workflow script from SCM_ in that your Workflow script comes from source control, not the Jenkins job configuration.
-The difference is that you do not configure a single branch, but a _set_ of branches, and Jenkins creates a subproject for each branch it finds in your repository.
+When you have a multibranch workflow, the configuration screen will resemble **Workflow script from SCM** in that your Workflow script comes from source control, not the Jenkins job configuration.
+The difference is that you do not configure a single branch, but a **set** of branches, and Jenkins creates a subproject for each branch it finds in your repository.
 
-For example, if you select _Git_ as the branch source (Subversion and Mercurial are also supported already), you will be prompted for the usual connection information,
+For example, if you select **Git** as the branch source (Subversion and Mercurial are also supported already), you will be prompted for the usual connection information,
 but then rather than a fixed refspec you will enter a branch name pattern (use the defaults to look for any branch).
 Jenkins expects to find a script named `Jenkinsfile` in branches it can build.
 From this script, the command `checkout scm` suffices to check out your project’s source code inside some `node {}`.
 
 Say you start with just a `master` branch, then you want to experiment with some changes, so you `git checkout -b newfeature` and push some commits.
-Jenkins will automatically detect the new branch in your repository and create a new subproject for it—with its own build history unrelated to trunk, so no one will mind if it has red/yellow balls for a while.
-(If you like, you can ask for the subproject to be automatically removed after the branch is merged and deleted.)
+Jenkins automatically detects the new branch in your repository and creates a new subproject for it — with its own build history unrelated to trunk, so no one will mind if it has red/yellow balls for a while.
+If you choose, you can ask for the subproject to be automatically removed after the branch is merged and deleted.
 
-The neat thing is that if you want to change your Workflow script—for example, to add a new Jenkins publisher step corresponding to reports your `Makefile`/`pom.xml`/etc. is newly creating—you just edit `Jenkinsfile` in your change.
+If you want to change your Workflow script — for example, to add a new Jenkins publisher step corresponding to reports your `Makefile`/`pom.xml`/etc. is newly creating — you just edit `Jenkinsfile` in your change.
 The Workflow script is always synchronized with the rest of the source code you are working on: `checkout scm` checks out the same revision as the script is loaded from.
 
-# Exploring Available Steps
+# Exploring the Snippet Generator
 There are a number of workflow steps not discussed in this document, and plugins can add more.
 Even steps discussed here can take various special options that can be added from release to release.
-To make it possible to browse all available steps and their syntax, a help tool is built into the flow definition screen.
+To browse all available steps and their syntax, a help tool is built into the flow definition screen.
 
-Click _Snippet Generator_ beneath your script textarea.
-You should see a list of installed steps.
+Click **Snippet Generator** beneath your script text area.
+You see a list of installed steps.
 Some will have a help icon (![help](https://raw.githubusercontent.com/jenkinsci/jenkins/master/war/src/main/webapp/images/16x16/help.png)) at the top which you can click to see general information.
-There will also be UI controls to help you configure the step, in some cases with auto completion and other features found in Jenkins configuration screens.
-(Again look for help icons on these.)
+There are also UI controls to help you configure the step — in some cases with auto completion and other features found in Jenkins configuration screens.
+Click help icons to see all.
 
-When you are done, click _Generate Groovy_ to see a Groovy snippet that would run the step exactly as you have configured it.
-This lets you see the function name used for the step, and the names of any parameters it takes (if not a default parameter), and their syntax.
+When you are done, click **Generate Groovy** to see a Groovy snippet that will run the step exactly as you have configured it.
+This lets you see the function name used for the step, the names of any parameters it takes (if not a default parameter), and their syntax.
 You can copy and paste the generated code right into your flow, or use it as a starting point (perhaps trimming some unnecessary optional parameters).
