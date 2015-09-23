@@ -1,4 +1,4 @@
-# Workflow Compatibility Plugins
+# Plugin Compatibility with Workflow  
 
 For architectural reasons, plugins that provide various extensions of interest to builds are not automatically compatible with Workflow.
 Typically, they require use of newer APIs - both large or small.
@@ -71,7 +71,7 @@ The following build wrappers are included:
 - [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
 - [ ] `AnsiColorBuildWrapper` (`ansicolor`): https://github.com/dblock/jenkins-ansicolor-plugin/pull/54
 
-## Triggers
+## Build Triggers
 The following triggers are included:
 - [X] `gerrit-trigger`: supported as of 2.15.0
 - [ ] `ghprb`: [JENKINS-26591](https://issues.jenkins-ci.org/browse/JENKINS-26591)
@@ -82,7 +82,7 @@ The following triggers are included:
 - [X] `bitbucket`: supported as of 1.1.2
 
 ## Clouds
-The following Clouds are delivered:
+Workflow supports on-demand node(s) provisioning from the following Cloud providers:
 - [ ] `elasticbox`: [JENKINS-25978](https://issues.jenkins-ci.org/browse/JENKINS-25978) (could also include build wrapper integration)
 - [ ] `mansion-cloud`: [JENKINS-24815](https://issues.jenkins-ci.org/browse/JENKINS-24815)
 - [X] `mock-slave` (for prototyping): supported as of 1.7
@@ -131,7 +131,7 @@ Several common types of plugin features (`@Extension`s) can be invoked from a Wo
 
 There are several considerations common to the various metasteps.
 
-#### Jenkins core dependency
+#### Jenkins Core Dependency
 
 First, make sure the baseline Jenkins version in your POM is set to at least 1.568 (or 1.580.1, the next LTS).
 This introduces some new API methods, and deprecates some old ones.
@@ -141,7 +141,7 @@ remember that you can always create a branch from your previous release (setting
 or merge from one branch to another if that is easier.
 (`mvn -B release:prepare release:perform` works fine on a branch and knows to increment just the last version component.)
 
-#### More general APIs
+#### More General APIs
 
 Replace `AbstractBuild.getProject` with `Run.getParent`.
 
@@ -149,7 +149,7 @@ Replace `AbstractBuild.getProject` with `Run.getParent`.
 
 If you need a `Node` where the build is running to replace `getBuiltOn`, you can use `FilePath.getComputer`.
 
-#### Constructor vs. setters
+#### Constructor vs. Setters
 
 It is a good idea to replace a lengthy `@DataBoundConstructor` with a short one taking just truly mandatory parameters (such as a server location).
 For all optional parameters, create a public setter marked with `@DataBoundSetter` (with any non-null default value set in the constructor or field initializer).
@@ -158,7 +158,7 @@ This allows most parameters to be left at their default values in a workflow scr
 For Java-level compatibility, leave any previous constructors in place, but mark them `@Deprecated`.
 Also remove `@DataBoundConstructor` from them (there can be only one).
 
-##### Handling default values
+##### Handling Default Values
 
 To ensure _Snippet Generator_ enumerates only those options the user has actually customized from their form defaults, ensure that Jelly `default` attributes match the property defaults as seen from the getter.
 For a cleaner XStream serial form in freestyle projects, it is best for the default value to also be represented as a null in the Java field.
@@ -230,7 +230,7 @@ See the [user documentation](scm-step/README.md) for background. The `checkout` 
 As the author of an SCM plugin, there are some changes you should make to ensure your plugin can be used from workflows.
 You can use `mercurial-plugin` as a relatively straightforward code example.
 
-#### Basic update
+#### Basic Update
 
 Check your plugin for compilation warnings relating to `hudson.scm.*` classes to see outstanding changes you need to make.
 Most importantly, various methods in `SCM` which formerly took an `AbstractBuild` now take a more generic `Run` (i.e., potentially a workflow build) plus a `FilePath` (i.e., a workspace).
@@ -245,16 +245,16 @@ If so, just skip changelog generation.
 `SCMDescriptor.isApplicable` should be switched to the `Job` overload.
 Typically you will unconditionally return `true`.
 
-#### Checkout key
+#### Checkout Key
 
 You should override the new `getKey`.
 This allows a workflow job to match up checkouts from build to build so it knows how to look for changes.
 
-#### Browser selection
+#### Browser Selection
 
 You may override the new `guessBrowser`, so that scripts do not need to specify the changelog browser to display.
 
-#### Commit triggers
+#### Commit Triggers
 
 If you have a commit trigger, generally an `UnprotectedRootAction` which schedules builds, it will need a few changes.
 Use `SCMTriggerItem` rather than the deprecated `SCMedItem`; use `SCMTriggerItem.SCMTriggerItems.asSCMTriggerItem` rather than checking `instanceof`.
@@ -264,14 +264,14 @@ Use its `getSCMTrigger` method to look for a configured trigger (for example to 
 Ideally you will already be integrated with the `scm-api` plugin and implementing `SCMSource`; if not, now is a good time to try it.
 In the future workflows may take advantage of this API to support automatic creation of subprojects for each detected branch.
 
-#### Explicit integration
+#### Explicit Integration
 
 If you want to provide a smoother experience for workflow users than is possible via the generic `scm` step,
 you can add a (perhaps optional) dependency on `workflow-scm-step` to your plugin.
 Define a `SCMStep` using `SCMStepDescriptor` and you can define a friendly, script-oriented syntax.
 You still need to make the aforementioned changes, since at the end you are just preconfiguring an `SCM`.
 
-### Build steps
+### Build Steps
 
 See the [user documentation](basic-steps/CORE-STEPS.md) for background. The metastep is `step`.
 
@@ -308,7 +308,7 @@ node {
 
 but if the `workspace` is being ignored anyway (in this case because `FunkyNotificationBuilder` only cares about artifacts that have already been archived), it may be better to just write a custom step (described below).
 
-### Build wrappers
+### Build Wrappers
 
 Here the metastep is `wrap`.
 To add support for a `BuildWrapper`, depend on Jenkins 1.599+ (typically 1.609.1), and implement `SimpleBuildWrapper`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildWrapper.html).
@@ -329,7 +329,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 Plugins can also implement custom Workflow steps with specialized behavior.
 See [here](step-api/README.md) for more.
 
-## Historical background
+## Historical Background
 
 Traditional Jenkins `Job`s are defined in a fairly deep type hierarchy: `FreestyleProject` → `Project` → `AbstractProject` → `Job` → `AbstractItem` → `Item`.
 (As well as paired `Run` types: `FreestyleBuild`, etc.)
