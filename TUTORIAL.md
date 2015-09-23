@@ -24,7 +24,7 @@ If you want to play with Workflow without installing Jenkins separately (or acce
 
 # Creating a Workflow
 
-To crete a workflow, perform the following steps:
+To create a workflow, perform the following steps:
 
 1. Click **New Item**, pick a name for your flow, select **Workflow**, and click **OK**.
 
