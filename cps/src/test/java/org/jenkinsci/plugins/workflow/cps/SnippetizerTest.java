@@ -29,6 +29,7 @@ import com.gargoylesoftware.htmlunit.WebRequestSettings;
 import com.gargoylesoftware.htmlunit.WebResponse;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.GroovyShell;
+import hudson.model.BooleanParameterDefinition;
 import hudson.model.BooleanParameterValue;
 import hudson.model.FreeStyleProject;
 import hudson.model.ParametersDefinitionProperty;
@@ -39,7 +40,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import org.apache.commons.httpclient.NameValuePair;
+import org.jenkinsci.plugins.workflow.steps.CatchErrorStep;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
 import org.jenkinsci.plugins.workflow.steps.PwdStep;
@@ -53,7 +57,6 @@ import org.jenkinsci.plugins.workflow.support.steps.input.InputStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -82,7 +85,6 @@ public class SnippetizerTest {
         assertRoundTrip(new CoreStep(aa), "step([$class: 'ArtifactArchiver', allowEmptyArchive: true, artifacts: 'x.jar'])");
     }
 
-    @Ignore("TODO until 1.601+ expected:<step[([$class: 'ArtifactArchiver', artifacts: 'x.jar'])]> but was:<step[ <object of type hudson.tasks.ArtifactArchiver>]>")
     @Test public void coreStep2() throws Exception {
         assertRoundTrip(new CoreStep(new ArtifactArchiver("x.jar")), "step([$class: 'ArtifactArchiver', artifacts: 'x.jar'])");
     }
@@ -138,16 +140,7 @@ public class SnippetizerTest {
     }
 
     @Test public void generateSnippet() throws Exception {
-        JenkinsRule.WebClient wc = r.createWebClient();
-        WebRequestSettings wrs = new WebRequestSettings(new URL(r.getURL(), Snippetizer.GENERATE_URL), HttpMethod.POST);
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new NameValuePair("json", "{'stapler-class':'" + EchoStep.class.getName() + "', 'message':'hello world'}"));
-        // WebClient.addCrumb *replaces* rather than *adds*:
-        params.add(new NameValuePair(r.jenkins.getCrumbIssuer().getDescriptor().getCrumbRequestField(), r.jenkins.getCrumbIssuer().getCrumb(null)));
-        wrs.setRequestParameters(params);
-        WebResponse response = wc.getPage(wrs).getWebResponse();
-        assertEquals("text/plain", response.getContentType());
-        assertEquals("echo 'hello world'", response.getContentAsString().trim());
+        assertGenerateSnippet("{'stapler-class':'" + EchoStep.class.getName() + "', 'message':'hello world'}", "echo 'hello world'", null);
     }
 
     @Issue("JENKINS-26093")
@@ -157,17 +150,42 @@ public class SnippetizerTest {
         MockFolder d2 = r.createFolder("d2");
         // Really this would be a WorkflowJob, but we cannot depend on that here, and it should not matter since we are just looking for Job:
         FreeStyleProject us = d2.createProject(FreeStyleProject.class, "us");
+        ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("key", ""), new BooleanParameterDefinition("flag", false, "")));
+        assertGenerateSnippet("{'stapler-class':'" + BuildTriggerStep.class.getName() + "', 'job':'../d1/ds', 'parameter': [{'name':'key', 'value':'stuff'}, {'name':'flag', 'value':true}]}", "build job: '../d1/ds', parameters: [[$class: 'StringParameterValue', name: 'key', value: 'stuff'], [$class: 'BooleanParameterValue', name: 'flag', value: true]]", us.getAbsoluteUrl() + "configure");
+    }
+
+    @Issue("JENKINS-29739")
+    @Test public void generateSnippetForBuildTriggerSingle() throws Exception {
+        FreeStyleProject ds = r.jenkins.createProject(FreeStyleProject.class, "ds1");
+        FreeStyleProject us = r.jenkins.createProject(FreeStyleProject.class, "us1");
         ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("key", "")));
+        assertGenerateSnippet("{'stapler-class':'" + BuildTriggerStep.class.getName() + "', 'job':'ds1', 'parameter': {'name':'key', 'value':'stuff'}}", "build job: 'ds1', parameters: [[$class: 'StringParameterValue', name: 'key', value: 'stuff']]", us.getAbsoluteUrl() + "configure");
+    }
+
+    @Test public void generateSnippetForBuildTriggerNone() throws Exception {
+        FreeStyleProject ds = r.jenkins.createProject(FreeStyleProject.class, "ds0");
+        FreeStyleProject us = r.jenkins.createProject(FreeStyleProject.class, "us0");
+        assertGenerateSnippet("{'stapler-class':'" + BuildTriggerStep.class.getName() + "', 'job':'ds0'}", "build 'ds0'", us.getAbsoluteUrl() + "configure");
+    }
+
+    @Test public void generateSnippetAdvancedDeprecated() throws Exception {
+        assertGenerateSnippet("{'stapler-class':'" + CatchErrorStep.class.getName() + "'}", "// " + Messages.Snippetizer_this_step_should_not_normally_be_used_in() + "\ncatchError {\n    // some block\n}", null);
+    }
+
+    private void assertGenerateSnippet(@Nonnull String json, @Nonnull String responseText, @CheckForNull String referer) throws Exception {
         JenkinsRule.WebClient wc = r.createWebClient();
         WebRequestSettings wrs = new WebRequestSettings(new URL(r.getURL(), Snippetizer.GENERATE_URL), HttpMethod.POST);
-        wrs.setAdditionalHeader("Referer", us.getAbsoluteUrl() + "configure");
+        if (referer != null) {
+            wrs.setAdditionalHeader("Referer", referer);
+        }
         List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new NameValuePair("json", "{'stapler-class':'" + BuildTriggerStep.class.getName() + "', 'job':'../d1/ds', 'parameter':[{'name':'key', 'value':'stuff'}]}"));
+        params.add(new NameValuePair("json", json));
+        // WebClient.addCrumb *replaces* rather than *adds*:
         params.add(new NameValuePair(r.jenkins.getCrumbIssuer().getDescriptor().getCrumbRequestField(), r.jenkins.getCrumbIssuer().getCrumb(null)));
         wrs.setRequestParameters(params);
         WebResponse response = wc.getPage(wrs).getWebResponse();
         assertEquals("text/plain", response.getContentType());
-        assertEquals("build job: '../d1/ds', parameters: [[$class: 'StringParameterValue', name: 'key', value: 'stuff']]", response.getContentAsString().trim());
+        assertEquals(responseText, response.getContentAsString().trim());
     }
 
 }

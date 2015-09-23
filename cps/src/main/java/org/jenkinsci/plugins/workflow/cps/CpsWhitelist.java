@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.workflow.cps;
 
-import hudson.ExtensionList;
 import org.codehaus.groovy.runtime.GStringImpl;
 import org.codehaus.groovy.runtime.ScriptBytecodeAdapter;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.Whitelist;
@@ -39,7 +38,7 @@ class CpsWhitelist extends AbstractWhitelist {
                 return true;
             }
             if (name.equals("getProperty") && args.length == 1 && args[0] instanceof String) {
-                for (GlobalVariable v : ExtensionList.lookup(GlobalVariable.class)) {
+                for (GlobalVariable v : GlobalVariable.ALL) {
                     if (v.getName().equals(args[0])) {
                         return true;
                     }

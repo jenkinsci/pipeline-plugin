@@ -250,8 +250,7 @@ public class WorkflowRunTest {
             assertNotNull(exec);
             FlowGraphWalker w = new FlowGraphWalker(exec);
             List<String> steps = new ArrayList<String>();
-            FlowNode n;
-            while ((n = w.next()) != null) {
+            for (FlowNode n : w) {
                 if (n instanceof StepNode) {
                     steps.add(((StepNode) n).getDescriptor().getFunctionName());
                 }

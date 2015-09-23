@@ -2,14 +2,11 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Extension;
 import hudson.Util;
-import hudson.tasks.BuildStep;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * Artifact archiving.
- *
- * Could be a throw-away until {@link BuildStep} interop.
  *
  * @author Kohsuke Kawaguchi
  */

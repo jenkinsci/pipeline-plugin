@@ -527,8 +527,32 @@ node('remote') {
 }
 ```
 
-## Creating Multiple Threads
+However the safest approach is to isolate use of nonserializable state inside a method marked with the annotation `@NonCPS`.
+Such a method will be treated as “native” by the Workflow engine, and its local variables never saved.
+However it may _not_ make any calls to Workflow steps, so the `readFile` call must be pulled out:
 
+```groovy
+node('remote') {
+  git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
+  def v = version(readFile('pom.xml'))
+  if (v) {
+    echo "Building version ${v}"
+  }
+  def mvnHome = tool 'M3'
+  sh "${mvnHome}/bin/mvn -B -Dmaven.test.failure.ignore verify"
+  step([$class: 'ArtifactArchiver', artifacts: '**/target/*.jar', fingerprint: true])
+  step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+}
+@NonCPS
+def version(text) {
+  def matcher = text =~ '<version>(.+)</version>'
+  matcher ? matcher[0][1] : null
+}
+```
+
+Here the logic inside the `version` function is run by the normal Groovy runtime, so any local variables are permitted.
+
+## Creating Multiple Threads
 Workflows can use a `parallel` step to perform multiple actions at once.
 This special step takes a map as its argument; keys are “branch names” (labels for your own benefit), and values are blocks to run.
 
@@ -640,10 +664,10 @@ Complex flows would be cumbersome to write and maintain in the textarea provided
 Therefore it makes sense to load the program from another source, one that you can maintain using version control and standalone Groovy editors.
 
 ## Building Entire Script from SCM
+The easiest way to do this is to select **Workflow script from SCM** when defining the workflow.
 
-The easiest way to do this is to select **Groovy CPS DSL from SCM** when defining the workflow.
 In that case you do not enter any Groovy code in the Jenkins UI; you just indicate where in source code you want to retrieve the program.
-(If you update this repository, a new build will be triggered, so long as your job is configured with an SCM polling trigger.)
+If you update this repository, a new build will be triggered, so long as your job is configured with an SCM polling trigger.
 
 ## Triggering Manual Loading
 
@@ -713,7 +737,7 @@ A [separate document](cps-global-lib/README.md) has details on this system.
 A new _Workflow: Multibranch_ plugin (as of this writing still in beta) offers an even better way of versioning your Workflow, and managing your project generally.
 You need to create a distinct project type, _Multibranch Workflow_.
 
-When you have a multibranch workflow, the configuration screen will resemble _Groovy CPS DSL from SCM_ in that your Workflow script comes from source control, not the Jenkins job configuration.
+When you have a multibranch workflow, the configuration screen will resemble _Workflow script from SCM_ in that your Workflow script comes from source control, not the Jenkins job configuration.
 The difference is that you do not configure a single branch, but a _set_ of branches, and Jenkins creates a subproject for each branch it finds in your repository.
 
 For example, if you select _Git_ as the branch source (Subversion and Mercurial are also supported already), you will be prompted for the usual connection information,

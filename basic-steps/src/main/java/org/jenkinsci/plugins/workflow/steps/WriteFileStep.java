@@ -27,7 +27,9 @@ package org.jenkinsci.plugins.workflow.steps;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Util;
+
 import javax.inject.Inject;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -74,7 +76,7 @@ public final class WriteFileStep extends AbstractStepImpl {
 
     }
 
-    public static final class Execution extends AbstractSynchronousStepExecution<Void> {
+    public static final class Execution extends AbstractSynchronousNonBlockingStepExecution<Void> {
 
         @Inject private transient WriteFileStep step;
         @StepContextParameter private transient FilePath workspace;

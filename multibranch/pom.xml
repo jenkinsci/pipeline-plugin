@@ -28,9 +28,9 @@ THE SOFTWARE.
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>1.9</version>
+        <version>1.10</version>
     </parent>
-    <version>1.9-beta-2-SNAPSHOT</version> <!-- TODO cannot release a non-beta until branch-api dep is out of beta -->
+    <version>1.9-beta-3-SNAPSHOT</version> <!-- TODO cannot release a non-beta until branch-api dep is out of beta -->
     <properties>
         <workflow.version>${project.parent.version}</workflow.version> <!-- TODO see above -->
     </properties>
@@ -38,6 +38,12 @@ THE SOFTWARE.
     <packaging>hpi</packaging>
     <name>Workflow: Multibranch</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
+    <scm> <!-- TODO necessary so long as releasing independently -->
+        <connection>scm:git:git://github.com/jenkinsci/workflow-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/workflow-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/workflow-plugin</url>
+      <tag>HEAD</tag>
+  </scm>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -82,6 +88,7 @@ THE SOFTWARE.
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>subversion</artifactId>
+            <version>2.5.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>

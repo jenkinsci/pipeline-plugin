@@ -29,7 +29,6 @@ import hudson.model.Executor;
 import hudson.model.Queue;
 import hudson.model.TaskListener;
 import hudson.model.User;
-import hudson.slaves.DumbSlave;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,12 +41,14 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockQueueItemAuthenticator;
 import org.jvnet.hudson.test.TestExtension;
@@ -94,44 +95,6 @@ public class WorkflowTest extends SingleJobTestBase {
         assertEquals(e, b.getExecutor());
         assertTrue(e.isActive());
         assertFalse(e.isAlive());
-    }
-
-    /**
-     * Workflow captures a stateful object, and we verify that it survives the restart
-     */
-    @Test public void persistEphemeralObject() throws Exception {
-        story.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
-                jenkins().setNumExecutors(0);
-                DumbSlave s = createSlave(story.j);
-                String nodeName = s.getNodeName();
-
-                p = jenkins().createProject(WorkflowJob.class, "demo");
-                p.setDefinition(new CpsFlowDefinition(
-                    "def s = jenkins.model.Jenkins.instance.getComputer('" + nodeName + "')\n" +
-                    "def r = s.node.rootPath\n" +
-                    "def p = r.getRemote()\n" +
-
-                    "semaphore 'wait'\n" +
-
-                    // make sure these values are still alive
-                    "assert s.nodeName=='" + nodeName + "'\n" +
-                    "assert r.getRemote()==p : r.getRemote() + ' vs ' + p;\n" +
-                    "assert r.channel==s.channel : r.channel.toString() + ' vs ' + s.channel\n"));
-
-                startBuilding();
-                SemaphoreStep.waitForStart("wait/1", b);
-                assertTrue(b.isBuilding());
-            }
-        });
-        story.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
-                rebuildContext(story.j);
-                assertThatWorkflowIsSuspended();
-                SemaphoreStep.success("wait/1", null);
-                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
-            }
-        });
     }
 
     /**
@@ -246,6 +209,40 @@ public class WorkflowTest extends SingleJobTestBase {
                     return null;
                 }
             });
+        }
+    }
+
+    @Issue("JENKINS-30122")
+    @Test public void authenticationInSynchronousStep() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                jenkins().setSecurityRealm(story.j.createDummySecurityRealm());
+                jenkins().save();
+                QueueItemAuthenticatorConfiguration.get().getAuthenticators().add(new MockQueueItemAuthenticator(Collections.singletonMap("demo", User.get("someone").impersonate())));
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition("echo \"ran as ${auth()}\"", true));
+                b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                story.j.assertLogContains("ran as someone", b);
+            }
+        });
+    }
+    public static final class CheckAuthSync extends AbstractStepImpl {
+        @DataBoundConstructor public CheckAuthSync() {}
+        @TestExtension("authenticationInSynchronousStep") public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+            public DescriptorImpl() {
+                super(Execution.class);
+            }
+            @Override public String getFunctionName() {
+                return "auth";
+            }
+            @Override public String getDisplayName() {
+                return getFunctionName();
+            }
+        }
+        public static final class Execution extends AbstractSynchronousNonBlockingStepExecution<String> {
+            @Override protected String run() throws Exception {
+                return Jenkins.getAuthentication().getName();
+            }
         }
     }
 
