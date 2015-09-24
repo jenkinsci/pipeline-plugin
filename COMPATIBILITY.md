@@ -100,6 +100,8 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `authorize-project`: supported as of 1.1.0
 - [ ] `lockable-resources` : [JENKINS-30269](https://issues.jenkins-ci.org/browse/JENKINS-30269)
 - [X] `customize-build-now`: supported as of 1.1
+- [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
+- [ ] `ansicolour` : [JENKINS-30528](https://issues.jenkins-ci.org/browse/JENKINS-30528)
 
 ## Custom steps
 
