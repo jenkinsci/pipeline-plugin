@@ -141,6 +141,20 @@ public abstract class FlowNode extends Actionable implements Saveable {
         else            return getTypeDisplayName();
     }
 
+    public String getDisplayFunctionName() {
+        String functionName = getTypeFunctionName();
+        if (functionName == null) {
+            return getDisplayName();
+        } else {
+            LabelAction a = getAction(LabelAction.class);
+            if (a != null) {
+                return functionName + ": " + a.getDisplayName();
+            } else {
+                return functionName;
+            }
+        }
+    }
+
     /**
      * Returns colored orb that represents the current state of this node.
      *
@@ -161,6 +175,19 @@ public abstract class FlowNode extends Actionable implements Saveable {
      * This is used to implement {@link #getDisplayName()} as a fallback in case {@link LabelAction} doesnt exist.
      */
     protected abstract String getTypeDisplayName();
+
+    /**
+     * Gets the function name for this type of node.
+     *
+     * Note that this method should be abstract (suppossed to be implemented in all subclasses), but keeping 
+     * it non-abstract to avoid binary incompatibilities.
+     *
+     * @return the function name or null
+     */
+    @CheckForNull
+    protected /* abstract */ String getTypeFunctionName() {
+        return null;
+    }
 
     /**
      * Returns the URL of this {@link FlowNode}, relative to the context root of Jenkins.

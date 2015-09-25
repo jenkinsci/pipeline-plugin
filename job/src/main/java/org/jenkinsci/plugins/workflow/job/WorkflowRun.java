@@ -656,7 +656,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
             node.addAction(new TimingAction());
 
-            logNodeMessage(node, "Running: " + node.getDisplayName());
+            logNodeMessage(node, "Running: " + node.getDisplayFunctionName());
             if (node instanceof FlowEndNode) {
                 finish(((FlowEndNode) node).getResult(), execution.getCauseOfFailure());
             } else {
