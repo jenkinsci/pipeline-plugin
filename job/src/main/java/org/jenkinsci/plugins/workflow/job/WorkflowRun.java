@@ -182,7 +182,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             
             FlowExecution newExecution = definition.create(owner, listener, getAllActions());
             FlowExecutionList.get().register(owner);
-            newExecution.addListener(new GraphL());
+            newExecution.addListener(new GraphL(), false);
             completed = new AtomicBoolean();
             logsToCopy = new LinkedHashMap<String,Long>();
             execution = newExecution;
@@ -385,7 +385,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
         }
         if (execution != null) {
-            execution.addListener(new GraphL());
+            execution.addListener(new GraphL(), false);
             executionPromise.set(execution);
             if (!execution.isComplete()) {
                 // we've been restarted while we were running. let's get the execution going again.

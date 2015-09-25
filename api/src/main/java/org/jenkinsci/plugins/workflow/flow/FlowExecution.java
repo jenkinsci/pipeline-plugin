@@ -158,7 +158,25 @@ public abstract class FlowExecution implements FlowActionStorage {
      */
     public abstract void interrupt(Result r, CauseOfInterruption... causes) throws IOException, InterruptedException;
 
-    public abstract void addListener(GraphListener listener);
+    @Deprecated
+    public void addListener(GraphListener listener) {
+        addListener(listener, false);
+    }
+
+    /**
+     * Add a listener to changes in the flow graph structure.
+     * @param listener a listener to add
+     * @param synchronous true to receive events immediately as they occur (you must be very careful not to acquire locks or block); false to receive notification as soon as possible
+     */
+    public /*abstract*/ void addListener(GraphListener listener, boolean synchronous) {
+        if (Util.isOverridden(FlowExecution.class, getClass(), "addListener", GraphListener.class) && !synchronous) {
+            addListener(listener);
+        } else {
+            throw new AbstractMethodError("you must override the new overload of addListener");
+        }
+    }
+
+    public /*abstract*/ void removeListener(GraphListener listener) {}
 
     /**
      * Checks whether this flow execution has finished executing completely.

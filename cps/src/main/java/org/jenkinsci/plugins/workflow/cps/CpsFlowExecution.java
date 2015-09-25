@@ -237,7 +237,7 @@ public class CpsFlowExecution extends FlowExecution {
 
     private final AtomicInteger iota = new AtomicInteger();
 
-    private transient List<GraphListener> listeners;
+    private transient List<GraphListener> listeners, synchronousListeners;
 
     /**
      * Result set from {@link StepContext}. Start by success and progressively gets worse.
@@ -681,11 +681,27 @@ public class CpsFlowExecution extends FlowExecution {
 
 
     @Override
-    public void addListener(GraphListener listener) {
-        if (listeners == null) {
-            listeners = new CopyOnWriteArrayList<GraphListener>();
+    public void addListener(GraphListener listener, boolean synchronous) {
+        if (synchronous) {
+            if (synchronousListeners == null) {
+                synchronousListeners = new CopyOnWriteArrayList<GraphListener>();
+            }
+            synchronousListeners.add(listener);
+        } else {
+            if (listeners == null) {
+                listeners = new CopyOnWriteArrayList<GraphListener>();
+            }
+            listeners.add(listener);
         }
-        listeners.add(listener);
+    }
+
+    @Override public void removeListener(GraphListener listener) {
+        if (listeners != null) {
+            listeners.remove(listener);
+        }
+        if (synchronousListeners != null) {
+            synchronousListeners.remove(listener);
+        }
     }
 
     @Override
@@ -767,9 +783,10 @@ public class CpsFlowExecution extends FlowExecution {
         return heads.firstEntry().getValue();
     }
 
-    void notifyListeners(FlowNode node) {
-        if (listeners != null) {
-            for (GraphListener listener : listeners) {
+    void notifyListeners(FlowNode node, boolean synchronous) {
+        List<GraphListener> _listeners = synchronous ? synchronousListeners : listeners;
+        if (_listeners != null) {
+            for (GraphListener listener : _listeners) {
                 listener.onNewHead(node);
             }
         }

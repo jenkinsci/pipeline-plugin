@@ -27,7 +27,6 @@ package org.jenkinsci.plugins.workflow;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.Rule;
 import org.jvnet.hudson.test.Issue;
@@ -37,7 +36,6 @@ public class ScalabilityTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
-    @Ignore("TODO fails w/ various errors incl. IOException: Too many open files")
     @Issue("JENKINS-30055")
     @Test public void manySteps() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");

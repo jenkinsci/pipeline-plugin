@@ -119,7 +119,9 @@ final class FlowHead implements Serializable {
             } else {
                 // in recovering from error and such situation, we sometimes need to grow the graph
                 // without running the program.
-                execution.notifyListeners(v);
+                // TODO can CpsThreadGroup.notifyNewHead be used instead?
+                execution.notifyListeners(v, true);
+                execution.notifyListeners(v, false);
             }
         } catch (IOException e) {
             LOGGER.log(Level.FINE, "Failed to record new head: " + v, e);

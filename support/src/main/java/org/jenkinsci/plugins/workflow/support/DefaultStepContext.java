@@ -38,6 +38,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
@@ -90,10 +91,12 @@ public abstract class DefaultStepContext extends StepContext {
                     os = filter.decorateLogger(null, os);
                 }
                 listener = new StreamTaskListener(os);
-                getExecution().addListener(new GraphListener() {
+                final AtomicReference<GraphListener> graphListener = new AtomicReference<GraphListener>();
+                graphListener.set(new GraphListener() {
                     @Override public void onNewHead(FlowNode node) {
                         try {
                             if (!getNode().isRunning()) {
+                                getExecution().removeListener(graphListener.get());
                                 listener.getLogger().close();
                             }
                         } catch (IOException x) {
@@ -101,6 +104,7 @@ public abstract class DefaultStepContext extends StepContext {
                         }
                     }
                 });
+                getExecution().addListener(graphListener.get(), true);
             }
             return key.cast(listener);
         } else if (Node.class.isAssignableFrom(key)) {

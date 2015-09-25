@@ -315,9 +315,10 @@ public final class CpsThreadGroup implements Serializable {
     @CpsVmThreadOnly
     /*package*/ void notifyNewHead(final FlowNode head) {
         assertVmThread();
+        execution.notifyListeners(head, true);
         runner.execute(new Runnable() {
             public void run() {
-                execution.notifyListeners(head);
+                execution.notifyListeners(head, false);
             }
         });
     }
