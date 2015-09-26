@@ -42,7 +42,10 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -307,6 +310,8 @@ public final class CpsThreadGroup implements Serializable {
         }
     }
 
+    private transient List<FlowNode> nodesToNotify;
+    private static final Object nodesToNotifyLock = new Object();
     /**
      * Notifies listeners of the new {@link FlowHead}.
      *
@@ -315,10 +320,24 @@ public final class CpsThreadGroup implements Serializable {
     @CpsVmThreadOnly
     /*package*/ void notifyNewHead(final FlowNode head) {
         assertVmThread();
-        execution.notifyListeners(head, true);
+        execution.notifyListeners(Collections.singletonList(head), true);
+        synchronized (nodesToNotifyLock) {
+            if (nodesToNotify == null) {
+                nodesToNotify = new ArrayList<FlowNode>();
+            }
+            nodesToNotify.add(head);
+        }
         runner.execute(new Runnable() {
             public void run() {
-                execution.notifyListeners(head, false);
+                List<FlowNode> _nodesToNotify;
+                synchronized (nodesToNotifyLock) {
+                    if (nodesToNotify == null) {
+                        return;
+                    }
+                    _nodesToNotify = nodesToNotify;
+                    nodesToNotify = null;
+                }
+                execution.notifyListeners(_nodesToNotify, false);
             }
         });
     }

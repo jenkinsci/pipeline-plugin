@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -120,8 +121,8 @@ final class FlowHead implements Serializable {
                 // in recovering from error and such situation, we sometimes need to grow the graph
                 // without running the program.
                 // TODO can CpsThreadGroup.notifyNewHead be used instead?
-                execution.notifyListeners(v, true);
-                execution.notifyListeners(v, false);
+                execution.notifyListeners(Collections.singletonList(v), true);
+                execution.notifyListeners(Collections.singletonList(v), false);
             }
         } catch (IOException e) {
             LOGGER.log(Level.FINE, "Failed to record new head: " + v, e);
