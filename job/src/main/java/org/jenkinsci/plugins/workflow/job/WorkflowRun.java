@@ -63,6 +63,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -315,24 +316,45 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     }
 
-    private String getLogPrefix(FlowNode node) {
+    // CacheBuilder would be more convenient, but apparently does not support null values. Memoizer does not support weak keys.
+    private static final Map<FlowNode,String> logPrefixCache = new WeakHashMap<FlowNode,String>();
+    private static String getLogPrefix(FlowNode node) {
+        synchronized (logPrefixCache) {
+            if (logPrefixCache.containsKey(node)) {
+                return logPrefixCache.get(node);
+            }
+        }
+        
         if (node instanceof BlockEndNode) {
+            synchronized (logPrefixCache) {
+                logPrefixCache.put(node, null);
+            }
             return null;
         }
 
         ThreadNameAction threadNameAction = node.getAction(ThreadNameAction.class);
 
         if (threadNameAction != null) {
-            return threadNameAction.getThreadName();
+            String name = threadNameAction.getThreadName();
+            synchronized (logPrefixCache) {
+                logPrefixCache.put(node, name);
+            }
+            return name;
         }
 
         for (FlowNode parent : node.getParents()) {
             String prefix = getLogPrefix(parent);
             if (prefix != null) {
+                synchronized (logPrefixCache) {
+                    logPrefixCache.put(node, prefix);
+                }
                 return prefix;
             }
         }
 
+        synchronized (logPrefixCache) {
+            logPrefixCache.put(node, null);
+        }
         return null;
     }
 
