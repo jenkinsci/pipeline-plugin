@@ -93,10 +93,7 @@ import java.util.logging.Logger;
 
 import static com.thoughtworks.xstream.io.ExtendedHierarchicalStreamWriterHelper.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import hudson.BulkChange;
 import hudson.init.Terminator;
-import hudson.model.Queue;
-import hudson.model.Saveable;
 import hudson.model.User;
 import hudson.security.ACL;
 import java.beans.Introspector;
@@ -789,26 +786,8 @@ public class CpsFlowExecution extends FlowExecution {
     void notifyListeners(FlowNode node, boolean synchronous) {
         List<GraphListener> _listeners = synchronous ? synchronousListeners : listeners;
         if (_listeners != null) {
-            Saveable s = Saveable.NOOP;
-            try {
-                Queue.Executable exec = owner.getExecutable();
-                if (exec instanceof Saveable) {
-                    s = (Saveable) exec;
-                }
-            } catch (IOException x) {
-                LOGGER.log(Level.WARNING, null, x);
-            }
-            BulkChange bc = new BulkChange(Saveable.NOOP);
-            try {
-                for (GraphListener listener : _listeners) {
-                    listener.onNewHead(node);
-                }
-            } finally {
-                try {
-                    bc.commit();
-                } catch (IOException x) {
-                    LOGGER.log(Level.WARNING, null, x);
-                }
+            for (GraphListener listener : _listeners) {
+                listener.onNewHead(node);
             }
         }
     }
