@@ -59,11 +59,11 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -185,7 +185,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             FlowExecutionList.get().register(owner);
             newExecution.addListener(new GraphL(), false);
             completed = new AtomicBoolean();
-            logsToCopy = new LinkedHashMap<String,Long>();
+            logsToCopy = new ConcurrentSkipListMap<String,Long>();
             execution = newExecution;
             newExecution.start();
             executionPromise.set(newExecution);
@@ -247,22 +247,24 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (logsToCopy == null) { // finished
             return;
         }
-        Iterator<Map.Entry<String,Long>> it = logsToCopy.entrySet().iterator();
+        if (logsToCopy instanceof LinkedHashMap) { // upgrade while build is running
+            logsToCopy = new ConcurrentSkipListMap<String,Long>(logsToCopy);
+        }
         boolean modified = false;
-        while (it.hasNext()) {
-            Map.Entry<String,Long> entry = it.next();
+        for (Map.Entry<String,Long> entry : logsToCopy.entrySet()) {
+            String id = entry.getKey();
             FlowNode node;
             try {
-                node = execution.getNode(entry.getKey());
+                node = execution.getNode(id);
             } catch (IOException x) {
                 LOGGER.log(Level.WARNING, null, x);
-                it.remove();
+                logsToCopy.remove(id);
                 modified = true;
                 continue;
             }
             if (node == null) {
-                LOGGER.log(Level.WARNING, "no such node {0}", entry.getKey());
-                it.remove();
+                LOGGER.log(Level.WARNING, "no such node {0}", id);
+                logsToCopy.remove(id);
                 modified = true;
                 continue;
             }
@@ -283,13 +285,13 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     try {
                         long revised = logText.writeRawLogTo(old, logger);
                         if (revised != old) {
-                            entry.setValue(revised);
+                            logsToCopy.put(id, revised);
                             modified = true;
                         }
                         if (logText.isComplete()) {
                             logText.writeRawLogTo(entry.getValue(), logger); // defend against race condition?
                             assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
-                            it.remove();
+                            logsToCopy.remove(id);
                             modified = true;
                         }
                     } finally {
@@ -299,11 +301,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     }
                 } catch (IOException x) {
                     LOGGER.log(Level.WARNING, null, x);
-                    it.remove();
+                    logsToCopy.remove(id);
                     modified = true;
                 }
             } else if (!node.isRunning()) {
-                it.remove();
+                logsToCopy.remove(id);
                 modified = true;
             }
         }
