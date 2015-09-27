@@ -317,16 +317,19 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     }
 
     // CacheBuilder would be more convenient, but apparently does not support null values. Memoizer does not support weak keys.
-    private static final Map<FlowNode,String> logPrefixCache = new WeakHashMap<FlowNode,String>();
-    private static String getLogPrefix(FlowNode node) {
-        synchronized (logPrefixCache) {
-            if (logPrefixCache.containsKey(node)) {
+    @GuardedBy("completed")
+    private transient Map<FlowNode,String> logPrefixCache;
+    private String getLogPrefix(FlowNode node) {
+        synchronized (completed) {
+            if (logPrefixCache == null) {
+                logPrefixCache = new WeakHashMap<FlowNode,String>();
+            } else if (logPrefixCache.containsKey(node)) {
                 return logPrefixCache.get(node);
             }
         }
         
         if (node instanceof BlockEndNode) {
-            synchronized (logPrefixCache) {
+            synchronized (completed) {
                 logPrefixCache.put(node, null);
             }
             return null;
@@ -336,7 +339,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
         if (threadNameAction != null) {
             String name = threadNameAction.getThreadName();
-            synchronized (logPrefixCache) {
+            synchronized (completed) {
                 logPrefixCache.put(node, name);
             }
             return name;
@@ -345,14 +348,14 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         for (FlowNode parent : node.getParents()) {
             String prefix = getLogPrefix(parent);
             if (prefix != null) {
-                synchronized (logPrefixCache) {
+                synchronized (completed) {
                     logPrefixCache.put(node, prefix);
                 }
                 return prefix;
             }
         }
 
-        synchronized (logPrefixCache) {
+        synchronized (completed) {
             logPrefixCache.put(node, null);
         }
         return null;
