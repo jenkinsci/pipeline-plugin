@@ -66,6 +66,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
 - [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
 - [ ] `AnsiColorBuildWrapper` (`ansicolor`): https://github.com/dblock/jenkins-ansicolor-plugin/pull/54
+- [ ] `CustomToolInstallWrapper` (`custom-tools-plugin`): [JENKINS-30680](https://issues.jenkins-ci.org/browse/JENKINS-30680) 
 
 ## Triggers
 
