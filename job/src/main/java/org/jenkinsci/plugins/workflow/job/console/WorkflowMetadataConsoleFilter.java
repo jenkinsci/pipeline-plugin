@@ -24,39 +24,32 @@
 
 package org.jenkinsci.plugins.workflow.job.console;
 
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import java.io.IOException;
+import java.io.OutputStream;
 
-import hudson.MarkupText;
-import hudson.console.ConsoleAnnotator;
-import hudson.console.ConsoleNote;
-import hudson.model.Run;
+import hudson.console.LineTransformationOutputStream;
 
 /**
- * Console note for Workflow metadata specific messages.
- * See {@link WorkflowConsoleLogger} for more information.
+ * It transforms workflow metadata log messages through {@link WorkflowRunConsoleNote}.
  */
-public class WorkflowRunConsoleNote extends ConsoleNote<Run<?, ?>> {
+public class WorkflowMetadataConsoleFilter extends LineTransformationOutputStream {
 
-    /**
-     * Prefix used in metadata lines.
-     */
-    public static final String CONSOLE_NOTE_PREFIX = "[Workflow] ";
+    private final OutputStream out;
 
-    /**
-     * CSS color selector.
-     */
-    private static final String TEXT_COLOR = "9A9999";
-
-    @Override
-    public ConsoleAnnotator<Run<?,?>> annotate(Run<?, ?> context, MarkupText text, int charPos) {
-        if (context instanceof WorkflowRun) {
-            if (text.getText().startsWith(CONSOLE_NOTE_PREFIX)) {
-                text.addMarkup(0, text.length(), "<span style=\"color:#"+ TEXT_COLOR +"\">", "</span>");
-            }
-        }
-        return null;
+    public WorkflowMetadataConsoleFilter(OutputStream out) {
+        this.out = out;
     }
 
-    private static final long serialVersionUID = 1L;
+    @Override
+    protected void eol(byte[] b, int len) throws IOException {
+        new WorkflowRunConsoleNote().encodeTo(out);
+        out.write(b, 0, len);
+    }
+
+    @Override
+    public void close() throws IOException {
+        super.close();
+        out.close();
+    }
 
 }

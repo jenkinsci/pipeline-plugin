@@ -88,6 +88,7 @@ import org.jenkinsci.plugins.workflow.flow.StashManager;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.job.console.WorkflowConsoleLogger;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.HttpResponses;
@@ -656,7 +657,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
             node.addAction(new TimingAction());
 
-            logNodeMessage(node, "Running: " + node.getDisplayFunctionName());
+            logNodeMessage(node);
             if (node instanceof FlowEndNode) {
                 finish(((FlowEndNode) node).getResult(), execution.getCauseOfFailure());
             } else {
@@ -669,19 +670,19 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     }
 
-    private void logNodeMessage(FlowNode node, String message) {
-        PrintStream logger = listener.getLogger();
+    private void logNodeMessage(FlowNode node) {
+        WorkflowConsoleLogger wfLogger = new WorkflowConsoleLogger(listener);
         String prefix = getLogPrefix(node);
         if (prefix != null) {
-            logger.printf("[%s] %s%n", prefix, message);
+            wfLogger.log(String.format("[%s] %s", prefix, node.getDisplayFunctionName()));
         } else {
-            logger.println(message);
+            wfLogger.log(node.getDisplayFunctionName());
         }
         // Flushing to keep logs printed in order as much as possible. The copyLogs method uses
         // LargeText and possibly LogLinePrefixOutputFilter. Both of these buffer and flush, causing strange
         // out of sequence writes to the underlying log stream (and => things being printed out of sequence)
         // if we don't flush the logger here.
-        logger.flush();
+        wfLogger.getLogger().flush();
     }
 
     static void alias() {
