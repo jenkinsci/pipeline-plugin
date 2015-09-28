@@ -120,7 +120,7 @@ final class FlowHead implements Serializable {
             } else {
                 // in recovering from error and such situation, we sometimes need to grow the graph
                 // without running the program.
-                // TODO can CpsThreadGroup.notifyNewHead be used instead?
+                // TODO can CpsThreadGroup.notifyNewHead be used instead to notify both kinds of listeners?
                 execution.notifyListeners(Collections.singletonList(v), true);
                 execution.notifyListeners(Collections.singletonList(v), false);
             }
