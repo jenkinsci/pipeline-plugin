@@ -65,7 +65,8 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `XvfbBuildWrapper` (`xvfb`): supported as of 1.1.0-beta-1
 - [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
 - [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
-- [ ] `AnsiColorBuildWrapper` (`ansicolor`): https://github.com/dblock/jenkins-ansicolor-plugin/pull/54
+=======
+- [X] `AnsiColorBuildWrapper` (`ansicolor`): scheduled to be supported as of 0.4.1
 - [ ] `CustomToolInstallWrapper` (`custom-tools-plugin`): [JENKINS-30680](https://issues.jenkins-ci.org/browse/JENKINS-30680) 
 
 ## Triggers
@@ -103,7 +104,6 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `lockable-resources` : [JENKINS-30269](https://issues.jenkins-ci.org/browse/JENKINS-30269)
 - [X] `customize-build-now`: supported as of 1.1
 - [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
-- [ ] `ansicolour` : [JENKINS-30528](https://issues.jenkins-ci.org/browse/JENKINS-30528)
 
 ## Custom steps
 
