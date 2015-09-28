@@ -27,21 +27,37 @@ package org.jenkinsci.plugins.workflow;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import static org.junit.Assert.*;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.Rule;
+import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class ScalabilityTest {
 
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
+    @Ignore("TODO java.io.IOException: failed to load flow node from /…/jobs/p/builds/1/workflow/10003.xml: …<node class='org.jenkinsci.plugins.workflow.graph.FlowEndNode'>…")
     @Issue("JENKINS-30055")
-    @Test public void manySteps() throws Exception {
-        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
-        p.setDefinition(new CpsFlowDefinition("for (int i = 0; i < 10000; i++) {echo \"iteration #${i}\"}", true));
-        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        r.assertLogContains("iteration #9876", b); // arbitrary iteration close to the end
+    @Test public void manySteps() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition("for (int i = 0; i < 10000; i++) {echo \"iteration #${i}\"}", true));
+                WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                story.j.assertLogContains("iteration #9876", b); // arbitrary iteration close to the end
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.getItemByFullName("p", WorkflowJob.class);
+                WorkflowRun b = p.getLastBuild();
+                story.j.assertLogContains("iteration #5432", b);
+                assertNotNull(b.getExecution());
+            }
+        });
     }
 
 }

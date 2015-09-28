@@ -224,7 +224,7 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
             XmlFile nodeFile = getNodeFile(id);
             v = (Tag) nodeFile.read();
             if (v.node == null) {
-                throw new IOException("failed to load flow node from " + nodeFile);
+                throw new IOException("failed to load flow node from " + nodeFile + ": " + nodeFile.asString());
             }
             try {
                 FlowNode$exec.set(v.node,exec);
