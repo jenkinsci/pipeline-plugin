@@ -41,7 +41,7 @@ public class ScalabilityTest {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         p.setDefinition(new CpsFlowDefinition("for (int i = 0; i < 10000; i++) {echo \"iteration #${i}\"}", true));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        r.assertLogContains("iteration #9876", b);
+        r.assertLogContains("iteration #9876", b); // arbitrary iteration close to the end
     }
 
 }
