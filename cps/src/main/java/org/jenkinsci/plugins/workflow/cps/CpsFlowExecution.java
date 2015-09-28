@@ -240,7 +240,7 @@ public class CpsFlowExecution extends FlowExecution {
 
     private final AtomicInteger iota = new AtomicInteger();
 
-    private transient List<GraphListener> listeners, synchronousListeners;
+    private transient List<GraphListener> listeners;
 
     /**
      * Result set from {@link StepContext}. Start by success and progressively gets worse.
@@ -684,26 +684,16 @@ public class CpsFlowExecution extends FlowExecution {
 
 
     @Override
-    public void addListener(GraphListener listener, boolean synchronous) {
-        if (synchronous) {
-            if (synchronousListeners == null) {
-                synchronousListeners = new CopyOnWriteArrayList<GraphListener>();
-            }
-            synchronousListeners.add(listener);
-        } else {
-            if (listeners == null) {
-                listeners = new CopyOnWriteArrayList<GraphListener>();
-            }
-            listeners.add(listener);
+    public void addListener(GraphListener listener) {
+        if (listeners == null) {
+            listeners = new CopyOnWriteArrayList<GraphListener>();
         }
+        listeners.add(listener);
     }
 
     @Override public void removeListener(GraphListener listener) {
         if (listeners != null) {
             listeners.remove(listener);
-        }
-        if (synchronousListeners != null) {
-            synchronousListeners.remove(listener);
         }
     }
 
@@ -787,8 +777,7 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     void notifyListeners(List<FlowNode> nodes, boolean synchronous) {
-        List<GraphListener> _listeners = synchronous ? synchronousListeners : listeners;
-        if (_listeners != null) {
+        if (listeners != null) {
             Saveable s = Saveable.NOOP;
             try {
                 Queue.Executable exec = owner.getExecutable();
@@ -801,8 +790,10 @@ public class CpsFlowExecution extends FlowExecution {
             BulkChange bc = new BulkChange(s);
             try {
                 for (FlowNode node : nodes) {
-                    for (GraphListener listener : _listeners) {
-                        listener.onNewHead(node);
+                    for (GraphListener listener : listeners) {
+                        if (listener instanceof GraphListener.Synchronous == synchronous) {
+                            listener.onNewHead(node);
+                        }
                     }
                 }
             } finally {

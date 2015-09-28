@@ -92,7 +92,7 @@ public abstract class DefaultStepContext extends StepContext {
                 }
                 listener = new StreamTaskListener(os);
                 final AtomicReference<GraphListener> graphListener = new AtomicReference<GraphListener>();
-                graphListener.set(new GraphListener() {
+                graphListener.set(new GraphListener.Synchronous() {
                     @Override public void onNewHead(FlowNode node) {
                         try {
                             if (!getNode().isRunning()) {
@@ -104,7 +104,7 @@ public abstract class DefaultStepContext extends StepContext {
                         }
                     }
                 });
-                getExecution().addListener(graphListener.get(), true);
+                getExecution().addListener(graphListener.get());
             }
             return key.cast(listener);
         } else if (Node.class.isAssignableFrom(key)) {
