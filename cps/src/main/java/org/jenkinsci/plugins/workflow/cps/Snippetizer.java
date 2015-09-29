@@ -29,6 +29,7 @@ import hudson.Functions;
 import hudson.model.Descriptor;
 import hudson.model.RootAction;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -228,11 +229,12 @@ import org.kohsuke.stapler.StaplerResponse;
         }
     }
 
-    private static class StepDescriptorComparator implements Comparator<StepDescriptor> {
+    private static class StepDescriptorComparator implements Comparator<StepDescriptor>, Serializable {
         @Override
         public int compare(StepDescriptor o1, StepDescriptor o2) {
             return o1.getFunctionName().compareTo(o2.getFunctionName());
         }
+        private static final long serialVersionUID = 1L;
     }
 
 }
