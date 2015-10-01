@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.workflow.support.steps.build;
 
 import com.google.inject.Inject;
 import hudson.AbortException;
+import hudson.console.HyperlinkNote;
 import hudson.model.Action;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
@@ -39,7 +40,6 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
     @Override
     public boolean start() throws Exception {
         String job = step.getJob();
-        listener.getLogger().println("Starting building project: " + job);
         final ParameterizedJobMixIn.ParameterizedJob project = Jenkins.getActiveInstance().getItem(job, invokingRun.getParent(), ParameterizedJobMixIn.ParameterizedJob.class);
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
@@ -67,6 +67,9 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         if (f == null) {
             throw new AbortException("Failed to trigger build of " + project.getFullName());
         }
+
+        Run r = (Run) f.waitForStart();
+        listener.getLogger().println("Starting building project: " + HyperlinkNote.encodeTo('/' + r.getUrl(), r.getFullDisplayName()));
         if (step.getWait()) {
             return false;
         } else {
