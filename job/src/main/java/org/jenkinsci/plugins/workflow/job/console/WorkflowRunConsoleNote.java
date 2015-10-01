@@ -47,11 +47,14 @@ public class WorkflowRunConsoleNote extends ConsoleNote<Run<?, ?>> {
      */
     private static final String TEXT_COLOR = "9A9999";
 
+    private static final String START_NOTE = "<span style=\"color:#"+ TEXT_COLOR +"\">";
+    private static final String END_NOTE = "</span>";
+
     @Override
     public ConsoleAnnotator<Run<?,?>> annotate(Run<?, ?> context, MarkupText text, int charPos) {
         if (context instanceof WorkflowRun) {
             if (text.getText().startsWith(CONSOLE_NOTE_PREFIX)) {
-                text.addMarkup(0, text.length(), "<span style=\"color:#"+ TEXT_COLOR +"\">", "</span>");
+                text.addMarkup(0, text.length(), START_NOTE, END_NOTE);
             }
         }
         return null;
