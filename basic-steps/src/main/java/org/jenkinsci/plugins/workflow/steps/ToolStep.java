@@ -80,7 +80,7 @@ public final class ToolStep extends AbstractStepImpl {
         }
 
         @Override public String getDisplayName() {
-            return "Use a tool";
+            return "Use a tool from a predefined Tool Installation";
         }
 
         public ListBoxModel doFillTypeItems() {
