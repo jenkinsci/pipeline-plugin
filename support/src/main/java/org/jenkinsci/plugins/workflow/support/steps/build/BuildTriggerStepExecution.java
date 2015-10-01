@@ -67,7 +67,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         if (f == null) {
             throw new AbortException("Failed to trigger build of " + project.getFullName());
         }
-        Run r = (Run) f.waitForStart();
+        Run r = (Run) f.getStartCondition().get();
         listener.getLogger().println("Starting building project: " + HyperlinkNote.encodeTo('/' + r.getUrl(), r.getFullDisplayName()));
         if (step.getWait()) {
             return false;
