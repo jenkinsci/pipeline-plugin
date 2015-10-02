@@ -47,7 +47,7 @@ public class ArtifactArchiverStep extends AbstractStepImpl {
 
         @Override
         public String getDisplayName() {
-            return "Archive Artifacts";
+            return "Archive artifacts";
         }
     }
 }

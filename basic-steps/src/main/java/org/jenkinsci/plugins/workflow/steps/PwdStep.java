@@ -53,7 +53,7 @@ public class PwdStep extends AbstractStepImpl {
         }
 
         @Override public String getDisplayName() {
-            return "Determine Current Directory";
+            return "Determine current directory";
         }
 
     }

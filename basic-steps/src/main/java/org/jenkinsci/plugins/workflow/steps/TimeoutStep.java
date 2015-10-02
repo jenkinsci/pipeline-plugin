@@ -61,7 +61,7 @@ public class TimeoutStep extends AbstractStepImpl implements Serializable {
 
         @Override
         public String getDisplayName() {
-            return "Executes the body with a timeout";
+            return "Enforce time limit";
         }
 
         public ListBoxModel doFillUnitItems() {

@@ -1,0 +1,14 @@
+<div>
+    <p>
+        Takes a map from branch names to closures and an optional argument <code>failFast</code>
+        which will terminate all branches upon a failure in any other branch:
+    </p>
+    <pre>
+    parallel firstBranch: {
+        // do something
+    }, secondBranch: {
+        // do something else
+    },
+    failFast: true|false
+    </pre>
+</div>
