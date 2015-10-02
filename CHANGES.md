@@ -3,6 +3,8 @@
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
 ## 1.11 (not yet released)
+
+* [JENKINS-30086](https://issues.jenkins-ci.org/browse/JENKINS-30086): improve inline help and display names for steps, and show step function names in _Snippet Generator_.
 * [JENKINS-30346](https://issues.jenkins-ci.org/browse/JENKINS-30346): added a cross platform `deleteDir` step to recursively delete a directory and its contents.
 
 ## 1.10 (Aug 31 2015)
