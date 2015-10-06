@@ -28,10 +28,13 @@ import hudson.AbortException;
 import hudson.model.AbstractBuild;
 import hudson.model.Result;
 import hudson.model.Run;
+import hudson.model.ParameterValue;
+import hudson.model.ParametersAction;
 import hudson.security.ACL;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -161,12 +164,19 @@ public final class RunWrapper implements Serializable {
         if (build instanceof AbstractBuild) {
             return Collections.unmodifiableMap(((AbstractBuild<?,?>) build).getBuildVariables());
         } else {
-            EnvironmentAction.IncludingOverrides env = build.getAction(EnvironmentAction.IncludingOverrides.class);
-            if (env != null) { // downstream is also WorkflowRun
-                return env.getOverriddenEnvironment();
-            } else { // who knows
-                return Collections.emptyMap();
+            Map<String, String> buildVariablesMap = new HashMap<String, String>();
+            ParametersAction parameterAction = build.getAction(ParametersAction.class);
+            if (parameterAction != null){
+                for (ParameterValue parameterValue: parameterAction.getParameters()){
+                    buildVariablesMap.put(parameterValue.getName(), (String) parameterValue.getValue());
+                }
             }
+            EnvironmentAction.IncludingOverrides env = build.getAction(EnvironmentAction.IncludingOverrides.class);
+            if (env != null) { // downstream is also WorkflowRuns
+                buildVariablesMap.putAll(env.getOverriddenEnvironment());
+            }
+
+            return buildVariablesMap;
         }
     }
 
