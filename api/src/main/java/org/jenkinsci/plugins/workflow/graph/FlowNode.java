@@ -42,6 +42,7 @@ import javax.annotation.Nonnull;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.export.Exported;
@@ -177,16 +178,19 @@ public abstract class FlowNode extends Actionable implements Saveable {
     protected abstract String getTypeDisplayName();
 
     /**
-     * Gets the function name for this type of node.
+     * Gets a human readable text that may include a {@link StepDescriptor#getFunctionName()}.
+     * It would return "echo" for a flow node linked to an EchoStep or "ws {" for WorkspaceStep.
      *
-     * Note that this method should be abstract (suppossed to be implemented in all subclasses), but keeping 
+     * For StepEndNode it would return "} // step.getFunctionName()".
+     *
+     * Note that this method should be abstract (supposed to be implemented in all subclasses), but keeping
      * it non-abstract to avoid binary incompatibilities.
      *
-     * @return the function name or null
+     * @return the text human-readable representation of the step function name
+     *      or {@link FlowNode#getDisplayName()} by default (if not overriden in subclasses)
      */
-    @CheckForNull
     protected /* abstract */ String getTypeFunctionName() {
-        return null;
+        return getDisplayName();
     }
 
     /**
