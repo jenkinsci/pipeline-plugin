@@ -44,7 +44,7 @@ public class BuildTriggerListener extends RunListener<Run<?,?>>{
                 Run upStreamRun = upstreamCause.getUpstreamRun();
                 BuildTriggerAction buildTriggerAction = run.getAction(BuildTriggerAction.class);
                 //Only works when upstream is still running
-                if (upStreamRun.isBuilding() && buildTriggerAction != null) {
+                if (upStreamRun != null && upStreamRun.isBuilding() && buildTriggerAction != null) {
                     try {
                         TaskListener taskListener = buildTriggerAction.getStepContext().get(TaskListener.class);
                         taskListener.getLogger().println("Starting building project: " + HyperlinkNote.encodeTo('/' + run.getUrl(), run.getFullDisplayName()));
