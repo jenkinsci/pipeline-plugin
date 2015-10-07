@@ -44,6 +44,8 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
         }
+        listener.getLogger().println("Scheduling project: " + HyperlinkNote.encodeTo('/' + project.getUrl(), project.getFullDisplayName()));
+
         node.addAction(new LabelAction(Messages.BuildTriggerStepExecution_building_(project.getFullDisplayName())));
         List<Action> actions = new ArrayList<Action>();
         if (step.getWait()) {
@@ -68,8 +70,6 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
             throw new AbortException("Failed to trigger build of " + project.getFullName());
         }
 
-        Run r = (Run) f.waitForStart();
-        listener.getLogger().println("Starting building project: " + HyperlinkNote.encodeTo('/' + r.getUrl(), r.getFullDisplayName()));
         if (step.getWait()) {
             return false;
         } else {
