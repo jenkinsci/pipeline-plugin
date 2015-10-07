@@ -47,6 +47,16 @@ public class StepStartNode extends BlockStartNode implements StepNode {
         return getStepName() + (isBody() ?" : Body":"") + " : Start";
     }
 
+    @Override
+    protected String getTypeFunctionName() {
+        StepDescriptor d = getDescriptor();
+        if (isBody()) {
+            return (d != null ? d.getFunctionName() : descriptorId) + " {";
+        } else {
+            return getStepName() + " : Start";
+        }
+    }
+
     public boolean isBody() {
         return getAction(BodyInvocationAction.class)!=null;
     }

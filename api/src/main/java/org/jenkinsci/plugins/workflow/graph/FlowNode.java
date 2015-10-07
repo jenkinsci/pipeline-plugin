@@ -42,6 +42,7 @@ import javax.annotation.Nonnull;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.export.Exported;
@@ -141,6 +142,20 @@ public abstract class FlowNode extends Actionable implements Saveable {
         else            return getTypeDisplayName();
     }
 
+    public String getDisplayFunctionName() {
+        String functionName = getTypeFunctionName();
+        if (functionName == null) {
+            return getDisplayName();
+        } else {
+            LabelAction a = getAction(LabelAction.class);
+            if (a != null) {
+                return functionName + ": " + a.getDisplayName();
+            } else {
+                return functionName;
+            }
+        }
+    }
+
     /**
      * Returns colored orb that represents the current state of this node.
      *
@@ -161,6 +176,22 @@ public abstract class FlowNode extends Actionable implements Saveable {
      * This is used to implement {@link #getDisplayName()} as a fallback in case {@link LabelAction} doesnt exist.
      */
     protected abstract String getTypeDisplayName();
+
+    /**
+     * Gets a human readable text that may include a {@link StepDescriptor#getFunctionName()}.
+     * It would return "echo" for a flow node linked to an EchoStep or "ws {" for WorkspaceStep.
+     *
+     * For StepEndNode it would return "} // step.getFunctionName()".
+     *
+     * Note that this method should be abstract (supposed to be implemented in all subclasses), but keeping
+     * it non-abstract to avoid binary incompatibilities.
+     *
+     * @return the text human-readable representation of the step function name
+     *      or {@link FlowNode#getDisplayName()} by default (if not overriden in subclasses)
+     */
+    protected /* abstract */ String getTypeFunctionName() {
+        return getDisplayName();
+    }
 
     /**
      * Returns the URL of this {@link FlowNode}, relative to the context root of Jenkins.
