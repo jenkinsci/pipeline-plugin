@@ -32,17 +32,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import jenkins.plugins.git.GitSCMSource;
 import jenkins.scm.api.SCMNavigator;
 import jenkins.scm.api.SCMNavigatorDescriptor;
-import jenkins.scm.api.SCMSource;
-import jenkins.scm.api.SCMSourceOwner;
+import jenkins.scm.api.SCMSourceObserver;
 import org.apache.commons.io.IOUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -61,13 +56,13 @@ public class GitDirectorySCMNavigator extends SCMNavigator {
         return directory;
     }
 
-    @Override public Map<String,? extends List<? extends SCMSource>> discoverSources(SCMSourceOwner context, TaskListener listener) throws IOException, InterruptedException {
+    @Override public void visitSources(SCMSourceObserver observer) throws IOException, InterruptedException {
+        TaskListener listener = observer.getListener();
         File[] kids = new File(directory).listFiles();
         if (kids == null) {
             listener.error(directory + " does not exist");
-            return Collections.emptyMap();
+            return;
         }
-        Map<String,List<? extends SCMSource>> result = new HashMap<String,List<? extends SCMSource>>();
         for (File kid : kids) {
             if (!new File(kid, ".git").isDirectory()) {
                 listener.getLogger().format("Ignoring %s since it does not look like a Git checkout%n", kid);
@@ -92,9 +87,10 @@ public class GitDirectorySCMNavigator extends SCMNavigator {
                     break;
                 }
             }
-            result.put(kid.getName(), Collections.singletonList(new GitSCMSource(null, origin, "", "*", "", false)));
+            SCMSourceObserver.ProjectObserver projectObserver = observer.observe(kid.getName());
+            projectObserver.addSource(new GitSCMSource(null, origin, "", "*", "", false));
+            projectObserver.complete();
         }
-        return result;
     }
     private static final Pattern ORIGIN = Pattern.compile("origin\t(.+) [(]fetch[)]");
 

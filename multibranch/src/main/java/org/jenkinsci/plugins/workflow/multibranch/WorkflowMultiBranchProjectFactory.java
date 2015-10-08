@@ -28,6 +28,7 @@ import hudson.Extension;
 import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
 import java.io.IOException;
+import java.util.Map;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.MultiBranchProjectFactory;
 import jenkins.branch.MultiBranchProjectFactoryDescriptor;
@@ -51,7 +52,7 @@ public class WorkflowMultiBranchProjectFactory extends MultiBranchProjectFactory
         };
     }
 
-    @Override protected MultiBranchProject<?,?> doCreateProject(ItemGroup<?> parent, String name) {
+    @Override protected MultiBranchProject<?,?> doCreateProject(ItemGroup<?> parent, String name, Map<String,Object> attributes) {
         return new WorkflowMultiBranchProject(parent, name);
     }
 
