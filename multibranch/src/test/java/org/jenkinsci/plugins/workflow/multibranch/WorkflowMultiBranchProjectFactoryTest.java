@@ -33,7 +33,6 @@ import jenkins.scm.api.SCMSource;
 import static org.hamcrest.Matchers.*;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
