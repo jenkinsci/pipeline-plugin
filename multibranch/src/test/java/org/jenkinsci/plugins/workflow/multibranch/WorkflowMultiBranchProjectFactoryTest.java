@@ -24,12 +24,17 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import hudson.model.Item;
+import hudson.model.User;
+import hudson.security.ACL;
+import hudson.security.FullControlOnceLoggedInAuthorizationStrategy;
 import java.io.File;
 import java.util.List;
 import javax.annotation.Nonnull;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.OrganizationFolder;
 import jenkins.scm.api.SCMSource;
+import org.acegisecurity.Authentication;
 import static org.hamcrest.Matchers.*;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -60,6 +65,8 @@ public class WorkflowMultiBranchProjectFactoryTest {
         sampleRepo1.git("clone", ".", new File(clones, "one").getAbsolutePath());
         sampleRepo3.init(); // but do not write JENKINSFILE, so should be ignored
         sampleRepo3.git("clone", ".", new File(clones, "three").getAbsolutePath());
+        r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
+        r.jenkins.setAuthorizationStrategy(new FullControlOnceLoggedInAuthorizationStrategy());
         OrganizationFolder top = r.jenkins.createProject(OrganizationFolder.class, "top");
         top.getNavigators().add(new GitDirectorySCMNavigator(clones.getAbsolutePath()));
         // Make sure we created one multibranch projects:
@@ -72,6 +79,15 @@ public class WorkflowMultiBranchProjectFactoryTest {
         List<SCMSource> sources = one.getSCMSources();
         assertEquals(1, sources.size());
         assertEquals("GitSCMSource", sources.get(0).getClass().getSimpleName());
+        // Verify permissions:
+        Authentication admin = User.get("admin").impersonate();
+        ACL acl = one.getACL();
+        assertTrue(acl.hasPermission(ACL.SYSTEM, Item.CONFIGURE));
+        assertTrue(acl.hasPermission(ACL.SYSTEM, Item.DELETE));
+        assertFalse(acl.hasPermission(admin, Item.CONFIGURE));
+        assertFalse(acl.hasPermission(admin, Item.DELETE));
+        assertTrue(acl.hasPermission(admin, Item.EXTENDED_READ));
+        assertTrue(acl.hasPermission(admin, Item.READ));
         // Check that the master branch project works:
         WorkflowJob p = findBranchProject((WorkflowMultiBranchProject) one, "master");
         r.waitUntilNoActivity();
