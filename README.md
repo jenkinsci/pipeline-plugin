@@ -33,6 +33,8 @@ Workflows can be divided into sequential stages, not only for labeling but to th
 
 Read the [tutorial](TUTORIAL.md) to get started writing workflows.
 
+There is also a [DZone Refcard](https://dzone.com/refcardz/continuous-delivery-with-jenkins-workflow).
+
 # Installation
 
 Releases are available on the Jenkins update center.
