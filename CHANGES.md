@@ -2,6 +2,10 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.11 (upcoming)
+
+* [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): error during build queue rendering on 1.624+ when using non-concurrent-capable Workflow builds.
+
 ## 1.11-beta-1 (Oct 07 2015)
 
 * [JENKINS-30086](https://issues.jenkins-ci.org/browse/JENKINS-30086): improve inline help and display names for steps, and show step function names in _Snippet Generator_.
