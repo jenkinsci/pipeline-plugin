@@ -12,6 +12,10 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 * [JENKINS-30346](https://issues.jenkins-ci.org/browse/JENKINS-30346): added a cross platform `deleteDir` step to recursively delete a directory and its contents.
 * [JENKINS-30088](https://issues.jenkins-ci.org/browse/JENKINS-30088): Adjust how steps are displayed, to make the appearance cleaner and keep a focus on the DSL
 
+## 1.10.1 (Oct 15 2015)
+
+* [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): backport from 1.11.
+
 ## 1.10 (Aug 31 2015)
 
 * [JENKINS-30122](https://issues.jenkins-ci.org/browse/JENKINS-30122): regression in usage of the Authorize Project plugin in 1.10-beta-1.
