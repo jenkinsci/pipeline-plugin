@@ -66,6 +66,8 @@ public class BranchJobProperty extends WorkflowJobProperty {
         };
     }
 
+    // TODO make WorkflowJob.isBuildable false if !branch.isBuildable to handle orphaned projects
+
     @Extension public static class DescriptorImpl extends JobPropertyDescriptor {
 
         @Override public String getDisplayName() {

@@ -79,7 +79,7 @@ public class WorkflowMultiBranchProjectTest {
     // TODO changelog shows per-branch changes
 
     static @Nonnull WorkflowJob findBranchProject(@Nonnull WorkflowMultiBranchProject mp, @Nonnull String name) throws Exception {
-        mp.scheduleBuild2(0, null).get();
+        mp.scheduleBuild2(0).getFuture().get();
         WorkflowJob p = mp.getItem(name);
         if (p == null) {
             mp.getIndexing().writeWholeLogTo(System.out);
