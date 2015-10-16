@@ -39,6 +39,7 @@ import jenkins.scm.api.SCMNavigator;
 import jenkins.scm.api.SCMNavigatorDescriptor;
 import jenkins.scm.api.SCMSourceObserver;
 import org.apache.commons.io.IOUtils;
+import static org.junit.Assert.assertFalse;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -81,9 +82,7 @@ public class GitDirectorySCMNavigator extends SCMNavigator {
                 if (m.matches()) {
                     origin = m.group(1);
                     listener.getLogger().format("Found origin URL: %s%n", origin);
-                    if (origin.startsWith("git@")) {
-                        listener.getLogger().format("Warning: SSH private keys not yet supported here%n");
-                    }
+                    assertFalse(origin.startsWith("git@"));
                     break;
                 }
             }

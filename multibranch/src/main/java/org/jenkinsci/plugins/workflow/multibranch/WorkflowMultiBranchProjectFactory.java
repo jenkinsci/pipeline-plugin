@@ -34,7 +34,7 @@ import jenkins.branch.MultiBranchProjectFactory;
 import jenkins.branch.MultiBranchProjectFactoryDescriptor;
 import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.SCMSourceCriteria;
-import org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject;
+import static org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject.CRITERIA;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class WorkflowMultiBranchProjectFactory extends MultiBranchProjectFactory.BySCMSourceCriteria {
@@ -44,12 +44,7 @@ public class WorkflowMultiBranchProjectFactory extends MultiBranchProjectFactory
     @DataBoundConstructor public WorkflowMultiBranchProjectFactory() {}
 
     @Override protected SCMSourceCriteria getSCMSourceCriteria(SCMSource source) {
-        // TODO share implementation with WorkflowMultiBranchProject
-        return new SCMSourceCriteria() {
-            @Override public boolean isHead(SCMSourceCriteria.Probe probe, TaskListener listener) throws IOException {
-                return probe.exists(JENKINSFILE);
-            }
-        };
+        return CRITERIA;
     }
 
     @Override protected MultiBranchProject<?,?> doCreateProject(ItemGroup<?> parent, String name, Map<String,Object> attributes) {

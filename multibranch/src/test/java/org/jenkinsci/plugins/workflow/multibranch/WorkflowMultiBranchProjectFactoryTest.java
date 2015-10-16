@@ -30,7 +30,6 @@ import hudson.security.ACL;
 import hudson.security.FullControlOnceLoggedInAuthorizationStrategy;
 import java.io.File;
 import java.util.List;
-import javax.annotation.Nonnull;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.OrganizationFolder;
 import jenkins.scm.api.SCMSource;
@@ -88,8 +87,9 @@ public class WorkflowMultiBranchProjectFactoryTest {
         assertFalse(acl.hasPermission(admin, Item.DELETE));
         assertTrue(acl.hasPermission(admin, Item.EXTENDED_READ));
         assertTrue(acl.hasPermission(admin, Item.READ));
+        r.waitUntilNoActivity();
         // Check that the master branch project works:
-        WorkflowJob p = findBranchProject((WorkflowMultiBranchProject) one, "master");
+        WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject((WorkflowMultiBranchProject) one, "master");
         r.waitUntilNoActivity();
         WorkflowRun b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
@@ -106,22 +106,11 @@ public class WorkflowMultiBranchProjectFactoryTest {
         // Same for another one:
         MultiBranchProject<?,?> two = top.getItem("two");
         assertThat(two, is(instanceOf(WorkflowMultiBranchProject.class)));
-        p = findBranchProject((WorkflowMultiBranchProject) two, "master");
         r.waitUntilNoActivity();
+        p = WorkflowMultiBranchProjectTest.findBranchProject((WorkflowMultiBranchProject) two, "master");
         b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
         r.assertLogContains("ran two", b1);
-    }
-
-    // adapted from WorkflowMultiBranchProjectTest
-    private @Nonnull WorkflowJob findBranchProject(@Nonnull WorkflowMultiBranchProject mp, @Nonnull String name) throws Exception {
-        r.waitUntilNoActivity();
-        WorkflowJob p = mp.getItem(name);
-        if (p == null) {
-            mp.getIndexing().writeWholeLogTo(System.out);
-            fail(name + " project not found");
-        }
-        return p;
     }
 
 }
