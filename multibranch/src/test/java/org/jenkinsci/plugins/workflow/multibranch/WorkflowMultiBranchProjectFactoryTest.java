@@ -87,10 +87,8 @@ public class WorkflowMultiBranchProjectFactoryTest {
         assertFalse(acl.hasPermission(admin, Item.DELETE));
         assertTrue(acl.hasPermission(admin, Item.EXTENDED_READ));
         assertTrue(acl.hasPermission(admin, Item.READ));
-        r.waitUntilNoActivity();
         // Check that the master branch project works:
         WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject((WorkflowMultiBranchProject) one, "master");
-        r.waitUntilNoActivity();
         WorkflowRun b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
         r.assertLogContains("ran one", b1);
