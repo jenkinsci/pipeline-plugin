@@ -104,6 +104,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `lockable-resources` : [JENKINS-30269](https://issues.jenkins-ci.org/browse/JENKINS-30269)
 - [X] `customize-build-now`: supported as of 1.1
 - [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
+- [ ] `embeddable-build-status`: [JENKINS-28642](https://issues.jenkins-ci.org/browse/JENKINS-28642)
 
 ## Custom steps
 
