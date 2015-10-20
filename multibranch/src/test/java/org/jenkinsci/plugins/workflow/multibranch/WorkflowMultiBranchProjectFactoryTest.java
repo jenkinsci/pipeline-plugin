@@ -58,11 +58,11 @@ public class WorkflowMultiBranchProjectFactoryTest {
     @Test public void smokes() throws Exception {
         File clones = tmp.newFolder();
         sampleRepo1.init();
-        sampleRepo1.write(WorkflowMultiBranchProjectFactory.JENKINSFILE, "echo 'ran one'");
-        sampleRepo1.git("add", WorkflowMultiBranchProjectFactory.JENKINSFILE);
+        sampleRepo1.write(WorkflowMultiBranchProject.SCRIPT, "echo 'ran one'");
+        sampleRepo1.git("add", WorkflowMultiBranchProject.SCRIPT);
         sampleRepo1.git("commit", "--all", "--message=flow");
         sampleRepo1.git("clone", ".", new File(clones, "one").getAbsolutePath());
-        sampleRepo3.init(); // but do not write JENKINSFILE, so should be ignored
+        sampleRepo3.init(); // but do not write SCRIPT, so should be ignored
         sampleRepo3.git("clone", ".", new File(clones, "three").getAbsolutePath());
         r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
         r.jenkins.setAuthorizationStrategy(new FullControlOnceLoggedInAuthorizationStrategy());
@@ -94,8 +94,8 @@ public class WorkflowMultiBranchProjectFactoryTest {
         r.assertLogContains("ran one", b1);
         // Then add a second checkout and reindex:
         sampleRepo2.init();
-        sampleRepo2.write(WorkflowMultiBranchProjectFactory.JENKINSFILE, "echo 'ran two'");
-        sampleRepo2.git("add", WorkflowMultiBranchProjectFactory.JENKINSFILE);
+        sampleRepo2.write(WorkflowMultiBranchProject.SCRIPT, "echo 'ran two'");
+        sampleRepo2.git("add", WorkflowMultiBranchProject.SCRIPT);
         sampleRepo2.git("commit", "--all", "--message=flow");
         sampleRepo2.git("clone", ".", new File(clones, "two").getAbsolutePath());
         top.scheduleBuild2(0).getFuture().get();
