@@ -71,7 +71,7 @@ public class SCMBinderTest {
                 sampleGitRepo.git("commit", "--all", "--message=flow");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
                 mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
-                WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject(mp, "master");
+                WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "master");
                 SemaphoreStep.waitForStart("wait/1", null);
                 WorkflowRun b1 = p.getLastBuild();
                 assertNotNull(b1);
@@ -103,7 +103,7 @@ public class SCMBinderTest {
                 sampleGitRepo.git("commit", "--all", "--message=flow");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
                 mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
-                WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject(mp, "master");
+                WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "master");
                 SemaphoreStep.waitForStart("wait/1", null);
                 WorkflowRun b1 = p.getLastBuild();
                 assertNotNull(b1);
@@ -134,7 +134,7 @@ public class SCMBinderTest {
                 sampleSvnRepo.svn("commit", "--message=flow");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
                 mp.getSourcesList().add(new BranchSource(new SubversionSCMSource(null, sampleSvnRepo.prjUrl(), null, null, null), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
-                WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject(mp, "trunk");
+                WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "trunk");
                 SemaphoreStep.waitForStart("wait/1", null);
                 WorkflowRun b1 = p.getLastBuild();
                 assertNotNull(b1);
@@ -174,7 +174,7 @@ public class SCMBinderTest {
                 }
                 */
                 mp.getSourcesList().add(new BranchSource(new MercurialSCMSource(null, instName, sampleHgRepo.fileUrl(), null, null, null, null, null, true), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
-                WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject(mp, "default");
+                WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "default");
                 SemaphoreStep.waitForStart("wait/1", null);
                 WorkflowRun b1 = p.getLastBuild();
                 assertNotNull(b1);
@@ -222,7 +222,7 @@ public class SCMBinderTest {
                 // And run:
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
                 mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
-                WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject(mp, "master");
+                WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "master");
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
                 story.j.assertLogContains("loaded resource content", b);
             }

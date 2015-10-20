@@ -42,7 +42,6 @@ import jenkins.branch.RateLimitBranchProperty;
 import jenkins.plugins.git.GitSCMSource;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import static org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProjectTest.findBranchProject;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -51,6 +50,7 @@ import org.junit.Rule;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import static org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject;
 
 public class WorkflowParameterDefinitionBranchPropertyTest {
 
@@ -83,7 +83,7 @@ public class WorkflowParameterDefinitionBranchPropertyTest {
         WorkflowParameterDefinitionBranchProperty prop = new WorkflowParameterDefinitionBranchProperty();
         prop.setParameterDefinitions(Collections.<ParameterDefinition>singletonList(new StringParameterDefinition("myparam", "default value")));
         mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[] {prop})));
-        WorkflowJob p = findBranchProject(mp, "master");
+        WorkflowJob p = scheduleAndFindBranchProject(mp, "master");
         assertEquals(1, mp.getItems().size());
         r.waitUntilNoActivity();
         WorkflowRun b1 = p.getLastBuild();
