@@ -26,8 +26,6 @@ package org.jenkinsci.plugins.workflow.multibranch;
 
 import hudson.Extension;
 import hudson.model.ItemGroup;
-import hudson.model.TaskListener;
-import java.io.IOException;
 import java.util.Map;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.MultiBranchProjectFactory;
@@ -38,8 +36,6 @@ import static org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProj
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class WorkflowMultiBranchProjectFactory extends MultiBranchProjectFactory.BySCMSourceCriteria {
-
-    public static final String JENKINSFILE = "Jenkinsfile";
 
     @DataBoundConstructor public WorkflowMultiBranchProjectFactory() {}
 
