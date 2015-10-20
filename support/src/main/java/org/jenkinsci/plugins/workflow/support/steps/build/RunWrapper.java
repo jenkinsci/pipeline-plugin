@@ -35,6 +35,8 @@ import java.util.Collections;
 import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+
+import jenkins.model.Jenkins;
 import org.acegisecurity.context.SecurityContext;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted;
@@ -167,6 +169,16 @@ public final class RunWrapper implements Serializable {
             } else { // who knows
                 return Collections.emptyMap();
             }
+        }
+    }
+
+    @Whitelisted
+    public @Nonnull String getAbsoluteUrl() throws AbortException {
+        String root = Jenkins.getActiveInstance().getRootUrl();
+        if (root == null) {
+            throw new AbortException("Jenkins root url is not configured!");
+        } else {
+            return root + build().getUrl();
         }
     }
 
