@@ -174,12 +174,7 @@ public final class RunWrapper implements Serializable {
 
     @Whitelisted
     public @Nonnull String getAbsoluteUrl() throws AbortException {
-        String root = Jenkins.getActiveInstance().getRootUrl();
-        if (root == null) {
-            throw new AbortException("Jenkins root url is not configured!");
-        } else {
-            return root + build().getUrl();
-        }
+        return build().getAbsoluteUrl();
     }
 
 }
