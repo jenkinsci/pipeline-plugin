@@ -65,7 +65,6 @@ public abstract class AbstractSynchronousNonBlockingStepExecution<T> extends Abs
         if (task != null) {
             task.cancel(true);
         }
-        getContext().onFailure(cause);
     }
 
     @Override
