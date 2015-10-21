@@ -17,7 +17,6 @@ import jenkins.model.Jenkins;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepNode;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -104,12 +103,12 @@ public class SynchronousNonBlockingStepTest {
 
         // At this point syncnonblocking is waiting for an interruption
 
-        FlowExecution e = b.getExecutionPromise().get();
         // Let's force a call to stop. This will try to send an interruption to the run Thread
-        e.interrupt(Result.ABORTED);
+        b.getExecutor().interrupt();
         System.out.println("Looking for interruption received log message");
         j.waitForMessage("Interrupted!", b);
         j.waitForCompletion(b);
+        j.assertBuildStatus(Result.ABORTED, b);
     }
 
     @Test

@@ -208,7 +208,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 }
                 if (interruptionCount.incrementAndGet() == 3) {
                     listener.getLogger().println("Hard kill!");
-                    finish(Result.ABORTED, new FlowInterruptedException(Result.ABORTED /* TBD CauseOfInterruption */));
+                    finish(Result.ABORTED, new FlowInterruptedException(Result.ABORTED));
                     return;
                 }
                 try {
