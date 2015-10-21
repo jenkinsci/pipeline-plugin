@@ -94,4 +94,39 @@ public abstract class BodyExecutionCallback implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * A convenience subclass for the common case that the step expects to run its block just once and return the same value (or throw the same error).
+     * @see <a href="https://en.wikipedia.org/wiki/Tail_call">Tail call</a>
+     */
+    public static abstract class TailCall extends BodyExecutionCallback {
+
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Called when the body is finished.
+         * @param context the body context as passed to {@link #onSuccess} or {@link #onFailure}
+         * @throws Exception if anything is thrown here, the step fails too
+         */
+        protected abstract void finished(StepContext context) throws Exception;
+
+        @Override public final void onSuccess(StepContext context, Object result) {
+            try {
+                finished(context);
+                context.onSuccess(result);
+            } catch (Exception x) {
+                context.onFailure(x);
+            }
+        }
+
+        @Override public final void onFailure(StepContext context, Throwable t) {
+            try {
+                finished(context);
+                context.onFailure(t);
+            } catch (Exception x) {
+                context.onFailure(x);
+            }
+        }
+
+    }
+
 }

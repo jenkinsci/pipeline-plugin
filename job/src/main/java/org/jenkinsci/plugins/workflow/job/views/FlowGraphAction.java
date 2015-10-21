@@ -72,11 +72,10 @@ public final class FlowGraphAction implements Action {
         }
         List<FlowNode> nodes = new ArrayList<FlowNode>();
         FlowGraphWalker walker = new FlowGraphWalker(exec);
-        FlowNode n;
-        while ((n = walker.next()) != null) {
+        for (FlowNode n : walker) {
             nodes.add(n);
         }
-        Collections.reverse(nodes); // TODO would be more intuitive for FlowGraphWalker to do this to begin with
+        Collections.reverse(nodes);
         return nodes;
     }
 

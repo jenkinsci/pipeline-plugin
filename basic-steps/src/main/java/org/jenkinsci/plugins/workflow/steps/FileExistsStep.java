@@ -59,7 +59,7 @@ public final class FileExistsStep extends AbstractStepImpl {
 
     }
 
-    public static final class Execution extends AbstractSynchronousStepExecution<Boolean> {
+    public static final class Execution extends AbstractSynchronousNonBlockingStepExecution<Boolean> {
 
         @Inject private transient FileExistsStep step;
         @StepContextParameter private transient FilePath workspace;

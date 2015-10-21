@@ -25,10 +25,10 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.inject.Inject;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.TaskListener;
-import javax.inject.Inject;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.Set;
@@ -59,7 +59,7 @@ public class PushdStep extends AbstractStepImpl {
         }
 
         @Override public String getDisplayName() {
-            return "Change Directory";
+            return "Change current directory";
         }
 
         @Override public boolean takesImplicitBlockArgument() {
@@ -74,7 +74,7 @@ public class PushdStep extends AbstractStepImpl {
 
     public static class Execution extends AbstractStepExecutionImpl {
         
-        @Inject private transient PushdStep step; // TODO should this be marked optional=true?
+        @Inject(optional=true) private transient PushdStep step;
         @StepContextParameter private transient TaskListener listener;
         @StepContextParameter private transient FilePath cwd;
         private BodyExecution body;

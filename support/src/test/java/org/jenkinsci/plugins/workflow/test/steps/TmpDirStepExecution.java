@@ -4,9 +4,9 @@ import hudson.FilePath;
 import hudson.Util;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
-import org.jenkinsci.plugins.workflow.steps.StepContext;
 
 import java.io.File;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -17,7 +17,7 @@ public class TmpDirStepExecution extends AbstractStepExecutionImpl {
         File dir = Util.createTempDir();
         getContext().newBodyInvoker()
                 .withContext(new FilePath(dir))
-                .withCallback(new Callback(getContext(), dir))
+                .withCallback(new Callback(dir))
                 .withDisplayName(null)
                 .start();
         return false;
@@ -30,31 +30,15 @@ public class TmpDirStepExecution extends AbstractStepExecutionImpl {
     /**
      * Wipe off the allocated temporary directory in the end.
      */
-    private static final class Callback extends BodyExecutionCallback {
-        private final StepContext context;
+    private static final class Callback extends BodyExecutionCallback.TailCall {
         private final File dir;
 
-        Callback(StepContext context, File dir) {
-            this.context = context;
+        Callback(File dir) {
             this.dir = dir;
         }
 
-        @Override public void onSuccess(StepContext context, Object result) {
-            this.context.onSuccess(result);
-            delete();
-        }
-
-        @Override public void onFailure(StepContext context, Throwable t) {
-            this.context.onFailure(t);
-            delete();
-        }
-
-        private void delete() {
-            try {
-                new FilePath(dir).deleteRecursive();
-            } catch (Exception e) {
-                throw new Error(e);
-            }
+        @Override protected void finished(StepContext context) throws Exception {
+            new FilePath(dir).deleteRecursive();
         }
     }
 }

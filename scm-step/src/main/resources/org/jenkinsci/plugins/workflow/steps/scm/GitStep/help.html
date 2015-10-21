@@ -1,0 +1,11 @@
+<div>
+    <p>
+    Git step. It performs a clone from the specified repository.
+    </p>
+    <p>
+    Note that this step is shorthand for the generic SCM step:<pre>
+checkout([$class: 'GitSCM', branches: [[name: '*/master']], 
+     userRemoteConfigs: [[url: 'http://git-server/user/repository.git']]])
+    </pre>
+    </p>
+</div>

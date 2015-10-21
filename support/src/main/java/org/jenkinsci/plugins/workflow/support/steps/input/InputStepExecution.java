@@ -141,16 +141,25 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
     @RequirePOST
     public HttpResponse doProceed(StaplerRequest request) throws IOException, ServletException, InterruptedException {
         preSubmissionCheck();
-        User user = User.current();
-        if (user!=null){
-            run.addAction(new ApproverAction(user.getId()));
-            listener.getLogger().println("Approved by " + hudson.console.ModelHyperlinkNote.encodeTo(user));
-        }
         Object v = parseValue(request);
         return proceed(v);
     }
 
+    /**
+     * Processes the acceptance (approval) request.
+     * This method is used by both {@link #doProceedEmpty()} and {@link #doProceed(StaplerRequest)}
+     *
+     * @param v An object that represents the parameters sent in the request
+     * @return A HttpResponse object that represents Status code (200) indicating the request succeeded normally.
+     * @throws IOException
+     */
     public HttpResponse proceed(Object v) throws IOException {
+        User user = User.current();
+        if (user != null){
+            run.addAction(new ApproverAction(user.getId()));
+            listener.getLogger().println("Approved by " + hudson.console.ModelHyperlinkNote.encodeTo(user));
+        }
+
         outcome = new Outcome(v, null);
         getContext().onSuccess(v);
 
@@ -161,7 +170,9 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
         return HttpResponses.ok();
     }
 
-    /** Used from the Proceed hyperlink when no parameters are defined. */
+    /**
+     * Used from the Proceed hyperlink when no parameters are defined.
+     */
     @RequirePOST
     public HttpResponse doProceedEmpty() throws IOException {
         preSubmissionCheck();

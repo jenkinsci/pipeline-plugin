@@ -304,7 +304,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         }
         return null;
     }
-    // TODO delete when https://github.com/jenkinsci/jenkins/pull/1747 is available
+    // TODO use BlockedBecauseOfBuildInProgress in 1.624 (and remove Messages.properties in resources)
     public static class BecauseOfBuildInProgress extends CauseOfBlockage {
         private final Run<?,?> build;
 
@@ -317,10 +317,10 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             Executor e = build.getExecutor();
             String eta = "";
             if (e != null) {
-                eta = hudson.model.Messages.AbstractProject_ETA(e.getEstimatedRemainingTime());
+                eta = Messages.BlockedBecauseOfBuildInProgress_ETA(e.getEstimatedRemainingTime());
             }
             int lbn = build.getNumber();
-            return hudson.model.Messages.AbstractProject_BuildInProgress(lbn, eta);
+            return Messages.BlockedBecauseOfBuildInProgress_shortDescription(lbn, eta);
         }
     }
 
@@ -332,6 +332,16 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     public void setConcurrentBuild(boolean b) throws IOException {
         concurrentBuild = b ? null : false;
         save();
+    }
+
+    @Override public ACL getACL() {
+        ACL acl = super.getACL();
+        for (JobProperty<?> property : properties) {
+            if (property instanceof WorkflowJobProperty) {
+                acl = ((WorkflowJobProperty) property).decorateACL(acl);
+            }
+        }
+        return acl;
     }
 
     @Override public void checkAbortPermission() {
@@ -429,7 +439,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             return Collections.emptySet();
         }
         List<SCM> scms = new LinkedList<SCM>();
-        for (WorkflowRun.SCMCheckout co : b.checkouts) {
+        for (WorkflowRun.SCMCheckout co : b.checkouts(null)) {
             scms.add(co.scm);
         }
         return scms;
@@ -454,7 +464,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             listener.getLogger().println("no previous build to compare to");
             return PollingResult.NO_CHANGES;
         }
-        for (WorkflowRun.SCMCheckout co : b.checkouts) {
+        for (WorkflowRun.SCMCheckout co : b.checkouts(listener)) {
             if (!co.scm.supportsPolling()) {
                 listener.getLogger().println("polling not supported from " + co.workspace + " on " + co.node);
             }

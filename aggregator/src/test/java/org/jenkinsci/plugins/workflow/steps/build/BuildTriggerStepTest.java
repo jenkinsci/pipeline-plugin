@@ -25,10 +25,8 @@ import org.jvnet.hudson.test.MockFolder;
 
 import java.util.Arrays;
 import java.util.List;
-import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
-import org.jenkinsci.plugins.workflow.BuildWatcher;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.junit.ClassRule;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.FailureBuilder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.SleepBuilder;
@@ -120,7 +118,7 @@ public class BuildTriggerStepTest {
         }
         fb.getExecutor().interrupt();
 
-        j.assertBuildStatus(Result.ABORTED, JenkinsRuleExt.waitForCompletion(fb));
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(fb));
         j.assertBuildStatus(Result.FAILURE,q.get());
     }
 
@@ -172,10 +170,10 @@ public class BuildTriggerStepTest {
         // Should be the same as, e.g., GerritTrigger.RunningJobs.cancelJob, which calls Executor.interrupt directly.
         // (Not if the Executor.currentExecutable is an AfterRestartTask.Body, though in that case probably the FreeStyleBuild would have been killed by restart anyway!)
         usb.doStop();
-        j.assertBuildStatus(Result.ABORTED, JenkinsRuleExt.waitForCompletion(usb));
-        j.assertBuildStatus(Result.ABORTED, JenkinsRuleExt.waitForCompletion(ds1b));
-        j.assertBuildStatus(Result.ABORTED, JenkinsRuleExt.waitForCompletion(ds2b));
-        j.assertBuildStatus(Result.ABORTED, JenkinsRuleExt.waitForCompletion(ds3b));
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(usb));
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(ds1b));
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(ds2b));
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(ds3b));
     }
 
     @SuppressWarnings("deprecation")
@@ -234,10 +232,16 @@ public class BuildTriggerStepTest {
     @Test public void buildVariables() throws Exception {
         j.createFreeStyleProject("ds").addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("param", "default")));
         WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
-        // TODO apparent sandbox bug using buildVariables.param: unclassified field java.util.HashMap param
-        ScriptApproval.get().approveSignature("method java.util.Map get java.lang.Object"); // TODO should be prewhitelisted
-        us.setDefinition(new CpsFlowDefinition("echo \"build var: ${build(job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'param', value: 'override']]).buildVariables.get('param')}\"", true));
+        us.setDefinition(new CpsFlowDefinition("echo \"build var: ${build(job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'param', value: 'override']]).buildVariables.param}\"", true));
         j.assertLogContains("build var: override", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
+    }
+
+    @Issue("JENKINS-29169")
+    @Test public void buildVariablesWorkflow() throws Exception {
+        j.jenkins.createProject(WorkflowJob.class, "ds").setDefinition(new CpsFlowDefinition("env.RESULT = \"ds-${env.BUILD_NUMBER}\"", true));
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("def vars = build('ds').buildVariables; echo \"received RESULT=${vars.RESULT} vs. BUILD_NUMBER=${vars.BUILD_NUMBER}\"", true));
+        j.assertLogContains("received RESULT=ds-1 vs. BUILD_NUMBER=null", j.assertBuildStatusSuccess(us.scheduleBuild2(0)));
     }
 
     @Issue("JENKINS-28063")
@@ -259,6 +263,28 @@ public class BuildTriggerStepTest {
         FreeStyleBuild ds1 = ds.getLastBuild();
         assertEquals(1, ds1.getNumber());
         assertEquals(2, ds1.getCauses().size()); // 2× UpstreamCause
+    }
+
+    @Issue("http://stackoverflow.com/q/32228590/12916")
+    @Test public void nonCoalescedQueueParallel() throws Exception {
+        j.jenkins.setNumExecutors(5);
+        FreeStyleProject ds = j.createFreeStyleProject("ds");
+        ds.setConcurrentBuild(true);
+        ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("which", null)));
+        ds.getBuildersList().add(new SleepBuilder(3000));
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition(
+            "def branches = [:]\n" +
+            "for (int i = 0; i < 5; i++) {\n" +
+            "  def which = \"${i}\"\n" +
+            "  branches[\"branch${i}\"] = {\n" +
+            "    build job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'which', value: which]]\n" +
+            "  }\n" +
+            "}\n" +
+            "parallel branches", true));
+        j.assertBuildStatusSuccess(us.scheduleBuild2(0));
+        FreeStyleBuild ds1 = ds.getLastBuild();
+        assertEquals(5, ds1.getNumber());
     }
 
 }

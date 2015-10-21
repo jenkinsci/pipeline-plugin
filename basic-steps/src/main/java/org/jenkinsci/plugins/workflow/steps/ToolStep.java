@@ -35,8 +35,10 @@ import hudson.slaves.NodeSpecific;
 import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
 import hudson.util.ListBoxModel;
+
 import javax.annotation.CheckForNull;
 import javax.inject.Inject;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -78,7 +80,7 @@ public final class ToolStep extends AbstractStepImpl {
         }
 
         @Override public String getDisplayName() {
-            return "Install a tool";
+            return "Use a tool from a predefined Tool Installation";
         }
 
         public ListBoxModel doFillTypeItems() {
@@ -106,7 +108,7 @@ public final class ToolStep extends AbstractStepImpl {
 
     }
 
-    public static final class Execution extends AbstractSynchronousStepExecution<String> {
+    public static final class Execution extends AbstractSynchronousNonBlockingStepExecution<String> {
 
         @Inject private transient ToolStep step;
         @StepContextParameter transient TaskListener listener;

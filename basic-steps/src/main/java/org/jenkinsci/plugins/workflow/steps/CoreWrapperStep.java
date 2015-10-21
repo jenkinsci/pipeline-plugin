@@ -103,7 +103,7 @@ public class CoreWrapperStep extends AbstractStepImpl {
         }
     }
 
-    private static final class Callback extends BodyExecutionCallback {
+    private static final class Callback extends BodyExecutionCallback.TailCall {
 
         private static final long serialVersionUID = 1;
 
@@ -113,22 +113,8 @@ public class CoreWrapperStep extends AbstractStepImpl {
             this.disposer = disposer;
         }
 
-        private void cleanup(StepContext context) {
-            try {
-                disposer.tearDown(context.get(Run.class), context.get(FilePath.class), context.get(Launcher.class), context.get(TaskListener.class));
-            } catch (Exception x) {
-                context.onFailure(x);
-            }
-        }
-
-        @Override public void onSuccess(StepContext context, Object result) {
-            cleanup(context);
-            context.onSuccess(result);
-        }
-
-        @Override public void onFailure(StepContext context, Throwable t) {
-            cleanup(context);
-            context.onFailure(t);
+        @Override protected void finished(StepContext context) throws Exception {
+            disposer.tearDown(context.get(Run.class), context.get(FilePath.class), context.get(Launcher.class), context.get(TaskListener.class));
         }
 
     }

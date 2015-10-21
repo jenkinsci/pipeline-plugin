@@ -26,15 +26,6 @@ THE SOFTWARE.
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
     <f:block>
-        <p>
-            (No visual configuration.) Takes a map from branch names to closures and an optional argument <code>failFast</code>
-             which will terminate all branches upon a failure in any other branch:
-        </p>
-        <pre>parallel firstBranch: {
-    // do something
-}, secondBranch: {
-    // do something else
-},
-failFast: true|false</pre>
+        <p>This is a special step. No snippet generation available. See inline help for more information.</p>
     </f:block>
 </j:jelly>

@@ -38,13 +38,21 @@ import hudson.model.queue.QueueTaskFuture;
 import hudson.security.ACL;
 import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.security.Permission;
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
+import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepNode;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
@@ -52,12 +60,11 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
-
 import static org.junit.Assert.*;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
@@ -69,15 +76,8 @@ public class WorkflowRunTest {
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public JenkinsRule r = new JenkinsRule();
 
-    WorkflowJob p;
-
-    @Before
-    public void setUp() throws Exception {
-        r.jenkins.getInjector().injectMembers(this);
-    }
-
     @Test public void basics() throws Exception {
-        p = r.jenkins.createProject(WorkflowJob.class, "p");
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("println('hello')"));
         WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertFalse(b1.isBuilding());
@@ -87,15 +87,23 @@ public class WorkflowRunTest {
         WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertEquals(b1, b2.getPreviousBuild());
         assertEquals(null, b1.getPreviousBuild());
-        assertTrue(b1.getLog().contains("hello\n"));
+        r.assertLogContains("hello\n", b1);
     }
 
     @Test public void parameters() throws Exception {
-        p = r.jenkins.createProject(WorkflowJob.class, "p");
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("node {sh('echo param=' + PARAM)}",true));
         p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("PARAM", null)));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("PARAM", "value"))));
         r.assertLogContains("param=value", b);
+    }
+
+    @Test public void funnyParameters() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("echo \"a.b=${binding['a.b']}\"", /* TODO Script.binding does not work in sandbox */false));
+        p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("a.b", null)));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("a.b", "v"))));
+        r.assertLogContains("a.b=v", b);
     }
 
     /**
@@ -103,7 +111,7 @@ public class WorkflowRunTest {
      */
     @Test
     public void iconColor() throws Exception {
-        p = r.jenkins.createProject(WorkflowJob.class, "p");
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition(
             "println('hello')\n"+
             "semaphore 'wait'\n"+
@@ -161,6 +169,10 @@ public class WorkflowRunTest {
         assertFalse(b2.hasntStartedYet());
         assertColor(b2, BallColor.BLUE);
     }
+    private void assertColor(WorkflowRun b, BallColor color) throws IOException {
+        assertSame(color, b.getIconColor());
+        assertSame(color, b.getParent().getIconColor());
+    }
 
     @Test public void scriptApproval() throws Exception {
         r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
@@ -170,7 +182,7 @@ public class WorkflowRunTest {
             gmas.add(p, "devel");
         }
         r.jenkins.setAuthorizationStrategy(gmas);
-        p = r.jenkins.createProject(WorkflowJob.class, "p");
+        final WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         final String groovy = "println 'hello'";
         ACL.impersonate(User.get("devel").impersonate(), new Runnable() {
             @Override public void run() {
@@ -188,17 +200,32 @@ public class WorkflowRunTest {
         r.assertLogContains("hello", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
 
-    private void assertColor(WorkflowRun b, BallColor color) throws IOException {
-        assertSame(b.getLog(), color, b.getIconColor());
-        assertSame(b.getLog(), color, p.getIconColor());
-    }
-
     @Test @Issue("JENKINS-25630")
     public void contextInjectionOfSubParameters() throws Exception {
         // see SubtypeInjectingStep
-        p = r.jenkins.createProject(WorkflowJob.class, "p");
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("node('master') { injectSubtypesAsContext() }"));
         r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+    }
+
+    @Test @Issue("JENKINS-29221")
+    public void failedToStartRun() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition(
+                "{{stage 'dev'\n" +
+                        "def hello = new HelloWorld()\n" +
+                        "public class HelloWorld()\n" +
+                        "{ // <- invalid class definition }\n" +
+                        "}}"
+        ));
+        QueueTaskFuture<WorkflowRun> workflowRunQueueTaskFuture = p.scheduleBuild2(0);
+        WorkflowRun run = r.assertBuildStatus(Result.FAILURE, workflowRunQueueTaskFuture.get());
+
+        // The issue was that the WorkflowRun's execution instance got initialised even though the script
+        // was bad and the execution never started. The fix is to ensure that it only gets initialised
+        // if the execution instance starts successfully i.e. in the case of this test, that it doesn't
+        // get initialised.
+        assertNull(run.getExecution());
     }
 
     @Issue("JENKINS-27531")
@@ -208,24 +235,53 @@ public class WorkflowRunTest {
         assertNotNull(p);
         WorkflowRun b = p.getLastBuild();
         assertNotNull(b);
-        r.assertBuildStatusSuccess(JenkinsRuleExt.waitForCompletion(b));
+        r.assertBuildStatusSuccess(r.waitForCompletion(b));
+    }
+
+    @Issue("JENKINS-29571")
+    @Test public void buildRecordAfterRename() throws Exception {
+        {
+            WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p1");
+            p.setDefinition(new CpsFlowDefinition("echo 'hello world'"));
+            r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+            p.renameTo("p2");
+        }
+        r.jenkins.reload();
+        {
+            WorkflowJob p = r.jenkins.getItemByFullName("p2", WorkflowJob.class);
+            assertNotNull(p);
+            WorkflowRun b = p.getLastBuild();
+            assertNotNull(b);
+            System.out.println(FileUtils.readFileToString(new File(b.getRootDir(), "build.xml")));
+            r.assertLogContains("hello world", b);
+            FlowExecution exec = b.getExecution();
+            assertNotNull(exec);
+            FlowGraphWalker w = new FlowGraphWalker(exec);
+            List<String> steps = new ArrayList<String>();
+            for (FlowNode n : w) {
+                if (n instanceof StepNode) {
+                    steps.add(((StepNode) n).getDescriptor().getFunctionName());
+                }
+            }
+            assertEquals("[echo]", steps.toString());
+        }
     }
 
     @Issue("JENKINS-25550")
     @Test public void hardKill() throws Exception {
-        p = r.jenkins.createProject(WorkflowJob.class, "p");
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("zombie()"));
         WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-        JenkinsRuleExt.waitForMessage("undead", b);
+        r.waitForMessage("undead", b);
         Executor ex = b.getExecutor();
         assertNotNull(ex);
         ex.interrupt();
-        JenkinsRuleExt.waitForMessage("bwahaha org.jenkinsci.plugins.workflow.steps.FlowInterruptedException #1", b);
+        r.waitForMessage("bwahaha org.jenkinsci.plugins.workflow.steps.FlowInterruptedException #1", b);
         ex.interrupt();
-        JenkinsRuleExt.waitForMessage("bwahaha org.jenkinsci.plugins.workflow.steps.FlowInterruptedException #2", b);
+        r.waitForMessage("bwahaha org.jenkinsci.plugins.workflow.steps.FlowInterruptedException #2", b);
         ex.interrupt();
-        JenkinsRuleExt.waitForMessage("Hard kill!", b);
-        JenkinsRuleExt.waitForCompletion(b);
+        r.waitForMessage("Hard kill!", b);
+        r.waitForCompletion(b);
         r.assertBuildStatus(Result.ABORTED, b);
     }
     public static class Zombie extends AbstractStepImpl {

@@ -89,8 +89,7 @@ public final class GraphVizAction implements Action {
         try {
             w.println("digraph G {");
             FlowGraphWalker walker = new FlowGraphWalker(run.getExecution());
-            FlowNode n;
-            while ((n=walker.next())!=null) {
+            for (FlowNode n : walker) {
                 for (FlowNode p : n.getParents()) {
                     w.printf("%s -> %s%n",
                             p.getId(), n.getId());

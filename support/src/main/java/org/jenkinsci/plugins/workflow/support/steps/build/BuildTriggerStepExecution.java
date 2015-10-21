@@ -55,6 +55,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
             actions.add(new ParametersAction(parameters));
         }
         Integer quietPeriod = step.getQuietPeriod();
+        // TODO use new convenience method in 1.621
         if (quietPeriod == null) {
             quietPeriod = project.getQuietPeriod();
         }

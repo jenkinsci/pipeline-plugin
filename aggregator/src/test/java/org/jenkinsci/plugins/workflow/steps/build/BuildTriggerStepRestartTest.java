@@ -5,20 +5,19 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
+import java.io.IOException;
+import java.util.Arrays;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
-
-import java.io.IOException;
-import java.util.Arrays;
-import org.jenkinsci.plugins.workflow.BuildWatcher;
-import org.junit.ClassRule;
 
 /**
  * @author Vivek Pandey

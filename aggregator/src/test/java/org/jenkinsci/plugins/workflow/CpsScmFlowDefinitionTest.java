@@ -36,12 +36,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
 import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
@@ -49,31 +45,29 @@ import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
 import org.jenkinsci.plugins.workflow.steps.scm.GitStep;
-import org.jenkinsci.plugins.workflow.steps.scm.SubversionStepTest;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class CpsScmFlowDefinitionTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
-    @Rule public TemporaryFolder tmp = new TemporaryFolder();
+    @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
     @Test public void basics() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsScmFlowDefinition(new SingleFileSCM("flow.groovy", "echo 'hello from SCM'"), "flow.groovy"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
-        // TODO currently the log text is in Run.log, but not on FlowStartNode/LogAction, so not visible from Running Steps etc.
+        // TODO currently the log text is in Run.log, but not on FlowStartNode/LogAction, so not visible from Workflow Steps etc.
         r.assertLogContains("hello from SCM", b);
         r.assertLogContains("Staging flow.groovy", b);
         FlowGraphWalker w = new FlowGraphWalker(b.getExecution());
         int workspaces = 0;
-        FlowNode n;
-        while ((n = w.next()) != null) {
+        for (FlowNode n : w) {
             if (n.getAction(WorkspaceAction.class) != null) {
                 workspaces++;
             }
@@ -81,35 +75,21 @@ public class CpsScmFlowDefinitionTest {
         assertEquals(1, workspaces);
     }
 
-    private static void git(File repo, String... cmds) throws Exception {
-        List<String> args = new ArrayList<String>();
-        args.add("git");
-        args.addAll(Arrays.asList(cmds));
-        SubversionStepTest.run(repo, args.toArray(new String[args.size()]));
-    }
-
-    /** Otherwise {@link JenkinsRule#waitUntilNoActivity()} is ineffective when we have just pinged a commit notification endpoint. */
-    @Before public void synchronousPolling() {
-        r.jenkins.getDescriptorByType(SCMTrigger.DescriptorImpl.class).synchronousPolling = true;
-    }
-
     @Test public void changelogAndPolling() throws Exception {
-        File sampleRepo = tmp.newFolder();
-        git(sampleRepo, "init");
-        FileUtils.write(new File(sampleRepo, "flow.groovy"), "echo 'version one'");
-        git(sampleRepo, "add", "flow.groovy");
-        git(sampleRepo, "commit", "--message=init");
+        sampleRepo.init();
+        sampleRepo.write("flow.groovy", "echo 'version one'");
+        sampleRepo.git("add", "flow.groovy");
+        sampleRepo.git("commit", "--message=init");
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.addTrigger(new SCMTrigger("")); // no schedule, use notifyCommit only
-        p.setDefinition(new CpsScmFlowDefinition(new GitStep(sampleRepo.getAbsolutePath()).createSCM(), "flow.groovy"));
+        p.setDefinition(new CpsScmFlowDefinition(new GitStep(sampleRepo.toString()).createSCM(), "flow.groovy"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("Cloning the remote Git repository", b);
         r.assertLogContains("version one", b);
-        FileUtils.write(new File(sampleRepo, "flow.groovy"), "echo 'version two'");
-        git(sampleRepo, "add", "flow.groovy");
-        git(sampleRepo, "commit", "--message=next");
-        System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
-        r.waitUntilNoActivity();
+        sampleRepo.write("flow.groovy", "echo 'version two'");
+        sampleRepo.git("add", "flow.groovy");
+        sampleRepo.git("commit", "--message=next");
+        sampleRepo.notifyCommit(r);
         b = p.getLastBuild();
         assertEquals(2, b.number);
         r.assertLogContains("Fetching changes from the remote Git repository", b);

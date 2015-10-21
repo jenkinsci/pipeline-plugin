@@ -28,42 +28,32 @@ import hudson.model.Label;
 import hudson.scm.ChangeLogSet;
 import hudson.triggers.SCMTrigger;
 import java.io.File;
-import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import static org.jenkinsci.plugins.workflow.steps.scm.GitStepTest.createSampleRepo;
-import static org.jenkinsci.plugins.workflow.steps.scm.GitStepTest.git;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class GitStepRestartTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule r = new RestartableJenkinsRule();
-    @Rule public TemporaryFolder tmp = new TemporaryFolder();
-
-    private File sampleRepo;
-
-    @Before public void sampleRepo() throws Exception {
-        sampleRepo = createSampleRepo(tmp);
-    }
+    @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
     @Issue("JENKINS-26761")
     @Test public void checkoutsRestored() throws Exception {
         r.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                SCMTrigger.DescriptorImpl scmTriggerDescriptor = r.j.jenkins.getDescriptorByType(SCMTrigger.DescriptorImpl.class);
-                scmTriggerDescriptor.synchronousPolling = true;
-                scmTriggerDescriptor.save();
+                sampleRepo.init();
                 WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.addTrigger(new SCMTrigger(""));
                 r.j.createOnlineSlave(Label.get("remote"));
@@ -76,17 +66,17 @@ public class GitStepRestartTest {
                 p.save();
                 WorkflowRun b = r.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
                 r.j.assertLogContains("Cloning the remote Git repository", b);
+                FileUtils.copyFile(new File(b.getRootDir(), "build.xml"), System.out);
             }
         });
         r.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = r.j.jenkins.getItemByFullName("p", WorkflowJob.class);
                 r.j.createOnlineSlave(Label.get("remote"));
-                FileUtils.touch(new File(sampleRepo, "nextfile"));
-                git(sampleRepo, "add", "nextfile");
-                git(sampleRepo, "commit", "--message=next");
-                System.out.println(r.j.createWebClient().goTo("git/notifyCommit?url=" + URLEncoder.encode(sampleRepo.getAbsolutePath(), "UTF-8"), "text/plain").getWebResponse().getContentAsString());
-                r.j.waitUntilNoActivity();
+                sampleRepo.write("nextfile", "");
+                sampleRepo.git("add", "nextfile");
+                sampleRepo.git("commit", "--message=next");
+                sampleRepo.notifyCommit(r.j);
                 WorkflowRun b = p.getLastBuild();
                 assertEquals(2, b.number);
                 r.j.assertLogContains("Cloning the remote Git repository", b); // new slave, new workspace

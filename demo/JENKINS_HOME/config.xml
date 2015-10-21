@@ -2,7 +2,7 @@
 <hudson>
   <disabledAdministrativeMonitors/>
   <version>1.0</version>
-  <numExecutors>2</numExecutors>
+  <numExecutors>0</numExecutors>
   <mode>NORMAL</mode>
   <useSecurity>true</useSecurity>
   <authorizationStrategy class="hudson.security.AuthorizationStrategy$Unsecured"/>
@@ -14,25 +14,15 @@
   <jdks/>
   <viewsTabBar class="hudson.views.DefaultViewsTabBar"/>
   <myViewsTabBar class="hudson.views.DefaultMyViewsTabBar"/>
-  <clouds/>
-  <slaves>
-    <slave>
-      <name>slave</name>
-      <description></description>
-      <remoteFS>/tmp/slave</remoteFS>
-      <numExecutors>2</numExecutors>
+  <clouds>
+    <org.jenkinci.plugins.mock__slave.MockCloud>
+      <name>mock</name>
       <mode>NORMAL</mode>
-      <retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/>
-      <launcher class="hudson.plugins.sshslaves.SSHLauncher">
-        <host>localhost</host>
-        <port>22</port>
-        <credentialsId>jenkins-login</credentialsId>
-      </launcher>
-      <label></label>
-      <nodeProperties/>
-      <userId>anonymous</userId>
-    </slave>
-  </slaves>
+      <numExecutors>1</numExecutors>
+      <labelString></labelString>
+    </org.jenkinci.plugins.mock__slave.MockCloud>
+  </clouds>
+   <slaves/>
   <scmCheckoutRetryCount>0</scmCheckoutRetryCount>
   <views>
     <hudson.model.AllView>
