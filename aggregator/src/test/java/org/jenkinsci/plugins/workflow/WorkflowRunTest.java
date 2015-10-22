@@ -24,16 +24,13 @@
 
 package org.jenkinsci.plugins.workflow;
 
-import com.google.inject.Inject;
 import hudson.model.BallColor;
-import hudson.model.Executor;
 import hudson.model.Item;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Result;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
-import hudson.model.TaskListener;
 import hudson.model.User;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.security.ACL;
@@ -56,10 +53,6 @@ import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
-import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
@@ -68,10 +61,7 @@ import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.TestExtension;
 import org.jvnet.hudson.test.recipes.LocalData;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 
 public class WorkflowRunTest {
 
@@ -266,58 +256,6 @@ public class WorkflowRunTest {
                 }
             }
             assertEquals("[echo]", steps.toString());
-        }
-    }
-
-    @Issue("JENKINS-25550")
-    @Test public void hardKill() throws Exception {
-        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("def seq = 0; retry (99) {zombie id: ++seq}"));
-        WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-        r.waitForMessage("[1] undead", b);
-        Executor ex = b.getExecutor();
-        assertNotNull(ex);
-        ex.interrupt();
-        r.waitForMessage("[1] bwahaha FlowInterruptedException #1", b);
-        ex.interrupt();
-        r.waitForMessage("[1] bwahaha FlowInterruptedException #2", b);
-        b.doTerm();
-        r.waitForMessage("[2] undead", b);
-        ex.interrupt();
-        r.waitForMessage("[2] bwahaha FlowInterruptedException #1", b);
-        b.doKill();
-        r.waitForMessage("Hard kill!", b);
-        r.waitForCompletion(b);
-        r.assertBuildStatus(Result.ABORTED, b);
-    }
-    public static class Zombie extends AbstractStepImpl {
-        @DataBoundSetter public int id;
-        @DataBoundConstructor public Zombie() {}
-        public static class Execution extends AbstractStepExecutionImpl {
-            @Inject(optional=true) private transient Zombie step;
-            @StepContextParameter private transient TaskListener listener;
-            int id;
-            int count;
-            @Override public boolean start() throws Exception {
-                id = step.id;
-                listener.getLogger().printf("[%d] undead%n", id);
-                return false;
-            }
-            @Override public void stop(Throwable cause) throws Exception {
-                listener.getLogger().printf("[%d] bwahaha %s #%d%n", id, cause.getClass().getSimpleName(), ++count);
-            }
-
-        }
-        @TestExtension("hardKill") public static class DescriptorImpl extends AbstractStepDescriptorImpl {
-            public DescriptorImpl() {
-                super(Execution.class);
-            }
-            @Override public String getFunctionName() {
-                return "zombie";
-            }
-            @Override public String getDisplayName() {
-                return "zombie";
-            }
         }
     }
 

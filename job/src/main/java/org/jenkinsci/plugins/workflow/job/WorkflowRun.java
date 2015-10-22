@@ -122,7 +122,18 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     };
     private transient StreamBuildListener listener;
+
+    /**
+     * Flag for whether or not the build has completed somehow.
+     * Non-null soon after the build starts or is reloaded from disk.
+     * Recomputed in {@link #onLoad} based on {@link FlowExecution#isComplete}.
+     * TODO may be better to make this a persistent field.
+     * That would allow the execution of a completed build to be loaded on demand, reducing overhead for some operations.
+     * It would also remove the need to null out {@link #execution} merely to force {@link #isInProgress} to be false
+     * in the case of broken or hard-killed builds which lack a single head node.
+     */
     private transient AtomicBoolean completed;
+
     /** map from node IDs to log positions from which we should copy text */
     private Map<String,Long> logsToCopy;
 
@@ -299,7 +310,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (listener != null) {
             listener.getLogger().println("Hard kill!");
         }
-        finish(Result.ABORTED, new FlowInterruptedException(Result.ABORTED));
+        execution = null; // ensures isInProgress returns false
+        FlowInterruptedException suddenDeath = new FlowInterruptedException(Result.ABORTED);
+        finish(Result.ABORTED, suddenDeath);
+        executionPromise.setException(suddenDeath);
+        // TODO CpsFlowExecution.onProgramEnd does some cleanup which we cannot access here; perhaps need a FlowExecution.halt(Throwable) API?
     }
 
     @GuardedBy("completed")
