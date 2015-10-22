@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.support;
+package org.jenkinsci.plugins.workflow.support.steps.input;
 
 import hudson.Extension;
 import hudson.console.ConsoleAnnotationDescriptor;
@@ -53,7 +53,7 @@ public final class POSTHyperlinkNote extends HyperlinkNote {
 
     private final String url;
 
-    private POSTHyperlinkNote(String url, int length) {
+    public POSTHyperlinkNote(String url, int length) {
         super("#", length);
         if (url.startsWith("/")) {
             StaplerRequest req = Stapler.getCurrentRequest();
