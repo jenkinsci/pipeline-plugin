@@ -24,10 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
-import hudson.console.LineTransformationOutputStream;
-import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
-import org.jenkinsci.plugins.workflow.actions.TimingAction;
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -37,8 +34,10 @@ import hudson.FilePath;
 import hudson.Main;
 import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
+import hudson.console.LineTransformationOutputStream;
 import hudson.model.Computer;
 import hudson.model.Executor;
+import hudson.model.Item;
 import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -49,6 +48,7 @@ import hudson.model.listeners.SCMListener;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
+import hudson.util.Iterators;
 import hudson.util.NullStream;
 import hudson.util.PersistedList;
 import java.io.File;
@@ -67,7 +67,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -81,8 +80,11 @@ import jenkins.model.lazy.LazyBuildMixIn;
 import jenkins.model.queue.AsynchronousExecution;
 import jenkins.util.Timer;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
+import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
+import org.jenkinsci.plugins.workflow.actions.TimingAction;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
 import org.jenkinsci.plugins.workflow.flow.StashManager;
@@ -91,6 +93,10 @@ import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.console.WorkflowConsoleLogger;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.support.POSTHyperlinkNote;
+import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.export.Exported;
@@ -201,14 +207,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     private AsynchronousExecution sleep() {
         final AsynchronousExecution asynchronousExecution = new AsynchronousExecution() {
-            AtomicInteger interruptionCount = new AtomicInteger();
             @Override public void interrupt(boolean forShutdown) {
                 if (forShutdown) {
-                    return;
-                }
-                if (interruptionCount.incrementAndGet() == 3) {
-                    listener.getLogger().println("Hard kill!");
-                    finish(Result.ABORTED, new FlowInterruptedException(Result.ABORTED));
                     return;
                 }
                 try {
@@ -217,6 +217,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     LOGGER.log(Level.WARNING, null, x);
                 }
                 getExecutor().recordCauseOfInterruption(WorkflowRun.this, listener);
+                printLater("term", "Forcibly terminate running steps");
             }
             @Override public boolean blocksRestart() {
                 return execution.blocksRestart();
@@ -247,6 +248,58 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
         }, 1, 1, TimeUnit.SECONDS));
         return asynchronousExecution;
+    }
+
+    private void printLater(final String url, final String message) {
+        Timer.get().schedule(new Runnable() {
+            @Override public void run() {
+                if (!isInProgress()) {
+                    return;
+                }
+                listener.getLogger().println(POSTHyperlinkNote.encodeTo("/" + getUrl() + url, message));
+            }
+        }, 15, TimeUnit.SECONDS);
+    }
+
+    /** Sends {@link StepContext#onFailure} to all running (leaf) steps. */
+    @RequirePOST
+    public void doTerm() {
+        checkPermission(Item.CANCEL);
+        if (!isInProgress()) {
+            return;
+        }
+        final Throwable x = new FlowInterruptedException(Result.ABORTED);
+        Futures.addCallback(execution.getCurrentExecutions(/* cf. JENKINS-26148 */true), new FutureCallback<List<StepExecution>>() {
+            @Override public void onSuccess(List<StepExecution> l) {
+                for (StepExecution e : Iterators.reverse(l)) {
+                    StepContext context = e.getContext();
+                    context.onFailure(x);
+                    try {
+                        FlowNode n = context.get(FlowNode.class);
+                        if (n != null) {
+                            listener.getLogger().println("Terminating " + n.getDisplayFunctionName());
+                        }
+                    } catch (Exception x) {
+                        LOGGER.log(Level.FINE, null, x);
+                    }
+                }
+            }
+            @Override public void onFailure(Throwable t) {}
+        });
+        printLater("kill", "Forcibly kill entire build");
+    }
+
+    /** Immediately kills the build. */
+    @RequirePOST
+    public void doKill() {
+        checkPermission(Item.CANCEL);
+        if (!isBuilding()) {
+            return;
+        }
+        if (listener != null) {
+            listener.getLogger().println("Hard kill!");
+        }
+        finish(Result.ABORTED, new FlowInterruptedException(Result.ABORTED));
     }
 
     @GuardedBy("completed")
@@ -534,6 +587,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (e != null) {
             return e.doStop();
         } else {
+            doKill();
             return HttpResponses.forwardToPreviousPage();
         }
     }

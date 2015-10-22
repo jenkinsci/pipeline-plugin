@@ -4,7 +4,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 
 ## 1.11 (upcoming)
 
-* [JENKINS-25550](https://issues.jenkins-ci.org/browse/JENKINS-25550): flow builds hung due to a buggy step (and certain erroneous scripts) can now be forcibly stopped by clicking the stop button three times.
+* [JENKINS-25550](https://issues.jenkins-ci.org/browse/JENKINS-25550): flow builds hung due to a buggy step (and certain erroneous scripts) can now be forcibly stopped by using hyperlinks that appear in the console after an initial abort attempt.
 * [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): error during build queue rendering on 1.624+ when using non-concurrent-capable Workflow builds.
 
 ## 1.11-beta-1 (Oct 07 2015)
