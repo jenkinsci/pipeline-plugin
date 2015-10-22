@@ -54,6 +54,7 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import static java.util.logging.Level.*;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ExecutorStepExecution extends AbstractStepExecutionImpl {
@@ -235,39 +236,42 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             return null;
         }
 
-        // TODO not sure we need bother with all this, since there is not yet any clear linkage from Executor.interrupt to FlowExecution.abort
-        private @CheckForNull
-        AccessControlled accessControlled() {
+        /**
+         * Something we can use to check abort permission.
+         * Normally this will be a {@link Run}.
+         * However if things are badly broken, for example if the build has been deleted,
+         * then as a fallback we use the Jenkins root.
+         * This allows an administrator to clean up dead queue items and executor cells.
+         * TODO make {@link FlowExecutionOwner} implement {@link AccessControlled}
+         * so that an implementation could fall back to checking {@link Job} permission.
+         */
+        private @Nonnull AccessControlled accessControlled() {
             try {
                 if (!context.isReady()) {
-                    return null;
+                    return Jenkins.getActiveInstance();
                 }
                 FlowExecution exec = context.get(FlowExecution.class);
                 if (exec == null) {
-                    return null;
+                    return Jenkins.getActiveInstance();
                 }
                 Queue.Executable executable = exec.getOwner().getExecutable();
                 if (executable instanceof AccessControlled) {
                     return (AccessControlled) executable;
                 } else {
-                    return null;
+                    return Jenkins.getActiveInstance();
                 }
             } catch (Exception x) {
                 LOGGER.log(FINE, null, x);
-                return null;
+                return Jenkins.getActiveInstance();
             }
         }
 
         @Override public void checkAbortPermission() {
-            AccessControlled ac = accessControlled();
-            if (ac != null) {
-                ac.checkPermission(Item.CANCEL);
-            }
+            accessControlled().checkPermission(Item.CANCEL);
         }
 
         @Override public boolean hasAbortPermission() {
-            AccessControlled ac = accessControlled();
-            return ac != null && ac.hasPermission(Item.CANCEL);
+            return accessControlled().hasPermission(Item.CANCEL);
         }
 
         public @CheckForNull Run<?,?> run() {
@@ -292,7 +296,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         @Override public String getDisplayName() {
             // TODO more generic to check whether FlowExecution.owner.executable is a ModelObject
             Run<?,?> r = run();
-            return r != null ? "part of " + r.getFullDisplayName() : "part of unknown step";
+            return r != null ? "part of " + r.getFullDisplayName() : "Unknown workflow node step";
         }
 
         @Override public String getName() {
@@ -457,8 +461,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                                 return;
                             }
                             LOGGER.log(FINE, "interrupted {0}", cookie);
-                            // TODO save the BodyExecution somehow and call .cancel() here; currently you need to Executor.doStop the WorkflowRun as a whole, which is inconvenient
-                            // In the meantime, at least interrupt the build as a whole:
+                            // TODO save the BodyExecution somehow and call .cancel() here; currently we just interrupt the build as a whole:
                             Executor masterExecutor = r.getExecutor();
                             if (masterExecutor != null) {
                                 masterExecutor.interrupt();
