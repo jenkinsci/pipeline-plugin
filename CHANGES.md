@@ -5,6 +5,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 ## 1.11 (upcoming)
 
 * [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): error during build queue rendering on 1.624+ when using non-concurrent-capable Workflow builds.
+* Added the `absoluteUrl` property to `RunWrapper`
 
 ## 1.11-beta-1 (Oct 07 2015)
 

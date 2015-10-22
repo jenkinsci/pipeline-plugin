@@ -36,7 +36,6 @@ import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-import jenkins.model.Jenkins;
 import org.acegisecurity.context.SecurityContext;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted;
@@ -172,6 +171,7 @@ public final class RunWrapper implements Serializable {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Whitelisted
     public @Nonnull String getAbsoluteUrl() throws AbortException {
         return build().getAbsoluteUrl();
