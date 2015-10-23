@@ -15,6 +15,7 @@ RUN wget -O - "http://mirrors.ibiblio.org/eclipse/jetty/$JETTY_VERSION/dist/jett
 RUN ln -sv jetty-distribution-$JETTY_VERSION jetty
 RUN cd /tmp; ln -s /opt/jetty/webapps
 RUN chown -R jenkins /opt/jetty/logs
+RUN chown -R jenkins /opt/jetty/webapps
 
 ENV JENKINS_UC http://jenkins-updates.cloudbees.com
 COPY workflow-version.txt plugins.txt /tmp/files/
