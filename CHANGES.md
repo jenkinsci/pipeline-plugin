@@ -6,6 +6,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 
 * [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): error during build queue rendering on 1.624+ when using non-concurrent-capable Workflow builds.
 * Added the `absoluteUrl` property to `RunWrapper`
+* [JENKINS-29542](https://issues.jenkins-ci.org/browse/JENKINS-29542): fixed help display for `env` global variable.
 
 ## 1.11-beta-1 (Oct 07 2015)
 
