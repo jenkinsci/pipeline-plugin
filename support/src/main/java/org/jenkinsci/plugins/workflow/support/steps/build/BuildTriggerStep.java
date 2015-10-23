@@ -123,7 +123,7 @@ public class BuildTriggerStep extends AbstractStepImpl {
 
         @Override
         public String getDisplayName() {
-            return "Build a Job";
+            return "Build a job";
         }
 
         public AutoCompletionCandidates doAutoCompleteJob(@AncestorInPath ItemGroup<?> context, @QueryParameter String value) {

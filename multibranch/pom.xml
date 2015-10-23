@@ -28,9 +28,9 @@ THE SOFTWARE.
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>1.10</version>
+        <version>1.11-beta-1</version>
     </parent>
-    <version>1.9-beta-3-SNAPSHOT</version> <!-- TODO cannot release a non-beta until branch-api dep is out of beta -->
+    <version>1.11-beta-2-SNAPSHOT</version> <!-- TODO cannot release a non-beta until branch-api dep is out of beta -->
     <properties>
         <workflow.version>${project.parent.version}</workflow.version> <!-- TODO see above -->
     </properties>
@@ -58,7 +58,7 @@ THE SOFTWARE.
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>branch-api</artifactId>
-            <version>0.2-beta-4</version>
+            <version>0.2-beta-5</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>

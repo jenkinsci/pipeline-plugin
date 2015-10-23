@@ -304,7 +304,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         }
         return null;
     }
-    // TODO use BlockedBecauseOfBuildInProgress in 1.624
+    // TODO use BlockedBecauseOfBuildInProgress in 1.624 (and remove Messages.properties in resources)
     public static class BecauseOfBuildInProgress extends CauseOfBlockage {
         private final Run<?,?> build;
 
@@ -317,10 +317,10 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             Executor e = build.getExecutor();
             String eta = "";
             if (e != null) {
-                eta = hudson.model.Messages.AbstractProject_ETA(e.getEstimatedRemainingTime());
+                eta = Messages.BlockedBecauseOfBuildInProgress_ETA(e.getEstimatedRemainingTime());
             }
             int lbn = build.getNumber();
-            return hudson.model.Messages.AbstractProject_BuildInProgress(lbn, eta);
+            return Messages.BlockedBecauseOfBuildInProgress_shortDescription(lbn, eta);
         }
     }
 

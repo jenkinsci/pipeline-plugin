@@ -185,4 +185,22 @@ public class SerializationTest extends SingleJobTestBase {
         });
     }
 
+    @Test public void nonCps() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(
+                    "echo \"first parse: ${parse('foo <version>1.0</version> bar')}\"\n" +
+                    "echo \"second parse: ${parse('foo bar')}\"\n" +
+                    "@NonCPS def parse(text) {\n" +
+                    "  def matcher = text =~ '<version>(.+)</version>'\n" +
+                    "  matcher ? matcher[0][1] : null\n" +
+                    "}\n", true));
+                b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                story.j.assertLogContains("first parse: 1.0", b);
+                story.j.assertLogContains("second parse: null", b);
+            }
+        });
+    }
+
 }

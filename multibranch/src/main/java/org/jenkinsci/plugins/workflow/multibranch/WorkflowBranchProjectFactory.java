@@ -81,7 +81,7 @@ public class WorkflowBranchProjectFactory extends BranchProjectFactory<WorkflowJ
             return "Fixed configuration";
         }
 
-        @SuppressWarnings("rawtypes") // TODO fix super class
+        @SuppressWarnings("rawtypes") // erasure
         @Override public boolean isApplicable(Class<? extends MultiBranchProject> clazz) {
             return WorkflowMultiBranchProject.class.isAssignableFrom(clazz);
         }

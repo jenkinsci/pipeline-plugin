@@ -2,8 +2,20 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.11 (not yet released)
+## 1.11 (upcoming)
+
+* [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): error during build queue rendering on 1.624+ when using non-concurrent-capable Workflow builds.
+* Added the `absoluteUrl` property to `RunWrapper`
+
+## 1.11-beta-1 (Oct 07 2015)
+
+* [JENKINS-30086](https://issues.jenkins-ci.org/browse/JENKINS-30086): improve inline help and display names for steps, and show step function names in _Snippet Generator_.
 * [JENKINS-30346](https://issues.jenkins-ci.org/browse/JENKINS-30346): added a cross platform `deleteDir` step to recursively delete a directory and its contents.
+* [JENKINS-30088](https://issues.jenkins-ci.org/browse/JENKINS-30088): Adjust how steps are displayed, to make the appearance cleaner and keep a focus on the DSL
+
+## 1.10.1 (Oct 15 2015)
+
+* [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): backport from 1.11.
 
 ## 1.10 (Aug 31 2015)
 

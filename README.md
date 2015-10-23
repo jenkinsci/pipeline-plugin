@@ -33,6 +33,8 @@ Workflows can be divided into sequential stages, not only for labeling but to th
 
 Read the [tutorial](TUTORIAL.md) to get started writing workflows.
 
+There is also a [DZone Refcard](https://dzone.com/refcardz/continuous-delivery-with-jenkins-workflow).
+
 # Installation
 
 Releases are available on the Jenkins update center.
@@ -64,7 +66,9 @@ and browse [localhost:8080](http://localhost:8080/).
 
 # Presentations
 
-Jenkins Workflow: What’s Up? (JUC West) (Sep 2015): [slides](http://www.slideshare.net/jgcloudbees/juc-west-15-jenkins-workflow-whats-up) and accompanying [demo](https://youtu.be/yaEF3VAjWbk)
+Webinar _Continuous Delivery as Code with Jenkins Workflow_ (Sep 2015): [slides](https://www.cloudbees.com/sites/default/files/webinar-_continuous_delivery_as_code_with_jenkins_workflow.pdf) and [video](https://youtu.be/Q2pZdzaaCXg) (demo starts at 20:30)
+
+Jenkins Workflow: What’s Up? (JUC West) (Sep 2015): [slides](http://www.slideshare.net/jgcloudbees/juc-west-15-jenkins-workflow-whats-up) and [video](https://youtu.be/VkIzoU7zYzE)
 
 Jenkins Office Hour on Workflow for plugin developers (Aug 2015): [video](https://www.youtube.com/watch?v=4zdy7XGx3PA)
 
