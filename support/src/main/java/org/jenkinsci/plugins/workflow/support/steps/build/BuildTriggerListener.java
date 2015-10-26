@@ -2,11 +2,11 @@ package org.jenkinsci.plugins.workflow.support.steps.build;
 
 import hudson.Extension;
 import hudson.console.HyperlinkNote;
-import hudson.model.Cause;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
 
 import java.util.logging.Logger;
 import static java.util.logging.Level.WARNING;
@@ -16,6 +16,23 @@ import javax.annotation.Nonnull;
 public class BuildTriggerListener extends RunListener<Run<?,?>>{
 
     private static final Logger LOGGER = Logger.getLogger(BuildTriggerListener.class.getName());
+
+    @Override
+    public void onStarted(Run<?, ?> run, TaskListener listener) {
+        BuildTriggerAction buildTriggerAction = run.getAction(BuildTriggerAction.class);
+
+        if (buildTriggerAction != null) {
+            StepContext stepContext = buildTriggerAction.getStepContext();
+            if (stepContext != null && stepContext.isReady()) {
+                try {
+                    TaskListener taskListener = stepContext.get(TaskListener.class);
+                    taskListener.getLogger().println("Starting building project: " + HyperlinkNote.encodeTo('/' + run.getUrl(), run.getFullDisplayName()));
+                } catch (Exception e) {
+                    LOGGER.log(WARNING, null, e);
+                }
+            }
+        }
+    }
 
     @Override
     public void onCompleted(Run<?,?> run, @Nonnull TaskListener listener) {
@@ -32,27 +49,6 @@ public class BuildTriggerListener extends RunListener<Run<?,?>>{
     public void onDeleted(Run<?,?> run) {
         for (BuildTriggerAction action : run.getActions(BuildTriggerAction.class)) {
             action.getStepContext().onFailure(new Exception(run.getBuildStatusSummary().message));
-        }
-    }
-
-    @Extension
-    public static final class Listener extends RunListener<Run<?, ?>> {
-        @Override
-        public void onStarted(Run<?, ?> run, TaskListener listener) {
-            Cause.UpstreamCause upstreamCause = run.getCause(Cause.UpstreamCause.class);
-            if (upstreamCause != null) {
-                Run upStreamRun = upstreamCause.getUpstreamRun();
-                BuildTriggerAction buildTriggerAction = run.getAction(BuildTriggerAction.class);
-                //Only works when upstream is still running
-                if (upStreamRun != null && upStreamRun.isBuilding() && buildTriggerAction != null) {
-                    try {
-                        TaskListener taskListener = buildTriggerAction.getStepContext().get(TaskListener.class);
-                        taskListener.getLogger().println("Starting building project: " + HyperlinkNote.encodeTo('/' + run.getUrl(), run.getFullDisplayName()));
-                    } catch (Exception e) {
-                        LOGGER.log(WARNING, null, e);
-                    }
-                }
-            }
         }
     }
 }
