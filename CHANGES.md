@@ -2,7 +2,7 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.11 (upcoming)
+## 1.11-beta-2 (Oct 26 2015)
 
 * [JENKINS-25550](https://issues.jenkins-ci.org/browse/JENKINS-25550): flow builds hung due to a buggy step (and certain erroneous scripts) can now be forcibly stopped by using hyperlinks that appear in the console after an initial abort attempt.
 * [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): error during build queue rendering on 1.624+ when using non-concurrent-capable Workflow builds.
