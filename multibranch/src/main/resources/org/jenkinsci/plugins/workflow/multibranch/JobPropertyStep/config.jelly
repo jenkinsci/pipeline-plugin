@@ -25,9 +25,5 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:block>
-        <!-- TODO restrict to descriptors applicable to WorkflowJob (specifically exclude BranchJobProperty) -->
-        <!-- TODO deal with the mess of https://github.com/jenkinsci/jenkins/pull/1656 somehow -->
-        <f:repeatableHeteroProperty field="properties" hasHeader="true"/>
-    </f:block>
+    <f:descriptorList field="properties" descriptors="${descriptor.propertyDescriptors}" forceRowSet="true"/>
 </j:jelly>

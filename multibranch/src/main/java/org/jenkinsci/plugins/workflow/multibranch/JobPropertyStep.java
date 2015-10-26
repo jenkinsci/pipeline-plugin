@@ -27,16 +27,30 @@ package org.jenkinsci.plugins.workflow.multibranch;
 import hudson.AbortException;
 import hudson.BulkChange;
 import hudson.Extension;
+import hudson.ExtensionList;
+import hudson.model.Descriptor;
 import hudson.model.Job;
 import hudson.model.JobProperty;
+import hudson.model.JobPropertyDescriptor;
 import hudson.model.Run;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
+import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
+import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Resets the properties of the current job.
@@ -100,6 +114,43 @@ public class JobPropertyStep extends AbstractStepImpl {
 
         @Override public String getDisplayName() {
             return "Set job properties";
+        }
+
+        @Override public Step newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            // A modified version of RequestImpl.TypePair.convertJSON.
+            // Works around the fact that Stapler does not call back into Descriptor.newInstance for nested objects.
+            List<JobProperty> properties = new ArrayList<JobProperty>();
+            ClassLoader cl = req.getStapler().getWebApp().getClassLoader();
+            @SuppressWarnings("unchecked") Set<Map.Entry<String,Object>> entrySet = formData.getJSONObject("properties").entrySet();
+            for (Map.Entry<String,Object> e : entrySet) {
+                if (e.getValue() instanceof JSONObject) {
+                    String className = e.getKey().replace('-', '.'); // decode JSON-safe class name escaping
+                    Class<? extends JobProperty> itemType;
+                    try {
+                        itemType = cl.loadClass(className).asSubclass(JobProperty.class);
+                    } catch (ClassNotFoundException x) {
+                        throw new FormException(x, "properties");
+                    }
+                    JobPropertyDescriptor d = (JobPropertyDescriptor) Jenkins.getActiveInstance().getDescriptorOrDie(itemType);
+                    JSONObject more = (JSONObject) e.getValue();
+                    JobProperty property = d.newInstance(req, more);
+                    if (property != null) {
+                        properties.add(property);
+                    }
+                }
+            }
+            return new JobPropertyStep(properties);
+        }
+
+        @Restricted(DoNotUse.class) // f:repeatableHeteroProperty
+        public Collection<? extends Descriptor<?>> getPropertyDescriptors() {
+            List<Descriptor<?>> result = new ArrayList<Descriptor<?>>();
+            for (JobPropertyDescriptor p : ExtensionList.lookup(JobPropertyDescriptor.class)) {
+                if (p.isApplicable(WorkflowJob.class)) {
+                    result.add(p);
+                }
+            }
+            return result;
         }
 
     }

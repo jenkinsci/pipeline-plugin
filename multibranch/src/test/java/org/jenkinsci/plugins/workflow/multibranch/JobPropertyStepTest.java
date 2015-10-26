@@ -29,15 +29,18 @@ import hudson.model.JobProperty;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterValue;
+import hudson.tasks.LogRotator;
 import java.util.Collections;
 import java.util.List;
 import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
+import jenkins.model.BuildDiscarder;
 import jenkins.plugins.git.GitSCMSource;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.job.properties.BuildDiscarderProperty;
 import org.jenkinsci.plugins.workflow.steps.StepConfigTester;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
 import org.junit.Test;
@@ -48,6 +51,7 @@ import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import static org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject;
+import org.junit.Ignore;
 
 public class JobPropertyStepTest {
 
@@ -55,11 +59,11 @@ public class JobPropertyStepTest {
     @Rule public JenkinsRule r = new JenkinsRule();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
+    @Ignore("TODO fails with TypeError: Cannot call method \"hasClassName\" of undefined (http://localhost:35782/jenkins/adjuncts/cb384db9/lib/form/hetero-list/hetero-list.js#16)")
     @SuppressWarnings("rawtypes")
     @Issue("JENKINS-30519")
-    @Test public void configRoundTrip() throws Exception {
+    @Test public void configRoundTripParameters() throws Exception {
         StepConfigTester tester = new StepConfigTester(r);
-        // TODO fails (returns null)
         assertEquals(Collections.emptyList(), tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>emptyList())).getProperties());
         List<JobProperty> properties = tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>singletonList(new ParametersDefinitionProperty(new BooleanParameterDefinition("flag", true, null))))).getProperties();
         assertEquals(1, properties.size());
@@ -70,6 +74,27 @@ public class JobPropertyStepTest {
         BooleanParameterDefinition bpd = (BooleanParameterDefinition) pdp.getParameterDefinitions().get(0);
         assertEquals("flag", bpd.getName());
         assertTrue(bpd.isDefaultValue());
+        // TODO JENKINS-29711 means it seems to omit the required ()
+    }
+
+    @Ignore("TODO fails with TypeError: Cannot call method \"hasClassName\" of undefined (http://localhost:35782/jenkins/adjuncts/cb384db9/lib/form/hetero-list/hetero-list.js#16)")
+    @SuppressWarnings("rawtypes")
+    @Issue("JENKINS-30519")
+    @Test public void configRoundTripBuildDiscarder() throws Exception {
+        StepConfigTester tester = new StepConfigTester(r);
+        assertEquals(Collections.emptyList(), tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>emptyList())).getProperties());
+        List<JobProperty> properties = tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>singletonList(new BuildDiscarderProperty(new LogRotator(1, 2, -1, 3))))).getProperties();
+        assertEquals(1, properties.size());
+        assertEquals(BuildDiscarderProperty.class, properties.get(0));
+        BuildDiscarderProperty bdp = (BuildDiscarderProperty) properties.get(0);
+        BuildDiscarder strategy = bdp.getStrategy();
+        assertNotNull(strategy);
+        assertEquals(LogRotator.class, strategy.getClass());
+        LogRotator lr = (LogRotator) strategy;
+        assertEquals(1, lr.getDaysToKeep());
+        assertEquals(2, lr.getNumToKeep());
+        assertEquals(-1, lr.getArtifactDaysToKeep());
+        assertEquals(3, lr.getArtifactNumToKeep());
         // TODO JENKINS-29711 means it seems to omit the required ()
     }
 
