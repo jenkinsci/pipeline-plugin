@@ -35,6 +35,7 @@ import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.GitSCMSource;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.StepConfigTester;
@@ -75,9 +76,10 @@ public class JobPropertyStepTest {
     @Issue("JENKINS-30206")
     @Test public void useParameter() throws Exception {
         sampleRepo.init();
+        ScriptApproval.get().approveSignature("method groovy.lang.Binding hasVariable java.lang.String"); // TODO add to generic whitelist
         sampleRepo.write("Jenkinsfile",
                 "properties([[$class: 'ParametersDefinitionProperty', parameterDefinitions: [[$class: 'StringParameterDefinition', name: 'myparam', defaultValue: 'default value']]]])\n" +
-                "echo \"received ${myparam}\"");
+                "echo \"received ${binding.hasVariable('myparam') ? myparam : 'undefined'}\"");
         sampleRepo.git("add", "Jenkinsfile");
         sampleRepo.git("commit", "--all", "--message=flow");
         WorkflowMultiBranchProject mp = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
@@ -87,7 +89,8 @@ public class JobPropertyStepTest {
         r.waitUntilNoActivity();
         WorkflowRun b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
-        r.assertLogContains("received default value", b1);
+        // TODO not all that satisfactory since it means you cannot rely on a default value; would be a little easier given JENKINS-27295
+        r.assertLogContains("received undefined", b1);
         WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("myparam", "special value"))));
         assertEquals(2, b2.getNumber());
         r.assertLogContains("received special value", b2);
