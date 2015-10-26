@@ -219,7 +219,7 @@ public class DescribableHelper {
                 Jenkins j = Jenkins.getInstance();
                 ClassLoader loader = j != null ? j.getPluginManager().uberClassLoader : DescribableHelper.class.getClassLoader();
                 clazz = loader.loadClass(clazzS);
-            } else {
+            } else if (type instanceof Class) {
                 clazz = null;
                 for (Class<?> c : findSubtypes((Class<?>) type)) {
                     if (c.getSimpleName().equals(clazzS)) {
@@ -232,6 +232,8 @@ public class DescribableHelper {
                 if (clazz == null) {
                     throw new UnsupportedOperationException("no known implementation of " + type + " is named " + clazzS);
                 }
+            } else {
+                throw new UnsupportedOperationException("JENKINS-26535: do not know how to handle " + type);
             }
             return instantiate(clazz.asSubclass((Class<?>) type), m);
         } else if (o instanceof String && type instanceof Class && ((Class) type).isEnum()) {

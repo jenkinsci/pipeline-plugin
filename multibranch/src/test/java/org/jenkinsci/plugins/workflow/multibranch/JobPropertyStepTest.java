@@ -54,12 +54,13 @@ public class JobPropertyStepTest {
     @Rule public JenkinsRule r = new JenkinsRule();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
+    @SuppressWarnings("rawtypes")
     @Issue("JENKINS-30519")
     @Test public void configRoundTrip() throws Exception {
         StepConfigTester tester = new StepConfigTester(r);
         // TODO fails (returns null)
-        assertEquals(Collections.emptyList(), tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty<?>>emptyList())).getProperties());
-        List<JobProperty<?>> properties = tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty<?>>singletonList(new ParametersDefinitionProperty(new BooleanParameterDefinition("flag", true, null))))).getProperties();
+        assertEquals(Collections.emptyList(), tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>emptyList())).getProperties());
+        List<JobProperty> properties = tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>singletonList(new ParametersDefinitionProperty(new BooleanParameterDefinition("flag", true, null))))).getProperties();
         assertEquals(1, properties.size());
         assertEquals(ParametersDefinitionProperty.class, properties.get(0));
         ParametersDefinitionProperty pdp = (ParametersDefinitionProperty) properties.get(0);
@@ -87,7 +88,6 @@ public class JobPropertyStepTest {
         r.waitUntilNoActivity();
         WorkflowRun b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
-        // TODO fails due to JENKINS-28510
         r.assertLogContains("received default value", b1);
         WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("myparam", "special value"))));
         assertEquals(2, b2.getNumber());

@@ -41,15 +41,16 @@ import org.kohsuke.stapler.DataBoundConstructor;
 /**
  * Resets the properties of the current job.
  */
+@SuppressWarnings("rawtypes") // TODO JENKINS-26535: cannot bind List<JobProperty<?>>
 public class JobPropertyStep extends AbstractStepImpl {
 
-    private final List<JobProperty<?>> properties;
+    private final List<JobProperty> properties;
 
-    @DataBoundConstructor public JobPropertyStep(List<JobProperty<?>> properties) {
+    @DataBoundConstructor public JobPropertyStep(List<JobProperty> properties) {
         this.properties = properties;
     }
 
-    public List<JobProperty<?>> getProperties() {
+    public List<JobProperty> getProperties() {
         return properties;
     }
 
@@ -58,7 +59,7 @@ public class JobPropertyStep extends AbstractStepImpl {
         @Inject transient JobPropertyStep step;
         @StepContextParameter Run<?,?> build;
 
-        @SuppressWarnings({"unchecked", "rawtypes"}) // untypable
+        @SuppressWarnings("unchecked") // untypable
         @Override protected Void run() throws Exception {
             Job<?,?> job = build.getParent();
             for (JobProperty prop : step.properties) {
