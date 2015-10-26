@@ -69,8 +69,7 @@ public class JobPropertyStepTest {
         BooleanParameterDefinition bpd = (BooleanParameterDefinition) pdp.getParameterDefinitions().get(0);
         assertEquals("flag", bpd.getName());
         assertTrue(bpd.isDefaultValue());
-        // TODO Snippetizer fails with: NoStaplerConstructorException: There's no @DataBoundConstructor on any constructor of class hudson.model.ParametersDefinitionProperty
-        // TODO also JENKINS-29711 means it seems to omit the required ()
+        // TODO JENKINS-29711 means it seems to omit the required ()
     }
 
     @Issue("JENKINS-30206")
