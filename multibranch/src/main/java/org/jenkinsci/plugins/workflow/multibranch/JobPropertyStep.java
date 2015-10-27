@@ -29,6 +29,7 @@ import hudson.BulkChange;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.Descriptor;
+import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
@@ -39,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
+import jenkins.branch.BuildRetentionBranchProperty;
+import jenkins.branch.RateLimitBranchProperty;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -155,6 +158,18 @@ public class JobPropertyStep extends AbstractStepImpl {
                 }
             }
             return result;
+        }
+
+    }
+
+    @Extension public static class HideSuperfluousBranchProperties extends DescriptorVisibilityFilter {
+
+        @Override public boolean filter(Object context, Descriptor descriptor) {
+            if (context instanceof WorkflowMultiBranchProject && (descriptor.clazz == RateLimitBranchProperty.class || descriptor.clazz == BuildRetentionBranchProperty.class)) {
+                // These are both adequately handled by declarative job properties.
+                return false;
+            }
+            return true;
         }
 
     }

@@ -25,16 +25,14 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
 import hudson.model.DescriptorVisibilityFilter;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchPropertyDescriptor;
 import jenkins.branch.BranchSource;
-import jenkins.branch.BuildRetentionBranchProperty;
 import jenkins.branch.DefaultBranchPropertyStrategy;
-import jenkins.branch.RateLimitBranchProperty;
 import jenkins.plugins.git.GitSCMSource;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -105,12 +103,9 @@ public class WorkflowMultiBranchProjectTest {
         for (BranchPropertyDescriptor d : DescriptorVisibilityFilter.apply(p, BranchPropertyDescriptor.all())) {
             clazzes.add(d.clazz);
         }
-        @SuppressWarnings("unchecked")
-        Set<Class<? extends BranchProperty>> expected = new HashSet<Class<? extends BranchProperty>>(Arrays.asList(
-                RateLimitBranchProperty.class,
-                BuildRetentionBranchProperty.class
-                /* UntrustedBranchProperty should not be here! */));
-        assertEquals(expected, clazzes);
+        // RateLimitBranchProperty & BuildRetentionBranchProperty hidden by JobPropertyStep.HideSuperfluousBranchProperties.
+        // UntrustedBranchProperty hidden because it applies only to Project.
+        assertEquals(Collections.<Class<? extends BranchProperty>>emptySet(), clazzes);
     }
 
 }
