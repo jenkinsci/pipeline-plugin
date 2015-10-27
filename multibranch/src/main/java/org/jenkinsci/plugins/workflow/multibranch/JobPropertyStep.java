@@ -68,6 +68,10 @@ public class JobPropertyStep extends AbstractStepImpl {
         return properties;
     }
 
+    public Map<JobPropertyDescriptor,JobProperty> getPropertiesMap() {
+        return Descriptor.toMap(properties);
+    }
+
     public static class Execution extends AbstractSynchronousStepExecution<Void> {
 
         @Inject transient JobPropertyStep step;
@@ -121,7 +125,7 @@ public class JobPropertyStep extends AbstractStepImpl {
             // Works around the fact that Stapler does not call back into Descriptor.newInstance for nested objects.
             List<JobProperty> properties = new ArrayList<JobProperty>();
             ClassLoader cl = req.getStapler().getWebApp().getClassLoader();
-            @SuppressWarnings("unchecked") Set<Map.Entry<String,Object>> entrySet = formData.getJSONObject("properties").entrySet();
+            @SuppressWarnings("unchecked") Set<Map.Entry<String,Object>> entrySet = formData.getJSONObject("propertiesMap").entrySet();
             for (Map.Entry<String,Object> e : entrySet) {
                 if (e.getValue() instanceof JSONObject) {
                     String className = e.getKey().replace('-', '.'); // decode JSON-safe class name escaping
@@ -129,7 +133,7 @@ public class JobPropertyStep extends AbstractStepImpl {
                     try {
                         itemType = cl.loadClass(className).asSubclass(JobProperty.class);
                     } catch (ClassNotFoundException x) {
-                        throw new FormException(x, "properties");
+                        throw new FormException(x, "propertiesMap");
                     }
                     JobPropertyDescriptor d = (JobPropertyDescriptor) Jenkins.getActiveInstance().getDescriptorOrDie(itemType);
                     JSONObject more = (JSONObject) e.getValue();

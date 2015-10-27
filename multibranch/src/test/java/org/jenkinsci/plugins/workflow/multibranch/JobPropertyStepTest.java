@@ -59,7 +59,7 @@ public class JobPropertyStepTest {
     @Rule public JenkinsRule r = new JenkinsRule();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
-    @Ignore("TODO fails with TypeError: Cannot call method \"hasClassName\" of undefined (http://localhost:35782/jenkins/adjuncts/cb384db9/lib/form/hetero-list/hetero-list.js#16)")
+    @Ignore("TODO fails with a JS TypeError, which goes away on new cores, maybe due to new HtmlUnit (1.627+); and needs patch to RateLimitBranchProperty")
     @SuppressWarnings("rawtypes")
     @Issue("JENKINS-30519")
     @Test public void configRoundTripParameters() throws Exception {
@@ -67,17 +67,17 @@ public class JobPropertyStepTest {
         assertEquals(Collections.emptyList(), tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>emptyList())).getProperties());
         List<JobProperty> properties = tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>singletonList(new ParametersDefinitionProperty(new BooleanParameterDefinition("flag", true, null))))).getProperties();
         assertEquals(1, properties.size());
-        assertEquals(ParametersDefinitionProperty.class, properties.get(0));
+        assertEquals(ParametersDefinitionProperty.class, properties.get(0).getClass());
         ParametersDefinitionProperty pdp = (ParametersDefinitionProperty) properties.get(0);
         assertEquals(1, pdp.getParameterDefinitions().size());
         assertEquals(BooleanParameterDefinition.class, pdp.getParameterDefinitions().get(0).getClass());
         BooleanParameterDefinition bpd = (BooleanParameterDefinition) pdp.getParameterDefinitions().get(0);
         assertEquals("flag", bpd.getName());
         assertTrue(bpd.isDefaultValue());
-        // TODO JENKINS-29711 means it seems to omit the required ()
+        // TODO JENKINS-29711 means it seems to omit the required () but we are not currently testing the Snippetizer output anyway
     }
 
-    @Ignore("TODO fails with TypeError: Cannot call method \"hasClassName\" of undefined (http://localhost:35782/jenkins/adjuncts/cb384db9/lib/form/hetero-list/hetero-list.js#16)")
+    @Ignore("TODO as above")
     @SuppressWarnings("rawtypes")
     @Issue("JENKINS-30519")
     @Test public void configRoundTripBuildDiscarder() throws Exception {
@@ -85,7 +85,7 @@ public class JobPropertyStepTest {
         assertEquals(Collections.emptyList(), tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>emptyList())).getProperties());
         List<JobProperty> properties = tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>singletonList(new BuildDiscarderProperty(new LogRotator(1, 2, -1, 3))))).getProperties();
         assertEquals(1, properties.size());
-        assertEquals(BuildDiscarderProperty.class, properties.get(0));
+        assertEquals(BuildDiscarderProperty.class, properties.get(0).getClass());
         BuildDiscarderProperty bdp = (BuildDiscarderProperty) properties.get(0);
         BuildDiscarder strategy = bdp.getStrategy();
         assertNotNull(strategy);
@@ -95,7 +95,6 @@ public class JobPropertyStepTest {
         assertEquals(2, lr.getNumToKeep());
         assertEquals(-1, lr.getArtifactDaysToKeep());
         assertEquals(3, lr.getArtifactNumToKeep());
-        // TODO JENKINS-29711 means it seems to omit the required ()
     }
 
     @Issue("JENKINS-30206")
