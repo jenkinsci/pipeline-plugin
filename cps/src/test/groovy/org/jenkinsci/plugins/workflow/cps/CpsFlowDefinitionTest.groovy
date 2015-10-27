@@ -30,7 +30,6 @@ import static org.junit.Assert.*;
 
 import javax.inject.Inject
 import com.gargoylesoftware.htmlunit.HttpMethod;
-import com.gargoylesoftware.htmlunit.WebRequestSettings;
 import com.gargoylesoftware.htmlunit.WebResponse;
 import java.net.URL;
 import org.apache.commons.httpclient.NameValuePair;
