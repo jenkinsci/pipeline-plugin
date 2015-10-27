@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.job.properties;
 
 import hudson.Extension;
 import jenkins.model.BuildDiscarder;
+import jenkins.model.OptionalJobProperty;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.kohsuke.stapler.DataBoundConstructor;
 
