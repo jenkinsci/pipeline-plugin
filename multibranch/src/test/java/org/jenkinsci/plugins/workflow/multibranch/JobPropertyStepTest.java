@@ -59,7 +59,7 @@ public class JobPropertyStepTest {
     @Rule public JenkinsRule r = new JenkinsRule();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
-    @Ignore("TODO fails with a JS TypeError, which goes away on new cores, maybe due to new HtmlUnit (1.627+); and needs patch to RateLimitBranchProperty")
+    @Ignore("TODO fails with a JS TypeError, which goes away on new cores, maybe due to new HtmlUnit (1.627+); and needs https://github.com/jenkinsci/branch-api-plugin/pull/9")
     @SuppressWarnings("rawtypes")
     @Issue("JENKINS-30519")
     @Test public void configRoundTripParameters() throws Exception {
