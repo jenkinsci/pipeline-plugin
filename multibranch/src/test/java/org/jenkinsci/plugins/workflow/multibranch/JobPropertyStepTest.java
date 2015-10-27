@@ -53,6 +53,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import static org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject;
 import org.junit.Ignore;
 
+@Issue("JENKINS-30519")
 public class JobPropertyStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
@@ -61,7 +62,6 @@ public class JobPropertyStepTest {
 
     @Ignore("TODO fails with a JS TypeError, which goes away on new cores, maybe due to new HtmlUnit (1.627+); and needs https://github.com/jenkinsci/branch-api-plugin/pull/9")
     @SuppressWarnings("rawtypes")
-    @Issue("JENKINS-30519")
     @Test public void configRoundTripParameters() throws Exception {
         StepConfigTester tester = new StepConfigTester(r);
         assertEquals(Collections.emptyList(), tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>emptyList())).getProperties());
@@ -79,7 +79,6 @@ public class JobPropertyStepTest {
 
     @Ignore("TODO as above")
     @SuppressWarnings("rawtypes")
-    @Issue("JENKINS-30519")
     @Test public void configRoundTripBuildDiscarder() throws Exception {
         StepConfigTester tester = new StepConfigTester(r);
         assertEquals(Collections.emptyList(), tester.configRoundTrip(new JobPropertyStep(Collections.<JobProperty>emptyList())).getProperties());
@@ -118,6 +117,27 @@ public class JobPropertyStepTest {
         WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("myparam", "special value"))));
         assertEquals(2, b2.getNumber());
         r.assertLogContains("received special value", b2);
+    }
+
+    @SuppressWarnings("deprecation") // RunList.size
+    @Test public void useBuildDiscarder() throws Exception {
+        sampleRepo.init();
+        sampleRepo.write("Jenkinsfile", "properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '1']]])");
+        sampleRepo.git("add", "Jenkinsfile");
+        sampleRepo.git("commit", "--all", "--message=flow");
+        WorkflowMultiBranchProject mp = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+        mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+        WorkflowJob p = scheduleAndFindBranchProject(mp, "master");
+        assertEquals(1, mp.getItems().size());
+        r.waitUntilNoActivity(); // #1 built automatically
+        assertEquals(1, p.getBuilds().size());
+        r.assertBuildStatusSuccess(p.scheduleBuild2(0)); // #2
+        assertEquals(1, p.getBuilds().size());
+        r.assertBuildStatusSuccess(p.scheduleBuild2(0)); // #3
+        assertEquals(1, p.getBuilds().size());
+        WorkflowRun b3 = p.getLastBuild();
+        assertEquals(3, b3.getNumber());
+        assertNull(b3.getPreviousBuild());
     }
 
 }
