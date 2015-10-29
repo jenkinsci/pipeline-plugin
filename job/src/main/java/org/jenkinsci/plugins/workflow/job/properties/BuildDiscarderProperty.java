@@ -22,35 +22,35 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.multibranch;
+package org.jenkinsci.plugins.workflow.job.properties;
 
 import hudson.Extension;
-import hudson.model.Job;
-import hudson.model.Run;
-import jenkins.branch.BranchPropertyDescriptor;
-import jenkins.branch.MultiBranchProjectDescriptor;
-import jenkins.branch.ParameterDefinitionBranchProperty;
+import jenkins.model.BuildDiscarder;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class WorkflowParameterDefinitionBranchProperty extends ParameterDefinitionBranchProperty {
+/**
+ * Defines a {@link BuildDiscarder}.
+ * TODO consider whether this should be moved upstream to core.
+ */
+public class BuildDiscarderProperty extends OptionalJobProperty<WorkflowJob> {
 
-    @DataBoundConstructor public WorkflowParameterDefinitionBranchProperty() {}
+    private final BuildDiscarder strategy;
 
-    @Override protected <P extends Job<P, B>, B extends Run<P, B>> boolean isApplicable(Class<P> clazz) {
-        return clazz == WorkflowJob.class;
+    @DataBoundConstructor public BuildDiscarderProperty(BuildDiscarder strategy) {
+        this.strategy = strategy;
     }
 
-    @Extension public static class DescriptorImpl extends BranchPropertyDescriptor {
+    public BuildDiscarder getStrategy() {
+        return strategy;
+    }
 
-        @Override protected boolean isApplicable(MultiBranchProjectDescriptor projectDescriptor) {
-            return WorkflowMultiBranchProject.class.isAssignableFrom(projectDescriptor.getClazz());
+    @Extension public static class DescriptorImpl extends OptionalJobPropertyDescriptor {
+
+        @Override public String getDisplayName() {
+            return "Discard Old Builds";
         }
 
-        @Override
-        public String getDisplayName() {
-            return "Parameters";
-        }
     }
 
 }

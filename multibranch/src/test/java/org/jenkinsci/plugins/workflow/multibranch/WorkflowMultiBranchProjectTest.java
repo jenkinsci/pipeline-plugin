@@ -24,8 +24,13 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import hudson.model.DescriptorVisibilityFilter;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import jenkins.branch.BranchProperty;
+import jenkins.branch.BranchPropertyDescriptor;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.GitSCMSource;
@@ -95,6 +100,17 @@ public class WorkflowMultiBranchProjectTest {
             fail(name + " project not found");
         }
         return p;
+    }
+
+    @Test public void visibleBranchProperties() throws Exception {
+        WorkflowMultiBranchProject p = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+        Set<Class<? extends BranchProperty>> clazzes = new HashSet<Class<? extends BranchProperty>>();
+        for (BranchPropertyDescriptor d : DescriptorVisibilityFilter.apply(p, BranchPropertyDescriptor.all())) {
+            clazzes.add(d.clazz);
+        }
+        // RateLimitBranchProperty & BuildRetentionBranchProperty hidden by JobPropertyStep.HideSuperfluousBranchProperties.
+        // UntrustedBranchProperty hidden because it applies only to Project.
+        assertEquals(Collections.<Class<? extends BranchProperty>>emptySet(), clazzes);
     }
 
 }
