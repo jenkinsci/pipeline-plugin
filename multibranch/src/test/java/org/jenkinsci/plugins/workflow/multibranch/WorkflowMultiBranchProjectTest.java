@@ -73,6 +73,11 @@ public class WorkflowMultiBranchProjectTest {
         r.assertLogContains("SUBSEQUENT CONTENT", b1);
     }
 
+    @Issue("JENKINS-30798")
+    @Test public void invalidFetchMethod() throws Exception {
+
+    }
+
     // TODO commit notifications can both add branch projects and build them
     // TODO scheduled reindexing can add branch projects
     // TODO regular polling works on branch projects
