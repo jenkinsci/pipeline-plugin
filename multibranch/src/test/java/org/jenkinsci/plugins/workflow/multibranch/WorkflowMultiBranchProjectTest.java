@@ -43,7 +43,6 @@ import static org.junit.Assert.*;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.jvnet.hudson.test.BuildWatcher;
-import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class WorkflowMultiBranchProjectTest {
@@ -77,11 +76,6 @@ public class WorkflowMultiBranchProjectTest {
         b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
         r.assertLogContains("SUBSEQUENT CONTENT", b1);
-    }
-
-    @Issue("JENKINS-30798")
-    @Test public void invalidFetchMethod() throws Exception {
-
     }
 
     // TODO commit notifications can both add branch projects and build them
