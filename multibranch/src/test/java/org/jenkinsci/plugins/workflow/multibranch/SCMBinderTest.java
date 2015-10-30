@@ -265,20 +265,21 @@ public class SCMBinderTest {
             @Override
             public void evaluate() throws Throwable {
                 sampleGitRepo.init();
-                sampleGitRepo.write("Jenkinsfile", "node { echo 'Hello World' }");
+                sampleGitRepo.write("Jenkinsfile", "node { echo 'Hello World 1' }");
                 sampleGitRepo.git("add", "Jenkinsfile");
                 sampleGitRepo.git("commit", "--all", "--message=flow");
                 sampleGitRepo.git("checkout", "-b", "dev/main");
-                sampleGitRepo.write("file.txt", "Hello World");
-                sampleGitRepo.git("add", "file.txt");
-                sampleGitRepo.git("commit", "--all", "--message=textfile");
+                sampleGitRepo.write("Jenkinsfile", "node { echo 'Hello World 2' }");
+                sampleGitRepo.git("add", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=modified");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
                 mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
                 WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "dev/main");
                 assertEquals(2, mp.getItems().size());
                 story.j.waitUntilNoActivity();
-                WorkflowRun b1 = p.getLastBuild();
-                assertEquals(1, b1.getNumber());
+                WorkflowRun b = p.getLastBuild();
+                assertEquals(1, b.getNumber());
+                story.j.assertLogContains("Hello World 2", b);
             }
         });
     }
