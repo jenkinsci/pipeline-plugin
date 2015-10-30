@@ -231,8 +231,12 @@ public class SCMBinderTest {
         });
     }
 
-    @Issue("JENKINS-30798")
-    @Test public void invalidFetchMethod() throws Exception {
+    /**
+     * This test aims to verify that {@link WorkflowMultiBranchProject#CRITERIA} is being applied.
+     *
+     * @throws Exception
+     */
+    @Test public void criteriaInvoked() throws Exception {
         story.addStep(new Statement() {
             @Override
             public void evaluate() throws Throwable {
@@ -251,6 +255,30 @@ public class SCMBinderTest {
                 sampleGitRepo.git("commit", "--all", "--message=remove");
                 WorkflowRun b = story.j.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
                 story.j.assertLogContains("java.io.FileNotFoundException", b);
+            }
+        });
+    }
+
+    @Issue("JENKINS-30798")
+    @Test public void branchName() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                sampleGitRepo.init();
+                sampleGitRepo.write("Jenkinsfile", "node { echo 'Hello World' }");
+                sampleGitRepo.git("add", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=flow");
+                sampleGitRepo.git("checkout", "-b", "dev/main");
+                sampleGitRepo.write("file.txt", "Hello World");
+                sampleGitRepo.git("add", "file.txt");
+                sampleGitRepo.git("commit", "--all", "--message=textfile");
+                WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+                mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+                WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "dev/main");
+                assertEquals(2, mp.getItems().size());
+                story.j.waitUntilNoActivity();
+                WorkflowRun b1 = p.getLastBuild();
+                assertEquals(1, b1.getNumber());
             }
         });
     }
