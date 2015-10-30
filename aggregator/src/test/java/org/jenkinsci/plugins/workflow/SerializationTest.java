@@ -203,4 +203,24 @@ public class SerializationTest extends SingleJobTestBase {
         });
     }
 
+    @Ignore("TODO JENKINS-31314: calls writeFile just once, echoes null (i.e., return value of writeFile), then succeeds")
+    @Test public void nonCpsContinuable() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                ScriptApproval.get().approveSignature("staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods each java.lang.Object groovy.lang.Closure"); // TODO whitelist; should work inside @NonCPS but pending JENKINS-26481 not outside
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(
+                    "@NonCPS def shouldBomb() {\n" +
+                    "  def text = ''\n" +
+                    "  ['a', 'b', 'c'].each {it -> writeFile file: it, text: it; text += it}\n" +
+                    "  text\n" +
+                    "}\n" +
+                    "node {\n" +
+                    "  echo shouldBomb()\n" +
+                    "}\n", true));
+                b = story.j.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
+            }
+        });
+    }
+
 }
