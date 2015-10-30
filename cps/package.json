@@ -1,0 +1,17 @@
+{
+  "name": "workflow-ui",
+  "version": "1.0.0",
+  "description": "Jenkins Workflow UI",
+  "author": "Tom Fennelly <tom.fennelly@gmail.com> (https://github.com/tfennelly)",
+  "license": "MIT",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "jenkins-js-builder": "0.0.26",
+    "jenkins-js-test": "0.0.15"
+  },
+  "dependencies": {
+    "jenkins-js-modules": "1.3.0",
+    "jquery-detached": "^2.1.4-v2",
+    "window-handle": "0.0.6"
+  }
+}
