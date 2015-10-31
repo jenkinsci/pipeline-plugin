@@ -20,12 +20,12 @@ samples.maven = "node {\n" +
     "   // Mark the code checkout 'stage'....\n" +
     "   stage 'Checkout'\n" +
     "\n" +
-    "   // Checkout some code from a github repository\n" +
+    "   // Get some code from a GitHub repository\n" +
     "   git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'\n" +
     "\n" +
     "   // Get the maven tool.\n" +
-    "   // ** NOTE: This 'M3' maven tool must be configured **\n" +
-    "   // **       in the global configuration.            **\n" +
+    "   // ** NOTE: This 'M3' maven tool must be configured\n" +
+    "   // **       in the global configuration.           \n" +
     "   def mvnHome = tool 'M3'\n" +
     "\n" +
     "   // Mark the code build 'stage'....\n" +

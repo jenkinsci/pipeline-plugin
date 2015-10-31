@@ -40,7 +40,7 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                     var samples = $('<div><select>' +
                         '<option >try sample workflow...</option>' +
                         '<option value="hello">Hello World</option>' +
-                        '<option value="maven">Github + Maven</option>' +
+                        '<option value="maven">GitHub + Maven</option>' +
                         '</select></div>');
 
                     samples.insertBefore($aceEditor);
