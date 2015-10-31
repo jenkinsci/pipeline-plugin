@@ -34,5 +34,5 @@
     <f:checkbox title="${%Use Groovy Sandbox}" default="${!h.hasPermission(app.RUN_SCRIPTS)}" />
   </f:entry>
   <st:include it="${descriptor.snippetizer}" page="block.jelly"/>
-  <st:adjunct includes="org.jenkinsci.plugins.workflow.workflow"/>
+  <st:adjunct includes="org.jenkinsci.plugins.workflow.cps.workflow-editor"/>
 </j:jelly>
