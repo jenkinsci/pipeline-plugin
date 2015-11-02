@@ -34,6 +34,7 @@ import jenkins.branch.BranchPropertyDescriptor;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.GitSCMSource;
+import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMSource;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -64,6 +65,7 @@ public class WorkflowMultiBranchProjectTest {
             assertEquals(mp, source.getOwner());
         }
         WorkflowJob p = scheduleAndFindBranchProject(mp, "master");
+        assertEquals(new SCMHead("master"), SCMHead.HeadByItem.findHead(p));
         assertEquals(1, mp.getItems().size());
         r.waitUntilNoActivity();
         WorkflowRun b1 = p.getLastBuild();
