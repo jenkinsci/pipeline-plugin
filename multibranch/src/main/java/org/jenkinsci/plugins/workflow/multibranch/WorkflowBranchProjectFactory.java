@@ -58,9 +58,7 @@ public class WorkflowBranchProjectFactory extends BranchProjectFactory<WorkflowJ
         BranchJobProperty property = project.getProperty(BranchJobProperty.class);
         try {
             if (property == null) {
-                property = new BranchJobProperty();
-                property.setBranch(branch);
-                project.addProperty(property);
+                project.addProperty(new BranchJobProperty(branch));
             } else if (!property.getBranch().equals(branch)) {
                 property.setBranch(branch);
                 project.save();

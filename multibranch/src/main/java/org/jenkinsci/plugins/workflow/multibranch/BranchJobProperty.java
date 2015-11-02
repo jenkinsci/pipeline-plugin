@@ -39,9 +39,13 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJobProperty;
  */
 public class BranchJobProperty extends WorkflowJobProperty {
 
-    private /*@Nonnull once initialized */ Branch branch;
+    private @Nonnull Branch branch;
 
-    public synchronized Branch getBranch() {
+    BranchJobProperty(@Nonnull Branch branch) {
+        this.branch = branch;
+    }
+
+    public synchronized @Nonnull Branch getBranch() {
         return branch;
     }
 
