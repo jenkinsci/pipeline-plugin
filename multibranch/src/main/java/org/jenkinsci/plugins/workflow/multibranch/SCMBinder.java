@@ -84,14 +84,15 @@ class SCMBinder extends FlowDefinition {
             throw new IllegalStateException(branch.getSourceId() + " not found");
         }
         SCMHead head = branch.getHead();
-        SCMRevision tip = scmSource.fetch(SCMHeadObserver.select(head), listener).result();
-        if (tip == null) {
-            // TODO observed (but not now reproducible) after trying to rebuild projects without rerunning branch indexing
-            // Perhaps because above we are calling the wrong `fetch` overload? (Simpler to pass SCMHead + TaskListener.)
-            throw new IllegalStateException("could not find branch tip on " + head);
+        SCMRevision tip = scmSource.fetch(head, listener);
+        SCM scm;
+        if (tip != null) {
+            scm = scmSource.build(head, tip);
+        } else {
+            listener.error("Could not determine exact tip revision of " + branch.getName() + "; falling back to nondeterministic checkout");
+            // Build might fail later anyway, but reason should become clear: for example, branch was deleted before indexing could run.
+            scm = branch.getScm();
         }
-        SCM scm = scmSource.build(head, tip);
-        // Fallback if one is needed: scm = branch.getScm()
         CpsFlowExecution execution = new CpsScmFlowDefinition(scm, WorkflowMultiBranchProject.SCRIPT).create(handle, listener, actions);
         scms.put(execution, scm); // stash for later
         return execution;
