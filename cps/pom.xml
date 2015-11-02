@@ -302,9 +302,6 @@
                                 <goals>
                                     <goal>gulp</goal>
                                 </goals>
-                                <configuration>
-                                    <arguments>bundle test</arguments>
-                                </configuration>
                             </execution>
 
                         </executions>
