@@ -25,6 +25,8 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
 import hudson.ExtensionList;
+import hudson.Util;
+import hudson.model.Result;
 import hudson.model.RootAction;
 import hudson.plugins.mercurial.MercurialInstallation;
 import hudson.plugins.mercurial.MercurialSCMSource;
@@ -225,6 +227,64 @@ public class SCMBinderTest {
                 WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "master");
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
                 story.j.assertLogContains("loaded resource content", b);
+            }
+        });
+    }
+
+    @Test public void deletedJenkinsfile() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                sampleGitRepo.init();
+                sampleGitRepo.write("Jenkinsfile", "node { echo 'Hello World' }");
+                sampleGitRepo.git("add", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=flow");
+                WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+                mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+                WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "master");
+                assertEquals(1, mp.getItems().size());
+                story.j.waitUntilNoActivity();
+                WorkflowRun b1 = p.getLastBuild();
+                assertEquals(1, b1.getNumber());
+                sampleGitRepo.git("rm", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=remove");
+                WorkflowRun b2 = story.j.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
+                story.j.assertLogContains("Jenkinsfile not found", b2);
+            }
+        });
+    }
+
+    @Test public void deletedBranch() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                sampleGitRepo.init();
+                // TODO GitSCMSource offers no way to set a GitSCMExtension such as CleanBeforeCheckout; work around with deleteDir
+                // (without cleaning, b2 will succeed since the workspace will still have a cached origin/feature ref)
+                sampleGitRepo.write("Jenkinsfile", "node {deleteDir(); checkout scm; echo 'Hello World'}");
+                sampleGitRepo.git("add", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=flow");
+                sampleGitRepo.git("checkout", "-b", "feature");
+                sampleGitRepo.write("somefile", "stuff");
+                sampleGitRepo.git("add", "somefile");
+                sampleGitRepo.git("commit", "--all", "--message=tweaked");
+                WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+                mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+                WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "feature");
+                assertEquals(2, mp.getItems().size());
+                story.j.waitUntilNoActivity();
+                WorkflowRun b1 = p.getLastBuild();
+                assertEquals(1, b1.getNumber());
+                sampleGitRepo.git("checkout", "master");
+                sampleGitRepo.git("branch", "-D", "feature");
+                { // TODO AbstractGitSCMSource.retrieve is incorrect: after fetching remote refs into the cache, the origin/feature ref remains locally even though it has been deleted upstream:
+                    Util.deleteRecursive(new File(story.j.jenkins.getRootDir(), "caches"));
+                }
+                WorkflowRun b2 = story.j.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
+                story.j.assertLogContains("nondeterministic checkout", b2); // SCMBinder
+                story.j.assertLogContains("any revision to build", b2); // checkout scm
+                mp.scheduleBuild2(0).getFuture().get();
+                assertEquals(1, mp.getItems().size());
             }
         });
     }
