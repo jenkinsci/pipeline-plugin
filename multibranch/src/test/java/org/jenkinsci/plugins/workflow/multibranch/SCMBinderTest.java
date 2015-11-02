@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
 import hudson.ExtensionList;
+import hudson.model.Result;
 import hudson.model.RootAction;
 import hudson.plugins.mercurial.MercurialInstallation;
 import hudson.plugins.mercurial.MercurialSCMSource;
@@ -51,6 +52,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class SCMBinderTest {
@@ -229,4 +231,56 @@ public class SCMBinderTest {
         });
     }
 
+    /**
+     * This test aims to verify that {@link WorkflowMultiBranchProject#CRITERIA} is being applied.
+     *
+     * @throws Exception
+     */
+    @Test public void criteriaInvoked() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                sampleGitRepo.init();
+                sampleGitRepo.write("Jenkinsfile", "node { echo 'Hello World' }");
+                sampleGitRepo.git("add", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=flow");
+                WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+                mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+                WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "master");
+                assertEquals(1, mp.getItems().size());
+                story.j.waitUntilNoActivity();
+                WorkflowRun b1 = p.getLastBuild();
+                assertEquals(1, b1.getNumber());
+                sampleGitRepo.git("rm", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=remove");
+                WorkflowRun b = story.j.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
+                story.j.assertLogContains("java.io.FileNotFoundException", b);
+            }
+        });
+    }
+
+    @Issue("JENKINS-30798")
+    @Test public void branchName() throws Exception {
+        story.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                sampleGitRepo.init();
+                sampleGitRepo.write("Jenkinsfile", "node { echo 'Hello World 1' }");
+                sampleGitRepo.git("add", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=flow");
+                sampleGitRepo.git("checkout", "-b", "dev/main");
+                sampleGitRepo.write("Jenkinsfile", "node { echo 'Hello World 2' }");
+                sampleGitRepo.git("add", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=modified");
+                WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+                mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+                WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "dev/main");
+                assertEquals(2, mp.getItems().size());
+                story.j.waitUntilNoActivity();
+                WorkflowRun b = p.getLastBuild();
+                assertEquals(1, b.getNumber());
+                story.j.assertLogContains("Hello World 2", b);
+            }
+        });
+    }
 }
