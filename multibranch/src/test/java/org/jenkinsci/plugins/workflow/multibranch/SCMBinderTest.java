@@ -28,6 +28,7 @@ import hudson.ExtensionList;
 import hudson.Util;
 import hudson.model.Result;
 import hudson.model.RootAction;
+import hudson.plugins.git.util.BuildData;
 import hudson.plugins.mercurial.MercurialInstallation;
 import hudson.plugins.mercurial.MercurialSCMSource;
 import hudson.tools.ToolProperty;
@@ -36,7 +37,10 @@ import java.util.Collections;
 import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
+import jenkins.plugins.git.AbstractGitSCMSource;
 import jenkins.plugins.git.GitSCMSource;
+import jenkins.scm.api.SCMRevision;
+import jenkins.scm.api.SCMRevisionAction;
 import jenkins.scm.impl.subversion.SubversionSCMSource;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
@@ -53,6 +57,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class SCMBinderTest {
@@ -63,11 +68,12 @@ public class SCMBinderTest {
     @Rule public SubversionSampleRepoRule sampleSvnRepo = new SubversionSampleRepoRule();
     @Rule public MercurialSampleRepoRule sampleHgRepo = new MercurialSampleRepoRule();
 
+    // TODO move to SCMVarTest
     @Test public void scmPickle() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 sampleGitRepo.init();
-                sampleGitRepo.write("Jenkinsfile", "semaphore 'wait'; node {checkout scm; echo readFile('file')}");
+                sampleGitRepo.write("Jenkinsfile", "def _scm = scm; semaphore 'wait'; node {checkout _scm; echo readFile('file')}");
                 sampleGitRepo.write("file", "initial content");
                 sampleGitRepo.git("add", "Jenkinsfile");
                 sampleGitRepo.git("commit", "--all", "--message=flow");
@@ -88,6 +94,7 @@ public class SCMBinderTest {
                 assertNotNull(b1);
                 assertEquals(1, b1.getNumber());
                 story.j.assertLogContains("initial content", story.j.waitForCompletion(b1));
+                assertRevisionAction(b1);
             }
         });
     }
@@ -110,6 +117,7 @@ public class SCMBinderTest {
                 WorkflowRun b1 = p.getLastBuild();
                 assertNotNull(b1);
                 assertEquals(1, b1.getNumber());
+                assertRevisionAction(b1);
                 sampleGitRepo.write("Jenkinsfile", "node {checkout scm; echo readFile('file').toUpperCase()}");
                 sa.approveSignature("method java.lang.String toUpperCase");
                 sampleGitRepo.write("file", "subsequent content");
@@ -119,8 +127,19 @@ public class SCMBinderTest {
                 assertEquals(2, b2.getNumber());
                 story.j.assertLogContains("initial content", story.j.waitForCompletion(b1));
                 story.j.assertLogContains("SUBSEQUENT CONTENT", b2);
+                assertRevisionAction(b2);
             }
         });
+    }
+
+    private static void assertRevisionAction(WorkflowRun build) {
+        BuildData data = build.getAction(BuildData.class);
+        assertNotNull(data);
+        SCMRevisionAction revisionAction = build.getAction(SCMRevisionAction.class);
+        assertNotNull(revisionAction);
+        SCMRevision revision = revisionAction.getRevision();
+        assertEquals(AbstractGitSCMSource.SCMRevisionImpl.class, revision.getClass());
+        assertEquals(data.lastBuild.marked.getSha1().getName(), ((AbstractGitSCMSource.SCMRevisionImpl) revision).getHash());
     }
 
     @Test public void exactRevisionSubversion() throws Exception {
@@ -194,6 +213,8 @@ public class SCMBinderTest {
         });
     }
 
+    // TODO move to SCMVarTest
+    @Issue("JENKINS-30222")
     @Test public void globalVariable() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -210,7 +231,7 @@ public class SCMBinderTest {
                     "  body.delegate = config\n" +
                     "  body()\n" +
                     "  node {\n" +
-                    "    checkout body.owner.scm\n" +
+                    "    checkout scm\n" +
                     "    echo \"loaded ${readFile config.file}\"\n" +
                     "  }\n" +
                     "}\n");
