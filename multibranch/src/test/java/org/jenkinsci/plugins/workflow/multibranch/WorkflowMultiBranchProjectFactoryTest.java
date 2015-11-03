@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.multibranch;
 
 import hudson.model.Item;
 import hudson.model.User;
+import hudson.model.View;
 import hudson.security.ACL;
 import hudson.security.FullControlOnceLoggedInAuthorizationStrategy;
 import java.io.File;
@@ -84,9 +85,13 @@ public class WorkflowMultiBranchProjectFactoryTest {
         assertTrue(acl.hasPermission(ACL.SYSTEM, Item.CONFIGURE));
         assertTrue(acl.hasPermission(ACL.SYSTEM, Item.DELETE));
         assertFalse(acl.hasPermission(admin, Item.CONFIGURE));
+        assertFalse(acl.hasPermission(admin, View.CONFIGURE));
+        assertFalse(acl.hasPermission(admin, View.CREATE));
+        assertFalse(acl.hasPermission(admin, View.DELETE));
         assertFalse(acl.hasPermission(admin, Item.DELETE));
         assertTrue(acl.hasPermission(admin, Item.EXTENDED_READ));
         assertTrue(acl.hasPermission(admin, Item.READ));
+        assertTrue(acl.hasPermission(admin, View.READ));
         // Check that the master branch project works:
         WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject((WorkflowMultiBranchProject) one, "master");
         WorkflowRun b1 = p.getLastBuild();
