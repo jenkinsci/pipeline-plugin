@@ -24,18 +24,23 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import hudson.Extension;
 import hudson.model.Action;
+import hudson.model.Descriptor;
+import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.ItemGroup;
 import hudson.model.Queue;
 import hudson.model.TaskListener;
 import hudson.scm.SCM;
 import java.util.List;
+import javax.inject.Inject;
 import jenkins.branch.Branch;
 import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMRevision;
 import jenkins.scm.api.SCMRevisionAction;
 import jenkins.scm.api.SCMSource;
 import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
+import org.jenkinsci.plugins.workflow.cps.Snippetizer;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinitionDescriptor;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -82,13 +87,26 @@ class SCMBinder extends FlowDefinition {
         return new CpsScmFlowDefinition(scm, WorkflowMultiBranchProject.SCRIPT).create(handle, listener, actions);
     }
 
-    // Not registered as an @Extension, but in case someone calls it:
-    @Override public FlowDefinitionDescriptor getDescriptor() {
-        return new FlowDefinitionDescriptor() {
-            @Override public String getDisplayName() {
-                return "SCMBinder"; // should not be used in UI
+    @Extension public static class DescriptorImpl extends FlowDefinitionDescriptor {
+
+        @Inject public Snippetizer snippetizer;
+
+        @Override public String getDisplayName() {
+            return "Workflow script from " + WorkflowMultiBranchProject.SCRIPT;
+        }
+
+    }
+
+    /** Want to display this in the r/o configuration for a branch project, but not offer it on standalone jobs. */
+    @Extension public static class HideMeElsewhere extends DescriptorVisibilityFilter {
+
+        @Override public boolean filter(Object context, Descriptor descriptor) {
+            if (descriptor instanceof DescriptorImpl && context instanceof WorkflowJob && !(((WorkflowJob) context).getParent() instanceof WorkflowMultiBranchProject)) {
+                return false;
             }
-        };
+            return true;
+        }
+
     }
 
 }
