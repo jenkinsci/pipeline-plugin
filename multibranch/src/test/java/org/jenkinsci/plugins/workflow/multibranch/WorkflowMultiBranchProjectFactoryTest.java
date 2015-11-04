@@ -69,7 +69,7 @@ public class WorkflowMultiBranchProjectFactoryTest {
         OrganizationFolder top = r.jenkins.createProject(OrganizationFolder.class, "top");
         top.getNavigators().add(new GitDirectorySCMNavigator(clones.getAbsolutePath()));
         // Make sure we created one multibranch projects:
-        r.waitUntilNoActivity();
+        top.scheduleBuild2(0).getFuture().get();
         top.getComputation().writeWholeLogTo(System.out);
         assertEquals(1, top.getItems().size());
         MultiBranchProject<?,?> one = top.getItem("one");
@@ -88,6 +88,7 @@ public class WorkflowMultiBranchProjectFactoryTest {
         assertTrue(acl.hasPermission(admin, Item.EXTENDED_READ));
         assertTrue(acl.hasPermission(admin, Item.READ));
         // Check that the master branch project works:
+        r.waitUntilNoActivity();
         WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject((WorkflowMultiBranchProject) one, "master");
         WorkflowRun b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());

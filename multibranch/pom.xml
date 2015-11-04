@@ -61,6 +61,11 @@ THE SOFTWARE.
             <version>0.2-beta-6-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>cloudbees-folder</artifactId>
+            <version>5.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-aggregator</artifactId>
             <version>${workflow.version}</version>
