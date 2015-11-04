@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.job;
 
 import hudson.AbortException;
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.init.InitMilestone;
@@ -35,6 +36,7 @@ import hudson.model.BuildableItem;
 import hudson.model.Cause;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
+import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.Executor;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
@@ -83,6 +85,7 @@ import jenkins.util.TimeDuration;
 import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
+import org.jenkinsci.plugins.workflow.flow.FlowDefinitionDescriptor;
 import org.jenkinsci.plugins.workflow.job.properties.BuildDiscarderProperty;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
@@ -561,6 +564,12 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
 
         @Override public TopLevelItem newInstance(ItemGroup parent, String name) {
             return new WorkflowJob(parent, name);
+        }
+
+        /** TODO can delete this in case {@code f:dropdownDescriptorSelector} defaults to applying {@code h.filterDescriptors} */
+        @Restricted(DoNotUse.class) // Jelly
+        public Collection<FlowDefinitionDescriptor> getDefinitionDescriptors(WorkflowJob context) {
+            return DescriptorVisibilityFilter.apply(context, ExtensionList.lookup(FlowDefinitionDescriptor.class));
         }
 
     }
