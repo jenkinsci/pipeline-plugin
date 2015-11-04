@@ -5,16 +5,29 @@ var textarea = $('textarea', wrapper);
 
 $('.textarea-handle', wrapper).remove();
 
+// The Jenkins 'ace-editor:ace-editor-122' plugin doesn't support a synchronous 
+// require option. This is because of how the ACE editor is written. So, we need
+// to use lower level jenkins-js-modules async 'import' to get a handle on a 
+// specific version of ACE, from which we create an editor instance for workflow. 
 jenkinsJSModules.import('ace-editor:ace-editor-122')
     .onFulfilled(function (acePack) {
+        
+        // The 'ace-editor:ace-editor-122' plugin supplies an "ACEPack" object.
+        // ACEPack understands the hardwired async nature of the ACE impl and so
+        // provides some async ACE script loading functions.
+        
         acePack.edit('workflow-editor', function() {
             var ace = acePack.ace;
             var editor = this.editor;
+            
+            // Attach the ACE editor instance to the element. Useful for testing.
+            $('#workflow-editor').get(0).aceEditor = editor;
 
             acePack.addPackOverride('snippets/groovy.js', '../workflow-cps/snippets/workflow.js');
 
             acePack.addScript('ext-language_tools.js', function() {
                 ace.require("ace/ext/language_tools");
+                
                 editor.$blockScrolling = Infinity;
                 editor.session.setMode("ace/mode/groovy");
                 editor.setTheme("ace/theme/tomorrow");
@@ -35,29 +48,12 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                     textarea.val(editor.getValue());
                 });
 
+                // If there's no workflow defined (e.g. on a new workflow), then
+                // we add a samples widget to let the user select some samples that
+                // can be used to get them going.
                 if (theScript === '') {
-                    var $aceEditor = $('#workflow-editor', wrapper);
-                    var samples = $('<div><select>' +
-                        '<option >try sample workflow...</option>' +
-                        '<option value="hello">Hello World</option>' +
-                        '<option value="maven">GitHub + Maven</option>' +
-                        '</select></div>');
-
-                    samples.insertBefore($aceEditor);
-                    samples.css({
-                        'position': 'absolute',
-                        'right': '1px',
-                        'z-index': 100,
-                        'top': '1px'
-                    });
-
-                    var sampleSelect = $('select', samples);
-                    sampleSelect.change(function() {
-                        var theSample = require('./samples').getSample(sampleSelect.val());
-                        editor.setValue(theSample, 1);
-                    });
+                    require('./samples').addSamplesWidget(editor);
                 }
-
             });
         });
     });
