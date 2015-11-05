@@ -28,7 +28,7 @@ THE SOFTWARE.
     <d:taglib uri="local">
         <d:tag name="listSteps">
             <j:forEach var="stepDescriptor" items="${stepDescriptors}">
-                <f:dropdownListBlock title="${stepDescriptor.displayName}" staplerClass="${stepDescriptor.clazz.name}" lazy="stepDescriptor,it">
+                <f:dropdownListBlock title="${stepDescriptor.functionName}: ${stepDescriptor.displayName}" staplerClass="${stepDescriptor.clazz.name}" lazy="stepDescriptor,it">
                     <l:ajax>
                         <j:set var="instance" value="${null}"/>
                         <j:set var="descriptor" value="${stepDescriptor}"/>
@@ -61,7 +61,7 @@ THE SOFTWARE.
         <j:set var="id" value="${h.generateId()}"/>
         <f:block>
             <input type="button" value="Generate Groovy" onclick="handlePrototype_${id}(); return false" class="submit-button primary"/>
-            <f:textarea id="prototypeText_${id}" readonly="true"/>
+            <f:textarea id="prototypeText_${id}" readonly="true" style="margin-top: 10px" />
         </f:block>
         <script>
             function handlePrototype_${id}() {

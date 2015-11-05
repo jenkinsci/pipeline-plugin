@@ -24,10 +24,12 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import com.google.inject.Inject;
+
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.model.TaskListener;
 import jenkins.plugins.mailer.tasks.MimeMessageBuilder;
+
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -38,6 +40,7 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Transport;
 import javax.mail.internet.MimeMessage;
+
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -97,7 +100,7 @@ public class MailStep extends AbstractStepImpl {
     /**
      * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
      */
-    public static class MailStepExecution extends AbstractSynchronousStepExecution<Void> {
+    public static class MailStepExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
 
         private static final long serialVersionUID = 1L;
 

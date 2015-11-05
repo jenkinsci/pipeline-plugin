@@ -6,18 +6,21 @@ import hudson.Util;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.inject.Inject;
+
 import jenkins.MasterToSlaveFileCallable;
 import jenkins.util.BuildListenerAdapter;
 
 /**
  * @author Kohsuke Kawaguchi
  */
-public class ArtifactArchiverStepExecution extends AbstractSynchronousStepExecution<Void> {
+public class ArtifactArchiverStepExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
 
     @StepContextParameter
     private transient TaskListener listener;

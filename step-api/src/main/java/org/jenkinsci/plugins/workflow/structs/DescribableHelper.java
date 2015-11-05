@@ -30,6 +30,7 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
+import hudson.model.ParametersDefinitionProperty;
 import java.beans.Introspector;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -85,8 +86,7 @@ public class DescribableHelper {
      * and only one subtype is registered (as a {@link Descriptor}) with that simple name.
      */
     public static <T> T instantiate(Class<? extends T> clazz, Map<String,?> arguments) throws Exception {
-        ClassDescriptor d = new ClassDescriptor(clazz);
-        String[] names = d.loadConstructorParamNames();
+        String[] names = loadConstructorParamNames(clazz);
         Constructor<T> c = findConstructor(clazz, names.length);
         Object[] args = buildArguments(clazz, arguments, c.getGenericParameterTypes(), names, true);
         T o = c.newInstance(args);
@@ -103,10 +103,9 @@ public class DescribableHelper {
     public static Map<String,Object> uninstantiate(Object o) throws UnsupportedOperationException {
         Class<?> clazz = o.getClass();
         Map<String, Object> r = new TreeMap<String, Object>();
-        ClassDescriptor d = new ClassDescriptor(clazz);
         String[] names;
         try {
-            names = d.loadConstructorParamNames();
+            names = loadConstructorParamNames(clazz);
         } catch (NoStaplerConstructorException x) {
             throw new UnsupportedOperationException(x);
         }
@@ -219,7 +218,7 @@ public class DescribableHelper {
                 Jenkins j = Jenkins.getInstance();
                 ClassLoader loader = j != null ? j.getPluginManager().uberClassLoader : DescribableHelper.class.getClassLoader();
                 clazz = loader.loadClass(clazzS);
-            } else {
+            } else if (type instanceof Class) {
                 clazz = null;
                 for (Class<?> c : findSubtypes((Class<?>) type)) {
                     if (c.getSimpleName().equals(clazzS)) {
@@ -232,6 +231,8 @@ public class DescribableHelper {
                 if (clazz == null) {
                     throw new UnsupportedOperationException("no known implementation of " + type + " is named " + clazzS);
                 }
+            } else {
+                throw new UnsupportedOperationException("JENKINS-26535: do not know how to handle " + type);
             }
             return instantiate(clazz.asSubclass((Class<?>) type), m);
         } else if (o instanceof String && type instanceof Class && ((Class) type).isEnum()) {
@@ -265,9 +266,24 @@ public class DescribableHelper {
         return r;
     }
 
-    // copied from RequestImpl
+    private static String[] loadConstructorParamNames(Class<?> clazz) {
+        if (clazz == ParametersDefinitionProperty.class) { // TODO pending core fix
+            return new String[] {"parameterDefinitions"};
+        }
+        return new ClassDescriptor(clazz).loadConstructorParamNames();
+    }
+
+    // adapted from RequestImpl
+    @SuppressWarnings("unchecked")
     private static <T> Constructor<T> findConstructor(Class<? extends T> clazz, int length) {
-        @SuppressWarnings("unchecked") Constructor<T>[] ctrs = (Constructor<T>[]) clazz.getConstructors();
+        try { // may work without this, but only if the JVM happens to return the right overload first
+            if (clazz == ParametersDefinitionProperty.class && length == 1) { // TODO pending core fix
+                return (Constructor<T>) ParametersDefinitionProperty.class.getConstructor(List.class);
+            }
+        } catch (NoSuchMethodException x) {
+            throw new AssertionError(x);
+        }
+        Constructor<T>[] ctrs = (Constructor<T>[]) clazz.getConstructors();
         for (Constructor<T> c : ctrs) {
             if (c.getAnnotation(DataBoundConstructor.class) != null) {
                 if (c.getParameterTypes().length != length) {
@@ -318,7 +334,7 @@ public class DescribableHelper {
         AtomicReference<Type> type = new AtomicReference<Type>();
         Object value = inspect(o, clazz, field, type);
         try {
-            String[] names = new ClassDescriptor(clazz).loadConstructorParamNames();
+            String[] names = loadConstructorParamNames(clazz);
             int idx = Arrays.asList(names).indexOf(field);
             if (idx >= 0) {
                 Type ctorType = findConstructor(clazz, names.length).getGenericParameterTypes()[idx];

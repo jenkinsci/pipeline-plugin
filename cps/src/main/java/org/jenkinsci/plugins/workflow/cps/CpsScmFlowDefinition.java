@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.cps;
 
+import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Action;
@@ -40,7 +41,6 @@ import hudson.slaves.WorkspaceList;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
@@ -111,6 +111,9 @@ public class CpsScmFlowDefinition extends FlowDefinition {
             if (!scriptFile.absolutize().getRemote().replace('\\', '/').startsWith(dir.absolutize().getRemote().replace('\\', '/') + '/')) { // TODO JENKINS-26838
                 throw new IOException(scriptFile + " is not inside " + dir);
             }
+            if (!scriptFile.exists()) {
+                throw new AbortException(scriptFile + " not found");
+            }
             script = scriptFile.readToString();
         } finally {
             lease.release();
@@ -133,7 +136,7 @@ public class CpsScmFlowDefinition extends FlowDefinition {
         @Inject public Snippetizer snippetizer;
 
         @Override public String getDisplayName() {
-            return "Groovy CPS DSL from SCM";
+            return "Workflow script from SCM";
         }
 
         public Collection<? extends SCMDescriptor<?>> getApplicableDescriptors() {

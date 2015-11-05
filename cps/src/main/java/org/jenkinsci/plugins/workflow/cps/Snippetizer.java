@@ -25,16 +25,18 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import hudson.Extension;
-import hudson.ExtensionList;
 import hudson.Functions;
 import hudson.model.Descriptor;
 import hudson.model.RootAction;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.lang.model.SourceVersion;
@@ -175,19 +177,19 @@ import org.kohsuke.stapler.StaplerResponse;
 
     @Restricted(DoNotUse.class)
     public Collection<? extends StepDescriptor> getStepDescriptors(boolean advanced) {
-        List<StepDescriptor> ds = new ArrayList<StepDescriptor>();
+        TreeSet<StepDescriptor> t = new TreeSet<StepDescriptor>(new StepDescriptorComparator());
         for (StepDescriptor d : StepDescriptor.all()) {
             if (d.isAdvanced() == advanced) {
-                ds.add(d);
+                t.add(d);
             }
         }
-        return ds;
+        return t;
     }
 
-    @Restricted(DoNotUse.class)
-    public Collection<GlobalVariable> getGlobalVariables() {
+    @Restricted(DoNotUse.class) // for stapler
+    public Iterable<GlobalVariable> getGlobalVariables() {
         // TODO order TBD. Alphabetical? Extension.ordinal?
-        return ExtensionList.lookup(GlobalVariable.class);
+        return GlobalVariable.ALL;
     }
 
     @Restricted(NoExternalUse.class)
@@ -207,7 +209,7 @@ import org.kohsuke.stapler.StaplerResponse;
         JSONObject jsonO = JSONObject.fromObject(json);
         Jenkins j = Jenkins.getActiveInstance();
         Class<?> c = j.getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
-        Descriptor<?> descriptor = j.getDescriptor(c.asSubclass(Step.class));
+        StepDescriptor descriptor = (StepDescriptor) j.getDescriptor(c.asSubclass(Step.class));
         Object o;
         try {
             o = descriptor.newInstance(req, jsonO);
@@ -215,11 +217,24 @@ import org.kohsuke.stapler.StaplerResponse;
             return HttpResponses.plainText(Functions.printThrowable(x));
         }
         try {
-            return HttpResponses.plainText(object2Groovy(o));
+            String groovy = object2Groovy(o);
+            if (descriptor.isAdvanced()) {
+                String warning = Messages.Snippetizer_this_step_should_not_normally_be_used_in();
+                groovy = "// " + warning + "\n" + groovy;
+            }
+            return HttpResponses.plainText(groovy);
         } catch (UnsupportedOperationException x) {
             Logger.getLogger(CpsFlowExecution.class.getName()).log(Level.WARNING, "failed to render " + json, x);
             return HttpResponses.plainText(x.getMessage());
         }
+    }
+
+    private static class StepDescriptorComparator implements Comparator<StepDescriptor>, Serializable {
+        @Override
+        public int compare(StepDescriptor o1, StepDescriptor o2) {
+            return o1.getFunctionName().compareTo(o2.getFunctionName());
+        }
+        private static final long serialVersionUID = 1L;
     }
 
 }

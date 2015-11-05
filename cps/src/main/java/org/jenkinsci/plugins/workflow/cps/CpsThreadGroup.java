@@ -40,6 +40,8 @@ import org.jenkinsci.plugins.workflow.support.pickles.serialization.RiverWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -55,6 +57,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.*;
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 import static org.jenkinsci.plugins.workflow.cps.CpsFlowExecution.*;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 
@@ -345,9 +348,14 @@ public final class CpsThreadGroup implements Serializable {
             } finally {
                 w.close();
             }
-            Util.deleteFile(f);
-            if (!tmpFile.renameTo(f)) {
-                throw new IOException("rename " + tmpFile + " to " + f + " failed");
+            try {
+                Class.forName("java.nio.file.Files");
+                rename(tmpFile, f);
+            } catch (ClassNotFoundException x) { // Java 6
+                Util.deleteFile(f);
+                if (!tmpFile.renameTo(f)) {
+                    throw new IOException("rename " + tmpFile + " to " + f + " failed");
+                }
             }
             LOGGER.log(FINE, "program state saved");
         } catch (RuntimeException e) {
@@ -362,6 +370,10 @@ public final class CpsThreadGroup implements Serializable {
             PROGRAM_STATE_SERIALIZATION.set(old);
             Util.deleteFile(tmpFile);
         }
+    }
+    @IgnoreJRERequirement
+    private static void rename(File from, File to) throws IOException {
+        Files.move(from.toPath(), to.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 
     /**

@@ -59,7 +59,7 @@ public class PushdStep extends AbstractStepImpl {
         }
 
         @Override public String getDisplayName() {
-            return "Change Directory";
+            return "Change current directory";
         }
 
         @Override public boolean takesImplicitBlockArgument() {

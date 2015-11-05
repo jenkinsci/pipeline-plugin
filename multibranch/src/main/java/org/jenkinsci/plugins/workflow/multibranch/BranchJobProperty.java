@@ -39,9 +39,13 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJobProperty;
  */
 public class BranchJobProperty extends WorkflowJobProperty {
 
-    private /*@Nonnull once initialized */ Branch branch;
+    private @Nonnull Branch branch;
 
-    public synchronized Branch getBranch() {
+    BranchJobProperty(@Nonnull Branch branch) {
+        this.branch = branch;
+    }
+
+    public synchronized @Nonnull Branch getBranch() {
         return branch;
     }
 
@@ -55,7 +59,9 @@ public class BranchJobProperty extends WorkflowJobProperty {
             @Override public boolean hasPermission(Authentication a, Permission permission) {
                 // This project is managed by its parent and may not be directly configured or deleted.
                 // Note that Item.EXTENDED_READ may still be granted, so you can still see Snippet Generator, etc.
-                if (permission == Item.CONFIGURE || permission == Item.DELETE) {
+                if (ACL.SYSTEM.equals(a)) {
+                    return true; // e.g., DefaultDeadBranchStrategy.runDeadBranchCleanup
+                } else if (permission == Item.CONFIGURE || permission == Item.DELETE) {
                     return false;
                 } else {
                     return acl.hasPermission(a, permission);
@@ -63,6 +69,8 @@ public class BranchJobProperty extends WorkflowJobProperty {
             }
         };
     }
+
+    // TODO make WorkflowJob.isBuildable false if !branch.isBuildable to handle orphaned projects
 
     @Extension public static class DescriptorImpl extends JobPropertyDescriptor {
 

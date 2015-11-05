@@ -58,9 +58,7 @@ public class WorkflowBranchProjectFactory extends BranchProjectFactory<WorkflowJ
         BranchJobProperty property = project.getProperty(BranchJobProperty.class);
         try {
             if (property == null) {
-                property = new BranchJobProperty();
-                property.setBranch(branch);
-                project.addProperty(property);
+                project.addProperty(new BranchJobProperty(branch));
             } else if (!property.getBranch().equals(branch)) {
                 property.setBranch(branch);
                 project.save();
@@ -81,7 +79,7 @@ public class WorkflowBranchProjectFactory extends BranchProjectFactory<WorkflowJ
             return "Fixed configuration";
         }
 
-        @SuppressWarnings("rawtypes") // TODO fix super class
+        @SuppressWarnings("rawtypes") // erasure
         @Override public boolean isApplicable(Class<? extends MultiBranchProject> clazz) {
             return WorkflowMultiBranchProject.class.isAssignableFrom(clazz);
         }

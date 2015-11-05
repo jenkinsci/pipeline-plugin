@@ -1,10 +1,11 @@
-def jettyUrl = 'http://localhost:8081/'
+#!groovy
+jettyUrl = 'http://localhost:8081/'
 
 stage 'Dev'
 node {
     checkout scm
     mvn '-o clean package'
-    archive 'target/x.war'
+    dir('target') {stash name: 'war', includes: 'x.war'}
 }
 
 stage 'QA'
@@ -48,7 +49,7 @@ def runTests(duration) {
 }
 
 def deploy(id) {
-    unarchive mapping: ['target/x.war' : 'x.war']
+    unstash 'war'
     sh "cp x.war /tmp/webapps/${id}.war"
 }
 
@@ -57,7 +58,6 @@ def undeploy(id) {
 }
 
 def runWithServer(body) {
-    def jettyUrl = 'http://localhost:8081/' // TODO why is this not inherited from the top-level scope?
     def id = UUID.randomUUID().toString()
     deploy id
     try {

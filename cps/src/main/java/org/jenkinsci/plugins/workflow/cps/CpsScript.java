@@ -27,7 +27,6 @@ package org.jenkinsci.plugins.workflow.cps;
 import com.cloudbees.groovy.cps.SerializableScript;
 import groovy.lang.GroovyShell;
 import hudson.EnvVars;
-import hudson.ExtensionList;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
@@ -38,6 +37,7 @@ import javax.annotation.CheckForNull;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.codehaus.groovy.runtime.DefaultGroovyStaticMethods;
+import org.codehaus.groovy.runtime.InvokerHelper;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
 import org.jenkinsci.plugins.workflow.cps.persistence.PersistIn;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
@@ -94,13 +94,27 @@ public abstract class CpsScript extends SerializableScript {
      */
     @Override
     public final Object invokeMethod(String name, Object args) {
+        // if global variables are defined by that name, try to call it.
+        // the 'call' convention comes from Closure
+        for (GlobalVariable v : GlobalVariable.ALL) {
+            if (v.getName().equals(name)) {
+                try {
+                    Object o = v.getValue(this);
+                    return InvokerHelper.getMetaClass(o).invokeMethod(o,"call",args);
+                } catch (Exception x) {
+                    throw new InvokerInvocationException(x);
+                }
+            }
+        }
+
+        // otherwise try Step impls.
         DSL dsl = (DSL) getBinding().getVariable(STEPS_VAR);
         return dsl.invokeMethod(name,args);
     }
 
     @Override
     public Object getProperty(String property) {
-        for (GlobalVariable v : ExtensionList.lookup(GlobalVariable.class)) {
+        for (GlobalVariable v : GlobalVariable.ALL) {
             if (v.getName().equals(property)) {
                 try {
                     return v.getValue(this);
@@ -112,7 +126,7 @@ public abstract class CpsScript extends SerializableScript {
         return super.getProperty(property);
     }
 
-    @CheckForNull Run<?,?> $build() throws IOException {
+    public @CheckForNull Run<?,?> $build() throws IOException {
         FlowExecutionOwner owner = execution.getOwner();
         Queue.Executable qe = owner.getExecutable();
         if (qe instanceof Run) {
@@ -178,7 +192,12 @@ public abstract class CpsScript extends SerializableScript {
         print(DefaultGroovyMethods.sprintf(this/*not actually used*/, format, values));
     }
 
-    /** Effectively overrides {@link DefaultGroovyStaticMethods#sleep(Object, long)} so that {@code SleepStep} works even in the bare form {@code sleep 5}. */
+    /**
+     * Effectively overrides {@link DefaultGroovyStaticMethods#sleep(Object, long)}
+     * so that {@code SleepStep} works even in the bare form {@code sleep 5}.
+     *
+     * @see CpsClosure2#sleep(long)
+     */
     public Object sleep(long arg) {
         return invokeMethod("sleep", arg);
     }

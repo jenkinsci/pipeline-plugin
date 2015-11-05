@@ -27,15 +27,34 @@ package org.jenkinsci.plugins.workflow.support.actions;
 import hudson.EnvVars;
 import hudson.model.Action;
 import hudson.model.Run;
+import hudson.model.TaskListener;
 import java.io.IOException;
+import java.util.Map;
+import org.jenkinsci.plugins.workflow.steps.EnvironmentExpander;
 import org.jenkinsci.plugins.workflow.support.DefaultStepContext;
 
 /**
  * A {@linkplain Run#addAction run action} which reports environment variables.
- * If present, will be used from {@link DefaultStepContext#get} on {@link EnvVars}.
+ * If present, will be used from {@link DefaultStepContext#get} on {@link EnvVars}
+ * after amendment by {@link EnvironmentExpander#getEffectiveEnvironment}.
  */
 public interface EnvironmentAction extends Action {
-    
+
+    /**
+     * Gets the complete global environment for a build, including both {@link Run#getEnvironment(TaskListener)} and any {@link IncludingOverrides#getOverriddenEnvironment}.
+     */
     EnvVars getEnvironment() throws IOException, InterruptedException;
+
+    /**
+     * Optional extension interface that allows the overrides to be distinguished.
+     */
+    interface IncludingOverrides extends EnvironmentAction {
+
+        /**
+         * Gets any environment variables set during this build that were not originally present.
+         */
+        Map<String,String> getOverriddenEnvironment();
+
+    }
 
 }

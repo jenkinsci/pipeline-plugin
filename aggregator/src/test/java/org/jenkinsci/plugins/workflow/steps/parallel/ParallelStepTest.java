@@ -143,7 +143,7 @@ public class ParallelStepTest extends SingleJobTestBase {
      * FailFast should not kill branches if there is no failure.
      */
     @Test @Issue("JENKINS-26034")
-    public void failFast_has_no_effect_on_suceess() throws Exception {
+    public void failFast_has_no_effect_on_success() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");

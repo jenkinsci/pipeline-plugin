@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.workflow.cps;
 import com.cloudbees.groovy.cps.CpsTransformer;
 import com.cloudbees.groovy.cps.NonCPS;
 import com.cloudbees.groovy.cps.SandboxCpsTransformer;
+import com.cloudbees.groovy.cps.TransformerConfiguration;
 import groovy.lang.Binding;
 import groovy.lang.GroovyCodeSource;
 import groovy.lang.GroovyShell;
@@ -55,8 +56,7 @@ class CpsGroovyShell extends GroovyShell {
 
         CompilerConfiguration cc = new CompilerConfiguration();
         cc.addCompilationCustomizers(ic);
-        cc.addCompilationCustomizers(
-                (execution!=null && execution.isSandbox()) ? new SandboxCpsTransformer() : new CpsTransformer());
+        cc.addCompilationCustomizers(makeCpsTransformer(execution));
         cc.setScriptBaseClass(CpsScript.class.getName());
 
         for (GroovyShellDecorator d : GroovyShellDecorator.all()) {
@@ -64,6 +64,12 @@ class CpsGroovyShell extends GroovyShell {
         }
 
         return cc;
+    }
+
+    private static CpsTransformer makeCpsTransformer(CpsFlowExecution execution) {
+        CpsTransformer t = (execution!=null && execution.isSandbox()) ? new SandboxCpsTransformer() : new CpsTransformer();
+        t.setConfiguration(new TransformerConfiguration().withClosureType(CpsClosure2.class));
+        return t;
     }
 
     public void prepareScript(Script script) {

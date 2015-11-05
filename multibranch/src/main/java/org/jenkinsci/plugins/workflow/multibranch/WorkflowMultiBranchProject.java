@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.multibranch;
 
 import hudson.Extension;
 import hudson.model.ItemGroup;
-import hudson.model.Queue;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.scm.SCM;
@@ -38,7 +37,6 @@ import jenkins.branch.MultiBranchProject;
 import jenkins.branch.MultiBranchProjectDescriptor;
 import jenkins.scm.api.SCMSource;
 import jenkins.scm.api.SCMSourceCriteria;
-import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 
@@ -49,6 +47,11 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,WorkflowRun> {
 
     static final String SCRIPT = "Jenkinsfile";
+    static final SCMSourceCriteria CRITERIA = new SCMSourceCriteria() {
+        @Override public boolean isHead(SCMSourceCriteria.Probe probe, TaskListener listener) throws IOException {
+            return probe.exists(SCRIPT);
+        }
+    };
 
     public WorkflowMultiBranchProject(ItemGroup parent, String name) {
         super(parent, name);
@@ -59,16 +62,7 @@ public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,W
     }
 
     @Override public SCMSourceCriteria getSCMSourceCriteria(SCMSource source) {
-        return new SCMSourceCriteria() {
-            @Override public boolean isHead(SCMSourceCriteria.Probe probe, TaskListener listener) throws IOException {
-                return probe.exists(SCRIPT);
-            }
-        };
-    }
-
-    // TODO unnecessary to override once branch-api on 1.592+
-    @Override public Authentication getDefaultAuthentication(Queue.Item item) {
-        return getDefaultAuthentication();
+        return CRITERIA;
     }
 
     @Extension public static class DescriptorImpl extends MultiBranchProjectDescriptor {

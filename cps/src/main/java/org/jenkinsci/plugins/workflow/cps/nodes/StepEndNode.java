@@ -38,6 +38,17 @@ public class StepEndNode extends BlockEndNode<StepStartNode> implements StepNode
     }
 
     @Override
+    protected String getTypeFunctionName() {
+        StepDescriptor d = getDescriptor();
+        boolean isBody = getStartNode().isBody();
+        if (isBody) {
+            return "} //" + (d != null ? d.getFunctionName() : getStartNode().getStepName());
+        } else {
+            return getStartNode().getStepName() + " : End";
+        }
+    }
+
+    @Override
     public StepDescriptor getDescriptor() {
         return getStartNode().getDescriptor();
     }

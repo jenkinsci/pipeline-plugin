@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.visualization.table;
 
 import hudson.ExtensionList;
+import hudson.ExtensionPoint;
 import hudson.model.Descriptor;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
@@ -13,7 +14,7 @@ import java.util.List;
  *
  * @author Kohsuke Kawaguchi
  */
-public abstract class FlowNodeViewColumnDescriptor extends Descriptor<FlowNodeViewColumn> {
+public abstract class FlowNodeViewColumnDescriptor extends Descriptor<FlowNodeViewColumn> implements ExtensionPoint {
     protected FlowNodeViewColumnDescriptor(Class<? extends FlowNodeViewColumn> clazz) {
         super(clazz);
     }

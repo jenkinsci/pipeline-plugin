@@ -2,9 +2,40 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.10 (upcoming)
+## 1.11 (upcoming)
 
+* When running the `build` step, the upstream log should now show a link to the downstream build.
+
+## 1.11-beta-2 (Oct 26 2015)
+
+* [JENKINS-25550](https://issues.jenkins-ci.org/browse/JENKINS-25550): flow builds hung due to a buggy step (and certain erroneous scripts) can now be forcibly stopped by using hyperlinks that appear in the console after an initial abort attempt.
+* [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): error during build queue rendering on 1.624+ when using non-concurrent-capable Workflow builds.
+* Added the `absoluteUrl` property to `RunWrapper`
+* [JENKINS-29542](https://issues.jenkins-ci.org/browse/JENKINS-29542): fixed help display for `env` global variable.
+
+## 1.11-beta-1 (Oct 07 2015)
+
+* [JENKINS-30086](https://issues.jenkins-ci.org/browse/JENKINS-30086): improve inline help and display names for steps, and show step function names in _Snippet Generator_.
+* [JENKINS-30346](https://issues.jenkins-ci.org/browse/JENKINS-30346): added a cross platform `deleteDir` step to recursively delete a directory and its contents.
+* [JENKINS-30088](https://issues.jenkins-ci.org/browse/JENKINS-30088): Adjust how steps are displayed, to make the appearance cleaner and keep a focus on the DSL
+
+## 1.10.1 (Oct 15 2015)
+
+* [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): backport from 1.11.
+
+## 1.10 (Aug 31 2015)
+
+* [JENKINS-30122](https://issues.jenkins-ci.org/browse/JENKINS-30122): regression in usage of the Authorize Project plugin in 1.10-beta-1.
+* [JENKINS-29739](https://issues.jenkins-ci.org/browse/JENKINS-29739): _Snippet Generator_ did not work for `build` with exactly one parameter.
+* [JENKINS-29169](https://issues.jenkins-ci.org/browse/JENKINS-29169): `build('otherWorkflow').buildVariables` can now be used to access variables set using `env.KEY = 'value'` notation.
+
+## 1.10-beta-1 (Aug 21 2015)
+
+* [JENKINS-26942](https://issues.jenkins-ci.org/browse/JENKINS-26942): added `stash` and `unstash` steps (deprecating `unarchive`).
+* [JENKINS-26135](https://issues.jenkins-ci.org/browse/JENKINS-26135): expand global library functionality to allow predefined variables and even custom DSLs.
 * [JENKINS-29890](https://issues.jenkins-ci.org/browse/JENKINS-29890): `input` step submitter was not being consistently logged.
+* [JENKINS-25879](https://issues.jenkins-ci.org/browse/JENKINS-25879), [JENKINS-29875](https://issues.jenkins-ci.org/browse/JENKINS-29875): New API to run long lived tasks that could block on I/O in a separate thread avoiding to block main CPS VM thread.
+* [JENKINS-29653](https://issues.jenkins-ci.org/browse/JENKINS-29653): visual tweak to _Snippet Generator_.
 
 ## 1.9 (Aug 06 2015)
 

@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.concurrent.TimeoutException;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -24,13 +23,19 @@ import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable
 import org.jenkinsci.plugins.workflow.support.visualization.table.FlowGraphTable.Row;
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class ShellStepTest extends Assert {
+
+    @ClassRule
+    public static BuildWatcher buildWatcher = new BuildWatcher();
+
     @Rule
     public JenkinsRule j = new JenkinsRule();
 
@@ -81,8 +86,6 @@ public class ShellStepTest extends Assert {
 
         // get the build going, and wait until workflow pauses
         WorkflowRun b = foo.scheduleBuild2(0).getStartCondition().get();
-        CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
-        e.waitForSuspension();
 
         // at this point the file should be being touched
         waitForCond(5000, tmp, new Predicate<File>() {
@@ -92,7 +95,7 @@ public class ShellStepTest extends Assert {
             }
         });
 
-        e.interrupt(Result.ABORTED);
+        b.getExecutor().interrupt();
 
         // touching should have stopped
         final long refTimestamp = tmp.lastModified();
@@ -102,6 +105,11 @@ public class ShellStepTest extends Assert {
                 return refTimestamp==tmp.lastModified();
             }
         });
+
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(b));
+        /* TODO fails, even though WorkflowRun calls recordCauseOfInterruption:
+        assertNotNull(b.getAction(InterruptedBuildAction.class)); // would also have a UserInterruption if authenticated
+        */
     }
 
     @Test public void launcherDecorator() throws Exception {

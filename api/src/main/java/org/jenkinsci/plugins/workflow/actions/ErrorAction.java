@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.actions;
 
+import groovy.lang.MissingMethodException;
 import hudson.remoting.ProxyException;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.jenkinsci.plugins.workflow.graph.AtomNode;
@@ -52,7 +53,8 @@ public class ErrorAction implements Action {
      * an equivalent that captures the same details but serializes nicely.
      */
     private boolean isUnserializableException(Throwable error) {
-        return error instanceof MultipleCompilationErrorsException;
+        return error instanceof MultipleCompilationErrorsException ||
+               error instanceof MissingMethodException;
     }
 
     public Throwable getError() {

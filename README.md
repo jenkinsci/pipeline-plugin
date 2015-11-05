@@ -33,6 +33,8 @@ Workflows can be divided into sequential stages, not only for labeling but to th
 
 Read the [tutorial](TUTORIAL.md) to get started writing workflows.
 
+There is also a [DZone Refcard](https://dzone.com/refcardz/continuous-delivery-with-jenkins-workflow).
+
 # Installation
 
 Releases are available on the Jenkins update center.
@@ -64,13 +66,18 @@ and browse [localhost:8080](http://localhost:8080/).
 
 # Presentations
 
-Jenkins Workflow: What’s Up? (JUC DC) (Jun 2015): [slides](http://www.slideshare.net/jgcloudbees/juc-dc-2015-workflow-whats-up)
+Webinar _Continuous Delivery as Code with Jenkins Workflow_ (Sep 2015): [slides](https://www.cloudbees.com/sites/default/files/webinar-_continuous_delivery_as_code_with_jenkins_workflow.pdf) and [video](https://youtu.be/Q2pZdzaaCXg) (demo starts at 20:30)
+
+Jenkins Workflow: What’s Up? (JUC West) (Sep 2015): [slides](http://www.slideshare.net/jgcloudbees/juc-west-15-jenkins-workflow-whats-up) and [video](https://youtu.be/VkIzoU7zYzE)
+
+Jenkins Office Hour on Workflow for plugin developers (Aug 2015): [video](https://www.youtube.com/watch?v=4zdy7XGx3PA)
 
 Workflow Meetup London (Mar 2015): [slides](http://www.slideshare.net/jgcloudbees/london-workflow-summit-kkjg)
 
+Jenkins Workflow Screencast (Jan 2015): [video](https://www.youtube.com/watch?v=Welwf1wTU-w)
+
 Webinar _Orchestrating the Continuous Delivery Process in Jenkins with Workflow_ (Dec 2014): [video](http://youtu.be/ZqfiW8eVcuQ)
 
-JUC San Francisco (Oct 2014): [video](https://www.youtube.com/watch?v=rswdksvwvJY)
 
 # Detailed guides
 
