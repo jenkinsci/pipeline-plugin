@@ -2,6 +2,12 @@ var samples = [];
 
 exports.addSamplesWidget = function(editor) {
     var $ = require('jquery-detached').getJQuery();
+
+    if ($('#workflow-editor-wrapper .samples').length) {
+        // Already there.
+        return;
+    }
+
     var $aceEditor = $('#workflow-editor');
     var sampleSelect = $('<select></select>');
     
