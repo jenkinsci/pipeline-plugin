@@ -13,3 +13,7 @@ out
 .settings
 
 demo/snapshot/plugins/
+
+node
+node_modules
+generates-adjuncts
