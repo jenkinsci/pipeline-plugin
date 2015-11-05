@@ -103,7 +103,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         LOGGER.log(Level.FINE, "save: {0}", stagesByNameByJob);
     }
 
-    private static synchronized void enter(Run<?,?> r, StepContext context, String name, Integer concurrency, Boolean eager) {
+    private static synchronized void enter(Run<?,?> r, StepContext context, String name, Integer concurrency, boolean eager) {
         LOGGER.log(Level.FINE, "enter {0} {1}", new Object[] {r, name});
         println(context, "Entering stage " + name);
         load();
@@ -144,7 +144,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
             }
         }
         // Interrupts any build in the holding state
-        if (eager != null && eager) {
+        if (eager) {
             Iterator<Integer> it = stage.holding.iterator();
             while (it.hasNext()) {
                 Integer i = it.next();
