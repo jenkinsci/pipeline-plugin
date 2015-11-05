@@ -28,7 +28,7 @@ THE SOFTWARE.
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>1.11-SNAPSHOT</version>
+        <version>1.11-beta-3</version>
     </parent>
     <version>1.11-beta-2-SNAPSHOT</version> <!-- TODO cannot release a non-beta until branch-api dep is out of beta -->
     <properties>
@@ -58,12 +58,12 @@ THE SOFTWARE.
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>branch-api</artifactId>
-            <version>0.2-beta-6-SNAPSHOT</version>
+            <version>0.2-beta-6</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>cloudbees-folder</artifactId>
-            <version>5.1-SNAPSHOT</version>
+            <version>5.1-beta-1</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
