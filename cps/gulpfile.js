@@ -9,4 +9,4 @@ var builder = require('jenkins-js-builder');
 //
 builder.bundle('src/main/js/workflow-editor.js')
     .withExternalModuleMapping('jquery-detached', 'jquery-detached:jquery2')
-    .inDir('target/generated-adjuncts/org/jenkinsci/plugins/workflow/cps');
+    .inDir('target/generated-resources/adjuncts/org/jenkinsci/plugins/workflow/cps');

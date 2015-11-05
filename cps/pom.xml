@@ -94,7 +94,7 @@
                 <directory>src/main/resources</directory>
             </resource>
             <resource>
-                <directory>target/generated-adjuncts</directory>
+                <directory>target/generated-resources/adjuncts</directory>
             </resource>
         </resources>
         <plugins>
