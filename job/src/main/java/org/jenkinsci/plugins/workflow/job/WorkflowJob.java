@@ -566,7 +566,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             return new WorkflowJob(parent, name);
         }
 
-        /** TODO can delete this in case {@code f:dropdownDescriptorSelector} defaults to applying {@code h.filterDescriptors} */
+        /** TODO JENKINS-20020 can delete this in case {@code f:dropdownDescriptorSelector} defaults to applying {@code h.filterDescriptors} */
         @Restricted(DoNotUse.class) // Jelly
         public Collection<FlowDefinitionDescriptor> getDefinitionDescriptors(WorkflowJob context) {
             return DescriptorVisibilityFilter.apply(context, ExtensionList.lookup(FlowDefinitionDescriptor.class));
