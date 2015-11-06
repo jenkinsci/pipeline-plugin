@@ -88,14 +88,13 @@
             <version>1.0</version>
         </dependency>
     </dependencies>
-    <!-- TODO currently job depends on tests from here; this dependency should probably be broken -->
     <build>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
             </resource>
             <resource>
-                <directory>target/generated-adjuncts</directory>
+                <directory>target/generated-resources/adjuncts</directory>
             </resource>
         </resources>
         <plugins>
@@ -103,8 +102,7 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <executions>
                     <!-- 
-                        TODO currently job depends on tests from here; this dependency should probably be broken.
-                        TODO Update the above TODO to make it clear what it's talking about. By "job", I think it is referring to the "workflow-job" module. 
+                        TODO currently, the workflow-job module depends on tests from here; this dependency should probably be broken.
                     -->
                     <execution>
                         <goals>

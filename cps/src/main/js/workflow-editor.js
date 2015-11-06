@@ -41,19 +41,21 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                     enableLiveAutocompletion: false
                 });
 
-                var theScript = textarea.val();
-
-                editor.setValue(theScript, 1);
+                editor.setValue(textarea.val(), 1);
                 editor.getSession().on('change', function() {
                     textarea.val(editor.getValue());
+                    showSamplesWidget();
                 });
-
-                // If there's no workflow defined (e.g. on a new workflow), then
-                // we add a samples widget to let the user select some samples that
-                // can be used to get them going.
-                if (theScript === '') {
-                    require('./samples').addSamplesWidget(editor);
+                
+                function showSamplesWidget() {
+                    // If there's no workflow defined (e.g. on a new workflow), then
+                    // we add a samples widget to let the user select some samples that
+                    // can be used to get them going.
+                    if (editor.getValue() === '') {
+                        require('./samples').addSamplesWidget(editor);
+                    }
                 }
+                showSamplesWidget();
             });
         });
     });
