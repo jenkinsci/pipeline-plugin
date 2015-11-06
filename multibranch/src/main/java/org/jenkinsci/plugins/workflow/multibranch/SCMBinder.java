@@ -77,7 +77,7 @@ class SCMBinder extends FlowDefinition {
         SCMRevision tip = scmSource.fetch(head, listener);
         SCM scm;
         if (tip != null) {
-            scm = scmSource.build(head, tip);
+            scm = scmSource.build(head, scmSource.getTrustedRevision(tip, listener));
             build.addAction(new SCMRevisionAction(tip));
         } else {
             listener.error("Could not determine exact tip revision of " + branch.getName() + "; falling back to nondeterministic checkout");

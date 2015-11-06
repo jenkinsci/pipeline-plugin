@@ -28,21 +28,27 @@ import hudson.ExtensionList;
 import hudson.Util;
 import hudson.model.Result;
 import hudson.model.RootAction;
+import hudson.model.TaskListener;
 import hudson.plugins.git.util.BuildData;
 import hudson.plugins.mercurial.MercurialInstallation;
 import hudson.plugins.mercurial.MercurialSCMSource;
 import hudson.tools.ToolProperty;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.AbstractGitSCMSource;
 import jenkins.plugins.git.GitSCMSource;
+import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMRevision;
 import jenkins.scm.api.SCMRevisionAction;
 import jenkins.scm.impl.subversion.SubversionSCMSource;
 import org.apache.commons.io.FileUtils;
+import static org.hamcrest.Matchers.*;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.global.WorkflowLibRepository;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -133,13 +139,15 @@ public class SCMBinderTest {
     }
 
     private static void assertRevisionAction(WorkflowRun build) {
-        BuildData data = build.getAction(BuildData.class);
-        assertNotNull(data);
         SCMRevisionAction revisionAction = build.getAction(SCMRevisionAction.class);
         assertNotNull(revisionAction);
         SCMRevision revision = revisionAction.getRevision();
         assertEquals(AbstractGitSCMSource.SCMRevisionImpl.class, revision.getClass());
-        assertEquals(data.lastBuild.marked.getSha1().getName(), ((AbstractGitSCMSource.SCMRevisionImpl) revision).getHash());
+        Set<String> expected = new HashSet<String>();
+        for (BuildData data : build.getActions(BuildData.class)) {
+            expected.add(data.lastBuild.marked.getSha1().getName());
+        }
+        assertThat(expected, hasItem(((AbstractGitSCMSource.SCMRevisionImpl) revision).getHash()));
     }
 
     @Test public void exactRevisionSubversion() throws Exception {
@@ -308,6 +316,56 @@ public class SCMBinderTest {
                 assertEquals(1, mp.getItems().size());
             }
         });
+    }
+
+    @Test public void untrustedRevisions() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                sampleGitRepo.init();
+                sampleGitRepo.write("Jenkinsfile", "node {checkout scm; echo readFile('file')}");
+                sampleGitRepo.write("file", "initial content");
+                sampleGitRepo.git("add", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=flow");
+                WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+                mp.getSourcesList().add(new BranchSource(new WarySource(null, sampleGitRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+                WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "master");
+                story.j.waitUntilNoActivity();
+                WorkflowRun b = p.getLastBuild();
+                assertNotNull(b);
+                assertEquals(1, b.getNumber());
+                assertRevisionAction(b);
+                story.j.assertBuildStatusSuccess(b);
+                story.j.assertLogContains("initial content", b);
+                String branch = "some-other-branch-from-Norway";
+                sampleGitRepo.git("checkout", "-b", branch);
+                sampleGitRepo.write("Jenkinsfile", "error 'ALL YOUR BUILD STEPS ARE BELONG TO US'");
+                sampleGitRepo.write("file", "subsequent content");
+                sampleGitRepo.git("commit", "--all", "--message=big evil laugh");
+                p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, branch);
+                story.j.waitUntilNoActivity();
+                b = p.getLastBuild();
+                assertNotNull(b);
+                assertEquals(1, b.getNumber());
+                assertRevisionAction(b);
+                story.j.assertBuildStatusSuccess(b);
+                story.j.assertLogContains("subsequent content", b);
+                story.j.assertLogContains("not trusting", b);
+            }
+        });
+    }
+    static class WarySource extends GitSCMSource {
+        WarySource(String id, String remote, String credentialsId, String includes, String excludes, boolean ignoreOnPushNotifications) {
+            super(id, remote, credentialsId, includes, excludes, ignoreOnPushNotifications);
+        }
+        @Override public SCMRevision getTrustedRevision(SCMRevision revision, TaskListener listener) throws IOException, InterruptedException {
+            String branch = revision.getHead().getName();
+            if (branch.equals("master")) {
+                return revision;
+            } else {
+                listener.getLogger().println("not trusting " + branch);
+                return fetch(new SCMHead("master"), listener);
+            }
+        }
     }
 
 }
