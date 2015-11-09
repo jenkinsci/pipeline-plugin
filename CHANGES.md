@@ -4,6 +4,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 
 ## 1.11 (upcoming)
 
+* [JENKINS-31391](https://issues.jenkins-ci.org/browse/JENKINS-31391): pass `EXECUTOR_NUMBER` into `node {}`.
 * [JENKINS-28769](https://issues.jenkins-ci.org/browse/JENKINS-28769): syntax highlighting, example scripts, and basic code snippets for Workflow scripts in the browser.
 * When running the `build` step, the upstream log should now show a link to the downstream build.
 
