@@ -2,7 +2,11 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.11 (upcoming)
+## 1.11-beta-4 (Nov 09 2015)
+
+* Minor enhancements to JENKINS-28769.
+
+## 1.11-beta-3 (Nov 05 2015)
 
 * [JENKINS-28769](https://issues.jenkins-ci.org/browse/JENKINS-28769): syntax highlighting, example scripts, and basic code snippets for Workflow scripts in the browser.
 * When running the `build` step, the upstream log should now show a link to the downstream build.
