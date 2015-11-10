@@ -106,7 +106,7 @@ define the `call` method:
 
 ```groovy
 // vars/helloWorld.groovy
-def call(msg) {
+def call(name) {
     // you can call any valid step functions from your code, just like you can from workflow scripts
     echo "Hello world, ${name}"
 }
