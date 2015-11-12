@@ -1,6 +1,6 @@
 ace-editor:1.0.1
-branch-api:0.2-beta-7
-cloudbees-folder:5.1-beta-2
+branch-api:1.0
+cloudbees-folder:5.1
 durable-task:1.6
 git:2.4.0
 git-client:1.19.0
@@ -12,7 +12,7 @@ mailer:1.16
 mapdb-api:1.0.6.0
 mercurial:1.54
 mock-slave:1.8
-scm-api:0.3-beta-2
+scm-api:1.0
 script-security:1.15
 subversion:2.5
 workflow-aggregator:@VERSION@
