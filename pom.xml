@@ -65,9 +65,7 @@
         -->
         <module>job</module>
         <module>aggregator</module>
-        <!-- TODO excluded since we cannot release a nonbeta of it while it has beta dependencies:
         <module>multibranch</module>
-        -->
     </modules>
     <dependencyManagement>
         <dependencies>
