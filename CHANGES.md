@@ -2,6 +2,10 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.11 (Nov 12 2015)
+
+* _Workflow: Multibranch_ plugin now released as nonbeta and available from the regular update center. (Currently not included in _Workflow: Aggregator_.)
+
 ## 1.11-beta-4 (Nov 09 2015)
 
 * Minor enhancements to JENKINS-28769.
