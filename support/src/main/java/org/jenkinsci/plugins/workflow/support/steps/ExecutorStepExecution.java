@@ -408,8 +408,6 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         EnvVars env = computer.getEnvironment();
                         env.overrideAll(computer.buildEnvironment(listener));
                         env.put(COOKIE_VAR, cookie);
-                        // TODO: Copied from https://github.com/jenkinsci/jenkins/blob/9c443c8d5bafd63fce574f6d0cf400cd8fe1f124/core/src/main/java/jenkins/model/CoreEnvironmentContributor.java#L59
-                        // TODO: It is interesting to add NODE_LABELS and EXECUTOR_NUMBER
                         if (exec.getOwner() instanceof MasterComputer) {
                             env.put("NODE_NAME", "master");
                         } else {

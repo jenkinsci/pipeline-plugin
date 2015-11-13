@@ -78,7 +78,7 @@ public class JobPropertyStep extends AbstractStepImpl {
     public static class Execution extends AbstractSynchronousStepExecution<Void> {
 
         @Inject transient JobPropertyStep step;
-        @StepContextParameter Run<?,?> build;
+        @StepContextParameter transient Run<?,?> build;
 
         @SuppressWarnings("unchecked") // untypable
         @Override protected Void run() throws Exception {
@@ -106,6 +106,8 @@ public class JobPropertyStep extends AbstractStepImpl {
             }
             return null;
         }
+
+        private static final long serialVersionUID = 1L;
 
     }
 

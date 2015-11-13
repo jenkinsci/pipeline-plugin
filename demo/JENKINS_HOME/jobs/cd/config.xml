@@ -51,9 +51,10 @@
   </views>
   <viewsTabBar class="hudson.views.DefaultViewsTabBar"/>
   <primaryView>All</primaryView>
-  <triggers class="vector">
-    <hudson.triggers.TimerTrigger>
+  <triggers>
+    <com.cloudbees.hudson.plugins.folder.computed.PeriodicFolderTrigger plugin="cloudbees-folder@5.1-beta-2">
       <spec>* * * * *</spec>
-    </hudson.triggers.TimerTrigger>
+      <interval>60000</interval>
+    </com.cloudbees.hudson.plugins.folder.computed.PeriodicFolderTrigger>
   </triggers>
 </org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject>

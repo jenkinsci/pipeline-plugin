@@ -2,6 +2,19 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.11 (Nov 12 2015)
+
+* _Workflow: Multibranch_ plugin now released as nonbeta and available from the regular update center. (Currently not included in _Workflow: Aggregator_.)
+
+## 1.11-beta-4 (Nov 09 2015)
+
+* Minor enhancements to JENKINS-28769.
+
+## 1.11-beta-3 (Nov 05 2015)
+
+* [JENKINS-28769](https://issues.jenkins-ci.org/browse/JENKINS-28769): syntax highlighting, example scripts, and basic code snippets for Workflow scripts in the browser.
+* When running the `build` step, the upstream log should now show a link to the downstream build.
+
 ## 1.11-beta-2 (Oct 26 2015)
 
 * [JENKINS-25550](https://issues.jenkins-ci.org/browse/JENKINS-25550): flow builds hung due to a buggy step (and certain erroneous scripts) can now be forcibly stopped by using hyperlinks that appear in the console after an initial abort attempt.

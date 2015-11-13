@@ -34,6 +34,8 @@ import jenkins.branch.BranchPropertyDescriptor;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.GitSCMSource;
+import jenkins.scm.api.SCMHead;
+import jenkins.scm.api.SCMSource;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -53,20 +55,25 @@ public class WorkflowMultiBranchProjectTest {
 
     @Test public void basicBranches() throws Exception {
         sampleRepo.init();
-        sampleRepo.write("Jenkinsfile", "node {checkout scm; echo readFile('file')}");
+        sampleRepo.write("Jenkinsfile", "echo \"branch=${env.BRANCH_NAME}\"; node {checkout scm; echo readFile('file')}");
         sampleRepo.write("file", "initial content");
         sampleRepo.git("add", "Jenkinsfile");
         sampleRepo.git("commit", "--all", "--message=flow");
         WorkflowMultiBranchProject mp = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
         mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+        for (SCMSource source : mp.getSCMSources()) {
+            assertEquals(mp, source.getOwner());
+        }
         WorkflowJob p = scheduleAndFindBranchProject(mp, "master");
+        assertEquals(new SCMHead("master"), SCMHead.HeadByItem.findHead(p));
         assertEquals(1, mp.getItems().size());
         r.waitUntilNoActivity();
         WorkflowRun b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
         r.assertLogContains("initial content", b1);
+        r.assertLogContains("branch=master", b1);
         sampleRepo.git("checkout", "-b", "feature");
-        sampleRepo.write("Jenkinsfile", "node {checkout scm; echo readFile('file').toUpperCase()}");
+        sampleRepo.write("Jenkinsfile", "echo \"branch=${env.BRANCH_NAME}\"; node {checkout scm; echo readFile('file').toUpperCase()}");
         ScriptApproval.get().approveSignature("method java.lang.String toUpperCase");
         sampleRepo.write("file", "subsequent content");
         sampleRepo.git("commit", "--all", "--message=tweaked");
@@ -76,6 +83,7 @@ public class WorkflowMultiBranchProjectTest {
         b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
         r.assertLogContains("SUBSEQUENT CONTENT", b1);
+        r.assertLogContains("branch=feature", b1);
     }
 
     // TODO commit notifications can both add branch projects and build them
