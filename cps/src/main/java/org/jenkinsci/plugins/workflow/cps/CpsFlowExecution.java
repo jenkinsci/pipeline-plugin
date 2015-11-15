@@ -76,6 +76,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -99,11 +100,14 @@ import hudson.security.ACL;
 import java.beans.Introspector;
 import java.util.LinkedHashMap;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 
 import org.acegisecurity.Authentication;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.jboss.marshalling.reflect.SerializableClassRegistry;
+
+import static java.util.Arrays.asList;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import org.kohsuke.accmod.restrictions.DoNotUse;
@@ -367,9 +371,9 @@ public class CpsFlowExecution extends FlowExecution {
         s.execution = this;
         if (false) {
             System.out.println("scriptName="+s.getClass().getName());
-            System.out.println(Arrays.asList(s.getClass().getInterfaces()));
-            System.out.println(Arrays.asList(s.getClass().getDeclaredFields()));
-            System.out.println(Arrays.asList(s.getClass().getDeclaredMethods()));
+            System.out.println(asList(s.getClass().getInterfaces()));
+            System.out.println(asList(s.getClass().getDeclaredFields()));
+            System.out.println(asList(s.getClass().getDeclaredMethods()));
         }
         return s;
     }
@@ -811,6 +815,12 @@ public class CpsFlowExecution extends FlowExecution {
             // Should not expose this to callers.
             return Jenkins.ANONYMOUS;
         }
+    }
+
+    @Nonnull
+    @Override
+    public Collection<? extends Action> createActions() {
+        return asList(new CpsThreadDumpAction());
     }
 
     @Override public String toString() {

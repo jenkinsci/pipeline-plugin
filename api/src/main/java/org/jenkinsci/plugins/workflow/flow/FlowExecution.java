@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.flow;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import hudson.Util;
+import hudson.model.Action;
 import hudson.model.Executor;
 import jenkins.model.CauseOfInterruption;
 import org.jenkinsci.plugins.workflow.actions.ErrorAction;
@@ -38,6 +39,8 @@ import hudson.security.ACL;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -211,4 +214,10 @@ public abstract class FlowExecution implements FlowActionStorage {
      */
     public abstract @Nonnull Authentication getAuthentication();
 
+    /**
+     * Create {@link Action}s to be attached to {@linkplain #getOwner() owner} when it has UI.
+     */
+    public @Nonnull Collection<? extends Action> createActions() {
+        return Collections.emptyList();
+    }
 }
