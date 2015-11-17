@@ -24,42 +24,33 @@
 
 package org.jenkinsci.plugins.workflow.steps.input;
 
-import com.google.common.base.Function;
-import java.io.IOException;
 import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
-import org.jenkinsci.plugins.workflow.support.steps.input.InputStepExecution;
+import org.jenkinsci.plugins.workflow.support.steps.input.InputAction;
+import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.Issue;
 
 public class InputStepRestartTest extends SingleJobTestBase {
 
+    @Issue("JENKINS-25889")
     @Test public void restart() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition("input 'paused'"));
                 startBuilding();
-                waitForWorkflowToSuspend();
-                assertTrue(b.isBuilding());
+                story.j.waitForMessage("paused", b);
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
-                assertThatWorkflowIsSuspended();
-                StepExecution.applyAll(InputStepExecution.class, new Function<InputStepExecution,Void>() {
-                    @Override public Void apply(InputStepExecution exec) {
-                        try {
-                            exec.doProceedEmpty();
-                        } catch (IOException x) {
-                            assert false : x;
-                        }
-                        return null;
-                    }
-                }).get();
+                InputAction a = b.getAction(InputAction.class);
+                assertEquals(1, a.getExecutions().size());
+                story.j.submit(story.j.createWebClient().getPage(b, a.getUrlName()).getFormByName(a.getExecutions().get(0).getId()), "proceed");
                 story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
             }
         });

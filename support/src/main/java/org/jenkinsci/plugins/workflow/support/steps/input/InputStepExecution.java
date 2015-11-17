@@ -33,12 +33,17 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 
 /**
  * @author Kohsuke Kawaguchi
  */
 public class InputStepExecution extends AbstractStepExecutionImpl implements ModelObject {
+
+    private static final Logger LOGGER = Logger.getLogger(InputStepExecution.class.getName());
+
     /**
      * Pause gets added here.
      */
@@ -225,7 +230,11 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
             getPauseAction().remove(this);
             run.save();
         } finally {
-            PauseAction.endCurrentPause(node);
+            if (node != null) {
+                PauseAction.endCurrentPause(node);
+            } else {
+                LOGGER.log(Level.WARNING, "cannot set pause end time for {0} in {1}", new Object[] {getId(), run});
+            }
         }
     }
 
