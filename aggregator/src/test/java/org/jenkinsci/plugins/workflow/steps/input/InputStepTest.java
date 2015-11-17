@@ -26,6 +26,8 @@ package org.jenkinsci.plugins.workflow.steps.input;
 
 import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.model.BooleanParameterDefinition;
 import hudson.model.Job;
@@ -59,7 +61,18 @@ import java.util.Arrays;
  */
 public class InputStepTest extends Assert {
     @Rule
-    public JenkinsRule j = new JenkinsRule();
+    public JenkinsRule j = new JenkinsRule() {
+        // TODO https://github.com/jenkinsci/jenkins/pull/1774/files#diff-a388b7a6a62410e46234342a32e29c02L1315 seems to have broken the super impl
+        @Override public HtmlPage submit(HtmlForm form, String name) throws Exception {
+            for (HtmlElement e : form.getHtmlElementsByTagName("button")) {
+                HtmlElement p = (HtmlElement) e.getParentNode().getParentNode();
+                if (p.getAttribute("name").equals(name)) {
+                    return e.click();
+                }
+            }
+            throw new AssertionError("No such submit button with the name " + name);
+        }
+    };
 
     /**
      * Try out a parameter.
