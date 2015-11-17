@@ -11,7 +11,7 @@ RUN ln -sv /usr/local/apache-maven-$MAVEN_VERSION /usr/local/maven
 WORKDIR /opt
 # jetty package is still 8
 ENV JETTY_VERSION 9.2.12.v20150709
-RUN wget -O - "http://mirrors.ibiblio.org/eclipse/jetty/$JETTY_VERSION/dist/jetty-distribution-$JETTY_VERSION.tar.gz" | tar xvfz -
+RUN wget -O - "http://archive.eclipse.org/jetty/$JETTY_VERSION/dist/jetty-distribution-$JETTY_VERSION.tar.gz" | tar xvfz -
 RUN ln -sv jetty-distribution-$JETTY_VERSION jetty
 RUN cd /tmp; ln -s /opt/jetty/webapps
 RUN chown -R jenkins /opt/jetty/logs
