@@ -33,14 +33,16 @@ public class InputAction implements RunAction2 {
     @Override
     public void onLoad(Run<?, ?> r) {
         this.run = r;
-        if (ids == null) {
-            // Loading from before JENKINS-25889 fix. Load the IDs and discard the executions, which lack state anyway.
-            assert executions != null && !executions.contains(null) : executions;
-            ids = new ArrayList<String>();
-            for (InputStepExecution execution : executions) {
-                ids.add(execution.getId());
+        synchronized (this) {
+            if (ids == null) {
+                // Loading from before JENKINS-25889 fix. Load the IDs and discard the executions, which lack state anyway.
+                assert executions != null && !executions.contains(null) : executions;
+                ids = new ArrayList<String>();
+                for (InputStepExecution execution : executions) {
+                    ids.add(execution.getId());
+                }
+                executions = null;
             }
-            executions = null;
         }
     }
 
