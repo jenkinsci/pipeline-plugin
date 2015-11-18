@@ -40,20 +40,20 @@ THE SOFTWARE.
     </f:entry>
     <f:entry title="Parameters">
         <div id="params"/>
+        <script>
+            function loadParams() {
+                var div = $$('params');
+                new Ajax.Request('${descriptor.descriptorUrl}/parameters?job=' + encodeURIComponent($$('${jobFieldId}').value) + '&amp;context=' + encodeURIComponent('${descriptor.context}'), {
+                    method : 'get',
+                    onSuccess : function(x) {
+                        div.innerHTML = x.responseText;
+                        Behaviour.applySubtree(div);
+                    },
+                    onFailure : function(x) {
+                        div.innerHTML = "<b>ERROR</b>: Failed to load parameter definitions: " + x.statusText;
+                    }
+                });
+            }
+        </script>
     </f:entry>
-    <script>
-        function loadParams() {
-            var div = $$('params');
-            new Ajax.Request('${descriptor.descriptorUrl}/parameters?job=' + encodeURIComponent($$('${jobFieldId}').value) + '&amp;context=' + encodeURIComponent('${descriptor.context}'), {
-                method : 'get',
-                onSuccess : function(x) {
-                    div.innerHTML = x.responseText;
-                    Behaviour.applySubtree(div);
-                },
-                onFailure : function(x) {
-                    div.innerHTML = "<b>ERROR</b>: Failed to load parameter definitions: " + x.statusText;
-                }
-            });
-        }
-    </script>
 </j:jelly>

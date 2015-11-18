@@ -36,7 +36,6 @@ public class BuildTriggerStepTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
-    @Ignore("TODO so long as BuildTriggerStep/config.jelly has a <script> block, even if empty, we get a 400 Bad Request due to submitted JSON having an array with all Step impls for builder/s/$class rather than just one string")
     @Issue("JENKINS-26692")
     @Test public void configRoundTrip() throws Exception {
         BuildTriggerStep s = new BuildTriggerStep("ds");
