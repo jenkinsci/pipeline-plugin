@@ -62,7 +62,8 @@ import java.util.Arrays;
 public class InputStepTest extends Assert {
     @Rule
     public JenkinsRule j = new JenkinsRule() {
-        // TODO https://github.com/jenkinsci/jenkins/pull/1774/files#diff-a388b7a6a62410e46234342a32e29c02L1315 seems to have broken the super impl
+        // TODO Remove post core 1.639
+        // See https://issues.jenkins-ci.org/browse/JENKINS-31631 and https://github.com/jenkinsci/jenkins/commit/7fdb589133de09e77d29397ee01bcc9004e25cb2
         @Override public HtmlPage submit(HtmlForm form, String name) throws Exception {
             for (HtmlElement e : form.getHtmlElementsByTagName("button")) {
                 HtmlElement p = (HtmlElement) e.getParentNode().getParentNode();
