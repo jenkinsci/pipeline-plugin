@@ -33,8 +33,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 
 /**
@@ -42,13 +40,7 @@ import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
  */
 public class InputStepExecution extends AbstractStepExecutionImpl implements ModelObject {
 
-    private static final Logger LOGGER = Logger.getLogger(InputStepExecution.class.getName());
-
-    /**
-     * Pause gets added here.
-     */
-    @StepContextParameter
-    /*package*/ transient Run run;
+    @StepContextParameter private transient Run run;
 
     @StepContextParameter private transient TaskListener listener;
 
@@ -233,7 +225,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
             if (node != null) {
                 PauseAction.endCurrentPause(node);
             } else {
-                LOGGER.log(Level.WARNING, "cannot set pause end time for {0} in {1}", new Object[] {getId(), run});
+                assert false : "cannot set pause end time for " + getId() + " in " + run;
             }
         }
     }

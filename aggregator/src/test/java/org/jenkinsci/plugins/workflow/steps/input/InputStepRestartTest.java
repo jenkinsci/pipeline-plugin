@@ -24,14 +24,24 @@
 
 package org.jenkinsci.plugins.workflow.steps.input;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.support.actions.PauseAction;
 import org.jenkinsci.plugins.workflow.support.steps.input.InputAction;
+import org.jenkinsci.plugins.workflow.support.steps.input.InputStepExecution;
 import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.recipes.LocalData;
 
 public class InputStepRestartTest extends SingleJobTestBase {
 
@@ -48,10 +58,44 @@ public class InputStepRestartTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 rebuildContext(story.j);
-                InputAction a = b.getAction(InputAction.class);
-                assertEquals(1, a.getExecutions().size());
-                story.j.submit(story.j.createWebClient().getPage(b, a.getUrlName()).getFormByName(a.getExecutions().get(0).getId()), "proceed");
+                proceed(b);
                 story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
+                sanity(b);
+            }
+        });
+    }
+    
+    private void proceed(WorkflowRun b) throws Exception {
+        InputAction a = b.getAction(InputAction.class);
+        assertNotNull(a);
+        assertEquals(1, a.getExecutions().size());
+        story.j.submit(story.j.createWebClient().getPage(b, a.getUrlName()).getFormByName(a.getExecutions().get(0).getId()), "proceed");
+    }
+
+    private void sanity(WorkflowRun b) throws Exception {
+        List<PauseAction> pauses = new ArrayList<PauseAction>();
+        for (FlowNode n : new FlowGraphWalker(b.getExecution())) {
+            pauses.addAll(PauseAction.getPauseActions(n));
+        }
+        assertEquals(1, pauses.size());
+        assertFalse(pauses.get(0).isPaused());
+        String xml = FileUtils.readFileToString(new File(b.getRootDir(), "build.xml"));
+        assertFalse(xml, xml.contains(InputStepExecution.class.getName()));
+    }
+
+    @Issue("JENKINS-25889")
+    @LocalData // from 1.4.2
+    @Test public void oldFlow() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = jenkins().getItemByFullName("p", WorkflowJob.class);
+                assertNotNull(p);
+                WorkflowRun b = p.getLastBuild();
+                assertNotNull(b);
+                assertEquals(1, b.getNumber());
+                proceed(b);
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
+                sanity(b);
             }
         });
     }
