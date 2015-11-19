@@ -2,7 +2,7 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.12 (upcoming)
+## 1.12-beta-1 (Nov 19 2015)
 
 * [JENKINS-25889](https://issues.jenkins-ci.org/browse/JENKINS-25889): error when submitting to an `input` step after a Jenkins restart.
 
