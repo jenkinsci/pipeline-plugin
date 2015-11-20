@@ -52,7 +52,6 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] SonarQube Jenkins: [SONARJNKNS-213](http://jira.sonarsource.com/browse/SONARJNKNS-213)
 - [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
 - [X] `ScoveragePublisher` (`scoverage`): supported as of 1.2.0
-- [ ] `XShellBuilder` (`xshell`): [JENKINS-30372](https://issues.jenkins-ci.org/browse/JENKINS-30372)
 - [ ] `AWSCodeDeployPublisher` (`codedeploy`): [issue 36](https://github.com/awslabs/aws-codedeploy-plugin/issues/36)
 
 ## Build wrappers
