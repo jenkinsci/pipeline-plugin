@@ -1,7 +1,7 @@
 var samples = [];
 
 exports.addSamplesWidget = function(editor) {
-    var $ = require('jquery-detached').getJQuery();
+    var $ = require('jqueryui-detached').getJQueryUI();
 
     if ($('#workflow-editor-wrapper .samples').length) {
         // Already there.
