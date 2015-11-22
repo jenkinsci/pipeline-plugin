@@ -736,7 +736,7 @@ A [separate document](cps-global-lib/README.md) has details on this system.
 
 ## Creating Multibranch Projects
 
-A new **Workflow: Multibranch** plugin (as of this writing still in beta) offers a better way of versioning your Workflow and managing your project.
+The **Workflow: Multibranch** plugin offers a better way of versioning your Workflow and managing your project.
 You need to create a distinct project type, **Multibranch Workflow**.
 
 When you have a multibranch workflow, the configuration screen will resemble **Workflow script from SCM** in that your Workflow script comes from source control, not the Jenkins job configuration.
@@ -748,10 +748,10 @@ Jenkins expects to find a script named `Jenkinsfile` in branches it can build.
 From this script, the command `checkout scm` suffices to check out your project’s source code inside some `node {}`.
 
 Say you start with just a `master` branch, then you want to experiment with some changes, so you `git checkout -b newfeature` and push some commits.
-Jenkins automatically detects the new branch in your repository and creates a new subproject for it — with its own build history unrelated to trunk, so no one will mind if it has red/yellow balls for a while.
+Jenkins automatically detects the new branch in your repository and creates a new subproject for it—with its own build history unrelated to trunk, so no one will mind if it has red/yellow balls for a while.
 If you choose, you can ask for the subproject to be automatically removed after the branch is merged and deleted.
 
-If you want to change your Workflow script — for example, to add a new Jenkins publisher step corresponding to reports your `Makefile`/`pom.xml`/etc. is newly creating — you just edit `Jenkinsfile` in your change.
+If you want to change your Workflow script—for example, to add a new Jenkins publisher step corresponding to reports your `Makefile`/`pom.xml`/etc. is newly creating—you just edit `Jenkinsfile` in your change.
 The Workflow script is always synchronized with the rest of the source code you are working on: `checkout scm` checks out the same revision as the script is loaded from.
 
 # Exploring the Snippet Generator

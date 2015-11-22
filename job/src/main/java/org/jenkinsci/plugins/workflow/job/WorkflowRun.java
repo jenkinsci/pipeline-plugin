@@ -230,7 +230,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     LOGGER.log(Level.WARNING, null, x);
                 }
                 getExecutor().recordCauseOfInterruption(WorkflowRun.this, listener);
-                printLater("term", "Forcibly terminate running steps");
+                printLater("term", "Click here to forcibly terminate running steps");
             }
             @Override public boolean blocksRestart() {
                 return execution.blocksRestart();
@@ -299,7 +299,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
             @Override public void onFailure(Throwable t) {}
         });
-        printLater("kill", "Forcibly kill entire build");
+        printLater("kill", "Click here to forcibly kill entire build");
     }
 
     /** Immediately kills the build. */

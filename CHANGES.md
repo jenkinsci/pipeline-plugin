@@ -2,6 +2,14 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.12 (upcoming)
+
+* [JENKINS-31585](https://issues.jenkins-ci.org/browse/JENKINS-31585): make new script editor resizable.
+
+## 1.12-beta-1 (Nov 19 2015)
+
+* [JENKINS-25889](https://issues.jenkins-ci.org/browse/JENKINS-25889): error when submitting to an `input` step after a Jenkins restart.
+
 ## 1.11 (Nov 12 2015)
 
 * _Workflow: Multibranch_ plugin now released as nonbeta and available from the regular update center. (Currently not included in _Workflow: Aggregator_.)

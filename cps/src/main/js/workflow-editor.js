@@ -1,4 +1,4 @@
-var $ = require('jquery-detached').getJQuery();
+var $ = require('jqueryui-detached').getJQueryUI();
 var jenkinsJSModules = require('jenkins-js-modules');
 var wrapper = $('#workflow-editor-wrapper');
 var textarea = $('textarea', wrapper);
@@ -21,7 +21,8 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
             var editor = this.editor;
             
             // Attach the ACE editor instance to the element. Useful for testing.
-            $('#workflow-editor').get(0).aceEditor = editor;
+            var $wfEditor = $('#workflow-editor');
+            $wfEditor.get(0).aceEditor = editor;
 
             acePack.addPackOverride('snippets/groovy.js', '../workflow-cps/snippets/workflow.js');
 
@@ -33,7 +34,6 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                 editor.setTheme("ace/theme/tomorrow");
                 editor.setAutoScrollEditorIntoView(true);
                 editor.setOption("minLines", 20);
-                editor.setOption("maxLines", 20);
                 // enable autocompletion and snippets
                 editor.setOptions({
                     enableBasicAutocompletion: true,
@@ -57,6 +57,19 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                 }
                 showSamplesWidget();
             });
+            
+            // Make the editor resizable using jQuery UI resizable (http://api.jqueryui.com/resizable).
+            // ACE Editor doesn't have this as a config option.
+            $wfEditor.wrap('<div class="jquery-ui-1"></div>');
+            $wfEditor.resizable({
+                handles: "s", // Only allow vertical resize off the bottom/south border
+                resize: function() {
+                    editor.resize();
+                }
+            });
+            // Make the bottom border a bit thicker as a visual cue.
+            // May not be enough for some people's taste.
+            $wfEditor.css('border-bottom-width', '0.4em');
         });
     });
 

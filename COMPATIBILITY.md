@@ -52,7 +52,6 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] SonarQube Jenkins: [SONARJNKNS-213](http://jira.sonarsource.com/browse/SONARJNKNS-213)
 - [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
 - [X] `ScoveragePublisher` (`scoverage`): supported as of 1.2.0
-- [ ] `XShellBuilder` (`xshell`): [JENKINS-30372](https://issues.jenkins-ci.org/browse/JENKINS-30372)
 - [ ] `AWSCodeDeployPublisher` (`codedeploy`): [issue 36](https://github.com/awslabs/aws-codedeploy-plugin/issues/36)
 
 ## Build wrappers
@@ -68,6 +67,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
 - [ ] `AnsiColorBuildWrapper` (`ansicolor`): scheduled to be supported as of 0.4.2
 - [ ] `CustomToolInstallWrapper` (`custom-tools-plugin`): [JENKINS-30680](https://issues.jenkins-ci.org/browse/JENKINS-30680) 
+- [ ] `PortAllocator` (`port-allocator`): [JENKINS-31449](https://issues.jenkins-ci.org/browse/JENKINS-31449)
 
 ## Triggers
 
@@ -104,7 +104,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `lockable-resources` : [JENKINS-30269](https://issues.jenkins-ci.org/browse/JENKINS-30269)
 - [X] `customize-build-now`: supported as of 1.1
 - [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
-- [ ] `embeddable-build-status`: [JENKINS-28642](https://issues.jenkins-ci.org/browse/JENKINS-28642)
+- [X] `embeddable-build-status`: scheduled to be supported as of 1.9
 
 ## Custom steps
 

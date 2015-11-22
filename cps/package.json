@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "jenkins-js-modules": "1.3.0",
-    "jquery-detached": "^2.1.4-v2",
+    "jqueryui-detached": "^1.11.4-v9",
     "window-handle": "0.0.6"
   }
 }
