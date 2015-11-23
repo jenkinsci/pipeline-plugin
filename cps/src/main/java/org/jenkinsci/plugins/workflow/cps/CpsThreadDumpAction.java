@@ -11,7 +11,11 @@ import jenkins.model.TransientActionFactory;
  */
 public final class CpsThreadDumpAction implements Action {
 
-    private CpsThreadDumpAction() {}
+    private final CpsFlowExecution execution;
+
+    private CpsThreadDumpAction(CpsFlowExecution execution) {
+        this.execution = execution;
+    }
 
     @Override
     public String getIconFileName() {
@@ -23,10 +27,13 @@ public final class CpsThreadDumpAction implements Action {
         return "Thread Dump";
     }
 
-    /** Matches {@link CpsFlowExecution#getThreadDump}. */
     @Override
     public String getUrlName() {
         return "threadDump";
+    }
+    
+    public CpsFlowExecution getExecution() {
+        return execution;
     }
 
     @Extension public static class Factory extends TransientActionFactory<CpsFlowExecution> {
@@ -35,8 +42,8 @@ public final class CpsThreadDumpAction implements Action {
             return CpsFlowExecution.class;
         }
 
-        @Override public Collection<? extends Action> createFor(CpsFlowExecution target) {
-            return Collections.singleton(new CpsThreadDumpAction());
+        @Override public Collection<? extends Action> createFor(CpsFlowExecution execution) {
+            return Collections.singleton(new CpsThreadDumpAction(execution));
         }
 
     }

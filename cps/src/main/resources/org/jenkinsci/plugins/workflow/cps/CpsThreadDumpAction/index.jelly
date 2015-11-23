@@ -32,7 +32,7 @@
       </l:tasks>
     </l:side-panel>
     <l:main-panel>
-      <j:set var="td" value="${it.toString()}"/>
+      <j:set var="td" value="${it.execution.threadDump.toString()}"/>
 
       <h1>
         ${%Thread Dump}

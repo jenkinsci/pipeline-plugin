@@ -55,7 +55,6 @@ import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
  * execution model, but it allows other code to listen on what's going on.
  *
  * <p>You may register a {@link TransientActionFactory} of {@link FlowExecution}s to add actions to the UI.
- * They may be URL-bound to the {@link FlowExecution}.
  *
  * <h2>Persistence</h2>
  * <p>

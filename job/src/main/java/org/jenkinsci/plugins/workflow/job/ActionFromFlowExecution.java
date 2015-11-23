@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Expose {@link FlowExecution#createActions()} to {@link WorkflowRun}.
+ * Expose {@link FlowExecution} actions to {@link WorkflowRun}.
  */
 @Extension
 public class ActionFromFlowExecution extends TransientActionFactory<WorkflowRun> {
@@ -28,9 +28,7 @@ public class ActionFromFlowExecution extends TransientActionFactory<WorkflowRun>
         List<Action> wrapped = new ArrayList<Action>();
         for (TransientActionFactory<?> taf : ExtensionList.lookup(TransientActionFactory.class)) {
             if (taf.type().isInstance(execution)) {
-                for (Action a : createFor(taf, execution)) {
-                    wrapped.add(new PrefixedAction(a));
-                }
+                wrapped.addAll(createFor(taf, execution));
             }
         }
         return wrapped;
@@ -39,39 +37,4 @@ public class ActionFromFlowExecution extends TransientActionFactory<WorkflowRun>
         return taf.createFor(taf.type().cast(execution));
     }
 
-    /**
-     * Exposes {@link Action} under {@link FlowExecution} by prefixing it.
-     */
-    private static final class PrefixedAction implements Action {
-        private final Action base;
-
-        PrefixedAction(Action base) {
-            this.base = base;
-        }
-
-        @Override
-        public String getIconFileName() {
-            return base.getIconFileName();
-        }
-
-        @Override
-        public String getDisplayName() {
-            return base.getDisplayName();
-        }
-
-        @Override
-        public String getUrlName() {
-            String u = base.getUrlName();
-            if (u != null) {
-                if (u.startsWith("/")) { // relative to context root
-                    return u;
-                }
-                if (u.contains("://")) { // absolute
-                    return u;
-                }
-                u = "execution/" + u;
-            }
-            return u;
-        }
-    }
 }
