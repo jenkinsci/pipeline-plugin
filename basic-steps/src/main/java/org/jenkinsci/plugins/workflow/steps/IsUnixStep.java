@@ -58,7 +58,7 @@ public class IsUnixStep extends AbstractStepImpl {
         }
 
         @Override public String getDisplayName() {
-            return "Checks if running on a Unix node";
+            return "Checks if running on a Unix-like node";
         }
 
     }
