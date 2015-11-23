@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 
 /**
  * Immutable snapshot of a state of {@link CpsThreadGroup}.
@@ -40,7 +41,10 @@ public final class CpsThreadDump {
 
                 StepExecution s = t.getStep();
                 if (s !=null) {
-                    stack.add(new StackTraceElement(s.getClass().getName(), "<>", null, -2));
+                    StepDescriptor d = ((CpsStepContext) s.getContext()).getStepDescriptor();
+                    if (d != null) {
+                        stack.add(new StackTraceElement("DSL", d.getFunctionName(), null, -2));
+                    }
                 }
                 stack.addAll(t.getStackTrace());
             }

@@ -51,7 +51,7 @@ public class CpsThreadDumpTest {
             ThreadInfo t = threads.get(0);
             assertThat(t.getHeadline(), containsString("Thread #0"));
             assertStackTrace(t,
-                    "org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep$Execution.<>(Native Method)",
+                    "DSL.semaphore(Native Method)",
                     "WorkflowScript.bar(WorkflowScript:3)",
                     "WorkflowScript.foo(WorkflowScript:1)",
                     "WorkflowScript.run(WorkflowScript:5)");
@@ -81,16 +81,16 @@ public class CpsThreadDumpTest {
         td.print(System.out);
 
         assertStackTrace( td.getThreads().get(0),
-            "org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep$Execution.<>(Native Method)",
+            "DSL.semaphore(Native Method)",
             "WorkflowScript.bar(WorkflowScript:3)",
             "WorkflowScript.foo(WorkflowScript:1)",
             "WorkflowScript.zot(WorkflowScript:7)",
-            "org.jenkinsci.plugins.workflow.cps.steps.ParallelStepExecution.<>(Native Method)",
+            "DSL.parallel(Native Method)",
             "WorkflowScript.zot(WorkflowScript:6)",
             "WorkflowScript.run(WorkflowScript:10)");
 
         assertStackTrace( td.getThreads().get(1),
-            "org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep$Execution.<>(Native Method)",
+            "DSL.semaphore(Native Method)",
             "WorkflowScript.bar(WorkflowScript:3)",
             "WorkflowScript.zot(WorkflowScript:8)");
     }
