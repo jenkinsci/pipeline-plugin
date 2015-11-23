@@ -646,12 +646,12 @@ public class CpsFlowExecution extends FlowExecution {
      */
     public CpsThreadDump getThreadDump() {
         if (programPromise == null || isComplete()) {
-            return CpsThreadDump.EMPTY;
+            return CpsThreadDump.empty(this);
         }
         if (!programPromise.isDone()) {
             // CpsThreadGroup state isn't ready yet, but this is probably one of the common cases
             // when one wants to obtain the stack trace. Cf. JENKINS-26130.
-            return CpsThreadDump.UNKNOWN;
+            return CpsThreadDump.unknown(this);
         }
 
         try {
@@ -659,7 +659,7 @@ public class CpsFlowExecution extends FlowExecution {
         } catch (InterruptedException e) {
             throw new AssertionError(); // since we are checking programPromise.isDone() upfront
         } catch (ExecutionException e) {
-            return CpsThreadDump.from(new Exception("Failed to resurrect program state",e));
+            return CpsThreadDump.from(new Exception("Failed to resurrect program state", e), this);
         }
     }
 

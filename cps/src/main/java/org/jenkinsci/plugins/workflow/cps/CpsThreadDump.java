@@ -20,6 +20,7 @@ import java.util.Map;
  */
 public final class CpsThreadDump {
     private final List<ThreadInfo> threads = new ArrayList<ThreadInfo>();
+    private final CpsFlowExecution execution;
 
     public static final class ThreadInfo {
         private final String headline;
@@ -80,10 +81,12 @@ public final class CpsThreadDump {
         }
     }
 
-    /**
-     * Use one of the {@link #from(CpsThreadGroup)} method.
-     */
-    private CpsThreadDump() {
+    private CpsThreadDump(CpsFlowExecution execution) {
+        this.execution = execution;
+    }
+
+    public CpsFlowExecution getExecution() {
+        return execution;
     }
 
     public List<ThreadInfo> getThreads() {
@@ -106,8 +109,8 @@ public final class CpsThreadDump {
         return sw.toString();
     }
 
-    public static CpsThreadDump from(Throwable t) {
-        CpsThreadDump td = new CpsThreadDump();
+    public static CpsThreadDump from(Throwable t, CpsFlowExecution execution) {
+        CpsThreadDump td = new CpsThreadDump(execution);
         td.threads.add(new ThreadInfo(t));
         return td;}
 
@@ -120,7 +123,7 @@ public final class CpsThreadDump {
             l.add(t);
         }
 
-        CpsThreadDump td = new CpsThreadDump();
+        CpsThreadDump td = new CpsThreadDump(g.getExecution());
         for (List<CpsThread> e : m.values())
             td.threads.add(new ThreadInfo(e));
         return td;
@@ -129,15 +132,19 @@ public final class CpsThreadDump {
     /**
      * Constant that indicates everything is done and no thread is alive.
      */
-    public static CpsThreadDump EMPTY = new CpsThreadDump();
+    public static CpsThreadDump empty(CpsFlowExecution execution) {
+        return new CpsThreadDump(execution);
+    }
 
     /**
      * Constant that indicates the state of {@link CpsThreadGroup} is unknown and so it is not possible
      * to produce a thread dump.
      */
-    public static CpsThreadDump UNKNOWN = from(new Exception("Program state is not yet known") {
-        @Override public Throwable fillInStackTrace() {
-            return this; // irrelevant
-        }
-    });
+    public static CpsThreadDump unknown(CpsFlowExecution execution) {
+        return from(new Exception("Program state is not yet known") {
+            @Override public Throwable fillInStackTrace() {
+                return this; // irrelevant
+            }
+        }, execution);
+    }
 }
