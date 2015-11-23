@@ -38,6 +38,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class SleepStepTest {
@@ -65,6 +66,17 @@ public class SleepStepTest {
                 WorkflowJob p = r.j.jenkins.getItemByFullName("p", WorkflowJob.class);
                 WorkflowRun b = p.getLastBuild();
                 r.j.assertBuildStatusSuccess(r.j.waitForCompletion(b));
+            }
+        });
+    }
+
+    @Issue("JENKINS-31701")
+    @Test public void sleepInsideNode() {
+        r.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition("node {sleep 1}", true));
+                r.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
             }
         });
     }
