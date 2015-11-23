@@ -42,7 +42,7 @@ public class ActionFromFlowExecution extends TransientActionFactory<WorkflowRun>
     /**
      * Exposes {@link Action} under {@link FlowExecution} by prefixing it.
      */
-    private final class PrefixedAction implements Action {
+    private static final class PrefixedAction implements Action {
         private final Action base;
 
         PrefixedAction(Action base) {

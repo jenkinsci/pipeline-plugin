@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.workflow.cps;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import java.io.PrintStream;
@@ -93,6 +94,7 @@ public final class CpsThreadDump {
         return Collections.unmodifiableList(threads);
     }
 
+    @SuppressFBWarnings(value="DM_DEFAULT_ENCODING", justification="Only used by tests anyway.")
     public void print(PrintStream ps) {
         print(new PrintWriter(ps,true));
     }
