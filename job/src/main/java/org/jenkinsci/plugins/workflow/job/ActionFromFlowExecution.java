@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.job;
 
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.model.Action;
 import jenkins.model.TransientActionFactory;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -12,8 +13,6 @@ import java.util.List;
 
 /**
  * Expose {@link FlowExecution#createActions()} to {@link WorkflowRun}.
- *
- * @author Kohsuke Kawaguchi
  */
 @Extension
 public class ActionFromFlowExecution extends TransientActionFactory<WorkflowRun> {
@@ -25,12 +24,19 @@ public class ActionFromFlowExecution extends TransientActionFactory<WorkflowRun>
     @Nonnull
     @Override
     public Collection<? extends Action> createFor(WorkflowRun target) {
-        Collection<? extends Action> actions = target.getExecution().createActions();
-        List<Action> wrapped = new ArrayList<Action>(actions.size());
-        for (Action a : actions) {
-            wrapped.add(new PrefixedAction(a));
+        FlowExecution execution = target.getExecution();
+        List<Action> wrapped = new ArrayList<Action>();
+        for (TransientActionFactory<?> taf : ExtensionList.lookup(TransientActionFactory.class)) {
+            if (taf.type().isInstance(execution)) {
+                for (Action a : createFor(taf, execution)) {
+                    wrapped.add(new PrefixedAction(a));
+                }
+            }
         }
         return wrapped;
+    }
+    private <T> Collection<? extends Action> createFor(TransientActionFactory<T> taf, FlowExecution execution) {
+        return taf.createFor(taf.type().cast(execution));
     }
 
     /**
@@ -39,7 +45,7 @@ public class ActionFromFlowExecution extends TransientActionFactory<WorkflowRun>
     private final class PrefixedAction implements Action {
         private final Action base;
 
-        public PrefixedAction(Action base) {
+        PrefixedAction(Action base) {
             this.base = base;
         }
 
