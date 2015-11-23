@@ -33,7 +33,7 @@ public final class CpsThreadDump {
          */
         private ThreadInfo(List<CpsThread> e) {
             CpsThread head = e.get(e.size() - 1);
-            headline = head.toString();
+            headline = "Thread #" + head.id;
 
             ListIterator<CpsThread> itr = e.listIterator(e.size());
             while (itr.hasPrevious()) {

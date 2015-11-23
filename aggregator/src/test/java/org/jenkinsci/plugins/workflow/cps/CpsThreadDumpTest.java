@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 public class CpsThreadDumpTest {
@@ -46,7 +45,7 @@ public class CpsThreadDumpTest {
             List<ThreadInfo> threads = td.getThreads();
             assertEquals(1, threads.size());
             ThreadInfo t = threads.get(0);
-            assertThat(t.getHeadline(), containsString("Thread #0"));
+            assertEquals("Thread #0", t.getHeadline());
             assertStackTrace(t,
                     "DSL.semaphore(Native Method)",
                     "WorkflowScript.bar(WorkflowScript:3)",
@@ -107,7 +106,7 @@ public class CpsThreadDumpTest {
     }
 
     private void assertStackTrace(ThreadInfo t, String... expected) {
-        assertThat(toString(t.getStackTrace()), is(asList(expected)));
+        assertEquals(asList(expected), toString(t.getStackTrace()));
     }
 
     private List<String> toString(List<StackTraceElement> in) {
