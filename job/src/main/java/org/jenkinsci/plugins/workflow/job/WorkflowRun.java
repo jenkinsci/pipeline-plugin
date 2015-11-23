@@ -35,7 +35,6 @@ import hudson.Main;
 import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
 import hudson.console.LineTransformationOutputStream;
-import hudson.model.Action;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Item;
@@ -179,7 +178,6 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     @Override public WorkflowRun getNextBuild() {
         return getRunMixIn().getNextBuild();
     }
-
 
     /**
      * Actually executes the workflow.

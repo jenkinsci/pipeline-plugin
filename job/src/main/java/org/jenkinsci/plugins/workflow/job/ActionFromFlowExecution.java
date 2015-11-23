@@ -62,10 +62,14 @@ public class ActionFromFlowExecution extends TransientActionFactory<WorkflowRun>
         @Override
         public String getUrlName() {
             String u = base.getUrlName();
-            if (u!=null) {
-                if (u.startsWith("/"))      return u;   // relative to context root
-                if (u.contains("://"))      return u;   // absolute
-                u = "execution/"+u;
+            if (u != null) {
+                if (u.startsWith("/")) { // relative to context root
+                    return u;
+                }
+                if (u.contains("://")) { // absolute
+                    return u;
+                }
+                u = "execution/" + u;
             }
             return u;
         }

@@ -133,7 +133,11 @@ public final class CpsThreadDump {
 
     /**
      * Constant that indicates the state of {@link CpsThreadGroup} is unknown and so it is not possible
-     * to produe a thread dump.
+     * to produce a thread dump.
      */
-    public static CpsThreadDump UNKNOWN = from(new Exception("Program state is not yet known"));
+    public static CpsThreadDump UNKNOWN = from(new Exception("Program state is not yet known") {
+        @Override public Throwable fillInStackTrace() {
+            return this; // irrelevant
+        }
+    });
 }

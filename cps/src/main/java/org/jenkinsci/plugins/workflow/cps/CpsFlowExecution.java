@@ -642,7 +642,7 @@ public class CpsFlowExecution extends FlowExecution {
      * Synchronously obtain the current state of the workflow program.
      *
      * <p>
-     * The workflow can be already completed, or it can be in the process of
+     * The workflow can be already completed, or it can still be running.
      */
     public CpsThreadDump getThreadDump() {
         if (programPromise == null || isComplete()) {
@@ -650,7 +650,7 @@ public class CpsFlowExecution extends FlowExecution {
         }
         if (!programPromise.isDone()) {
             // CpsThreadGroup state isn't ready yet, but this is probably one of the common cases
-            // when one wants to obtain the stack trace. Can we do anything better?
+            // when one wants to obtain the stack trace. Cf. JENKINS-26130.
             return CpsThreadDump.UNKNOWN;
         }
 
