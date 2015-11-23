@@ -17,9 +17,6 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
-/**
- * @author Kohsuke Kawaguchi
- */
 public class CpsThreadDumpTest {
     @Rule
     public JenkinsRule j = new JenkinsRule();
@@ -31,7 +28,7 @@ public class CpsThreadDumpTest {
     }
 
     @Test
-    public void threadDump() throws Exception {
+    public void simple() throws Exception {
         p.setDefinition(new CpsFlowDefinition(StringUtils.join(asList(
                 "def foo() { bar() }",
                 "def bar() {",
@@ -59,7 +56,7 @@ public class CpsThreadDumpTest {
     }
 
     @Test
-    public void threadDump2() throws Exception {
+    public void parallel() throws Exception {
         p.setDefinition(new CpsFlowDefinition(StringUtils.join(asList(
                 "def foo(x) { bar(x) }",// 1
                 "def bar(x) {",
@@ -93,6 +90,20 @@ public class CpsThreadDumpTest {
             "DSL.semaphore(Native Method)",
             "WorkflowScript.bar(WorkflowScript:3)",
             "WorkflowScript.zot(WorkflowScript:8)");
+    }
+
+    @Test public void load() throws Exception {
+        j.jenkins.getWorkspaceFor(p).child("lib.groovy").write("def m() {semaphore 'here'}; this", null);
+        p.setDefinition(new CpsFlowDefinition("def lib; node {lib = load 'lib.groovy'}; lib.m()", true));
+        WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+        SemaphoreStep.waitForStart("here/1", b);
+        CpsFlowExecution e = (CpsFlowExecution) b.getExecution();
+        CpsThreadDump td = e.getThreadDump();
+        td.print(System.out);
+        assertStackTrace(td.getThreads().get(0),
+            "DSL.semaphore(Native Method)",
+            "Script1.m(Script1.groovy:1)",
+            "WorkflowScript.run(WorkflowScript:1)");
     }
 
     private void assertStackTrace(ThreadInfo t, String... expected) {
