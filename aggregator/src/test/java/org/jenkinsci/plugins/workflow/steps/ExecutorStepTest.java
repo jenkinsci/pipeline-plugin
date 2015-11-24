@@ -26,9 +26,13 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Computer;
 import hudson.model.Node;
+import hudson.model.Queue;
+import hudson.model.User;
 import hudson.model.labels.LabelAtom;
 import hudson.remoting.Launcher;
 import hudson.remoting.Which;
+import hudson.security.ACL;
+import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.slaves.DumbSlave;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.slaves.JNLPLauncher;
@@ -46,6 +50,7 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.model.Jenkins;
 import org.apache.tools.ant.util.JavaEnvUtils;
 import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
@@ -374,6 +379,38 @@ public class ExecutorStepTest extends SingleJobTestBase {
                 story.j.assertLogContains("got the result", story.j.assertBuildStatusSuccess(p.scheduleBuild2(0)));
                 p.setDefinition(new CpsFlowDefinition("try {node {error 'a problem'}} catch (e) {echo \"failed with ${e.message}\"}"));
                 story.j.assertLogContains("failed with a problem", story.j.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+            }
+        });
+    }
+
+    @Issue("JENKINS-31649")
+    @Test public void queueTaskVisibility() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                jenkins().setSecurityRealm(story.j.createDummySecurityRealm());
+                GlobalMatrixAuthorizationStrategy gmas = new GlobalMatrixAuthorizationStrategy();
+                gmas.add(Jenkins.ADMINISTER, "admin");
+                jenkins().setAuthorizationStrategy(gmas);
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition("node('nonexistent') {}", true));
+                startBuilding();
+                story.j.waitForMessage("Still waiting to schedule task", b);
+                ACL.impersonate(User.get("admin").impersonate(), new Runnable() {
+                    @Override public void run() {
+                        Queue.Item[] items = Queue.getInstance().getItems();
+                        assertEquals(1, items.length); // fails in 1.638
+                        assertEquals(p, items[0].task.getOwnerTask());
+                    }
+                });
+                /* TODO uncomment when on 1.639+, or 1.625.3 if JENKINS-31649 is backported:
+                ACL.impersonate(User.get("devel").impersonate(), new Runnable() {
+                    @Override public void run() {
+                        Queue.Item[] items = Queue.getInstance().getItems();
+                        assertEquals(0, items.length); // fails in 1.609.2
+                    }
+                });
+                */
+                // TODO this would be a good time to add a third user with READ but no CANCEL permission and check behavior
             }
         });
     }
