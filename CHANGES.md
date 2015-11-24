@@ -2,9 +2,44 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.11 (not yet released)
+## 1.12 (upcoming)
+
 * [JENKINS-30055](https://issues.jenkins-ci.org/browse/JENKINS-30055): poor performance and file handle leaks when running a script with an enormous number of steps in quick succession
+* [JENKINS-31585](https://issues.jenkins-ci.org/browse/JENKINS-31585): make new script editor resizable.
+
+## 1.12-beta-1 (Nov 19 2015)
+
+* [JENKINS-25889](https://issues.jenkins-ci.org/browse/JENKINS-25889): error when submitting to an `input` step after a Jenkins restart.
+
+## 1.11 (Nov 12 2015)
+
+* _Workflow: Multibranch_ plugin now released as nonbeta and available from the regular update center. (Currently not included in _Workflow: Aggregator_.)
+
+## 1.11-beta-4 (Nov 09 2015)
+
+* Minor enhancements to JENKINS-28769.
+
+## 1.11-beta-3 (Nov 05 2015)
+
+* [JENKINS-28769](https://issues.jenkins-ci.org/browse/JENKINS-28769): syntax highlighting, example scripts, and basic code snippets for Workflow scripts in the browser.
+* When running the `build` step, the upstream log should now show a link to the downstream build.
+
+## 1.11-beta-2 (Oct 26 2015)
+
+* [JENKINS-25550](https://issues.jenkins-ci.org/browse/JENKINS-25550): flow builds hung due to a buggy step (and certain erroneous scripts) can now be forcibly stopped by using hyperlinks that appear in the console after an initial abort attempt.
+* [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): error during build queue rendering on 1.624+ when using non-concurrent-capable Workflow builds.
+* Added the `absoluteUrl` property to `RunWrapper`
+* [JENKINS-29542](https://issues.jenkins-ci.org/browse/JENKINS-29542): fixed help display for `env` global variable.
+
+## 1.11-beta-1 (Oct 07 2015)
+
+* [JENKINS-30086](https://issues.jenkins-ci.org/browse/JENKINS-30086): improve inline help and display names for steps, and show step function names in _Snippet Generator_.
 * [JENKINS-30346](https://issues.jenkins-ci.org/browse/JENKINS-30346): added a cross platform `deleteDir` step to recursively delete a directory and its contents.
+* [JENKINS-30088](https://issues.jenkins-ci.org/browse/JENKINS-30088): Adjust how steps are displayed, to make the appearance cleaner and keep a focus on the DSL
+
+## 1.10.1 (Oct 15 2015)
+
+* [JENKINS-30974](https://issues.jenkins-ci.org/browse/JENKINS-30974): backport from 1.11.
 
 ## 1.10 (Aug 31 2015)
 

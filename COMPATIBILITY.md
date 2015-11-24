@@ -13,7 +13,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `MercurialSCM` (`mercurial`): supported as of 1.51
 - [X] `PerforceScm` (`p4`, not the older `perforce`): supported as of 1.2.0
 - [ ] `DimensionsSCM` (`dimensionsscm`): [JENKINS-26165](https://issues.jenkins-ci.org/browse/JENKINS-26165)
-- [ ] `IntegritySCM` (`integrity-plugin`): [JENKINS-27140](https://issues.jenkins-ci.org/browse/JENKINS-27140)
+- [X] `IntegritySCM` (`integrity-plugin`): supported as of 1.36
 - [ ] `RepoScm` (`repo`): [JENKINS-26836](https://issues.jenkins-ci.org/browse/JENKINS-26836)
 - [X] `teamconcert`: supported as of 1.9.4
 - [X] `CVSSCM` (`cvs`): scheduled to be supported in 2.13
@@ -42,17 +42,17 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `CloverPublisher` (`clover`): [JENKINS-27302](https://issues.jenkins-ci.org/browse/JENKINS-27302)
 - [ ] `MsBuildBuilder` (`msbuild`): [JENKINS-26948](https://issues.jenkins-ci.org/browse/JENKINS-26948)
 - [ ] `HipChatNotifier` (`hipchat`): [JENKINS-27202](https://issues.jenkins-ci.org/browse/JENKINS-27202)
-- [ ] `LogParserPublisher` (`log-parser`): [JENKINS-27208](https://issues.jenkins-ci.org/browse/JENKINS-27208)
+- [X] `LogParserPublisher` (`log-parser`): supported as of 2.0
 - [ ] `SlackNotifier` (`slack`): [JENKINS-27652](https://issues.jenkins-ci.org/browse/JENKINS-27652)
 - [ ] ~~`DescriptionSetterPublisher` (`description-setter`): [PR 7](https://github.com/jenkinsci/description-setter-plugin/pull/7)~~
 - [ ] `CopyToSlaveBuildWrapper` and `CopyToMasterNotifier` (`copy-to-slave`): [JENKINS-28386](https://issues.jenkins-ci.org/browse/JENKINS-28386)
 - [ ] `VeracodeNotifier` (`veracode-scanner`): [JENKINS-28387](https://issues.jenkins-ci.org/browse/JENKINS-28387)
-- [ ] `SeleniumHtmlReportPublisher` (`seleniumhtmlreport`): [JENKINS-28388](https://issues.jenkins-ci.org/browse/JENKINS-28388)
+- [X] `SeleniumHtmlReportPublisher` (`seleniumhtmlreport`): supported as of 1.0
 - [ ] `GitPublisher` (`git`) or a custom step: [JENKINS-28335](https://issues.jenkins-ci.org/browse/JENKINS-28335)
 - [ ] SonarQube Jenkins: [SONARJNKNS-213](http://jira.sonarsource.com/browse/SONARJNKNS-213)
 - [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
 - [X] `ScoveragePublisher` (`scoverage`): supported as of 1.2.0
-- [ ] `XShellBuilder` (`xshell`): [JENKINS-30372](https://issues.jenkins-ci.org/browse/JENKINS-30372)
+- [ ] `AWSCodeDeployPublisher` (`codedeploy`): [issue 36](https://github.com/awslabs/aws-codedeploy-plugin/issues/36)
 
 ## Build wrappers
 
@@ -61,17 +61,19 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
 - [ ] `DashboardBuilder` (`environment-dashboard`): [issue 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
 - [X] `TimestamperBuildWrapper` (`timestamper`): supported as of 1.7
-- [ ] `MaskPasswordsBuildWrapper` (`mask-passwords`): [PR 3](https://github.com/jenkinsci/mask-passwords-plugin/pull/3)
+- [x] `MaskPasswordsBuildWrapper` (`mask-passwords`): supported as of 2.8
 - [X] `XvfbBuildWrapper` (`xvfb`): supported as of 1.1.0-beta-1
 - [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
 - [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
-- [X] `AnsiColorBuildWrapper` (`ansicolor`): scheduled to be supported as of 0.4.1
+- [ ] `AnsiColorBuildWrapper` (`ansicolor`): scheduled to be supported as of 0.4.2
+- [ ] `CustomToolInstallWrapper` (`custom-tools-plugin`): [JENKINS-30680](https://issues.jenkins-ci.org/browse/JENKINS-30680) 
+- [ ] `PortAllocator` (`port-allocator`): [JENKINS-31449](https://issues.jenkins-ci.org/browse/JENKINS-31449)
 
 ## Triggers
 
 - [X] `gerrit-trigger`: supported as of 2.15.0
 - [ ] `ghprb`: [JENKINS-26591](https://issues.jenkins-ci.org/browse/JENKINS-26591)
-- [X] `github`: scheduled to be supported as of 1.14
+- [X] `github`: supported as of 1.14.0
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
 - [ ] `deployment-notification`: [JENKINS-28632](https://issues.jenkins-ci.org/browse/JENKINS-28632)
 - [X] `gitlab-plugin`: supported as of 1.1.26
@@ -102,6 +104,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `lockable-resources` : [JENKINS-30269](https://issues.jenkins-ci.org/browse/JENKINS-30269)
 - [X] `customize-build-now`: supported as of 1.1
 - [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
+- [X] `embeddable-build-status`: scheduled to be supported as of 1.9
 
 ## Custom steps
 

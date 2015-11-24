@@ -30,6 +30,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.BooleanParameterValue;
 import hudson.model.Descriptor;
 import hudson.model.ParameterValue;
+import hudson.model.ParametersDefinitionProperty;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.extensions.impl.CleanBeforeCheckout;
 import java.net.URL;
@@ -461,6 +462,10 @@ public class DescribableHelperTest {
             }
             return b.toString();
         }
+    }
+
+    @Test public void parametersDefinitionProperty() throws Exception {
+        roundTrip(ParametersDefinitionProperty.class, map("parameterDefinitions", Arrays.asList(map("$class", "BooleanParameterDefinition", "name", "flag", "defaultValue", false), map("$class", "StringParameterDefinition", "name", "text"))));
     }
 
     @Issue("JENKINS-26619")

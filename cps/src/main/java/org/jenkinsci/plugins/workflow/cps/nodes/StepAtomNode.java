@@ -40,6 +40,7 @@ import java.util.Collections;
  * @author Kohsuke Kawaguchi
  */
 public class StepAtomNode extends AtomNode implements StepNode {
+
     private final String descriptorId;
 
     // once we successfully convert descriptorId to a real instance, cache that
@@ -69,5 +70,11 @@ public class StepAtomNode extends AtomNode implements StepNode {
     protected String getTypeDisplayName() {
         StepDescriptor d = getDescriptor();
         return d!=null ? d.getDisplayName() : descriptorId;
+    }
+
+    @Override
+    protected String getTypeFunctionName() {
+        StepDescriptor d = getDescriptor();
+        return d != null ? d.getFunctionName() : descriptorId;
     }
 }

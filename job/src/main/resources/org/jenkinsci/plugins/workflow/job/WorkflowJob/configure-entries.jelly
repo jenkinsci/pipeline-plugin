@@ -38,6 +38,6 @@
     </f:section>
 
     <f:section title="Workflow">
-        <f:dropdownDescriptorSelector title="Definition" field="definition"/>
+        <f:dropdownDescriptorSelector title="Definition" field="definition" descriptors="${descriptor.getDefinitionDescriptors(it)}"/>
     </f:section>
 </j:jelly>

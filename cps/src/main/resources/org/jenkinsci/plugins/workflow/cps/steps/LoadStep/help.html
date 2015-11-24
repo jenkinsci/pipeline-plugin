@@ -1,0 +1,17 @@
+<div>
+    Takes a filename in the workspace and runs it as Groovy source text.
+    <p>
+        The loaded file can contain statements at top level or just load and run a closure. For example:
+    </p>
+    <pre>
+    def flow
+    node('slave') {
+        flow = load 'flow.groovy'
+        flow.functionA()
+    }
+    flow.functionB()
+    </pre>
+    <p>
+    Where <code>flow.groovy</code> defines functionA and functionB functions (among others) before ending with <code>return this;</code>
+    <p>
+</div>

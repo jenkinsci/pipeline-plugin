@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.job;
 
 import hudson.AbortException;
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.init.InitMilestone;
@@ -35,6 +36,7 @@ import hudson.model.BuildableItem;
 import hudson.model.Cause;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
+import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.Executor;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
@@ -58,6 +60,7 @@ import hudson.scm.SCM;
 import hudson.search.SearchIndexBuilder;
 import hudson.security.ACL;
 import hudson.slaves.WorkspaceList;
+import hudson.tasks.LogRotator;
 import hudson.triggers.SCMTrigger;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
@@ -73,6 +76,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
+import jenkins.model.BuildDiscarder;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
 import jenkins.model.lazy.LazyBuildMixIn;
@@ -81,6 +85,8 @@ import jenkins.util.TimeDuration;
 import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
+import org.jenkinsci.plugins.workflow.flow.FlowDefinitionDescriptor;
+import org.jenkinsci.plugins.workflow.job.properties.BuildDiscarderProperty;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.QueryParameter;
@@ -304,7 +310,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         }
         return null;
     }
-    // TODO use BlockedBecauseOfBuildInProgress in 1.624
+    // TODO use BlockedBecauseOfBuildInProgress in 1.624 (and remove Messages.properties in resources)
     public static class BecauseOfBuildInProgress extends CauseOfBlockage {
         private final Run<?,?> build;
 
@@ -317,10 +323,10 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             Executor e = build.getExecutor();
             String eta = "";
             if (e != null) {
-                eta = hudson.model.Messages.AbstractProject_ETA(e.getEstimatedRemainingTime());
+                eta = Messages.BlockedBecauseOfBuildInProgress_ETA(e.getEstimatedRemainingTime());
             }
             int lbn = build.getNumber();
-            return hudson.model.Messages.AbstractProject_BuildInProgress(lbn, eta);
+            return Messages.BlockedBecauseOfBuildInProgress_shortDescription(lbn, eta);
         }
     }
 
@@ -521,6 +527,29 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         // TODO call SCM.processWorkspaceBeforeDeletion
     }
 
+    /** Actually it does, but we want to suppress this section of {@code Job/configure.jelly} in favor of {@link BuildDiscarderProperty}. */
+    @Override public boolean supportsLogRotator() {
+        return false;
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override public LogRotator getLogRotator() {
+        BuildDiscarder buildDiscarder = getBuildDiscarder();
+        return buildDiscarder instanceof LogRotator ? (LogRotator) buildDiscarder : null;
+    }
+
+    @Override public void setBuildDiscarder(BuildDiscarder bd) throws IOException {
+        removeProperty(BuildDiscarderProperty.class);
+        if (bd != null) {
+            addProperty(new BuildDiscarderProperty(bd));
+        }
+    }
+
+    @Override public BuildDiscarder getBuildDiscarder() {
+        BuildDiscarderProperty prop = getProperty(BuildDiscarderProperty.class);
+        return prop != null ? prop.getStrategy() : /* settings compatibility */ super.getBuildDiscarder();
+    }
+
     @Initializer(before=InitMilestone.EXTENSIONS_AUGMENTED)
     public static void alias() {
         Items.XSTREAM2.alias("flow-definition", WorkflowJob.class);
@@ -535,6 +564,12 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
 
         @Override public TopLevelItem newInstance(ItemGroup parent, String name) {
             return new WorkflowJob(parent, name);
+        }
+
+        /** TODO JENKINS-20020 can delete this in case {@code f:dropdownDescriptorSelector} defaults to applying {@code h.filterDescriptors} */
+        @Restricted(DoNotUse.class) // Jelly
+        public Collection<FlowDefinitionDescriptor> getDefinitionDescriptors(WorkflowJob context) {
+            return DescriptorVisibilityFilter.apply(context, ExtensionList.lookup(FlowDefinitionDescriptor.class));
         }
 
     }

@@ -24,10 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
-import hudson.console.LineTransformationOutputStream;
-import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
-import org.jenkinsci.plugins.workflow.actions.TimingAction;
-import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -37,8 +34,10 @@ import hudson.FilePath;
 import hudson.Main;
 import hudson.XmlFile;
 import hudson.console.AnnotatedLargeText;
+import hudson.console.LineTransformationOutputStream;
 import hudson.model.Computer;
 import hudson.model.Executor;
+import hudson.model.Item;
 import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -49,6 +48,7 @@ import hudson.model.listeners.SCMListener;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
+import hudson.util.Iterators;
 import hudson.util.NullStream;
 import hudson.util.PersistedList;
 import java.io.File;
@@ -81,15 +81,23 @@ import jenkins.model.lazy.LazyBuildMixIn;
 import jenkins.model.queue.AsynchronousExecution;
 import jenkins.util.Timer;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
+import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
+import org.jenkinsci.plugins.workflow.actions.TimingAction;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.flow.GraphListener;
 import org.jenkinsci.plugins.workflow.flow.StashManager;
 import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowEndNode;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.job.console.WorkflowConsoleLogger;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
+import org.jenkinsci.plugins.workflow.support.steps.input.POSTHyperlinkNote;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.export.Exported;
@@ -115,7 +123,18 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     };
     private transient StreamBuildListener listener;
+
+    /**
+     * Flag for whether or not the build has completed somehow.
+     * Non-null soon after the build starts or is reloaded from disk.
+     * Recomputed in {@link #onLoad} based on {@link FlowExecution#isComplete}.
+     * TODO may be better to make this a persistent field.
+     * That would allow the execution of a completed build to be loaded on demand, reducing overhead for some operations.
+     * It would also remove the need to null out {@link #execution} merely to force {@link #isInProgress} to be false
+     * in the case of broken or hard-killed builds which lack a single head node.
+     */
     private transient AtomicBoolean completed;
+
     /** map from node IDs to log positions from which we should copy text */
     private Map<String,Long> logsToCopy;
 
@@ -210,6 +229,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     LOGGER.log(Level.WARNING, null, x);
                 }
                 getExecutor().recordCauseOfInterruption(WorkflowRun.this, listener);
+                printLater("term", "Click here to forcibly terminate running steps");
             }
             @Override public boolean blocksRestart() {
                 return execution.blocksRestart();
@@ -240,6 +260,62 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
         }, 1, 1, TimeUnit.SECONDS));
         return asynchronousExecution;
+    }
+
+    private void printLater(final String url, final String message) {
+        Timer.get().schedule(new Runnable() {
+            @Override public void run() {
+                if (!isInProgress()) {
+                    return;
+                }
+                listener.getLogger().println(POSTHyperlinkNote.encodeTo("/" + getUrl() + url, message));
+            }
+        }, 15, TimeUnit.SECONDS);
+    }
+
+    /** Sends {@link StepContext#onFailure} to all running (leaf) steps. */
+    @RequirePOST
+    public void doTerm() {
+        checkPermission(Item.CANCEL);
+        if (!isInProgress()) {
+            return;
+        }
+        final Throwable x = new FlowInterruptedException(Result.ABORTED);
+        Futures.addCallback(execution.getCurrentExecutions(/* cf. JENKINS-26148 */true), new FutureCallback<List<StepExecution>>() {
+            @Override public void onSuccess(List<StepExecution> l) {
+                for (StepExecution e : Iterators.reverse(l)) {
+                    StepContext context = e.getContext();
+                    context.onFailure(x);
+                    try {
+                        FlowNode n = context.get(FlowNode.class);
+                        if (n != null) {
+                            listener.getLogger().println("Terminating " + n.getDisplayFunctionName());
+                        }
+                    } catch (Exception x) {
+                        LOGGER.log(Level.FINE, null, x);
+                    }
+                }
+            }
+            @Override public void onFailure(Throwable t) {}
+        });
+        printLater("kill", "Click here to forcibly kill entire build");
+    }
+
+    /** Immediately kills the build. */
+    @RequirePOST
+    public void doKill() {
+        checkPermission(Item.CANCEL);
+        if (!isBuilding()) {
+            return;
+        }
+        if (listener != null) {
+            listener.getLogger().println("Hard kill!");
+        }
+        execution = null; // ensures isInProgress returns false
+        FlowInterruptedException suddenDeath = new FlowInterruptedException(Result.ABORTED);
+        finish(Result.ABORTED, suddenDeath);
+        executionPromise.setException(suddenDeath);
+        // TODO CpsFlowExecution.onProgramEnd does some cleanup which we cannot access here; perhaps need a FlowExecution.halt(Throwable) API?
     }
 
     @GuardedBy("completed")
@@ -511,7 +587,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
 
     @Exported
     @Override protected boolean isInProgress() {
-        return execution != null && !execution.isComplete();
+        return execution != null && !execution.isComplete() && (completed == null || !completed.get());
     }
 
     @Override public boolean isLogUpdated() {
@@ -553,6 +629,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (e != null) {
             return e.doStop();
         } else {
+            doKill();
             return HttpResponses.forwardToPreviousPage();
         }
     }
@@ -683,7 +760,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
             node.addAction(new TimingAction());
 
-            logNodeMessage(node, "Running: " + node.getDisplayName());
+            logNodeMessage(node);
             if (node instanceof FlowEndNode) {
                 finish(((FlowEndNode) node).getResult(), execution.getCauseOfFailure());
             } else {
@@ -696,19 +773,19 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     }
 
-    private void logNodeMessage(FlowNode node, String message) {
-        PrintStream logger = listener.getLogger();
+    private void logNodeMessage(FlowNode node) {
+        WorkflowConsoleLogger wfLogger = new WorkflowConsoleLogger(listener);
         String prefix = getLogPrefix(node);
         if (prefix != null) {
-            logger.printf("[%s] %s%n", prefix, message);
+            wfLogger.log(String.format("[%s] %s", prefix, node.getDisplayFunctionName()));
         } else {
-            logger.println(message);
+            wfLogger.log(node.getDisplayFunctionName());
         }
         // Flushing to keep logs printed in order as much as possible. The copyLogs method uses
         // LargeText and possibly LogLinePrefixOutputFilter. Both of these buffer and flush, causing strange
         // out of sequence writes to the underlying log stream (and => things being printed out of sequence)
         // if we don't flush the logger here.
-        logger.flush();
+        wfLogger.getLogger().flush();
     }
 
     static void alias() {

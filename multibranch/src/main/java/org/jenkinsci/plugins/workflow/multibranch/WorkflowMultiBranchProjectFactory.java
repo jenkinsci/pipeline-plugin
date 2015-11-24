@@ -25,32 +25,38 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
 import hudson.Extension;
-import hudson.model.Job;
-import hudson.model.Run;
-import jenkins.branch.BranchPropertyDescriptor;
-import jenkins.branch.MultiBranchProjectDescriptor;
-import jenkins.branch.ParameterDefinitionBranchProperty;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import hudson.model.ItemGroup;
+import java.util.Map;
+import jenkins.branch.MultiBranchProject;
+import jenkins.branch.MultiBranchProjectFactory;
+import jenkins.branch.MultiBranchProjectFactoryDescriptor;
+import jenkins.scm.api.SCMSource;
+import jenkins.scm.api.SCMSourceCriteria;
+import static org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject.CRITERIA;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class WorkflowParameterDefinitionBranchProperty extends ParameterDefinitionBranchProperty {
+public class WorkflowMultiBranchProjectFactory extends MultiBranchProjectFactory.BySCMSourceCriteria {
 
-    @DataBoundConstructor public WorkflowParameterDefinitionBranchProperty() {}
+    @DataBoundConstructor public WorkflowMultiBranchProjectFactory() {}
 
-    @Override protected <P extends Job<P, B>, B extends Run<P, B>> boolean isApplicable(Class<P> clazz) {
-        return clazz == WorkflowJob.class;
+    @Override protected SCMSourceCriteria getSCMSourceCriteria(SCMSource source) {
+        return CRITERIA;
     }
 
-    @Extension public static class DescriptorImpl extends BranchPropertyDescriptor {
+    @Override protected MultiBranchProject<?,?> doCreateProject(ItemGroup<?> parent, String name, Map<String,Object> attributes) {
+        return new WorkflowMultiBranchProject(parent, name);
+    }
 
-        @Override protected boolean isApplicable(MultiBranchProjectDescriptor projectDescriptor) {
-            return WorkflowMultiBranchProject.class.isAssignableFrom(projectDescriptor.getClazz());
+    @Extension public static class DescriptorImpl extends MultiBranchProjectFactoryDescriptor {
+
+        @Override public MultiBranchProjectFactory newInstance() {
+            return new WorkflowMultiBranchProjectFactory();
         }
 
-        @Override
-        public String getDisplayName() {
-            return "Parameters";
+        @Override public String getDisplayName() {
+            return "Workflow Jenkinsfile";
         }
+
     }
 
 }

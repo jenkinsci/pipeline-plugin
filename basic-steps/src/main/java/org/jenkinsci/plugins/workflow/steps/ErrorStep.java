@@ -64,7 +64,7 @@ public final class ErrorStep extends AbstractStepImpl {
         }
 
         @Override public String getDisplayName() {
-            return "Error";
+            return "Error signal";
         }
 
     }

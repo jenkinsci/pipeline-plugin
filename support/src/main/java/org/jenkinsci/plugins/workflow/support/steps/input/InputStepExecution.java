@@ -39,11 +39,8 @@ import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
  * @author Kohsuke Kawaguchi
  */
 public class InputStepExecution extends AbstractStepExecutionImpl implements ModelObject {
-    /**
-     * Pause gets added here.
-     */
-    @StepContextParameter
-    /*package*/ transient Run run;
+
+    @StepContextParameter private transient Run run;
 
     @StepContextParameter private transient TaskListener listener;
 
@@ -225,7 +222,11 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
             getPauseAction().remove(this);
             run.save();
         } finally {
-            PauseAction.endCurrentPause(node);
+            if (node != null) {
+                PauseAction.endCurrentPause(node);
+            } else {
+                assert false : "cannot set pause end time for " + getId() + " in " + run;
+            }
         }
     }
 

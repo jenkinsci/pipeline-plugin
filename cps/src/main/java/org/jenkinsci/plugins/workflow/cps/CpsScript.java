@@ -126,7 +126,7 @@ public abstract class CpsScript extends SerializableScript {
         return super.getProperty(property);
     }
 
-    @CheckForNull Run<?,?> $build() throws IOException {
+    public @CheckForNull Run<?,?> $build() throws IOException {
         FlowExecutionOwner owner = execution.getOwner();
         Queue.Executable qe = owner.getExecutable();
         if (qe instanceof Run) {
