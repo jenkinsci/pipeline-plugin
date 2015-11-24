@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.graph;
 
+import java.io.IOException;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 
 import java.util.List;
@@ -34,19 +35,29 @@ import java.util.List;
  * @see BlockStartNode
  */
 public abstract class BlockEndNode<START extends BlockStartNode> extends FlowNode {
-    private final START start;
+    private transient START start;
+    private final String startId;
 
     public BlockEndNode(FlowExecution exec, String id, START start, FlowNode... parents) {
         super(exec, id, parents);
         this.start = start;
+        startId = start.getId();
     }
 
     public BlockEndNode(FlowExecution exec, String id, START start, List<FlowNode> parents) {
         super(exec, id, parents);
         this.start = start;
+        startId = start.getId();
     }
 
     public START getStartNode() {
+        if (start == null) {
+            try {
+                start = (START) getExecution().getNode(startId);
+            } catch (IOException x) {
+                x.printStackTrace(); // TODO
+            }
+        }
         return start;
     }
 

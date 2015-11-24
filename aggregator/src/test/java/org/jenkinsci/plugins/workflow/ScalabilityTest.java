@@ -24,11 +24,13 @@
 
 package org.jenkinsci.plugins.workflow;
 
+import java.util.List;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
@@ -39,7 +41,6 @@ public class ScalabilityTest {
 
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
-    @Ignore("TODO java.io.IOException: failed to load flow node from /…/jobs/p/builds/1/workflow/10003.xml: …<node class='org.jenkinsci.plugins.workflow.graph.FlowEndNode'>…")
     @Issue("JENKINS-30055")
     @Test public void manySteps() {
         story.addStep(new Statement() {
@@ -55,7 +56,13 @@ public class ScalabilityTest {
                 WorkflowJob p = story.j.jenkins.getItemByFullName("p", WorkflowJob.class);
                 WorkflowRun b = p.getLastBuild();
                 story.j.assertLogContains("iteration #5432", b);
-                assertNotNull(b.getExecution());
+                FlowExecution execution = b.getExecution();
+                assertNotNull(execution);
+                FlowNode node = execution.getNode("5678");
+                assertNotNull(node);
+                List<FlowNode> parents = node.getParents();
+                assertEquals(1, parents.size());
+                assertEquals("5677", parents.get(0).getId());
             }
         });
     }

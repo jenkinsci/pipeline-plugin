@@ -53,7 +53,8 @@ import org.kohsuke.stapler.export.ExportedBean;
  */
 @ExportedBean
 public abstract class FlowNode extends Actionable implements Saveable {
-    private final List<FlowNode> parents;
+    private transient List<FlowNode> parents;
+    private final List<String> parentIds;
 
     private final String id;
 
@@ -67,12 +68,22 @@ public abstract class FlowNode extends Actionable implements Saveable {
         this.id = id;
         this.exec = exec;
         this.parents = ImmutableList.copyOf(parents);
+        parentIds = ids();
     }
 
     protected FlowNode(FlowExecution exec, String id, FlowNode... parents) {
         this.id = id;
         this.exec = exec;
         this.parents = ImmutableList.copyOf(parents);
+        parentIds = ids();
+    }
+
+    private List<String> ids() {
+        List<String> ids = new ArrayList<String>(parents.size());
+        for (FlowNode n : parents) {
+            ids.add(n.id);
+        }
+        return ids;
     }
 
     /**
@@ -103,6 +114,16 @@ public abstract class FlowNode extends Actionable implements Saveable {
      * Returns a read-only view of parents.
      */
     public List<FlowNode> getParents() {
+        if (parents == null) {
+            parents = new ArrayList<FlowNode>(parentIds.size());
+            for (String id : parentIds) {
+                try {
+                    parents.add(exec.getNode(id));
+                } catch (IOException x) {
+                    x.printStackTrace(); // TODO deal with this somehow
+                }
+            }
+        }
         return parents;
     }
 
