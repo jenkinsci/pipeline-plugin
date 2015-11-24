@@ -29,8 +29,7 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import java.util.List;
 
 /**
- * @author Kohsuke Kawaguchi
- * @author Jesse Glick
+ * @deprecated unused
  */
 public class JoinNode extends BlockEndNode<ForkNode> {
     public JoinNode(FlowExecution exec, String id, ForkNode forkNode, List<FlowNode> parents) {

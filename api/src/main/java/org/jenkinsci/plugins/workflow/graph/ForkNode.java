@@ -27,8 +27,7 @@ package org.jenkinsci.plugins.workflow.graph;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 
 /**
- * @author Kohsuke Kawaguchi
- * @author Jesse Glick
+ * @deprecated unused
  */
 public class ForkNode extends BlockStartNode {
     public ForkNode(FlowExecution storage, String id, FlowNode... parents) {
