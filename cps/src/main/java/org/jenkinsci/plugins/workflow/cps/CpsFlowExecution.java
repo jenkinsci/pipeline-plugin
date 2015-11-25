@@ -104,6 +104,7 @@ import javax.annotation.concurrent.GuardedBy;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.jboss.marshalling.reflect.SerializableClassRegistry;
+
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import org.kohsuke.accmod.restrictions.DoNotUse;
@@ -529,7 +530,7 @@ public class CpsFlowExecution extends FlowExecution {
      *
      * <p>
      * If the {@link CpsThreadGroup} deserializatoin fails, {@link FutureCallback#onFailure(Throwable)} will
-     * be invoked (on a random thread, since {@link CpsVmThread} doesn't exist without a valid program.)
+     * be invoked (on a random thread, since CpsVmThread doesn't exist without a valid program.)
      */
     void runInCpsVmThread(final FutureCallback<CpsThreadGroup> callback) {
         if (programPromise == null) {
@@ -635,6 +636,31 @@ public class CpsFlowExecution extends FlowExecution {
         });
 
         return r;
+    }
+
+    /**
+     * Synchronously obtain the current state of the workflow program.
+     *
+     * <p>
+     * The workflow can be already completed, or it can still be running.
+     */
+    public CpsThreadDump getThreadDump() {
+        if (programPromise == null || isComplete()) {
+            return CpsThreadDump.EMPTY;
+        }
+        if (!programPromise.isDone()) {
+            // CpsThreadGroup state isn't ready yet, but this is probably one of the common cases
+            // when one wants to obtain the stack trace. Cf. JENKINS-26130.
+            return CpsThreadDump.UNKNOWN;
+        }
+
+        try {
+            return programPromise.get().getThreadDump();
+        } catch (InterruptedException e) {
+            throw new AssertionError(); // since we are checking programPromise.isDone() upfront
+        } catch (ExecutionException e) {
+            return CpsThreadDump.from(new Exception("Failed to resurrect program state",e));
+        }
     }
 
     @Override
