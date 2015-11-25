@@ -1,22 +1,24 @@
 package org.jenkinsci.plugins.workflow.cps;
 
+import java.util.ArrayList;
+import static java.util.Arrays.asList;
+import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsThreadDump.ThreadInfo;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
+import static org.junit.Assert.*;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
-
 public class CpsThreadDumpTest {
+
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule
     public JenkinsRule j = new JenkinsRule();
     private WorkflowJob p;
@@ -100,6 +102,26 @@ public class CpsThreadDumpTest {
             "DSL.semaphore(Native Method)",
             "Script1.m(Script1.groovy:1)",
             "WorkflowScript.run(WorkflowScript:1)");
+    }
+
+    @Test public void nativeMethods() throws Exception {
+        p.setDefinition(new CpsFlowDefinition(
+            "@NonCPS def untransformed() {Thread.sleep(Long.MAX_VALUE)}\n" +
+            "def helper() {echo 'sleeping'; /* flush output */ sleep 1; untransformed()}\n" +
+            "helper()"));
+        WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+        CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
+        j.waitForMessage("sleeping", b);
+        do { // wait for the CPS VM to be busy (opposite of waitForSuspension)
+            Thread.sleep(100);
+        } while (!e.blocksRestart());
+        CpsThreadDump td = e.getThreadDump();
+        td.print(System.out);
+        assertStackTrace(td.getThreads().get(0),
+            // TODO would like to see untransformed and Thread.sleep here
+            "WorkflowScript.helper(WorkflowScript:2)",
+            "WorkflowScript.run(WorkflowScript:3)");
+        b.doKill();
     }
 
     private void assertStackTrace(ThreadInfo t, String... expected) {
