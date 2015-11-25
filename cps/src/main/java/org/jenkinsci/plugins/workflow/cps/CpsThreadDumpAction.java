@@ -5,6 +5,8 @@ import hudson.model.Action;
 import java.util.Collection;
 import java.util.Collections;
 import jenkins.model.TransientActionFactory;
+import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 
 /**
  * Shows thread dump for {@link CpsFlowExecution}.
@@ -36,14 +38,21 @@ public final class CpsThreadDumpAction implements Action {
         return execution;
     }
 
-    @Extension public static class Factory extends TransientActionFactory<CpsFlowExecution> {
+    @Extension public static class Factory extends TransientActionFactory<FlowExecutionOwner.Executable> {
 
-        @Override public Class<CpsFlowExecution> type() {
-            return CpsFlowExecution.class;
+        @Override public Class<FlowExecutionOwner.Executable> type() {
+            return FlowExecutionOwner.Executable.class;
         }
 
-        @Override public Collection<? extends Action> createFor(CpsFlowExecution execution) {
-            return Collections.singleton(new CpsThreadDumpAction(execution));
+        @Override public Collection<? extends Action> createFor(FlowExecutionOwner.Executable executable) {
+            FlowExecutionOwner owner = executable.asFlowExecutionOwner();
+            if (owner != null) {
+                FlowExecution exec = owner.getOrNull();
+                if (exec instanceof CpsFlowExecution) {
+                    return Collections.singleton(new CpsThreadDumpAction((CpsFlowExecution) exec));
+                }
+            }
+            return Collections.emptySet();
         }
 
     }

@@ -37,7 +37,9 @@ public class CpsThreadDumpTest {
         ), "\n")));
         WorkflowRun b = p.scheduleBuild2(0).waitForStart();
         SemaphoreStep.waitForStart("x/1", b);
-        CpsFlowExecution e = (CpsFlowExecution) b.getExecution();
+        CpsThreadDumpAction action = b.getAction(CpsThreadDumpAction.class);
+        assertNotNull(b);
+        CpsFlowExecution e = action.getExecution();
         CpsThreadDump td = e.getThreadDump();
         td.print(System.out);
 

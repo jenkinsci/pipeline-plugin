@@ -42,7 +42,6 @@ import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
-import jenkins.model.TransientActionFactory;
 import jenkins.model.queue.AsynchronousExecution;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
@@ -54,13 +53,15 @@ import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
  * This "interface" abstracts away workflow definition language, syntax, or its
  * execution model, but it allows other code to listen on what's going on.
  *
- * <p>You may register a {@link TransientActionFactory} of {@link FlowExecution}s to add actions to the UI.
- *
  * <h2>Persistence</h2>
  * <p>
  * {@link FlowExecution} must support persistence by XStream, which should
  * capture the state of execution at one point. The expectation is that when
  * the object gets deserialized, it'll start re-executing from that point.
+ *
+ *
+ * @author Kohsuke Kawaguchi
+ * @author Jesse Glick
  */
 public abstract class FlowExecution implements FlowActionStorage {
 

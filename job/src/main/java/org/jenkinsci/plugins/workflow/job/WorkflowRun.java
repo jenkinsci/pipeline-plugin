@@ -104,7 +104,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
 @SuppressFBWarnings(value="JLM_JSR166_UTILCONCURRENT_MONITORENTER", justification="completed is an unusual usage")
-public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Queue.Executable, LazyBuildMixIn.LazyLoadingRun<WorkflowJob,WorkflowRun> {
+public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements FlowExecutionOwner.Executable, LazyBuildMixIn.LazyLoadingRun<WorkflowJob,WorkflowRun> {
 
     private static final Logger LOGGER = Logger.getLogger(WorkflowRun.class.getName());
 
@@ -549,6 +549,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return executionPromise;
     }
 
+    @Override public FlowExecutionOwner asFlowExecutionOwner() {
+        return new Owner(this);
+    }
+
     @Override
     public boolean hasntStartedYet() {
         return result == null && execution==null;
@@ -694,6 +698,14 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                 return exec;
             } else {
                 throw new IOException(r + " did not yet start");
+            }
+        }
+        @Override public FlowExecution getOrNull() {
+            try {
+                return run().getExecution();
+            } catch (IOException x) {
+                LOGGER.log(/* not important */Level.FINE, null, x);
+                return null;
             }
         }
         @Override public File getRootDir() throws IOException {
