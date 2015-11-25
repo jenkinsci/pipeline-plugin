@@ -2,7 +2,7 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.12 (upcoming)
+## 1.12-beta-2 (Nov 25 2015)
 
 * [JENKINS-29705](https://issues.jenkins-ci.org/browse/JENKINS-29705): added _Thread Dump_ link to running flow builds for diagnosing problems like hangs.
 * [JENKINS-31649](https://issues.jenkins-ci.org/browse/JENKINS-31649): correctly display pending queue items for blocked `node {}` tasks when on Jenkins 1.639+ (will not appear in 1.638 or 1.625.2).
