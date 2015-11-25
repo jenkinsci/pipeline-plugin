@@ -4,6 +4,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 
 ## 1.12 (upcoming)
 
+* [JENKINS-31691](https://issues.jenkins-ci.org/browse/JENKINS-31691): added `isUnix` step.
 * [JENKINS-31585](https://issues.jenkins-ci.org/browse/JENKINS-31585): make new script editor resizable.
 
 ## 1.12-beta-1 (Nov 19 2015)
