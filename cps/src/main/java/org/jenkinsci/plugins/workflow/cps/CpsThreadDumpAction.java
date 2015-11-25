@@ -59,7 +59,7 @@ public final class CpsThreadDumpAction implements Action {
             FlowExecutionOwner owner = executable.asFlowExecutionOwner();
             if (owner != null) {
                 FlowExecution exec = owner.getOrNull();
-                if (exec instanceof CpsFlowExecution) {
+                if (exec instanceof CpsFlowExecution && !exec.isComplete()) {
                     return Collections.singleton(new CpsThreadDumpAction((CpsFlowExecution) exec));
                 }
             }

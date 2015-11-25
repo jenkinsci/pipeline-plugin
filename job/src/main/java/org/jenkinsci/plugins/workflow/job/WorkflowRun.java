@@ -702,11 +702,14 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
         }
         @Override public FlowExecution getOrNull() {
             try {
-                return run().getExecution();
-            } catch (IOException x) {
+                ListenableFuture<FlowExecution> promise = run().getExecutionPromise();
+                if (promise.isDone()) {
+                    return promise.get();
+                }
+            } catch (Exception x) {
                 LOGGER.log(/* not important */Level.FINE, null, x);
-                return null;
             }
+            return null;
         }
         @Override public File getRootDir() throws IOException {
             return run().getRootDir();

@@ -53,6 +53,9 @@ public class CpsThreadDumpTest {
                     "WorkflowScript.foo(WorkflowScript:1)",
                     "WorkflowScript.run(WorkflowScript:5)");
         }
+        SemaphoreStep.success("x/1", null);
+        j.waitForCompletion(b);
+        assertNull(b.getAction(CpsThreadDumpAction.class));
     }
 
     @Test
