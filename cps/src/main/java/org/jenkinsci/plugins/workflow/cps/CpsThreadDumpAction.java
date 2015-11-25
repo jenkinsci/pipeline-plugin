@@ -40,7 +40,7 @@ public final class CpsThreadDumpAction implements Action {
         return execution.getOwner().getUrl();
     }
 
-    /* for tests */ CpsThreadDump threadDumpSynchonous() throws InterruptedException, ExecutionException {
+    /* for tests */ CpsThreadDump threadDumpSynchronous() throws InterruptedException, ExecutionException {
         execution.waitForSuspension();
         return execution.getThreadDump();
     }
