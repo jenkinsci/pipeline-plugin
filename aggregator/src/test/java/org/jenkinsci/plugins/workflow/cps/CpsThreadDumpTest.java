@@ -37,9 +37,7 @@ public class CpsThreadDumpTest {
         ), "\n")));
         WorkflowRun b = p.scheduleBuild2(0).waitForStart();
         SemaphoreStep.waitForStart("x/1", b);
-        CpsThreadDumpAction action = b.getAction(CpsThreadDumpAction.class);
-        assertNotNull(b);
-        CpsThreadDump td = action.threadDump();
+        CpsThreadDump td = b.getAction(CpsThreadDumpAction.class).threadDumpSynchonous();
         td.print(System.out);
 
         {// verify that we got the right thread dump
@@ -73,8 +71,7 @@ public class CpsThreadDumpTest {
         SemaphoreStep.waitForStart("x/1", b);
         SemaphoreStep.waitForStart("y/1", b);
 
-        CpsFlowExecution e = (CpsFlowExecution) b.getExecution();
-        CpsThreadDump td = e.getThreadDump();
+        CpsThreadDump td = b.getAction(CpsThreadDumpAction.class).threadDumpSynchonous();
         td.print(System.out);
 
         assertStackTrace( td.getThreads().get(0),
@@ -97,8 +94,7 @@ public class CpsThreadDumpTest {
         p.setDefinition(new CpsFlowDefinition("def lib; node {lib = load 'lib.groovy'}; lib.m()", true));
         WorkflowRun b = p.scheduleBuild2(0).waitForStart();
         SemaphoreStep.waitForStart("here/1", b);
-        CpsFlowExecution e = (CpsFlowExecution) b.getExecution();
-        CpsThreadDump td = e.getThreadDump();
+        CpsThreadDump td = b.getAction(CpsThreadDumpAction.class).threadDumpSynchonous();
         td.print(System.out);
         assertStackTrace(td.getThreads().get(0),
             "DSL.semaphore(Native Method)",
