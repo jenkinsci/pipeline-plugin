@@ -39,8 +39,7 @@ public class CpsThreadDumpTest {
         SemaphoreStep.waitForStart("x/1", b);
         CpsThreadDumpAction action = b.getAction(CpsThreadDumpAction.class);
         assertNotNull(b);
-        CpsFlowExecution e = action.getExecution();
-        CpsThreadDump td = e.getThreadDump();
+        CpsThreadDump td = action.threadDump();
         td.print(System.out);
 
         {// verify that we got the right thread dump
