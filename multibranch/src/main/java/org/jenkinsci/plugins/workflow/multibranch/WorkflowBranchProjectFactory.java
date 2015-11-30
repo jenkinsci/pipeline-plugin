@@ -44,7 +44,7 @@ public class WorkflowBranchProjectFactory extends BranchProjectFactory<WorkflowJ
     @DataBoundConstructor public WorkflowBranchProjectFactory() {}
 
     @Override public WorkflowJob newInstance(Branch branch) {
-        WorkflowJob job = new WorkflowJob((WorkflowMultiBranchProject) getOwner(), branch.getName());
+        WorkflowJob job = new WorkflowJob((WorkflowMultiBranchProject) getOwner(), branch.getEncodedName());
         job.setDefinition(new SCMBinder());
         setBranch(job, branch);
         return job;
@@ -58,9 +58,7 @@ public class WorkflowBranchProjectFactory extends BranchProjectFactory<WorkflowJ
         BranchJobProperty property = project.getProperty(BranchJobProperty.class);
         try {
             if (property == null) {
-                property = new BranchJobProperty();
-                property.setBranch(branch);
-                project.addProperty(property);
+                project.addProperty(new BranchJobProperty(branch));
             } else if (!property.getBranch().equals(branch)) {
                 property.setBranch(branch);
                 project.save();

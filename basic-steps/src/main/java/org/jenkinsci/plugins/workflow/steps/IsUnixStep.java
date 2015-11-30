@@ -22,35 +22,45 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.multibranch;
+package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Extension;
-import hudson.model.Job;
-import hudson.model.Run;
-import jenkins.branch.BranchPropertyDescriptor;
-import jenkins.branch.MultiBranchProjectDescriptor;
-import jenkins.branch.ParameterDefinitionBranchProperty;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import hudson.Launcher;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class WorkflowParameterDefinitionBranchProperty extends ParameterDefinitionBranchProperty {
+/**
+ * Checks whether we are running on Unix.
+ */
+public class IsUnixStep extends AbstractStepImpl {
 
-    @DataBoundConstructor public WorkflowParameterDefinitionBranchProperty() {}
+    @DataBoundConstructor public IsUnixStep() {}
 
-    @Override protected <P extends Job<P, B>, B extends Run<P, B>> boolean isApplicable(Class<P> clazz) {
-        return clazz == WorkflowJob.class;
+    public static class Execution extends AbstractSynchronousStepExecution<Boolean> {
+
+        @StepContextParameter private transient Launcher launcher;
+
+        @Override protected Boolean run() throws Exception {
+            return launcher.isUnix();
+        }
+
+        private static final long serialVersionUID = 1L;
+
     }
 
-    @Extension public static class DescriptorImpl extends BranchPropertyDescriptor {
+    @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
 
-        @Override protected boolean isApplicable(MultiBranchProjectDescriptor projectDescriptor) {
-            return WorkflowMultiBranchProject.class.isAssignableFrom(projectDescriptor.getClazz());
+        public DescriptorImpl() {
+            super(Execution.class);
         }
 
-        @Override
-        public String getDisplayName() {
-            return "Parameters";
+        @Override public String getFunctionName() {
+            return "isUnix";
         }
+
+        @Override public String getDisplayName() {
+            return "Checks if running on a Unix-like node";
+        }
+
     }
 
 }

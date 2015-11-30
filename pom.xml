@@ -32,7 +32,7 @@
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
-    <version>1.11-SNAPSHOT</version>
+    <version>1.12-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Workflow: Parent</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
@@ -65,9 +65,7 @@
         -->
         <module>job</module>
         <module>aggregator</module>
-        <!-- TODO excluded since we cannot release a nonbeta of it while it has beta dependencies:
         <module>multibranch</module>
-        -->
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -219,11 +217,10 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>3.0.1</version>
+                        <version>3.0.2</version>
                         <configuration>
-                          <xmlOutput>true</xmlOutput>
-                          <findbugsXmlWithMessages>true</findbugsXmlWithMessages>
-                          <failOnError>false</failOnError>
+                            <xmlOutput>true</xmlOutput>
+                            <failOnError>false</failOnError>
                         </configuration>
                         <executions>
                             <execution>

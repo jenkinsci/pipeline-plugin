@@ -13,10 +13,11 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `MercurialSCM` (`mercurial`): supported as of 1.51
 - [X] `PerforceScm` (`p4`, not the older `perforce`): supported as of 1.2.0
 - [ ] `DimensionsSCM` (`dimensionsscm`): [JENKINS-26165](https://issues.jenkins-ci.org/browse/JENKINS-26165)
-- [ ] `IntegritySCM` (`integrity-plugin`): [JENKINS-27140](https://issues.jenkins-ci.org/browse/JENKINS-27140)
+- [X] `IntegritySCM` (`integrity-plugin`): supported as of 1.36
 - [ ] `RepoScm` (`repo`): [JENKINS-26836](https://issues.jenkins-ci.org/browse/JENKINS-26836)
 - [X] `teamconcert`: supported as of 1.9.4
 - [X] `CVSSCM` (`cvs`): scheduled to be supported in 2.13
+- [ ] `TeamFoundationServerScm` (`tfs`): [JENKINS-31803](https://issues.jenkins-ci.org/browse/JENKINS-31803)
 
 ## Build steps and post-build actions
 
@@ -52,7 +53,6 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] SonarQube Jenkins: [SONARJNKNS-213](http://jira.sonarsource.com/browse/SONARJNKNS-213)
 - [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
 - [X] `ScoveragePublisher` (`scoverage`): supported as of 1.2.0
-- [ ] `XShellBuilder` (`xshell`): [JENKINS-30372](https://issues.jenkins-ci.org/browse/JENKINS-30372)
 - [ ] `AWSCodeDeployPublisher` (`codedeploy`): [issue 36](https://github.com/awslabs/aws-codedeploy-plugin/issues/36)
 
 ## Build wrappers
@@ -68,6 +68,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
 - [ ] `AnsiColorBuildWrapper` (`ansicolor`): scheduled to be supported as of 0.4.2
 - [ ] `CustomToolInstallWrapper` (`custom-tools-plugin`): [JENKINS-30680](https://issues.jenkins-ci.org/browse/JENKINS-30680) 
+- [ ] `PortAllocator` (`port-allocator`): [JENKINS-31449](https://issues.jenkins-ci.org/browse/JENKINS-31449)
 
 ## Triggers
 
@@ -75,9 +76,10 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `ghprb`: [JENKINS-26591](https://issues.jenkins-ci.org/browse/JENKINS-26591)
 - [X] `github`: supported as of 1.14.0
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
-- [ ] `deployment-notification`: [JENKINS-28632](https://issues.jenkins-ci.org/browse/JENKINS-28632)
+- [X] `deployment-notification`: scheduled to be supported as of 1.3
 - [X] `gitlab-plugin`: supported as of 1.1.26
 - [X] `bitbucket`: supported as of 1.1.2
+- [ ] `bitbucket-pullrequest-builder`: [JENKINS-31749](https://issues.jenkins-ci.org/browse/JENKINS-31749)
 
 ## Clouds
 
@@ -104,7 +106,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `lockable-resources` : [JENKINS-30269](https://issues.jenkins-ci.org/browse/JENKINS-30269)
 - [X] `customize-build-now`: supported as of 1.1
 - [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
-- [ ] `embeddable-build-status`: [JENKINS-28642](https://issues.jenkins-ci.org/browse/JENKINS-28642)
+- [X] `embeddable-build-status`: scheduled to be supported as of 1.9
 
 ## Custom steps
 

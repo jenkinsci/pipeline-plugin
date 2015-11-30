@@ -322,6 +322,10 @@ public final class CpsThreadGroup implements Serializable {
         });
     }
 
+    public CpsThreadDump getThreadDump() {
+        return CpsThreadDump.from(this);
+    }
+
     /**
      * Persists the current state of {@link CpsThreadGroup}.
      */

@@ -25,10 +25,14 @@
 
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
   <f:entry title="${%Script}" field="script">
-    <f:textarea checkMethod="post"/>
+    <div id="workflow-editor-wrapper" style="display: none; position: relative">
+        <f:textarea checkMethod="post"/>
+        <div id="workflow-editor" class="pane-frame" style="height: 250px;"/>
+    </div>
   </f:entry>
   <f:entry field="sandbox">
     <f:checkbox title="${%Use Groovy Sandbox}" default="${!h.hasPermission(app.RUN_SCRIPTS)}" />
   </f:entry>
   <st:include it="${descriptor.snippetizer}" page="block.jelly"/>
+  <st:adjunct includes="org.jenkinsci.plugins.workflow.cps.workflow-editor"/>
 </j:jelly>

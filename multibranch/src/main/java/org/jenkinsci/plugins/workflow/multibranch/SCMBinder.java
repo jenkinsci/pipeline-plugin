@@ -24,52 +24,42 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
-import com.thoughtworks.xstream.converters.Converter;
-import groovy.lang.GroovyShell;
 import hudson.Extension;
 import hudson.model.Action;
+import hudson.model.Descriptor;
+import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.ItemGroup;
 import hudson.model.Queue;
 import hudson.model.TaskListener;
 import hudson.scm.SCM;
-import hudson.util.DescribableList;
-import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
+import javax.inject.Inject;
 import jenkins.branch.Branch;
 import jenkins.scm.api.SCMHead;
-import jenkins.scm.api.SCMHeadObserver;
 import jenkins.scm.api.SCMRevision;
+import jenkins.scm.api.SCMRevisionAction;
 import jenkins.scm.api.SCMSource;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
-import org.jenkinsci.plugins.workflow.cps.GroovyShellDecorator;
+import org.jenkinsci.plugins.workflow.cps.Snippetizer;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinitionDescriptor;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.pickles.Pickle;
-import org.jenkinsci.plugins.workflow.support.pickles.SingleTypedPickleFactory;
-import org.jenkinsci.plugins.workflow.support.pickles.XStreamPickle;
 
 /**
- * Adds an {@code scm} global variable to the script.
- * This makes it possible to run {@code checkout scm} to get your project sources in the right branch.
+ * Checks out the desired version of {@link WorkflowMultiBranchProject#SCRIPT}.
  */
 class SCMBinder extends FlowDefinition {
-
-    private static final Map<CpsFlowExecution,SCM> scms = Collections.synchronizedMap(new WeakHashMap<CpsFlowExecution,SCM>());
 
     @Override public FlowExecution create(FlowExecutionOwner handle, TaskListener listener, List<? extends Action> actions) throws Exception {
         Queue.Executable exec = handle.getExecutable();
         if (!(exec instanceof WorkflowRun)) {
             throw new IllegalStateException("inappropriate context");
         }
-        WorkflowJob job = ((WorkflowRun) exec).getParent();
+        WorkflowRun build = (WorkflowRun) exec;
+        WorkflowJob job = build.getParent();
         BranchJobProperty property = job.getProperty(BranchJobProperty.class);
         if (property == null) {
             throw new IllegalStateException("inappropriate context");
@@ -84,51 +74,37 @@ class SCMBinder extends FlowDefinition {
             throw new IllegalStateException(branch.getSourceId() + " not found");
         }
         SCMHead head = branch.getHead();
-        SCMRevision tip = scmSource.fetch(SCMHeadObserver.select(head), listener).result();
-        if (tip == null) {
-            // TODO observed (but not now reproducible) after trying to rebuild projects without rerunning branch indexing
-            // Perhaps because above we are calling the wrong `fetch` overload? (Simpler to pass SCMHead + TaskListener.)
-            throw new IllegalStateException("could not find branch tip on " + head);
+        SCMRevision tip = scmSource.fetch(head, listener);
+        SCM scm;
+        if (tip != null) {
+            scm = scmSource.build(head, tip);
+            build.addAction(new SCMRevisionAction(tip));
+        } else {
+            listener.error("Could not determine exact tip revision of " + branch.getName() + "; falling back to nondeterministic checkout");
+            // Build might fail later anyway, but reason should become clear: for example, branch was deleted before indexing could run.
+            scm = branch.getScm();
         }
-        SCM scm = scmSource.build(head, tip);
-        // Fallback if one is needed: scm = branch.getScm()
-        CpsFlowExecution execution = new CpsScmFlowDefinition(scm, WorkflowMultiBranchProject.SCRIPT).create(handle, listener, actions);
-        scms.put(execution, scm); // stash for later
-        return execution;
+        return new CpsScmFlowDefinition(scm, WorkflowMultiBranchProject.SCRIPT).create(handle, listener, actions);
     }
 
-    // Not registered as an @Extension, but in case someone calls it:
-    @Override public FlowDefinitionDescriptor getDescriptor() {
-        return new FlowDefinitionDescriptor() {
-            @Override public String getDisplayName() {
-                return "SCMBinder"; // should not be used in UI
-            }
-        };
-    }
+    @Extension public static class DescriptorImpl extends FlowDefinitionDescriptor {
 
-    // Note that this cannot be a GlobalVariable, since that must always be set.
-    @Extension public static class Decorator extends GroovyShellDecorator {
+        @Inject public Snippetizer snippetizer;
 
-        @Override public void configureShell(CpsFlowExecution context, GroovyShell shell) {
-            if (context != null) {
-                SCM scm = scms.remove(context);
-                if (scm != null) {
-                    shell.setVariable("scm", scm);
-                }
-            }
+        @Override public String getDisplayName() {
+            return "Workflow script from " + WorkflowMultiBranchProject.SCRIPT;
         }
 
     }
 
-    /**
-     * Ensures that {@code scm} is saved in its XML representation.
-     * Necessary for {@code GitSCM} which is marked {@link Serializable}
-     * yet includes a {@link DescribableList} which relies on a custom {@link Converter}.
-     */
-    @Extension public static class Pickler extends SingleTypedPickleFactory<SCM> {
+    /** Want to display this in the r/o configuration for a branch project, but not offer it on standalone jobs. */
+    @Extension public static class HideMeElsewhere extends DescriptorVisibilityFilter {
 
-        @Override protected Pickle pickle(SCM scm) {
-            return new XStreamPickle(scm);
+        @Override public boolean filter(Object context, Descriptor descriptor) {
+            if (descriptor instanceof DescriptorImpl && context instanceof WorkflowJob && !(((WorkflowJob) context).getParent() instanceof WorkflowMultiBranchProject)) {
+                return false;
+            }
+            return true;
         }
 
     }
