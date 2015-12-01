@@ -127,7 +127,7 @@ public class JobPropertyStep extends AbstractStepImpl {
 
         @Override public Step newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             // A modified version of RequestImpl.TypePair.convertJSON.
-            // Works around the fact that Stapler does not call back into Descriptor.newInstance for nested objects.
+            // TODO JENKINS-31458 Works around the fact that Stapler does not call back into Descriptor.newInstance for nested objects.
             List<JobProperty> properties = new ArrayList<JobProperty>();
             ClassLoader cl = req.getStapler().getWebApp().getClassLoader();
             @SuppressWarnings("unchecked") Set<Map.Entry<String,Object>> entrySet = formData.getJSONObject("propertiesMap").entrySet();

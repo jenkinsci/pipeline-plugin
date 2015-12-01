@@ -205,7 +205,7 @@ import org.kohsuke.stapler.StaplerResponse;
 
     @Restricted(DoNotUse.class) // accessed via REST API
     public HttpResponse doGenerateSnippet(StaplerRequest req, @QueryParameter String json) throws Exception {
-        // TODO is there not an easier way to do this?
+        // TODO JENKINS-31458 is there not an easier way to do this?
         JSONObject jsonO = JSONObject.fromObject(json);
         Jenkins j = Jenkins.getActiveInstance();
         Class<?> c = j.getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));

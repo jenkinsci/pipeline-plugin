@@ -173,7 +173,7 @@ class CpsBodyExecution extends BodyExecution {
         return new Continuable(
             // this source location is a place holder for the step implementation.
             // perhaps at some point in the future we'll let the Step implementation control this.
-            inv.invoke(env, SourceLocation.UNKNOWN, onSuccess));
+            inv.invoke(env, null, onSuccess));
     }
 
     @Override
