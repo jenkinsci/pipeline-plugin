@@ -60,7 +60,6 @@ import hudson.scm.SCM;
 import hudson.search.SearchIndexBuilder;
 import hudson.security.ACL;
 import hudson.slaves.WorkspaceList;
-import hudson.tasks.LogRotator;
 import hudson.triggers.SCMTrigger;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
@@ -76,7 +75,6 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
-import jenkins.model.BuildDiscarder;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
 import jenkins.model.lazy.LazyBuildMixIn;
@@ -86,7 +84,6 @@ import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinitionDescriptor;
-import org.jenkinsci.plugins.workflow.job.properties.BuildDiscarderProperty;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.QueryParameter;
@@ -525,29 +522,6 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     @Override protected void performDelete() throws IOException, InterruptedException {
         super.performDelete();
         // TODO call SCM.processWorkspaceBeforeDeletion
-    }
-
-    /** Actually it does, but we want to suppress this section of {@code Job/configure.jelly} in favor of {@link BuildDiscarderProperty}. */
-    @Override public boolean supportsLogRotator() {
-        return false;
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override public LogRotator getLogRotator() {
-        BuildDiscarder buildDiscarder = getBuildDiscarder();
-        return buildDiscarder instanceof LogRotator ? (LogRotator) buildDiscarder : null;
-    }
-
-    @Override public void setBuildDiscarder(BuildDiscarder bd) throws IOException {
-        removeProperty(BuildDiscarderProperty.class);
-        if (bd != null) {
-            addProperty(new BuildDiscarderProperty(bd));
-        }
-    }
-
-    @Override public BuildDiscarder getBuildDiscarder() {
-        BuildDiscarderProperty prop = getProperty(BuildDiscarderProperty.class);
-        return prop != null ? prop.getStrategy() : /* settings compatibility */ super.getBuildDiscarder();
     }
 
     @Initializer(before=InitMilestone.EXTENSIONS_AUGMENTED)
