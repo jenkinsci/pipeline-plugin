@@ -126,6 +126,9 @@ public class JobPropertyStep extends AbstractStepImpl {
         }
 
         @Override public Step newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            if (req == null) { // should not happen
+                return super.newInstance(null, formData);
+            }
             // A modified version of RequestImpl.TypePair.convertJSON.
             // Works around the fact that Stapler does not call back into Descriptor.newInstance for nested objects (JENKINS-31458);
             // and propertiesMap virtual field name; and null values for unselected properties.
