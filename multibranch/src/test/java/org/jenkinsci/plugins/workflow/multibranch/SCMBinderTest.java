@@ -123,7 +123,8 @@ public class SCMBinderTest {
                 sampleGitRepo.write("file", "subsequent content");
                 sampleGitRepo.git("commit", "--all", "--message=tweaked");
                 SemaphoreStep.success("wait/1", null);
-                WorkflowRun b2 = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                sampleGitRepo.notifyCommit(story.j);
+                WorkflowRun b2 = p.getLastBuild();
                 assertEquals(2, b2.getNumber());
                 story.j.assertLogContains("initial content", story.j.waitForCompletion(b1));
                 story.j.assertLogContains("SUBSEQUENT CONTENT", b2);
