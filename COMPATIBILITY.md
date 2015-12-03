@@ -29,7 +29,6 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `CopyArtifact` (`copyartifact`): [JENKINS-24887](https://issues.jenkins-ci.org/browse/JENKINS-24887) in 1.34
 - [ ] `DeployPublisher` (`deployer-framework`): [JENKINS-25976](https://issues.jenkins-ci.org/browse/JENKINS-25976)
 - [X] Analysis publishers (e.g., `FindBugsPublisher`): supported as of `analysis-core` 1.73 and downstream plugins (e.g., `findbugs` 4.62)
-- [ ] `ExtendedEmailPublisher` (`email-ext`): [PR 107](https://github.com/jenkinsci/email-ext-plugin/pull/107)
 - [ ] `Ant` (`ant`): [JENKINS-26056](https://issues.jenkins-ci.org/browse/JENKINS-26056)
 - [ ] `Maven` (home TBD): [JENKINS-26057](https://issues.jenkins-ci.org/browse/JENKINS-26057)
 - [ ] `XShellBuilder` (`xshell`): [JENKINS-26169](https://issues.jenkins-ci.org/browse/JENKINS-26169)
@@ -119,6 +118,7 @@ For cases when a first-class Workflow step (rather than an adaptation of functio
 - [ ] `gerrit-trigger`: [JENKINS-26102](https://issues.jenkins-ci.org/browse/JENKINS-26102), [JENKINS-26103](https://issues.jenkins-ci.org/browse/JENKINS-26103)
 - [X] `mailer`: `mail` step in Workflow 1.2
 - [ ] `artifactory`: [JENKINS-30121](https://issues.jenkins-ci.org/browse/JENKINS-30121)
+- [X] `email-ext`: `emailext` step scheduled for 2.41
 
 # Plugin Developer Guide
 
@@ -135,7 +135,7 @@ There are several considerations common to the various metasteps.
 
 #### Jenkins core dependency
 
-First, make sure the baseline Jenkins version in your POM is set to at least 1.568 (or 1.580.1, the next LTS).
+First, make sure the baseline Jenkins version in your `pom.xml` is sufficiently new (specific versions will be noted below).
 This introduces some new API methods, and deprecates some old ones.
 
 If you are nervous about making your plugin depend on a recent Jenkins version,
@@ -234,6 +234,7 @@ You can use `mercurial-plugin` as a relatively straightforward code example.
 
 #### Basic update
 
+Make sure your Jenkins baseline is at least 1.568 (or 1.580.1, the next LTS).
 Check your plugin for compilation warnings relating to `hudson.scm.*` classes to see outstanding changes you need to make.
 Most importantly, various methods in `SCM` which formerly took an `AbstractBuild` now take a more generic `Run` (i.e., potentially a workflow build) plus a `FilePath` (i.e., a workspace).
 Use the specified workspace rather than the former `build.getWorkspace()`, which only worked for traditional projects with a single workspace.
@@ -280,6 +281,8 @@ See the [user documentation](basic-steps/CORE-STEPS.md) for background. The meta
 To add support for use of a `Builder` or `Publisher` from a workflow, depend on Jenkins 1.577+, typically 1.580.1 ([tips](#basic-update)).
 Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
 Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](#constructor-vs-setters)).
+
+#### Mandatory workspace context
 
 Note that a `SimpleBuildStep` is designed to work also in a freestyle project, and thus assumes that a `FilePath workspace` is available (as well as some associated services, like a `Launcher`).
 That is always true in a freestyle build, but is a potential limitation for use from a Workflow build.
@@ -348,7 +351,7 @@ Each encapsulates a set of related functionality originally tied to `AbstractPro
 * `SCMTriggerItem` integrates with `SCMTrigger`, including a definition of which SCM or SCMs a job is using, and how it should perform polling. It also allows various plugins to interoperate with the Multiple SCMs plugin without needing an explicit dependency. Supersedes and deprecates `SCMedItem`.
 * `LazyBuildMixIn` handles the plumbing of lazy-loading build records (a system introduced in Jenkins 1.485).
 
-For Workflow compatibility, plugins formerly referring to `AbstractProject`/`AbstractBuild` will generally need to start dealing with `Job`/`Run` but may also need to refer to `ParameterizedJobMixIn` and/or ``SCMTriggerItem`.
+For Workflow compatibility, plugins formerly referring to `AbstractProject`/`AbstractBuild` will generally need to start dealing with `Job`/`Run` but may also need to refer to `ParameterizedJobMixIn` and/or `SCMTriggerItem`.
 (`LazyBuildMixIn` is rarely needed from outside code, as the methods defined in `Job`/`Run` suffice for typical purposes.)
 
 Future improvements to Workflow may well require yet more implementation code to be extracted from `AbstractProject`/`AbstractBuild`.
