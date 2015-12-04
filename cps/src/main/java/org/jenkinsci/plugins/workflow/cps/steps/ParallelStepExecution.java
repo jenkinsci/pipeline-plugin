@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.cps.steps;
 
 import groovy.lang.Closure;
+import hudson.model.TaskListener;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
 import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
@@ -13,6 +14,7 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -37,6 +39,12 @@ class ParallelStepExecution extends StepExecution {
     @Override
     public boolean start() throws Exception {
         CpsStepContext cps = (CpsStepContext) getContext();
+        if (parallelStep.closures.isEmpty()) {
+            cps.get(TaskListener.class).getLogger().println("No branches to run");
+            cps.onSuccess(Collections.<String,Object>emptyMap());
+            return true;
+        }
+
         CpsThread t = CpsThread.current();
 
         ResultHandler r = new ResultHandler(cps, this, parallelStep.isFailFast());
