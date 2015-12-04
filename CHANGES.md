@@ -2,6 +2,10 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.12 (upcoming)
+
+* [JENKINS-31902](https://issues.jenkins-ci.org/browse/JENKINS-31902): interrupting the `build` step failed to interrupt downstream Workflow builds.
+
 ## 1.12-beta-2 (Nov 25 2015)
 
 * [JENKINS-29705](https://issues.jenkins-ci.org/browse/JENKINS-29705): added _Thread Dump_ link to running flow builds for diagnosing problems like hangs.

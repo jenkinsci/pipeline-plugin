@@ -105,14 +105,19 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         // so this method shouldn't call getContext().onFailure()
         for (Computer c : jenkins.getComputers()) {
             for (Executor e : c.getExecutors()) {
-                Queue.Executable exec = e.getCurrentExecutable();
-                if (exec instanceof Run) {
-                    Run<?,?> b = (Run) exec;
-                    for (BuildTriggerAction bta : b.getActions(BuildTriggerAction.class)) {
-                        if (bta.getStepContext().equals(getContext())) {
-                            e.interrupt(Result.ABORTED, new BuildTriggerCancelledCause(cause));
-                        }
-                    }
+                maybeInterrupt(e, cause);
+            }
+            for (Executor e : c.getOneOffExecutors()) {
+                maybeInterrupt(e, cause);
+            }
+        }
+    }
+    private void maybeInterrupt(Executor e, Throwable cause) {
+        Queue.Executable exec = e.getCurrentExecutable();
+        if (exec instanceof Run) {
+            for (BuildTriggerAction bta : ((Run) exec).getActions(BuildTriggerAction.class)) {
+                if (bta.getStepContext().equals(getContext())) {
+                    e.interrupt(Result.ABORTED, new BuildTriggerCancelledCause(cause));
                 }
             }
         }
