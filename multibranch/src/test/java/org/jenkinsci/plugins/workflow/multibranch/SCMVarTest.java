@@ -33,10 +33,12 @@ import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.GitSCMSource;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.global.WorkflowLibRepository;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
+import org.jenkinsci.plugins.workflow.steps.scm.GitStep;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -117,6 +119,23 @@ public class SCMVarTest {
                 WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "master");
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
                 story.j.assertLogContains("loaded resource content", b);
+            }
+        });
+    }
+
+    @Issue("JENKINS-31386")
+    @Test public void standaloneProject() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                sampleGitRepo.init();
+                sampleGitRepo.write("Jenkinsfile", "node {checkout scm; echo readFile('file')}");
+                sampleGitRepo.write("file", "some content");
+                sampleGitRepo.git("add", "Jenkinsfile");
+                sampleGitRepo.git("commit", "--all", "--message=flow");
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsScmFlowDefinition(new GitStep(sampleGitRepo.toString()).createSCM(), "Jenkinsfile"));
+                WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+                story.j.assertLogContains("some content", b);
             }
         });
     }
