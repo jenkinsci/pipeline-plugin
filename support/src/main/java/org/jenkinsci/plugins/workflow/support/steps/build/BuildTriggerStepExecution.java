@@ -2,7 +2,7 @@ package org.jenkinsci.plugins.workflow.support.steps.build;
 
 import com.google.inject.Inject;
 import hudson.AbortException;
-import hudson.console.HyperlinkNote;
+import hudson.console.ModelHyperlinkNote;
 import hudson.model.Action;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
@@ -44,7 +44,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
         }
-        listener.getLogger().println("Scheduling project: " + HyperlinkNote.encodeTo('/' + project.getUrl(), project.getFullDisplayName()));
+        listener.getLogger().println("Scheduling project: " + ModelHyperlinkNote.encodeTo(project));
 
         node.addAction(new LabelAction(Messages.BuildTriggerStepExecution_building_(project.getFullDisplayName())));
         List<Action> actions = new ArrayList<Action>();
@@ -88,7 +88,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         Queue q = jenkins.getQueue();
 
         // if the build is still in the queue, abort it.
-        // BuildTriggerListener will report the failure, so this method shouldn't call getContext().onFailure()
+        // BuildQueueListener will report the failure, so this method shouldn't call getContext().onFailure()
         for (Queue.Item i : q.getItems()) {
             for (BuildTriggerAction bta : i.getActions(BuildTriggerAction.class)) {
                 if (bta.getStepContext().equals(getContext())) {
