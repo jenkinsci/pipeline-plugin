@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.steps.scm;
 
+import com.gargoylesoftware.htmlunit.WebResponse;
+import org.apache.commons.httpclient.NameValuePair;
 import org.jvnet.hudson.test.JenkinsRule;
 
 /**
@@ -45,7 +47,13 @@ public final class GitSampleRepoRule extends AbstractSampleDVCSRepoRule {
 
     public void notifyCommit(JenkinsRule r) throws Exception {
         synchronousPolling(r);
-        System.out.println(r.createWebClient().goTo("git/notifyCommit?url=" + bareUrl(), "text/plain").getWebResponse().getContentAsString());
+        WebResponse webResponse = r.createWebClient().goTo("git/notifyCommit?url=" + bareUrl(), "text/plain").getWebResponse();
+        System.out.println(webResponse.getContentAsString());
+        for (NameValuePair pair : webResponse.getResponseHeaders()) {
+            if (pair.getName().equals("Triggered")) {
+                System.out.println("Triggered: " + pair.getValue());
+            }
+        }
         r.waitUntilNoActivity();
     }
 
