@@ -34,4 +34,7 @@ THE SOFTWARE.
     <f:entry field="excludes" title="Excludes">
         <f:textbox/>
     </f:entry>
+    <f:entry field="useDefaultExcludes" title="Use Default Ant Excludes">
+        <f:checkbox default="true" />
+    </f:entry>
 </j:jelly>

@@ -35,17 +35,6 @@ import hudson.model.TaskListener;
 import hudson.org.apache.tools.tar.TarInputStream;
 import hudson.util.DirScanner;
 import hudson.util.io.ArchiverFactory;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Map;
-import java.util.TreeMap;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import jenkins.model.ArtifactManager;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.FileUtils;
@@ -53,6 +42,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.tools.tar.TarEntry;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import java.io.*;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Manages per-build stashes of files.
@@ -66,6 +61,12 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
  */
 public class StashManager {
 
+    @Deprecated
+    public static void stash(@Nonnull Run<?,?> build, @Nonnull String name, @Nonnull FilePath workspace, @Nonnull TaskListener listener,
+                             @CheckForNull String includes, @CheckForNull String excludes) throws IOException, InterruptedException {
+        stash(build, name, workspace, listener, includes, excludes, true);
+    }
+
     /**
      * Saves a stash of some files from a build.
      * @param build a build to use as storage
@@ -73,9 +74,11 @@ public class StashManager {
      * @param workspace a directory to use as a base
      * @param includes a set of Ant-style file includes, separated by commas; null/blank is allowed as a synonym for {@code **} (i.e., everything)
      * @param excludes an optional set of Ant-style file excludes
+     * @param useDefaultExcludes whether to use Ant default excludes
      */
     @SuppressFBWarnings(value="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE", justification="fine if mkdirs returns false")
-    public static void stash(@Nonnull Run<?,?> build, @Nonnull String name, @Nonnull FilePath workspace, @Nonnull TaskListener listener, @CheckForNull String includes, @CheckForNull String excludes) throws IOException, InterruptedException {
+    public static void stash(@Nonnull Run<?,?> build, @Nonnull String name, @Nonnull FilePath workspace, @Nonnull TaskListener listener,
+                             @CheckForNull String includes, @CheckForNull String excludes, boolean useDefaultExcludes) throws IOException, InterruptedException {
         Jenkins.checkGoodName(name);
         File storage = storage(build, name);
         storage.getParentFile().mkdirs();
@@ -84,7 +87,7 @@ public class StashManager {
         }
         OutputStream os = new FileOutputStream(storage);
         try {
-            int count = workspace.archive(ArchiverFactory.TARGZ, os, new DirScanner.Glob(Util.fixEmpty(includes) == null ? "**" : includes, excludes));
+            int count = workspace.archive(ArchiverFactory.TARGZ, os, new DirScanner.Glob(Util.fixEmpty(includes) == null ? "**" : includes, excludes, useDefaultExcludes));
             if (count == 0) {
                 throw new AbortException("No files included in stash");
             }
