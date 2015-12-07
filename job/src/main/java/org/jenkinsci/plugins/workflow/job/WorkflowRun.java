@@ -590,7 +590,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
             for (SCMCheckout co : checkouts(null)) {
                 if (co.changelogFile != null && co.changelogFile.isFile()) {
                     try {
-                        changeSets.add(co.scm.createChangeLogParser().parse(this, co.scm.getEffectiveBrowser(), co.changelogFile));
+                        ChangeLogSet<? extends ChangeLogSet.Entry> changeLogSet =
+                                co.scm.createChangeLogParser().parse(this, co.scm.getEffectiveBrowser(), co.changelogFile);
+                        if (!changeLogSet.isEmptySet()) {
+                            changeSets.add(changeLogSet);
+                        }
                     } catch (Exception x) {
                         LOGGER.log(Level.WARNING, "could not parse " + co.changelogFile, x);
                     }
@@ -614,7 +618,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
     private void onCheckout(SCM scm, FilePath workspace, TaskListener listener, @CheckForNull File changelogFile, @CheckForNull SCMRevisionState pollingBaseline) throws Exception {
         if (changelogFile != null && changelogFile.isFile()) {
             ChangeLogSet<?> cls = scm.createChangeLogParser().parse(this, scm.getEffectiveBrowser(), changelogFile);
-            getChangeSets().add(cls);
+            if (!cls.isEmptySet()) {
+                getChangeSets().add(cls);
+            }
             for (SCMListener l : SCMListener.all()) {
                 l.onChangeLogParsed(this, scm, listener, cls);
             }
