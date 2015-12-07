@@ -4,6 +4,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 
 ## 1.12 (upcoming)
 
+* [JENKINS-31386](https://issues.jenkins-ci.org/browse/JENKINS-31386): `checkout scm` now works also in _Workflow script from SCM_ to better interoperate with multibranch projects.
 * [JENKINS-29413](https://issues.jenkins-ci.org/browse/JENKINS-29413): hung build when running the `parallel` step with an empty map.
 
 ## 1.12-beta-2 (Nov 25 2015)
