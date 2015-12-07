@@ -1,7 +1,8 @@
 package org.jenkinsci.plugins.workflow.support.steps.build;
 
+import hudson.AbortException;
 import hudson.Extension;
-import hudson.console.HyperlinkNote;
+import hudson.console.ModelHyperlinkNote;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -26,7 +27,8 @@ public class BuildTriggerListener extends RunListener<Run<?,?>>{
             if (stepContext != null && stepContext.isReady()) {
                 try {
                     TaskListener taskListener = stepContext.get(TaskListener.class);
-                    taskListener.getLogger().println("Starting building project: " + HyperlinkNote.encodeTo('/' + run.getUrl(), run.getFullDisplayName()));
+                    // encodeTo(Run) calls getDisplayName, which does not include the project name.
+                    taskListener.getLogger().println("Starting building: " + ModelHyperlinkNote.encodeTo("/" + run.getUrl(), run.getFullDisplayName()));
                 } catch (Exception e) {
                     LOGGER.log(WARNING, null, e);
                 }
@@ -40,7 +42,7 @@ public class BuildTriggerListener extends RunListener<Run<?,?>>{
             if (!action.isPropagate() || run.getResult() == Result.SUCCESS) {
                 action.getStepContext().onSuccess(new RunWrapper(run, false));
             } else {
-                action.getStepContext().onFailure(new Exception(String.valueOf(run.getResult())));
+                action.getStepContext().onFailure(new AbortException(run.getFullDisplayName() + " completed with status " + run.getResult() + " (propagate: false to ignore)"));
             }
         }
     }
@@ -48,7 +50,7 @@ public class BuildTriggerListener extends RunListener<Run<?,?>>{
     @Override
     public void onDeleted(Run<?,?> run) {
         for (BuildTriggerAction action : run.getActions(BuildTriggerAction.class)) {
-            action.getStepContext().onFailure(new Exception(run.getBuildStatusSummary().message));
+            action.getStepContext().onFailure(new AbortException(run.getFullDisplayName() + " was deleted"));
         }
     }
 }
