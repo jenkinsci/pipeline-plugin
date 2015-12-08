@@ -1,6 +1,8 @@
 # Writing Workflow steps
 
 Plugins can implement custom Workflow steps with specialized behavior by adding a dependency on `workflow-step-api`.
+Remember to ensure that your baseline Jenkins version is at least as new as that required by the version of Workflow you are depending on.
+(The [changelog](../CHANGES.md) notes these baselines.)
 
 ## Creating a basic synchronous step
 

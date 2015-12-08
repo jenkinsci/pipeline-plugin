@@ -22,39 +22,22 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.steps.scm;
+package org.jenkinsci.plugins.workflow.steps;
 
-import com.gargoylesoftware.htmlunit.WebResponse;
-import org.apache.commons.httpclient.NameValuePair;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.junit.Test;
+import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
-/**
- * Manages a sample Git repository.
- */
-public final class GitSampleRepoRule extends AbstractSampleDVCSRepoRule {
+public class IsUnixStepTest {
 
-    public void git(String... cmds) throws Exception {
-        run("git", cmds);
-    }
+    @Rule public JenkinsRule r = new JenkinsRule();
 
-    @Override public void init() throws Exception {
-        run(true, tmp.getRoot(), "git", "version");
-        git("init");
-        write("file", "");
-        git("add", "file");
-        git("commit", "--message=init");
-    }
-
-    public void notifyCommit(JenkinsRule r) throws Exception {
-        synchronousPolling(r);
-        WebResponse webResponse = r.createWebClient().goTo("git/notifyCommit?url=" + bareUrl(), "text/plain").getWebResponse();
-        System.out.println(webResponse.getContentAsString());
-        for (NameValuePair pair : webResponse.getResponseHeaders()) {
-            if (pair.getName().equals("Triggered")) {
-                System.out.println("Triggered: " + pair.getValue());
-            }
-        }
-        r.waitUntilNoActivity();
+    @Test public void basics() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("def xsh(cmd) {if (isUnix()) {sh cmd} else {bat cmd}}; node {xsh 'echo hello world'}", true));
+        r.assertLogContains("hello world", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
 
 }

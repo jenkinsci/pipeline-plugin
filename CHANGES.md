@@ -5,6 +5,15 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 ## 1.12 (upcoming)
 
 * [JENKINS-30055](https://issues.jenkins-ci.org/browse/JENKINS-30055): poor performance and file handle leaks when running a script with an enormous number of steps in quick succession
+* [JENKINS-31386](https://issues.jenkins-ci.org/browse/JENKINS-31386): `checkout scm` now works also in _Workflow script from SCM_ to better interoperate with multibranch projects.
+* [JENKINS-31902](https://issues.jenkins-ci.org/browse/JENKINS-31902): interrupting the `build` step failed to interrupt downstream Workflow builds.
+* [JENKINS-29413](https://issues.jenkins-ci.org/browse/JENKINS-29413): hung build when running the `parallel` step with an empty map.
+
+## 1.12-beta-2 (Nov 25 2015)
+
+* [JENKINS-29705](https://issues.jenkins-ci.org/browse/JENKINS-29705): added _Thread Dump_ link to running flow builds for diagnosing problems like hangs.
+* [JENKINS-31649](https://issues.jenkins-ci.org/browse/JENKINS-31649): correctly display pending queue items for blocked `node {}` tasks when on Jenkins 1.639+ (will not appear in 1.638 or 1.625.2).
+* [JENKINS-31691](https://issues.jenkins-ci.org/browse/JENKINS-31691): added `isUnix` step.
 * [JENKINS-31585](https://issues.jenkins-ci.org/browse/JENKINS-31585): make new script editor resizable.
 
 ## 1.12-beta-1 (Nov 19 2015)

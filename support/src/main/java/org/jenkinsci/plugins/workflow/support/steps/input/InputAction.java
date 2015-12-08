@@ -61,6 +61,8 @@ public class InputAction implements RunAction2 {
                 // Futures.addCallback is the safer way to iterate, but we need to know that the result is in.
                 // And we cannot start the calculation during onLoad because we are still inside WorkflowRun.onLoad and the CpsFlowExecution is not yet initialized.
                 // WorkflowRun has getExecutionPromise but that is not accessible via API.
+                // Even if we add such an API to FlowExecutionOwner, and look for FlowExecutionOwner.Executable,
+                // FlowExecutionList would need an API for getting owners without blocking on the execution.
                 for (StepExecution se : execution.getCurrentExecutions(true).get()) {
                     if (se instanceof InputStepExecution) {
                         InputStepExecution ise = (InputStepExecution) se;

@@ -729,6 +729,8 @@ return this;
 
 In this case `devQAStaging` runs on the same node as the main source code checkout, while `production` runs outside of that block (and in fact allocates a different node).
 
+To reduce the amount of boilerplate needed in the master script, you can try the [Workflow Remote File Loader plugin](https://github.com/jenkinsci/workflow-remote-loader-plugin/blob/master/README.md#workflow-remote-file-loader-plugin).
+
 ## Retaining Global Libraries
 
 Plugins inject function and class names into a flow before it runs. The plugin bundled with Workflow allows you to eliminate the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.

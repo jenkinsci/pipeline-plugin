@@ -22,39 +22,45 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.steps.scm;
+package org.jenkinsci.plugins.workflow.steps;
 
-import com.gargoylesoftware.htmlunit.WebResponse;
-import org.apache.commons.httpclient.NameValuePair;
-import org.jvnet.hudson.test.JenkinsRule;
+import hudson.Extension;
+import hudson.Launcher;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * Manages a sample Git repository.
+ * Checks whether we are running on Unix.
  */
-public final class GitSampleRepoRule extends AbstractSampleDVCSRepoRule {
+public class IsUnixStep extends AbstractStepImpl {
 
-    public void git(String... cmds) throws Exception {
-        run("git", cmds);
-    }
+    @DataBoundConstructor public IsUnixStep() {}
 
-    @Override public void init() throws Exception {
-        run(true, tmp.getRoot(), "git", "version");
-        git("init");
-        write("file", "");
-        git("add", "file");
-        git("commit", "--message=init");
-    }
+    public static class Execution extends AbstractSynchronousStepExecution<Boolean> {
 
-    public void notifyCommit(JenkinsRule r) throws Exception {
-        synchronousPolling(r);
-        WebResponse webResponse = r.createWebClient().goTo("git/notifyCommit?url=" + bareUrl(), "text/plain").getWebResponse();
-        System.out.println(webResponse.getContentAsString());
-        for (NameValuePair pair : webResponse.getResponseHeaders()) {
-            if (pair.getName().equals("Triggered")) {
-                System.out.println("Triggered: " + pair.getValue());
-            }
+        @StepContextParameter private transient Launcher launcher;
+
+        @Override protected Boolean run() throws Exception {
+            return launcher.isUnix();
         }
-        r.waitUntilNoActivity();
+
+        private static final long serialVersionUID = 1L;
+
+    }
+
+    @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
+
+        public DescriptorImpl() {
+            super(Execution.class);
+        }
+
+        @Override public String getFunctionName() {
+            return "isUnix";
+        }
+
+        @Override public String getDisplayName() {
+            return "Checks if running on a Unix-like node";
+        }
+
     }
 
 }

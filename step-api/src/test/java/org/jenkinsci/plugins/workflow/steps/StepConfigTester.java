@@ -86,7 +86,7 @@ public final class StepConfigTester {
                 return "Test step builder";
             }
             @Override public Builder newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-                // TODO f:dropdownDescriptorSelector does not seem to work sensibly: the super method uses RequestImpl.bindJSON and ignores any StepDescriptor.newInstance override.
+                // TODO JENKINS-31458 f:dropdownDescriptorSelector does not seem to work sensibly: the super method uses RequestImpl.bindJSON and ignores any StepDescriptor.newInstance override.
                 // Cf. Snippetizer.doGenerateSnippet, which also seems to lack a standard way of parsing part of a form using databinding.
                 JSONObject s = formData.getJSONObject("s");
                 Jenkins j = Jenkins.getActiveInstance();
