@@ -8,6 +8,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 * [JENKINS-31902](https://issues.jenkins-ci.org/browse/JENKINS-31902): interrupting the `build` step failed to interrupt downstream Workflow builds.
 * [JENKINS-29413](https://issues.jenkins-ci.org/browse/JENKINS-29413): hung build when running the `parallel` step with an empty map.
 * [JENKINS-29881](https://issues.jenkins-ci.org/browse/JENKINS-29881): don't include empty changesets in `WorkflowRun.getChangeSets()`.
+* [JENKINS-31086](https://issues.jenkins-ci.org/browse/JENKINS-31086): Added `useDefaultExcludes` option, defaulting to true, to `stash`. When false, Ant default excludes are not used.
 
 ## 1.12-beta-2 (Nov 25 2015)
 
