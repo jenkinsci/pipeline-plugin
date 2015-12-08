@@ -24,12 +24,19 @@
 
 package org.jenkinsci.plugins.workflow.support.storage;
 
+import com.thoughtworks.xstream.converters.Converter;
+import com.thoughtworks.xstream.converters.MarshallingContext;
+import com.thoughtworks.xstream.converters.UnmarshallingContext;
+import com.thoughtworks.xstream.core.JVM;
+import com.thoughtworks.xstream.io.HierarchicalStreamReader;
+import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.actions.FlowNodeAction;
 import hudson.Util;
 import hudson.XmlFile;
 import hudson.model.Action;
+import hudson.util.RobustReflectionConverter;
 import hudson.util.XStream2;
 
 import java.io.File;
@@ -38,7 +45,9 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
@@ -93,7 +102,6 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
         if (v.node == null) {
             throw new IOException("failed to load flow node from " + nodeFile + ": " + nodeFile.asString());
         }
-        // TODO try to migrate old storage like <parents><org.jenkinsci.plugins.workflow.graph.FlowStartNode>2</org.jenkinsci.plugins.workflow.graph.FlowStartNode></parents>
         try {
             FlowNode$exec.set(v.node, exec);
         } catch (IllegalAccessException e) {
@@ -125,12 +133,56 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
     public static final XStream2 XSTREAM = new XStream2();
 
     private static final Field FlowNode$exec;
+    private static final Field FlowNode$parents;
+    private static final Field FlowNode$parentIds;
 
     static {
+        XSTREAM.registerConverter(new Converter() {
+            private final RobustReflectionConverter ref = new RobustReflectionConverter(XSTREAM.getMapper(), JVM.newReflectionProvider());
+            private final Map<FlowNode,String> ids = new IdentityHashMap<FlowNode,String>(); // TODO clean up entries after completion
+            @Override public boolean canConvert(Class type) {
+                return FlowNode.class.isAssignableFrom(type);
+            }
+            @Override public void marshal(Object source, HierarchicalStreamWriter writer, MarshallingContext context) {
+                ref.marshal(source, writer, context);
+            }
+            @Override public Object unmarshal(HierarchicalStreamReader reader, UnmarshallingContext context) {
+                try {
+                    FlowNode n = (FlowNode) ref.unmarshal(reader, context);
+                    ids.put(n, reader.getValue());
+                    try {
+                        @SuppressWarnings("unchecked") List<FlowNode> parents = (List<FlowNode>) FlowNode$parents.get(n);
+                        if (parents != null) {
+                            @SuppressWarnings("unchecked") List<String> parentIds = (List<String>) FlowNode$parentIds.get(n);
+                            assert parentIds == null;
+                            parentIds = new ArrayList<String>(parents.size());
+                            for (FlowNode parent : parents) {
+                                String id = ids.get(parent);
+                                assert id != null;
+                                parentIds.add(id);
+                            }
+                            FlowNode$parents.set(n, null);
+                            FlowNode$parentIds.set(n, parentIds);
+                        }
+                    } catch (Exception x) {
+                        assert false : x;
+                    }
+                    return n;
+                } catch (RuntimeException x) {
+                    x.printStackTrace();
+                    throw x;
+                }
+            }
+        });
+
         try {
             // TODO just make a public setter for it already
             FlowNode$exec = FlowNode.class.getDeclaredField("exec");
             FlowNode$exec.setAccessible(true);
+            FlowNode$parents = FlowNode.class.getDeclaredField("parents");
+            FlowNode$parents.setAccessible(true);
+            FlowNode$parentIds = FlowNode.class.getDeclaredField("parentIds");
+            FlowNode$parentIds.setAccessible(true);
         } catch (NoSuchFieldException e) {
             throw new Error(e);
         }
