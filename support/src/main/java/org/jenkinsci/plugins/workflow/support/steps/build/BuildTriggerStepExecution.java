@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.workflow.support.steps.build;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import hudson.AbortException;
 import hudson.console.ModelHyperlinkNote;
@@ -9,8 +11,10 @@ import hudson.model.CauseAction;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Job;
+import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
+import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -54,6 +58,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         actions.add(new CauseAction(new Cause.UpstreamCause(invokingRun)));
         List<ParameterValue> parameters = step.getParameters();
         if (parameters != null) {
+            completeDefaultParameters(parameters);
             actions.add(new ParametersAction(parameters));
         }
         Integer quietPeriod = step.getQuietPeriod();
@@ -75,6 +80,26 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         } else {
             getContext().onSuccess(null);
             return true;
+        }
+    }
+
+    private void completeDefaultParameters(List<ParameterValue> parameters) {
+        List<String> names = Lists.transform(parameters, new Function<ParameterValue, String>() {
+            @Override public String apply(ParameterValue input) {
+                return input.getName();
+            }
+        });
+        final Job<?,?> project = Jenkins.getActiveInstance().getItem(step.getJob(), invokingRun.getParent(), Job.class);
+        if (project != null) {
+            ParametersDefinitionProperty pdp = project.getProperty(ParametersDefinitionProperty.class);
+            if (pdp != null && pdp.getParameterDefinitionNames().size() > parameters.size()) {
+                for (String name : pdp.getParameterDefinitionNames()) {
+                    ParameterDefinition pDef = pdp.getParameterDefinition(name);
+                    if (!names.contains(pDef.getName()) && pDef.getDefaultParameterValue() != null) {
+                        parameters.add(pDef.getDefaultParameterValue());
+                    }
+                }
+            }
         }
     }
 
