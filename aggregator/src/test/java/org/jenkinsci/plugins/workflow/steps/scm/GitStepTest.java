@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.model.Label;
 import hudson.plugins.git.GitSCM;
+import hudson.plugins.git.util.BuildData;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.triggers.SCMTrigger;
@@ -36,8 +37,11 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
+
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class GitStepTest {
@@ -162,4 +166,30 @@ public class GitStepTest {
         assertFalse(iterator.hasNext());
     }
 
+    // This test is currently disabled until the fix for JENKINS-29326 is released
+    // in the git plugin, in 2.4.1 or later.
+    @Ignore
+    @Issue("JENKINS-29326")
+    @Test
+    public void identicalGitSCMs() throws Exception {
+        otherRepo.git("init");
+        otherRepo.write("otherfile", "");
+        otherRepo.git("add", "otherfile");
+        otherRepo.git("commit", "--message=init");
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
+        p.setDefinition(new CpsFlowDefinition(
+                "node {\n" +
+                        "    ws {\n" +
+                        "        dir('main') {\n" +
+                        "            git($/" + otherRepo + "/$)\n" +
+                        "        }\n" +
+                        "        dir('other') {\n" +
+                        "            git($/" + otherRepo + "/$)\n" +
+                        "        }\n" +
+                        "        archive '**'\n" +
+                        "    }\n" +
+                        "}"));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals(1, b.getActions(BuildData.class).size());
+    }
 }
