@@ -58,7 +58,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         actions.add(new CauseAction(new Cause.UpstreamCause(invokingRun)));
         List<ParameterValue> parameters = step.getParameters();
         if (parameters != null) {
-            completeDefaultParameters(parameters);
+            completeDefaultParameters(parameters, (Job) project);
             actions.add(new ParametersAction(parameters));
         }
         Integer quietPeriod = step.getQuietPeriod();
@@ -83,13 +83,12 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         }
     }
 
-    private void completeDefaultParameters(List<ParameterValue> parameters) {
+    private void completeDefaultParameters(List<ParameterValue> parameters, Job<?,?> project) {
         List<String> names = Lists.transform(parameters, new Function<ParameterValue, String>() {
             @Override public String apply(ParameterValue input) {
                 return input.getName();
             }
         });
-        final Job<?,?> project = Jenkins.getActiveInstance().getItem(step.getJob(), invokingRun.getParent(), Job.class);
         if (project != null) {
             ParametersDefinitionProperty pdp = project.getProperty(ParametersDefinitionProperty.class);
             if (pdp != null && pdp.getParameterDefinitionNames().size() > parameters.size()) {
