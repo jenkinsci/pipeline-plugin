@@ -46,7 +46,50 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                     textarea.val(editor.getValue());
                     showSamplesWidget();
                 });
-                
+
+                // force underlying textarea onchange which turns in Stapler validation check
+                editor.on('blur', function() {
+                    //textarea.trigger('change');
+                    editor.session.clearAnnotations();
+                    var url = textarea.attr("checkUrl");
+                    /*
+                    var q = qs(this).addThis();
+                    if (depends.length>0) {
+                        depends.split(" ").each(function (n) {
+                            q.nearBy(n);
+                        });
+                    }
+                    url = url + q.toString();
+                    */
+
+                    $.ajax({
+                        url: url,
+                        data: {
+                            value: editor.getValue(),
+                            sandbox: $('_.sandbox').val()
+                        },
+                        method: textarea.attr("checkMethod") || "get",
+                        success: function(data) {
+                            if (data !== '<div/>') {
+                                editor.getSession().setAnnotations([{
+                                    row: 1,
+                                    column: 1,
+                                    text: data,
+                                    type: "error" // also warning and information
+                                }]);
+                            }
+                        }
+                    });
+                    /*
+                    editor.getSession().setAnnotations([{
+                        row: 1,
+                        column: 1,
+                        text: "Strange error",
+                        type: "error" // also warning and information
+                    }]);
+                    */
+                });
+
                 function showSamplesWidget() {
                     // If there's no workflow defined (e.g. on a new workflow), then
                     // we add a samples widget to let the user select some samples that
@@ -57,7 +100,7 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                 }
                 showSamplesWidget();
             });
-            
+
             // Make the editor resizable using jQuery UI resizable (http://api.jqueryui.com/resizable).
             // ACE Editor doesn't have this as a config option.
             $wfEditor.wrap('<div class="jquery-ui-1"></div>');
