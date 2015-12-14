@@ -58,7 +58,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         actions.add(new CauseAction(new Cause.UpstreamCause(invokingRun)));
         List<ParameterValue> parameters = step.getParameters();
         if (parameters != null) {
-            completeDefaultParameters(parameters, (Job) project);
+            parameters = completeDefaultParameters(parameters, (Job) project);
             actions.add(new ParametersAction(parameters));
         }
         Integer quietPeriod = step.getQuietPeriod();
@@ -83,7 +83,8 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         }
     }
 
-    private void completeDefaultParameters(List<ParameterValue> parameters, Job<?,?> project) {
+    private List<ParameterValue> completeDefaultParameters(List<ParameterValue> parameters, Job<?,?> project) {
+        List<ParameterValue> completeListOfParameters = Lists.newArrayList(parameters);
         List<String> names = Lists.transform(parameters, new Function<ParameterValue, String>() {
             @Override public String apply(ParameterValue input) {
                 return input.getName();
@@ -91,15 +92,18 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         });
         if (project != null) {
             ParametersDefinitionProperty pdp = project.getProperty(ParametersDefinitionProperty.class);
-            if (pdp != null && pdp.getParameterDefinitionNames().size() > parameters.size()) {
-                for (String name : pdp.getParameterDefinitionNames()) {
-                    ParameterDefinition pDef = pdp.getParameterDefinition(name);
-                    if (!names.contains(pDef.getName()) && pDef.getDefaultParameterValue() != null) {
-                        parameters.add(pDef.getDefaultParameterValue());
+            if (pdp != null) {
+                for (ParameterDefinition pDef : pdp.getParameterDefinitions()) {
+                    if (!names.contains(pDef.getName())) {
+                        ParameterValue defaultP = pDef.getDefaultParameterValue();
+                        if (defaultP != null) {
+                            completeListOfParameters.add(defaultP);
+                        }
                     }
                 }
             }
         }
+        return completeListOfParameters;
     }
 
     @Override
