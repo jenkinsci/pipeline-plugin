@@ -166,9 +166,7 @@ public class GitStepTest {
         assertFalse(iterator.hasNext());
     }
 
-    // This test is currently disabled until the fix for JENKINS-29326 is released
-    // in the git plugin, in 2.4.1 or later.
-    @Ignore
+    @Ignore("This test is currently disabled until the fix for JENKINS-29326 is released in the git plugin 2.4.1 or later.")
     @Issue("JENKINS-29326")
     @Test
     public void identicalGitSCMs() throws Exception {
