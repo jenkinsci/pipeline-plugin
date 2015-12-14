@@ -18,7 +18,7 @@ The directory structure of the shared library repository is as follows:
      |       +- foo
      |           +- Bar.groovy  # for org.foo.Bar class
      +- vars
-         +- foo.groovy          # for global 'foo' variable/function 
+         +- foo.groovy          # for global 'foo' variable/function
          +- foo.txt             # help for 'foo' variable/function
 
 The `src` directory should look like standard Java source directory structure.
@@ -154,7 +154,7 @@ def setFoo(v) {
 def getFoo() {
     return this.foo;
 }
-def say(msg) {
+def say(name) {
     echo "Hello world, ${name}"
 }
 ```
@@ -162,7 +162,7 @@ def say(msg) {
 Then your workflow can call these functions like this:
 
 ```groovy
-acme.foo = 5;
+acme.foo = "5";
 echo acme.foo; // print 5
 acme.say "Joe" // print "Hello world, Joe"
 ```
@@ -180,7 +180,7 @@ def call(body) {
     body.resolveStrategy = Closure.DELEGATE_FIRST
     body.delegate = config
     body()
-    
+
     // now build, based on the configuration provided
     node {
         git url: "https://github.com/jenkinsci/${config.name}-plugin.git"
