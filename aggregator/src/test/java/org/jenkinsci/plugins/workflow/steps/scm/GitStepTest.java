@@ -166,28 +166,34 @@ public class GitStepTest {
         assertFalse(iterator.hasNext());
     }
 
+    // TODO: Remove this Ignore after git plugin 2.4.1 is released.
     @Ignore("This test is currently disabled until the fix for JENKINS-29326 is released in the git plugin 2.4.1 or later.")
     @Issue("JENKINS-29326")
     @Test
     public void identicalGitSCMs() throws Exception {
         otherRepo.git("init");
-        otherRepo.write("otherfile", "");
-        otherRepo.git("add", "otherfile");
+        otherRepo.write("firstfile", "");
+        otherRepo.git("add", "firstfile");
         otherRepo.git("commit", "--message=init");
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
         p.setDefinition(new CpsFlowDefinition(
                 "node {\n" +
-                        "    ws {\n" +
-                        "        dir('main') {\n" +
-                        "            git($/" + otherRepo + "/$)\n" +
-                        "        }\n" +
-                        "        dir('other') {\n" +
-                        "            git($/" + otherRepo + "/$)\n" +
-                        "        }\n" +
-                        "        archive '**'\n" +
+                        "    dir('main') {\n" +
+                        "        git($/" + otherRepo + "/$)\n" +
+                        "    }\n" +
+                        "    dir('other') {\n" +
+                        "        git($/" + otherRepo + "/$)\n" +
                         "    }\n" +
                         "}"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         assertEquals(1, b.getActions(BuildData.class).size());
+        assertEquals(1, b.getChangeSets().size());
+
+        otherRepo.write("secondfile", "");
+        otherRepo.git("add", "secondfile");
+        otherRepo.git("commit", "--message=second");
+        WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals(1, b.getChangeSets().size());
+        assertFalse(b2.getChangeSets().get(0).isEmptySet());
     }
 }
