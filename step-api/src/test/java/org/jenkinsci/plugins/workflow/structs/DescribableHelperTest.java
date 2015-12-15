@@ -89,7 +89,14 @@ public class DescribableHelperTest {
     @Test public void schemaFor() throws Exception {
         schema(C.class, "(text: String, flag: boolean, [shorty: short])");
         schema(I.class, "(value: String, [flag: boolean], [text: String])");
-        // TODO test getDisplayName, getHelp
+        DescribableHelper.Schema schema = DescribableHelper.schemaFor(Impl1.class);
+        assertEquals("Implementation #1", schema.getDisplayName());
+        assertEquals("<div>Overall help.</div>", schema.getHelp(null));
+        assertEquals("<div>The text to display.</div>", schema.getHelp("text"));
+        schema = DescribableHelper.schemaFor(C.class);
+        assertEquals("C", schema.getDisplayName());
+        assertNull(schema.getHelp(null));
+        assertNull(schema.getHelp("text"));
     }
 
     public static final class C {
@@ -194,7 +201,7 @@ public class DescribableHelperTest {
         }
         @Extension public static final class DescriptorImpl extends Descriptor<Base> {
             @Override public String getDisplayName() {
-                return "Impl1";
+                return "Implementation #1";
             }
         }
     }

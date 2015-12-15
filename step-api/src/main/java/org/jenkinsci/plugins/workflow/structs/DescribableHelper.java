@@ -26,12 +26,14 @@ package org.jenkinsci.plugins.workflow.structs;
 
 import hudson.Extension;
 import com.google.common.primitives.Primitives;
+import hudson.Util;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersDefinitionProperty;
 import java.beans.Introspector;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -59,12 +61,14 @@ import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import net.java.sezpoz.Index;
 import net.java.sezpoz.IndexItem;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.codehaus.groovy.reflection.ReflectionCache;
 import org.kohsuke.stapler.ClassDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.NoStaplerConstructorException;
+import org.kohsuke.stapler.lang.Klass;
 
 /**
  * Utility for converting between {@link Describable}s (and some other objects) and map-like representations.
@@ -210,19 +214,33 @@ public class DescribableHelper {
         }
 
         /**
-         * Corresponds to {@link Descriptor#getDisplayName}.
+         * Corresponds to {@link Descriptor#getDisplayName} where available.
          */
         public String getDisplayName() {
-            return ""; // TODO
+            for (Descriptor<?> d : getDescriptorList()) {
+                if (d.clazz == type) {
+                    return d.getDisplayName();
+                }
+            }
+            return type.getSimpleName();
         }
 
         /**
          * Loads help defined for this object as a whole or one of its parameters.
+         * Note that you may need to use {@link Util#replaceMacro(String, Map)}
+         * to replace {@code ${rootURL}} with some other value.
          * @param parameter if specified, one of {@link #parameters}; else for the whole object
-         * @return some HTML, if available, else null
+         * @return some HTML (in English locale), if available, else null
+         * @see Descriptor#doHelp
          */
-        public @CheckForNull String getHelp(@CheckForNull String parameter) {
-            return null; // TODO
+        public @CheckForNull String getHelp(@CheckForNull String parameter) throws IOException {
+            for (Klass<?> c = Klass.java(type); c != null; c = c.getSuperClass()) {
+                URL u = c.getResource(parameter == null ? "help.html" : "help-" + parameter + ".html");
+                if (u != null) {
+                    return IOUtils.toString(u, "UTF-8");
+                }
+            }
+            return null;
         }
 
         @Override public String toString() {
