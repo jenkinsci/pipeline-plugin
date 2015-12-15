@@ -190,6 +190,7 @@ public class GitStepTest {
         assertEquals(1, b.getActions(BuildData.class).size());
         assertEquals(1, b.getActions(GitTagAction.class).size());
         assertEquals(0, b.getChangeSets().size());
+        assertEquals(1, p.getSCMs().size());
 
         otherRepo.write("secondfile", "");
         otherRepo.git("add", "secondfile");
@@ -199,5 +200,6 @@ public class GitStepTest {
         assertEquals(1, b2.getActions(GitTagAction.class).size());
         assertEquals(1, b2.getChangeSets().size());
         assertFalse(b2.getChangeSets().get(0).isEmptySet());
+        assertEquals(1, p.getSCMs().size());
     }
 }
