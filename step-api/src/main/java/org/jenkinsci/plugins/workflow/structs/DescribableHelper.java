@@ -54,6 +54,7 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import net.java.sezpoz.Index;
@@ -80,7 +81,7 @@ public class DescribableHelper {
      * Other object types may be passed in “raw” as well, but JSON-like structures are encouraged instead.
      * Specifically a {@link List} may be used to represent any list- or array-valued argument.
      * A {@link Map} with {@link String} keys may be used to represent any class which is itself data-bound.
-     * In that case the special key {@code $class} is used to specify the {@link Class#getName};
+     * In that case the special key {@link #CLAZZ} is used to specify the {@link Class#getName};
      * or it may be omitted if the argument is declared to take a concrete type;
      * or {@link Class#getSimpleName} may be used in case the argument type is {@link Describable}
      * and only one subtype is registered (as a {@link Descriptor}) with that simple name.
@@ -136,6 +137,198 @@ public class DescribableHelper {
     }
 
     /**
+     * Loads a definition of the structure of a class: what kind of data you might get back from {@link #uninstantiate} on an instance,
+     * or might want to pass to {@link #instantiate}.
+     */
+    public static Schema schemaFor(Class<?> clazz) throws Exception {
+        return new Schema(clazz);
+    }
+
+    /**
+     * Definition of how a particular class may be configured.
+     */
+    public static final class Schema {
+
+        private final Class<?> type;
+
+        Schema(Class<?> clazz) {
+            this.type = clazz;
+        }
+
+        /**
+         * A concrete class, usually {@link Describable}.
+         */
+        public Class<?> getType() {
+            return type;
+        }
+
+        /**
+         * A map from parameter names to types.
+         * A parameter name is either the name of an argument to a {@link DataBoundConstructor},
+         * or the JavaBeans property name corresponding to a {@link DataBoundSetter}.
+         */
+        public Map<String,ParameterType> parameters() {
+            return Collections.emptyMap(); // TODO
+        }
+
+        /**
+         * Mandatory (constructor) parameters, in order.
+         * Parameters at the end of the list may be omitted, in which case they are assumed to be null or some other default value
+         * (in these cases it would be better to use {@link DataBoundSetter} on the type definition).
+         * Will be keys in {@link #parameters}.
+         */
+        public List<String> mandatoryParameters() {
+            return Collections.emptyList(); // TODO
+        }
+
+        /**
+         * Corresponds to {@link Descriptor#getDisplayName}.
+         */
+        public String getDisplayName() {
+            return ""; // TODO
+        }
+
+        /**
+         * Loads help defined for this object as a whole or one of its parameters.
+         * @param parameter if specified, one of {@link #parameters}; else for the whole object
+         * @return some HTML, if available, else null
+         */
+        public @CheckForNull String getHelp(@CheckForNull String parameter) {
+            return null; // TODO
+        }
+
+        @Override public String toString() {
+            StringBuilder b = new StringBuilder("(");
+            boolean first = true;
+            Map<String,ParameterType> params = new TreeMap<String,ParameterType>(parameters());
+            for (String param : mandatoryParameters()) {
+                if (first) {
+                    first = false;
+                } else {
+                    b.append(" ,");
+                }
+                b.append(param).append(": ").append(params.remove(param));
+            }
+            for (Map.Entry<String,ParameterType> entry : params.entrySet()) {
+                if (first) {
+                    first = false;
+                } else {
+                    b.append(", ");
+                }
+                b.append('[').append(entry.getKey()).append(": ").append(entry.getValue()).append(']');
+            }
+            return b.append(')').toString();
+        }
+
+    }
+
+    /**
+     * A type of a parameter to a class.
+     */
+    public static abstract class ParameterType {
+        ParameterType() {}
+    }
+
+    public static final class AtomicType extends ParameterType {
+        private final Class<?> clazz;
+        AtomicType(Class<?> clazz) {
+            this.clazz = clazz;
+        }
+        /**
+         * A Java type: either {@link String}, or a {@link Class#isPrimitive} wrapper.
+         */
+        public Class<?> getType() {
+            return clazz;
+        }
+        @Override public String toString() {
+            return Primitives.unwrap(clazz).getSimpleName();
+        }
+    }
+
+    public static final class EnumType extends ParameterType {
+        private final Class<?> clazz;
+        private final String[] values;
+        EnumType(Class<?> clazz, String[] values) {
+            this.clazz = clazz;
+            this.values = values;
+        }
+        /**
+         * Gets the Java type, usually an {@link Enum} but not necessarily.
+         */
+        public Class<?> getClazz() {
+            return clazz;
+        }
+        /**
+         * A list of enumeration values.
+         */
+        public String[] getValues() {
+            return values;
+        }
+        @Override public String toString() {
+            return clazz.getSimpleName() + Arrays.toString(values);
+        }
+    }
+
+    public static final class ArrayType extends ParameterType {
+        private final ParameterType elementType;
+        ArrayType(ParameterType elementType) {
+            this.elementType = elementType;
+        }
+        /**
+         * The element type of the array or list.
+         */
+        public ParameterType getElementType() {
+            return elementType;
+        }
+        @Override public String toString() {
+            return elementType + "[]";
+        }
+    }
+
+    public static final class HomogeneousObjectType extends ParameterType {
+        private final Schema type;
+        HomogeneousObjectType(Schema type) {
+            this.type = type;
+        }
+        /**
+         * The schema representing a type of nested object.
+         */
+        public Schema getType() {
+            return type;
+        }
+        @Override public String toString() {
+            return type.getType().getSimpleName() + type;
+        }
+    }
+
+    /**
+     * A parameter (or array element) which could take any of the indicated concrete object types.
+     */
+    public static final class HeterogeneousObjectType extends ParameterType {
+        private final Class<?> supertype;
+        private final Map<String,Schema> types;
+        HeterogeneousObjectType(Class<?> supertype, Map<String,Schema> types) {
+            this.supertype = supertype;
+            this.types = types;
+        }
+        /**
+         * The supertype of allowed implementations; typically {@code abstract} or an {@code interface}.
+         */
+        public Class<?> getSupertype() {
+            return supertype;
+        }
+        /**
+         * A map from names which could be passed to {@link #CLAZZ} to types of allowable nested objects.
+         */
+        public Map<String,Schema> getTypes() {
+            return types;
+        }
+        @Override public String toString() {
+            return supertype.getSimpleName() + types;
+        }
+    }
+
+    /**
      * Removes configuration of any properties based on {@link DataBoundSetter} which appear unmodified from the default.
      * @param clazz the class of {@code o}
      * @param allDataBoundProps all its properties, including those from its {@link DataBoundConstructor} as well as any {@link DataBoundSetter}s; some of the latter might be deleted
@@ -171,7 +364,7 @@ public class DescribableHelper {
         }
     }
 
-    private static final String CLAZZ = "$class";
+    public static final String CLAZZ = "$class";
 
     private static Object[] buildArguments(Class<?> clazz, Map<String,?> arguments, Type[] types, String[] names, boolean callEvenIfNoArgs) throws Exception {
         Object[] args = new Object[names.length];
@@ -211,7 +404,7 @@ public class DescribableHelper {
             Class<?> clazz;
             if (clazzS == null) {
                 if (Modifier.isAbstract(((Class) type).getModifiers())) {
-                    throw new UnsupportedOperationException("must specify $class with an implementation of " + type);
+                    throw new UnsupportedOperationException("must specify " + CLAZZ + " with an implementation of " + type);
                 }
                 clazz = (Class) type;
             } else if (clazzS.contains(".")) {
