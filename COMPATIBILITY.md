@@ -79,6 +79,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `gitlab-plugin`: supported as of 1.1.26
 - [X] `bitbucket`: supported as of 1.1.2
 - [ ] `bitbucket-pullrequest-builder`: [JENKINS-31749](https://issues.jenkins-ci.org/browse/JENKINS-31749)
+- [ ] `xtrigger`: [JENKINS-31933](https://issues.jenkins-ci.org/browse/JENKINS-31933)
 
 ## Clouds
 
