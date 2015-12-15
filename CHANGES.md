@@ -8,15 +8,15 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 * [JENKINS-31769](https://issues.jenkins-ci.org/browse/JENKINS-31769): fixed at least some hangs when `sh`/`bat` processes complete on laggy slaves.
 * [JENKINS-31902](https://issues.jenkins-ci.org/browse/JENKINS-31902): interrupting the `build` step failed to interrupt downstream Workflow builds.
 * [JENKINS-29413](https://issues.jenkins-ci.org/browse/JENKINS-29413): hung build when running the `parallel` step with an empty map.
-* [JENKINS-29881](https://issues.jenkins-ci.org/browse/JENKINS-29881): don't include empty changesets in `WorkflowRun.getChangeSets()`.
-* [JENKINS-31086](https://issues.jenkins-ci.org/browse/JENKINS-31086): Added `useDefaultExcludes` option, defaulting to true, to `stash`. When false, Ant default excludes are not used.
+* [JENKINS-29881](https://issues.jenkins-ci.org/browse/JENKINS-29881): do not include empty changesets in `WorkflowRun.getChangeSets()`.
+* [JENKINS-31086](https://issues.jenkins-ci.org/browse/JENKINS-31086): added `useDefaultExcludes` option to the `stash` step.
 
 ## 1.12-beta-2 (Nov 25 2015)
 
 * [JENKINS-29705](https://issues.jenkins-ci.org/browse/JENKINS-29705): added _Thread Dump_ link to running flow builds for diagnosing problems like hangs.
 * [JENKINS-31649](https://issues.jenkins-ci.org/browse/JENKINS-31649): correctly display pending queue items for blocked `node {}` tasks when on Jenkins 1.639+ (will not appear in 1.638 or 1.625.2).
 * [JENKINS-31691](https://issues.jenkins-ci.org/browse/JENKINS-31691): added `isUnix` step.
-* [JENKINS-31585](https://issues.jenkins-ci.org/browse/JENKINS-31585): make new script editor resizable.
+* [JENKINS-31585](https://issues.jenkins-ci.org/browse/JENKINS-31585): made new script editor resizable.
 
 ## 1.12-beta-1 (Nov 19 2015)
 
