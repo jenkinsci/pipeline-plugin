@@ -26,11 +26,10 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import hudson.Extension;
 import hudson.Functions;
-import hudson.model.Descriptor;
 import hudson.model.RootAction;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -40,11 +39,13 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.lang.model.SourceVersion;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -226,6 +227,100 @@ import org.kohsuke.stapler.StaplerResponse;
         } catch (UnsupportedOperationException x) {
             Logger.getLogger(CpsFlowExecution.class.getName()).log(Level.WARNING, "failed to render " + json, x);
             return HttpResponses.plainText(x.getMessage());
+        }
+    }
+
+    @Restricted(NoExternalUse.class)
+    public static final String STATIC_URL = ACTION_URL + "/static";
+
+    @Restricted(DoNotUse.class)
+    public void doStatic(StaplerRequest req, StaplerResponse rsp) throws Exception {
+        rsp.setContentType("text/html;charset=UTF-8");
+        PrintWriter pw = rsp.getWriter();
+        pw.println("<html><head><title>Jenkins Workflow Reference</title></head><body>");
+        pw.println("<h1>Steps</h1>");
+        for (StepDescriptor d : getStepDescriptors(false)) {
+            generateStepHelp(d, pw);
+        }
+        pw.println("<h1>Advanced/Deprecated Steps</h1>");
+        for (StepDescriptor d : getStepDescriptors(true)) {
+            generateStepHelp(d, pw);
+        }
+        pw.println("<h1>Variables</h1>");
+        for (GlobalVariable v : getGlobalVariables()) {
+            pw.println("<h2><code>" + v.getName() + "</code></h2>");
+            RequestDispatcher rd = req.getView(v, "help");
+            if (rd != null) {
+                /* TODO does not work:
+                rd.include(req, rsp);
+                */
+            } else {
+                pw.println("(no help)");
+            }
+        }
+        pw.println("</body></html>");
+    }
+    private static void generateStepHelp(StepDescriptor d, PrintWriter pw) throws Exception {
+        pw.println("<h2><code>" + d.getFunctionName() + "</code>: " + d.getDisplayName() + "</h2>");
+        try {
+            generateHelp(DescribableHelper.schemaFor(d.clazz), pw, 3);
+        } catch (Exception x) {
+            pw.println("<pre><code>" + /*Util.escape(Functions.printThrowable(x))*/x + "</code></pre>");
+        }
+    }
+    private static void generateHelp(DescribableHelper.Schema schema, PrintWriter pw, int headerLevel) throws Exception {
+        String help = schema.getHelp(null);
+        if (help != null) {
+            pw.println(help);
+        } // TODO else could use RequestDispatcher (as in Descriptor.doHelp) to serve template-based help
+        for (String attr : schema.mandatoryParameters()) {
+            pw.println("<h" + headerLevel + "><code>" + attr + "</code></h" + headerLevel + ">");
+            generateAttrHelp(schema, attr, pw, headerLevel);
+        }
+        for (String attr : schema.parameters().keySet()) {
+            if (schema.mandatoryParameters().contains(attr)) {
+                continue;
+            }
+            pw.println("<h" + headerLevel + "><code>" + attr + "</code> (optional)</h" + headerLevel + ">");
+            generateAttrHelp(schema, attr, pw, headerLevel);
+        }
+    }
+    private static void generateAttrHelp(DescribableHelper.Schema schema, String attr, PrintWriter pw, int headerLevel) throws Exception {
+        String help = schema.getHelp(attr);
+        if (help != null) {
+            pw.println(help);
+        }
+        DescribableHelper.ParameterType type = schema.parameters().get(attr);
+        describeType(type, pw, headerLevel);
+    }
+    private static void describeType(DescribableHelper.ParameterType type, PrintWriter pw, int headerLevel) throws Exception {
+        int nextHeaderLevel = Math.min(6, headerLevel + 1);
+        if (type instanceof DescribableHelper.AtomicType) {
+            pw.println("<p><strong>Type:</strong>" + type + "</p>");
+        } else if (type instanceof DescribableHelper.EnumType) {
+            pw.println("<p><strong>Values:</strong></p><ul>");
+            for (String v : ((DescribableHelper.EnumType) type).getValues()) {
+                pw.println("<li><code>" + v + "</code></li>");
+            }
+            pw.println("</ul>");
+        } else if (type instanceof DescribableHelper.ArrayType) {
+            pw.println("<p><strong>Array/List</strong></p>");
+            describeType(((DescribableHelper.ArrayType) type).getElementType(), pw, headerLevel);
+        } else if (type instanceof DescribableHelper.HomogeneousObjectType) {
+            pw.println("<p><strong>Nested object</strong></p>");
+            generateHelp(((DescribableHelper.HomogeneousObjectType) type).getType(), pw, nextHeaderLevel);
+        } else if (type instanceof DescribableHelper.HeterogeneousObjectType) {
+            pw.println("<p><strong>Nested choice of objects</strong></p><ul>");
+            for (Map.Entry<String,DescribableHelper.Schema> entry : ((DescribableHelper.HeterogeneousObjectType) type).getTypes().entrySet()) {
+                pw.println("<li><code>$class: '" + entry.getKey() + "'</code></li>");
+                generateHelp(entry.getValue(), pw, nextHeaderLevel);
+            }
+            pw.println("</ul>");
+        } else if (type instanceof DescribableHelper.ErrorType) {
+            Exception x = ((DescribableHelper.ErrorType) type).getError();
+            pw.println("<pre><code>" + /*Util.escape(Functions.printThrowable(x))*/x + "</code></pre>");
+        } else {
+            assert false : type;
         }
     }
 

@@ -274,57 +274,61 @@ public class DescribableHelper {
     public static abstract class ParameterType {
         ParameterType() {}
         static ParameterType of(Type type) {
-            if (type instanceof Class) {
-                Class<?> c = (Class<?>) type;
-                if (c == String.class || Primitives.unwrap(c).isPrimitive()) {
-                    return new AtomicType(c);
-                }
-                if (Enum.class.isAssignableFrom(c)) {
-                    List<String> constants = new ArrayList<String>();
-                    for (Enum<?> value : c.asSubclass(Enum.class).getEnumConstants()) {
-                        constants.add(value.name());
+            try {
+                if (type instanceof Class) {
+                    Class<?> c = (Class<?>) type;
+                    if (c == String.class || Primitives.unwrap(c).isPrimitive()) {
+                        return new AtomicType(c);
                     }
-                    return new EnumType(c, constants.toArray(new String[constants.size()]));
-                }
-                if (c == URL.class) {
-                    return new AtomicType(String.class);
-                }
-                if (c.isArray()) {
-                    return new ArrayType(of(c.getComponentType()));
-                }
-                // Assume it is a nested object of some sort.
-                Set<Class<?>> subtypes = findSubtypes(c);
-                if (subtypes.isEmpty() || subtypes.equals(Collections.singleton(c))) {
-                    // Probably homogeneous. (Might be heterogeneous with no registered implementations, or might be concrete but subclassable.)
-                    return new HomogeneousObjectType(schemaFor(c));
-                } else {
-                    // Definitely heterogeneous.
-                    Map<String,List<Class<?>>> subtypesBySimpleName = new HashMap<String,List<Class<?>>>();
-                    for (Class<?> subtype : subtypes) {
-                        String simpleName = subtype.getSimpleName();
-                        List<Class<?>> bySimpleName = subtypesBySimpleName.get(simpleName);
-                        if (bySimpleName == null) {
-                            subtypesBySimpleName.put(simpleName, bySimpleName = new ArrayList<Class<?>>());
+                    if (Enum.class.isAssignableFrom(c)) {
+                        List<String> constants = new ArrayList<String>();
+                        for (Enum<?> value : c.asSubclass(Enum.class).getEnumConstants()) {
+                            constants.add(value.name());
                         }
-                        bySimpleName.add(subtype);
+                        return new EnumType(c, constants.toArray(new String[constants.size()]));
                     }
-                    Map<String,Schema> types = new TreeMap<String,Schema>();
-                    for (Map.Entry<String,List<Class<?>>> entry : subtypesBySimpleName.entrySet()) {
-                        if (entry.getValue().size() == 1) { // normal case: unambiguous via simple name
-                            types.put(entry.getKey(), schemaFor(entry.getValue().get(0)));
-                        } else { // have to diambiguate via FQN
-                            for (Class<?> subtype : entry.getValue()) {
-                                types.put(subtype.getName(), schemaFor(subtype));
+                    if (c == URL.class) {
+                        return new AtomicType(String.class);
+                    }
+                    if (c.isArray()) {
+                        return new ArrayType(of(c.getComponentType()));
+                    }
+                    // Assume it is a nested object of some sort.
+                    Set<Class<?>> subtypes = findSubtypes(c);
+                    if (subtypes.isEmpty() || subtypes.equals(Collections.singleton(c))) {
+                        // Probably homogeneous. (Might be heterogeneous with no registered implementations, or might be concrete but subclassable.)
+                        return new HomogeneousObjectType(schemaFor(c));
+                    } else {
+                        // Definitely heterogeneous.
+                        Map<String,List<Class<?>>> subtypesBySimpleName = new HashMap<String,List<Class<?>>>();
+                        for (Class<?> subtype : subtypes) {
+                            String simpleName = subtype.getSimpleName();
+                            List<Class<?>> bySimpleName = subtypesBySimpleName.get(simpleName);
+                            if (bySimpleName == null) {
+                                subtypesBySimpleName.put(simpleName, bySimpleName = new ArrayList<Class<?>>());
+                            }
+                            bySimpleName.add(subtype);
+                        }
+                        Map<String,Schema> types = new TreeMap<String,Schema>();
+                        for (Map.Entry<String,List<Class<?>>> entry : subtypesBySimpleName.entrySet()) {
+                            if (entry.getValue().size() == 1) { // normal case: unambiguous via simple name
+                                types.put(entry.getKey(), schemaFor(entry.getValue().get(0)));
+                            } else { // have to diambiguate via FQN
+                                for (Class<?> subtype : entry.getValue()) {
+                                    types.put(subtype.getName(), schemaFor(subtype));
+                                }
                             }
                         }
+                        return new HeterogeneousObjectType(c, types);
                     }
-                    return new HeterogeneousObjectType(c, types);
                 }
+                if (acceptsList(type)) {
+                    return new ArrayType(of(((ParameterizedType) type).getActualTypeArguments()[0]));
+                }
+                throw new UnsupportedOperationException("do not know how to categorize attributes of type " + type);
+            } catch (Exception x) {
+                return new ErrorType(x);
             }
-            if (acceptsList(type)) {
-                return new ArrayType(of(((ParameterizedType) type).getActualTypeArguments()[0]));
-            }
-            throw new UnsupportedOperationException("do not know how to categorize attributes of type " + type);
         }
     }
 
@@ -424,6 +428,16 @@ public class DescribableHelper {
         }
         @Override public String toString() {
             return supertype.getSimpleName() + types;
+        }
+    }
+
+    public static final class ErrorType extends ParameterType {
+        private final Exception error;
+        ErrorType(Exception error) {
+            this.error = error;
+        }
+        public Exception getError() {
+            return error;
         }
     }
 
