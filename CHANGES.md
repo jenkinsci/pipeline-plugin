@@ -2,6 +2,10 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.12 (Dec 14 2015)
+
+Same as beta 3.
+
 ## 1.12-beta-3 (Dec 09 2015)
 
 * [JENKINS-31386](https://issues.jenkins-ci.org/browse/JENKINS-31386): `checkout scm` now works also in _Workflow script from SCM_ to better interoperate with multibranch projects.
