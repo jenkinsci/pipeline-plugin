@@ -140,7 +140,7 @@ public class DescribableHelper {
      * Loads a definition of the structure of a class: what kind of data you might get back from {@link #uninstantiate} on an instance,
      * or might want to pass to {@link #instantiate}.
      */
-    public static Schema schemaFor(Class<?> clazz) throws Exception {
+    public static Schema schemaFor(Class<?> clazz) {
         return new Schema(clazz);
     }
 
@@ -150,9 +150,37 @@ public class DescribableHelper {
     public static final class Schema {
 
         private final Class<?> type;
+        private final Map<String,ParameterType> parameters;
+        private final List<String> mandatoryParameters;
 
         Schema(Class<?> clazz) {
             this.type = clazz;
+            mandatoryParameters = new ArrayList<String>();
+            parameters = new TreeMap<String,ParameterType>();
+            String[] names = loadConstructorParamNames(clazz);
+            Type[] types = findConstructor(clazz, names.length).getGenericParameterTypes();
+            for (int i = 0; i < names.length; i++) {
+                mandatoryParameters.add(names[i]);
+                parameters.put(names[i], ParameterType.of(types[i]));
+            }
+            for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
+                for (Field f : c.getDeclaredFields()) {
+                    if (f.isAnnotationPresent(DataBoundSetter.class)) {
+                        f.setAccessible(true);
+                        parameters.put(f.getName(), ParameterType.of(f.getGenericType()));
+                    }
+                }
+                for (Method m : c.getDeclaredMethods()) {
+                    if (m.isAnnotationPresent(DataBoundSetter.class)) {
+                        Type[] parameterTypes = m.getGenericParameterTypes();
+                        if (!m.getName().startsWith("set") || parameterTypes.length != 1) {
+                            throw new IllegalStateException(m + " cannot be a @DataBoundSetter");
+                        }
+                        m.setAccessible(true);
+                        parameters.put(Introspector.decapitalize(m.getName().substring(3)), ParameterType.of(m.getGenericParameterTypes()[0]));
+                    }
+                }
+            }
         }
 
         /**
@@ -168,7 +196,7 @@ public class DescribableHelper {
          * or the JavaBeans property name corresponding to a {@link DataBoundSetter}.
          */
         public Map<String,ParameterType> parameters() {
-            return Collections.emptyMap(); // TODO
+            return parameters;
         }
 
         /**
@@ -178,7 +206,7 @@ public class DescribableHelper {
          * Will be keys in {@link #parameters}.
          */
         public List<String> mandatoryParameters() {
-            return Collections.emptyList(); // TODO
+            return mandatoryParameters;
         }
 
         /**
@@ -205,7 +233,7 @@ public class DescribableHelper {
                 if (first) {
                     first = false;
                 } else {
-                    b.append(" ,");
+                    b.append(", ");
                 }
                 b.append(param).append(": ").append(params.remove(param));
             }
@@ -227,6 +255,59 @@ public class DescribableHelper {
      */
     public static abstract class ParameterType {
         ParameterType() {}
+        static ParameterType of(Type type) {
+            if (type instanceof Class) {
+                Class<?> c = (Class<?>) type;
+                if (c == String.class || Primitives.unwrap(c).isPrimitive()) {
+                    return new AtomicType(c);
+                }
+                if (Enum.class.isAssignableFrom(c)) {
+                    List<String> constants = new ArrayList<String>();
+                    for (Enum<?> value : c.asSubclass(Enum.class).getEnumConstants()) {
+                        constants.add(value.name());
+                    }
+                    return new EnumType(c, constants.toArray(new String[constants.size()]));
+                }
+                if (c == URL.class) {
+                    return new AtomicType(String.class);
+                }
+                if (c.isArray()) {
+                    return new ArrayType(of(c.getComponentType()));
+                }
+                // Assume it is a nested object of some sort.
+                Set<Class<?>> subtypes = findSubtypes(c);
+                if (subtypes.isEmpty() || subtypes.equals(Collections.singleton(c))) {
+                    // Probably homogeneous. (Might be heterogeneous with no registered implementations, or might be concrete but subclassable.)
+                    return new HomogeneousObjectType(schemaFor(c));
+                } else {
+                    // Definitely heterogeneous.
+                    Map<String,List<Class<?>>> subtypesBySimpleName = new HashMap<String,List<Class<?>>>();
+                    for (Class<?> subtype : subtypes) {
+                        String simpleName = subtype.getSimpleName();
+                        List<Class<?>> bySimpleName = subtypesBySimpleName.get(simpleName);
+                        if (bySimpleName == null) {
+                            subtypesBySimpleName.put(simpleName, bySimpleName = new ArrayList<Class<?>>());
+                        }
+                        bySimpleName.add(subtype);
+                    }
+                    Map<String,Schema> types = new TreeMap<String,Schema>();
+                    for (Map.Entry<String,List<Class<?>>> entry : subtypesBySimpleName.entrySet()) {
+                        if (entry.getValue().size() == 1) { // normal case: unambiguous via simple name
+                            types.put(entry.getKey(), schemaFor(entry.getValue().get(0)));
+                        } else { // have to diambiguate via FQN
+                            for (Class<?> subtype : entry.getValue()) {
+                                types.put(subtype.getName(), schemaFor(subtype));
+                            }
+                        }
+                    }
+                    return new HeterogeneousObjectType(c, types);
+                }
+            }
+            if (acceptsList(type)) {
+                return new ArrayType(of(((ParameterizedType) type).getActualTypeArguments()[0]));
+            }
+            throw new UnsupportedOperationException("do not know how to categorize attributes of type " + type);
+        }
     }
 
     public static final class AtomicType extends ParameterType {
@@ -262,7 +343,7 @@ public class DescribableHelper {
          * A list of enumeration values.
          */
         public String[] getValues() {
-            return values;
+            return values.clone();
         }
         @Override public String toString() {
             return clazz.getSimpleName() + Arrays.toString(values);
@@ -609,21 +690,21 @@ public class DescribableHelper {
         }
     }
 
-    static <T> Set<Class<? extends T>> findSubtypes(Class<T> supertype) {
-        Set<Class<? extends T>> clazzes = new HashSet<Class<? extends T>>();
+    static Set<Class<?>> findSubtypes(Class<?> supertype) {
+        Set<Class<?>> clazzes = new HashSet<Class<?>>();
         for (Descriptor<?> d : getDescriptorList()) {
             if (supertype.isAssignableFrom(d.clazz)) {
-                clazzes.add(d.clazz.asSubclass(supertype));
+                clazzes.add(d.clazz);
             }
         }
         if (supertype == ParameterValue.class) { // TODO JENKINS-26093 hack, pending core change
-            for (Class<? extends ParameterDefinition> d : findSubtypes(ParameterDefinition.class)) {
+            for (Class<?> d : findSubtypes(ParameterDefinition.class)) {
                 String name = d.getName();
                 if (name.endsWith("Definition")) {
                     try {
                         Class<?> c = d.getClassLoader().loadClass(name.replaceFirst("Definition$", "Value"));
                         if (supertype.isAssignableFrom(c)) {
-                            clazzes.add(c.asSubclass(supertype));
+                            clazzes.add(c);
                         }
                     } catch (ClassNotFoundException x) {
                         // ignore

@@ -87,7 +87,7 @@ public class DescribableHelperTest {
     }
 
     @Test public void schemaFor() throws Exception {
-        schema(C.class, "(flag: boolean, text: String, [shorty: short])");
+        schema(C.class, "(text: String, flag: boolean, [shorty: short])");
         schema(I.class, "(value: String, [flag: boolean], [text: String])");
         // TODO test getDisplayName, getHelp
     }
