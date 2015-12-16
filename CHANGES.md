@@ -5,6 +5,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 ## 1.13 (upcoming)
 
 * [JENKINS-26126](https://issues.jenkins-ci.org/browse/JENKINS-26126) (partial): introspect Workflow steps to generate static reference documentation (link from _Snippet Generator_). Planned to be used for IDE auto-completion as well.
+* [JENKINS-31897](https://issues.jenkins-ci.org/browse/JENKINS-31897): parameters with default values may now be omitted from the `parameters` option to the `build` step.
 
 ## 1.12 (Dec 14 2015)
 
