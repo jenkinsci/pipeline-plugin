@@ -40,6 +40,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.WeakHashMap;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import org.junit.rules.TemporaryFolder;
@@ -90,23 +92,21 @@ public class JenkinsRuleExt {
         }
     }
 
-    /**
-     * Prints a stack trace whenever {@link Thread#interrupt} is called on a thread running {@link JenkinsRule#before}.
-     */
+    private static Map<Thread,Throwable> interruptors() {
+        Properties props = System.getProperties();
+        Map<Thread,Throwable> m = (Map<Thread,Throwable>) props.get("diagnoseJenkins30395");
+        if (m == null) {
+            m = new WeakHashMap<Thread,Throwable>();
+            props.put("diagnoseJenkins30395", m);
+        }
+        return m;
+    }
     private static void diagnoseJenkins30395SetUp() {
         System.setSecurityManager(new SecurityManager() {
             @Override public void checkAccess(Thread t) {
-                StackTraceElement[] target = t.getStackTrace();
-                if (matches(target, JenkinsRule.class, "before")) {
-                    Throwable x = new Throwable("calling Thread.interrupt here");
-                    if (matches(x.getStackTrace(), Thread.class, "interrupt")) {
-                        x.printStackTrace();
-                        System.getProperties().put("diagnoseJenkins30395", x);
-                        System.err.println("Target thread:");
-                        for (StackTraceElement line : target) {
-                            System.err.println("\tat " + line);
-                        }
-                    }
+                Throwable x = new Throwable("calling Thread.interrupt here");
+                if (matches(x.getStackTrace(), Thread.class, "interrupt")) {
+                    interruptors().put(t, x);
                 }
             }
             boolean matches(StackTraceElement[] stack, Class<?> clazz, String method) {
@@ -122,26 +122,24 @@ public class JenkinsRuleExt {
             @Override public void checkPermission(Permission perm, Object context) {}
         });
     }
+    private static Throwable initCause(Throwable x) {
+        Throwable cause = interruptors().get(Thread.currentThread());
+        if (cause != null) {
+            x.initCause(cause);
+        }
+        return x;
+    }
     public static JenkinsRule diagnoseJenkins30395() {
         diagnoseJenkins30395SetUp();
         return new JenkinsRule() {
             @Override public void before() throws Throwable {
                 if (Thread.interrupted()) {
-                    InterruptedException x = new InterruptedException("was interrupted before start");
-                    Object o = System.getProperties().get("diagnoseJenkins30395");
-                    if (o instanceof Throwable) {
-                        x.initCause((Throwable) o);
-                    }
-                    throw x;
+                    throw initCause(new InterruptedException("was interrupted before start"));
                 }
                 try {
                     super.before();
                 } catch (ClosedByInterruptException x) {
-                    Object o = System.getProperties().get("diagnoseJenkins30395");
-                    if (o instanceof Throwable) {
-                        x.initCause((Throwable) o);
-                    }
-                    throw x;
+                    throw initCause(x);
                 }
             }
         };
@@ -187,21 +185,12 @@ public class JenkinsRuleExt {
                 for (Statement step : steps) {
                     j = new JenkinsRule().with(loader);
                     if (Thread.interrupted()) {
-                        InterruptedException x = new InterruptedException("was interrupted before start");
-                        Object o = System.getProperties().get("diagnoseJenkins30395");
-                        if (o instanceof Throwable) {
-                            x.initCause((Throwable) o);
-                        }
-                        throw x;
+                        throw initCause(new InterruptedException("was interrupted before start"));
                     }
                     try {
                         j.apply(step,description).evaluate();
                     } catch (ClosedByInterruptException x) {
-                        Object o = System.getProperties().get("diagnoseJenkins30395");
-                        if (o instanceof Throwable) {
-                            x.initCause((Throwable) o);
-                        }
-                        throw x;
+                        throw initCause(x);
                     }
                 }
             }
