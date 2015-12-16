@@ -38,6 +38,7 @@ import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.security.Permission;
 import java.io.File;
 import java.io.IOException;
+import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -71,7 +72,20 @@ public class WorkflowRunTest {
     }
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public JenkinsRule r = new JenkinsRule() {
+        @Override public void before() throws Throwable {
+            assert !Thread.interrupted() : System.getProperties().get("diagnoseJenkins30395");
+            try {
+                super.before();
+            } catch (ClosedByInterruptException x) {
+                Object o = System.getProperties().get("diagnoseJenkins30395");
+                if (o instanceof Throwable) {
+                    x.initCause((Throwable) o);
+                }
+                throw x;
+            }
+        }
+    };
 
     @Test public void basics() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");

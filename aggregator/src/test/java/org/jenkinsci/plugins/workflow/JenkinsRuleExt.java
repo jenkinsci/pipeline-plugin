@@ -92,6 +92,7 @@ public class JenkinsRuleExt {
                     Throwable x = new Throwable("calling Thread.interrupt here");
                     if (matches(x.getStackTrace(), Thread.class, "interrupt")) {
                         x.printStackTrace();
+                        System.getProperties().put("diagnoseJenkins30395", x);
                         System.err.println("Target thread:");
                         for (StackTraceElement line : target) {
                             System.err.println("\tat " + line);
