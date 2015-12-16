@@ -41,6 +41,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.codehaus.groovy.runtime.GStringImpl;
 import static org.jenkinsci.plugins.workflow.structs.DescribableHelper.CLAZZ;
 import static org.junit.Assert.*;
@@ -55,6 +59,14 @@ public class DescribableHelperTest {
 
     @BeforeClass public static void isUnitTest() {
         Main.isUnitTest = true; // suppress HsErrPidList
+    }
+
+    private static final Logger logger = Logger.getLogger(DescribableHelper.class.getName());
+    @BeforeClass public static void logging() {
+        logger.setLevel(Level.ALL);
+        Handler handler = new ConsoleHandler();
+        handler.setLevel(Level.ALL);
+        logger.addHandler(handler);
     }
 
     @Test public void instantiate() throws Exception {
@@ -97,7 +109,6 @@ public class DescribableHelperTest {
         assertEquals("C", schema.getDisplayName());
         assertNull(schema.getHelp(null));
         assertNull(schema.getHelp("text"));
-        schema(UsesUnimplementedExtensionPoint.class, "(delegate: UnimplementedExtensionPoint{})");
     }
 
     public static final class C {
@@ -142,11 +153,6 @@ public class DescribableHelperTest {
         }
     }
 
-    public static abstract class UnimplementedExtensionPoint extends AbstractDescribableImpl<UnimplementedExtensionPoint> {}
-    public static final class UsesUnimplementedExtensionPoint {
-        @DataBoundConstructor public UsesUnimplementedExtensionPoint(UnimplementedExtensionPoint delegate) {}
-    }
-
     @Test public void findSubtypes() throws Exception {
         assertEquals(new HashSet<Class<?>>(Arrays.asList(Impl1.class, Impl2.class)), DescribableHelper.findSubtypes(Base.class));
         assertEquals(Collections.singleton(Impl1.class), DescribableHelper.findSubtypes(Marker.class));
@@ -168,6 +174,8 @@ public class DescribableHelperTest {
         roundTrip(UsesImpl2.class, map("impl2", map()));
         schema(UsesBase.class, "(base: Base{Impl1=(text: String), Impl2=([flag: boolean])})");
         schema(UsesImpl2.class, "(impl2: Impl2([flag: boolean]))");
+        schema(UsesUnimplementedExtensionPoint.class, "(delegate: UnimplementedExtensionPoint{})");
+        schema(UsesSomeImplsBroken.class, "(delegate: SomeImplsBroken{FineImpl=()})");
     }
 
     public static class UsesBase {
@@ -231,6 +239,31 @@ public class DescribableHelperTest {
         }
     }
     
+    public static abstract class UnimplementedExtensionPoint extends AbstractDescribableImpl<UnimplementedExtensionPoint> {}
+    public static final class UsesUnimplementedExtensionPoint {
+        @DataBoundConstructor public UsesUnimplementedExtensionPoint(UnimplementedExtensionPoint delegate) {}
+    }
+
+    public static abstract class SomeImplsBroken extends AbstractDescribableImpl<SomeImplsBroken> {}
+    public static class BrokenImpl extends SomeImplsBroken {
+        @Extension public static class DescriptorImpl extends Descriptor<SomeImplsBroken> {
+            @Override public String getDisplayName() {
+                return "BrokenImpl";
+            }
+        }
+    }
+    public static class FineImpl extends SomeImplsBroken {
+        @DataBoundConstructor public FineImpl() {}
+        @Extension public static class DescriptorImpl extends Descriptor<SomeImplsBroken> {
+            @Override public String getDisplayName() {
+                return "FineImpl";
+            }
+        }
+    }
+    public static class UsesSomeImplsBroken {
+        @DataBoundConstructor public UsesSomeImplsBroken(SomeImplsBroken delegate) {}
+    }
+
     @Test public void enums() throws Exception {
         roundTrip(UsesEnum.class, map("e", "ZERO"));
         schema(UsesEnum.class, "(e: E[ZERO])");

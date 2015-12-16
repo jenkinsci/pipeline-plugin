@@ -312,10 +312,18 @@ public class DescribableHelper {
                         Map<String,Schema> types = new TreeMap<String,Schema>();
                         for (Map.Entry<String,List<Class<?>>> entry : subtypesBySimpleName.entrySet()) {
                             if (entry.getValue().size() == 1) { // normal case: unambiguous via simple name
-                                types.put(entry.getKey(), schemaFor(entry.getValue().get(0)));
+                                try {
+                                    types.put(entry.getKey(), schemaFor(entry.getValue().get(0)));
+                                } catch (Exception x) {
+                                    LOG.log(Level.FINE, "skipping subtype", x);
+                                }
                             } else { // have to diambiguate via FQN
                                 for (Class<?> subtype : entry.getValue()) {
-                                    types.put(subtype.getName(), schemaFor(subtype));
+                                    try {
+                                        types.put(subtype.getName(), schemaFor(subtype));
+                                    } catch (Exception x) {
+                                        LOG.log(Level.FINE, "skipping subtype", x);
+                                    }
                                 }
                             }
                         }
@@ -434,6 +442,7 @@ public class DescribableHelper {
     public static final class ErrorType extends ParameterType {
         private final Exception error;
         ErrorType(Exception error) {
+            LOG.log(Level.FINE, null, error);
             this.error = error;
         }
         public Exception getError() {

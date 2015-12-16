@@ -40,6 +40,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import org.apache.commons.httpclient.NameValuePair;
@@ -50,6 +54,7 @@ import org.jenkinsci.plugins.workflow.steps.EchoStep;
 import org.jenkinsci.plugins.workflow.steps.PwdStep;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.jenkinsci.plugins.workflow.support.steps.ExecutorStep;
 import org.jenkinsci.plugins.workflow.support.steps.StageStep;
 import org.jenkinsci.plugins.workflow.support.steps.WorkspaceStep;
@@ -57,6 +62,7 @@ import org.jenkinsci.plugins.workflow.support.steps.build.BuildTriggerStep;
 import org.jenkinsci.plugins.workflow.support.steps.input.InputStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.Issue;
@@ -67,6 +73,14 @@ public class SnippetizerTest {
 
     @ClassRule public static JenkinsRule r = new JenkinsRule();
     
+    private static final Logger logger = Logger.getLogger(DescribableHelper.class.getName());
+    @BeforeClass public static void logging() {
+        logger.setLevel(Level.ALL);
+        Handler handler = new ConsoleHandler();
+        handler.setLevel(Level.ALL);
+        logger.addHandler(handler);
+    }
+
     @Test public void basics() throws Exception {
         assertRoundTrip(new EchoStep("hello world"), "echo 'hello world'");
         StageStep s = new StageStep("Build");
@@ -194,6 +208,8 @@ public class SnippetizerTest {
         JenkinsRule.WebClient wc = r.createWebClient();
         String html = wc.goTo(Snippetizer.STATIC_URL).getWebResponse().getContentAsString();
         assertThat("text from LoadStep/help-path.html is included", html, containsString("the Groovy file to load"));
+        assertThat("SubversionSCM.workspaceUpdater is mentioned as an attribute of a value of GenericSCMStep.delegate", html, containsString("workspaceUpdater"));
+        assertThat("CheckoutUpdater is mentioned as an option", html, containsString("CheckoutUpdater"));
         /* TODO see comment in Snippetizer
         assertThat("text from RunWrapperBinder/help.jelly is included", html, containsString("may be used to refer to the currently running build"));
         */
