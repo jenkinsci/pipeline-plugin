@@ -46,7 +46,11 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                     textarea.val(editor.getValue());
                     showSamplesWidget();
                 });
-                
+
+                editor.on('blur', function() {
+                    textarea.trigger('change');
+                });
+
                 function showSamplesWidget() {
                     // If there's no workflow defined (e.g. on a new workflow), then
                     // we add a samples widget to let the user select some samples that
