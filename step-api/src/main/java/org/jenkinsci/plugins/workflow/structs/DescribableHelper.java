@@ -295,8 +295,8 @@ public class DescribableHelper {
                     }
                     // Assume it is a nested object of some sort.
                     Set<Class<?>> subtypes = findSubtypes(c);
-                    if (subtypes.isEmpty() || subtypes.equals(Collections.singleton(c))) {
-                        // Probably homogeneous. (Might be heterogeneous with no registered implementations, or might be concrete but subclassable.)
+                    if ((subtypes.isEmpty() && !Modifier.isAbstract(c.getModifiers())) || subtypes.equals(Collections.singleton(c))) {
+                        // Probably homogeneous. (Might be concrete but subclassable.)
                         return new HomogeneousObjectType(schemaFor(c));
                     } else {
                         // Definitely heterogeneous.
@@ -438,6 +438,9 @@ public class DescribableHelper {
         }
         public Exception getError() {
             return error;
+        }
+        @Override public String toString() {
+            return error.toString();
         }
     }
 

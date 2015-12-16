@@ -97,6 +97,7 @@ public class DescribableHelperTest {
         assertEquals("C", schema.getDisplayName());
         assertNull(schema.getHelp(null));
         assertNull(schema.getHelp("text"));
+        schema(UsesUnimplementedExtensionPoint.class, "(delegate: UnimplementedExtensionPoint{})");
     }
 
     public static final class C {
@@ -139,6 +140,11 @@ public class DescribableHelperTest {
         @Override public String toString() {
             return "I:" + value + "/" + text + "/" + flag;
         }
+    }
+
+    public static abstract class UnimplementedExtensionPoint extends AbstractDescribableImpl<UnimplementedExtensionPoint> {}
+    public static final class UsesUnimplementedExtensionPoint {
+        @DataBoundConstructor public UsesUnimplementedExtensionPoint(UnimplementedExtensionPoint delegate) {}
     }
 
     @Test public void findSubtypes() throws Exception {
