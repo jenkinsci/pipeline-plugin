@@ -304,4 +304,15 @@ public class BuildTriggerStepTest {
         assertEquals(5, ds1.getNumber());
     }
 
+    @Issue("JENKINS-31897")
+    @Test public void defaultParameters() throws Exception {
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("build job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'PARAM1', value: 'first']] "));
+        WorkflowJob ds = j.jenkins.createProject(WorkflowJob.class, "ds");
+        ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("PARAM1", "p1"), new StringParameterDefinition("PARAM2", "p2")));
+        ds.setDefinition(new CpsFlowDefinition("echo \"${PARAM1} - ${PARAM2}\""));
+        j.assertBuildStatusSuccess(us.scheduleBuild2(0));
+        j.assertLogContains("first - p2", ds.getLastBuild());
+    }
+
 }
