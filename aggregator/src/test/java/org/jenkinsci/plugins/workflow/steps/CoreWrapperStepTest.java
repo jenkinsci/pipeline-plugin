@@ -49,7 +49,6 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.Assume;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,12 +61,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class CoreWrapperStepTest {
 
-    @BeforeClass public static void diagnoseJenkins30395() {
-        JenkinsRuleExt.diagnoseJenkins30395();
-    }
-
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.diagnoseJenkins30395Restartable();
 
     @Test public void useWrapper() throws Exception {
         story.addStep(new Statement() {

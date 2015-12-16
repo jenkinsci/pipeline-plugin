@@ -36,11 +36,19 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.security.Permission;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.Description;
+import org.junit.runners.model.FrameworkMethod;
+import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.HudsonHomeLoader;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 /**
  * Utilities that could be added to {@link JenkinsRule} in the future but are not yet available in our baseline version.
@@ -85,7 +93,7 @@ public class JenkinsRuleExt {
     /**
      * Prints a stack trace whenever {@link Thread#interrupt} is called on a thread running {@link JenkinsRule#before}.
      */
-    public static JenkinsRule diagnoseJenkins30395() {
+    private static void diagnoseJenkins30395SetUp() {
         System.setSecurityManager(new SecurityManager() {
             @Override public void checkAccess(Thread t) {
                 StackTraceElement[] target = t.getStackTrace();
@@ -113,6 +121,9 @@ public class JenkinsRuleExt {
             @Override public void checkPermission(Permission perm) {}
             @Override public void checkPermission(Permission perm, Object context) {}
         });
+    }
+    public static JenkinsRule diagnoseJenkins30395() {
+        diagnoseJenkins30395SetUp();
         return new JenkinsRule() {
             @Override public void before() throws Throwable {
                 if (Thread.interrupted()) {
@@ -131,6 +142,67 @@ public class JenkinsRuleExt {
                         x.initCause((Throwable) o);
                     }
                     throw x;
+                }
+            }
+        };
+    }
+    public static RestartableJenkinsRule diagnoseJenkins30395Restartable() {
+        diagnoseJenkins30395SetUp();
+        return new RestartableJenkinsRule() {
+            private Description description;
+            private final List<Statement> steps = new ArrayList<Statement>();
+            private TemporaryFolder tmp = new TemporaryFolder();
+            private Object target;
+            @Override
+            public Statement apply(final Statement base, FrameworkMethod method, Object target) {
+                this.description = Description.createTestDescription(
+                        method.getMethod().getDeclaringClass(), method.getName(), method.getAnnotations());
+                this.target = target;
+                return tmp.apply(new Statement() {
+                    @Override
+                    public void evaluate() throws Throwable {
+                        home = tmp.newFolder();
+                        base.evaluate();
+                        run();
+                    }
+                }, description);
+            }
+            public void addStep(final Statement step) {
+                steps.add(new Statement() {
+                    @Override
+                    public void evaluate() throws Throwable {
+                        j.jenkins.getInjector().injectMembers(step);
+                        j.jenkins.getInjector().injectMembers(target);
+                        step.evaluate();
+                    }
+                });
+            }
+            private void run() throws Throwable {
+                HudsonHomeLoader loader = new HudsonHomeLoader() {
+                    @Override
+                    public File allocate() throws Exception {
+                        return home;
+                    }
+                };
+                for (Statement step : steps) {
+                    j = new JenkinsRule().with(loader);
+                    if (Thread.interrupted()) {
+                        InterruptedException x = new InterruptedException("was interrupted before start");
+                        Object o = System.getProperties().get("diagnoseJenkins30395");
+                        if (o instanceof Throwable) {
+                            x.initCause((Throwable) o);
+                        }
+                        throw x;
+                    }
+                    try {
+                        j.apply(step,description).evaluate();
+                    } catch (ClosedByInterruptException x) {
+                        Object o = System.getProperties().get("diagnoseJenkins30395");
+                        if (o instanceof Throwable) {
+                            x.initCause((Throwable) o);
+                        }
+                        throw x;
+                    }
                 }
             }
         };

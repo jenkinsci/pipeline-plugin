@@ -37,7 +37,6 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runners.model.Statement;
@@ -47,12 +46,8 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class GitStepRestartTest {
 
-    @BeforeClass public static void diagnoseJenkins30395() {
-        JenkinsRuleExt.diagnoseJenkins30395();
-    }
-
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule r = new RestartableJenkinsRule();
+    @Rule public RestartableJenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395Restartable();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
     @Issue("JENKINS-26761")

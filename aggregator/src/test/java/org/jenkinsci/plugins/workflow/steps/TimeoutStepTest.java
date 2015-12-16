@@ -25,13 +25,9 @@ import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
  */
 public class TimeoutStepTest extends Assert {
 
-    @BeforeClass public static void diagnoseJenkins30395() {
-        JenkinsRuleExt.diagnoseJenkins30395();
-    }
-
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
 
-    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.diagnoseJenkins30395Restartable();
 
     /**
      * The simplest possible timeout step ever.

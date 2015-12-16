@@ -34,7 +34,6 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,12 +43,8 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class SleepStepTest {
 
-    @BeforeClass public static void diagnoseJenkins30395() {
-        JenkinsRuleExt.diagnoseJenkins30395();
-    }
-
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule r = new RestartableJenkinsRule();
+    @Rule public RestartableJenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395Restartable();
 
     @Test public void sleepAndRestart() {
         r.addStep(new Statement() {
