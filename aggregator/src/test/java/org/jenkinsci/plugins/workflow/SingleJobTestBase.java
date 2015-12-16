@@ -32,6 +32,7 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -44,6 +45,10 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
  * @author Kohsuke Kawaguchi
  */
 public abstract class SingleJobTestBase extends Assert {
+
+    @BeforeClass public static void diagnoseJenkins30395() {
+        JenkinsRuleExt.diagnoseJenkins30395();
+    }
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();

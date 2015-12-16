@@ -34,6 +34,7 @@ import hudson.slaves.RetentionStrategy;
 import hudson.slaves.SlaveComputer;
 import java.io.File;
 import java.io.IOException;
+import java.security.Permission;
 import java.util.Collections;
 import java.util.Map;
 import javax.annotation.CheckForNull;
@@ -78,6 +79,38 @@ public class JenkinsRuleExt {
             env2.overrideAll(env);
             return env2;
         }
+    }
+
+    /**
+     * Prints a stack trace whenever {@link Thread#interrupt} is called on a thread running {@link JenkinsRule#before}.
+     */
+    public static void diagnoseJenkins30395() {
+        System.setSecurityManager(new SecurityManager() {
+            @Override public void checkAccess(Thread t) {
+                StackTraceElement[] target = t.getStackTrace();
+                if (matches(target, JenkinsRule.class, "before")) {
+                    Throwable x = new Throwable("calling Thread.interrupt here");
+                    if (matches(x.getStackTrace(), Thread.class, "interrupt")) {
+                        x.printStackTrace();
+                        System.err.println("Target thread:");
+                        for (StackTraceElement line : target) {
+                            System.err.println("\tat " + line);
+                        }
+                    }
+                }
+            }
+            boolean matches(StackTraceElement[] stack, Class<?> clazz, String method) {
+                String n = clazz.getName();
+                for (StackTraceElement line : stack) {
+                    if (line.getClassName().equals(n) && line.getMethodName().equals(method)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            @Override public void checkPermission(Permission perm) {}
+            @Override public void checkPermission(Permission perm, Object context) {}
+        });
     }
 
     private JenkinsRuleExt() {}

@@ -42,6 +42,7 @@ import org.jenkinsci.plugins.workflow.steps.RetryStep;
 import org.jenkinsci.plugins.workflow.support.actions.LogActionImpl;
 import static org.junit.Assert.*;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -52,6 +53,10 @@ import org.jvnet.hudson.test.JenkinsRule;
  * @author Kohsuke Kawaguchi
  */
 public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
+
+    @BeforeClass public static void diagnoseJenkins30395() {
+        JenkinsRuleExt.diagnoseJenkins30395();
+    }
 
     WorkflowJob p;
 
