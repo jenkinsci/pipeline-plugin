@@ -15,7 +15,9 @@ import org.junit.Test;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 import javax.inject.Inject;
 import org.apache.commons.io.FileUtils;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
+import org.junit.BeforeClass;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -25,6 +27,10 @@ import org.jvnet.hudson.test.JenkinsRule;
  * @author Kohsuke Kawaguchi
  */
 public class WorkflowLibRepositoryTest {
+    @BeforeClass public static void diagnoseJenkins30395() {
+        JenkinsRuleExt.diagnoseJenkins30395();
+    }
+
     @Rule
     public RestartableJenkinsRule story = new RestartableJenkinsRule();
 

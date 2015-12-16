@@ -7,11 +7,13 @@ import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import java.io.IOException;
 import java.util.Arrays;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,6 +25,10 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
  * @author Vivek Pandey
  */
 public class BuildTriggerStepRestartTest extends Assert {
+
+    @BeforeClass public static void diagnoseJenkins30395() {
+        JenkinsRuleExt.diagnoseJenkins30395();
+    }
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();

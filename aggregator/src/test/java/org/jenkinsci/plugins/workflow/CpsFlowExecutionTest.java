@@ -42,6 +42,7 @@ import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
@@ -49,6 +50,10 @@ import org.jvnet.hudson.test.MemoryAssert;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class CpsFlowExecutionTest {
+
+    @BeforeClass public static void diagnoseJenkins30395() {
+        JenkinsRuleExt.diagnoseJenkins30395();
+    }
 
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
     

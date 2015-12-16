@@ -18,11 +18,16 @@ import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 import java.util.List;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 
 /**
  * @author Kohsuke Kawaguchi
  */
 public class TimeoutStepTest extends Assert {
+
+    @BeforeClass public static void diagnoseJenkins30395() {
+        JenkinsRuleExt.diagnoseJenkins30395();
+    }
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
 

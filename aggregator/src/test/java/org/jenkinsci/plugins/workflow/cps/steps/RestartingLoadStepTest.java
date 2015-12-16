@@ -2,12 +2,14 @@ package org.jenkinsci.plugins.workflow.cps.steps;
 
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
@@ -20,6 +22,10 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
  * @author Kohsuke Kawaguchi
  */
 public class RestartingLoadStepTest {
+    @BeforeClass public static void diagnoseJenkins30395() {
+        JenkinsRuleExt.diagnoseJenkins30395();
+    }
+
     @Rule
     public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
