@@ -26,6 +26,8 @@ package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.model.Label;
 import hudson.plugins.git.GitSCM;
+import hudson.plugins.git.GitTagAction;
+import hudson.plugins.git.util.BuildData;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.triggers.SCMTrigger;
@@ -36,8 +38,11 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
+
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class GitStepTest {
@@ -162,4 +167,39 @@ public class GitStepTest {
         assertFalse(iterator.hasNext());
     }
 
+    // TODO: Remove this Ignore after git plugin 2.4.1 is released.
+    @Ignore("This test is currently disabled until the fix for JENKINS-29326 is released in the git plugin 2.4.1 or later.")
+    @Issue("JENKINS-29326")
+    @Test
+    public void identicalGitSCMs() throws Exception {
+        otherRepo.git("init");
+        otherRepo.write("firstfile", "");
+        otherRepo.git("add", "firstfile");
+        otherRepo.git("commit", "--message=init");
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
+        p.setDefinition(new CpsFlowDefinition(
+                "node {\n" +
+                        "    dir('main') {\n" +
+                        "        git($/" + otherRepo + "/$)\n" +
+                        "    }\n" +
+                        "    dir('other') {\n" +
+                        "        git($/" + otherRepo + "/$)\n" +
+                        "    }\n" +
+                        "}"));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals(1, b.getActions(BuildData.class).size());
+        assertEquals(1, b.getActions(GitTagAction.class).size());
+        assertEquals(0, b.getChangeSets().size());
+        assertEquals(1, p.getSCMs().size());
+
+        otherRepo.write("secondfile", "");
+        otherRepo.git("add", "secondfile");
+        otherRepo.git("commit", "--message=second");
+        WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals(1, b2.getActions(BuildData.class).size());
+        assertEquals(1, b2.getActions(GitTagAction.class).size());
+        assertEquals(1, b2.getChangeSets().size());
+        assertFalse(b2.getChangeSets().get(0).isEmptySet());
+        assertEquals(1, p.getSCMs().size());
+    }
 }
