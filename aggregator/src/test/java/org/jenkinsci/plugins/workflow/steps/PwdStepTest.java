@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Test;
@@ -32,7 +33,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 public class PwdStepTest {
 
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
 
     @Test public void basics() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");

@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Result;
 import jenkins.model.CauseOfInterruption;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -36,7 +37,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 public class CatchErrorStepTest {
 
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
 
     @Test public void specialStatus() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");

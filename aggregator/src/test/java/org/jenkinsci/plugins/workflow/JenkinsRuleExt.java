@@ -34,6 +34,7 @@ import hudson.slaves.RetentionStrategy;
 import hudson.slaves.SlaveComputer;
 import java.io.File;
 import java.io.IOException;
+import java.nio.channels.ClosedByInterruptException;
 import java.security.Permission;
 import java.util.Collections;
 import java.util.Map;
@@ -84,7 +85,7 @@ public class JenkinsRuleExt {
     /**
      * Prints a stack trace whenever {@link Thread#interrupt} is called on a thread running {@link JenkinsRule#before}.
      */
-    public static void diagnoseJenkins30395() {
+    public static JenkinsRule diagnoseJenkins30395() {
         System.setSecurityManager(new SecurityManager() {
             @Override public void checkAccess(Thread t) {
                 StackTraceElement[] target = t.getStackTrace();
@@ -112,6 +113,27 @@ public class JenkinsRuleExt {
             @Override public void checkPermission(Permission perm) {}
             @Override public void checkPermission(Permission perm, Object context) {}
         });
+        return new JenkinsRule() {
+            @Override public void before() throws Throwable {
+                if (Thread.interrupted()) {
+                    InterruptedException x = new InterruptedException("was interrupted before start");
+                    Object o = System.getProperties().get("diagnoseJenkins30395");
+                    if (o instanceof Throwable) {
+                        x.initCause((Throwable) o);
+                    }
+                    throw x;
+                }
+                try {
+                    super.before();
+                } catch (ClosedByInterruptException x) {
+                    Object o = System.getProperties().get("diagnoseJenkins30395");
+                    if (o instanceof Throwable) {
+                        x.initCause((Throwable) o);
+                    }
+                    throw x;
+                }
+            }
+        };
     }
 
     private JenkinsRuleExt() {}

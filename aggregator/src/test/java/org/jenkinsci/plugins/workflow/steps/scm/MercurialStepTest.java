@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import jenkins.util.VirtualFile;
 import org.apache.commons.io.FileUtils;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -44,7 +45,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 @For(GenericSCMStep.class) // formerly a dedicated MercurialStep
 public class MercurialStepTest {
 
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
     @Rule public MercurialSampleRepoRule sampleRepo = new MercurialSampleRepoRule();
     @Rule public MercurialSampleRepoRule otherRepo = new MercurialSampleRepoRule();
 

@@ -38,7 +38,6 @@ import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.security.Permission;
 import java.io.File;
 import java.io.IOException;
-import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -56,7 +55,6 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -67,25 +65,8 @@ import org.jvnet.hudson.test.recipes.LocalData;
 
 public class WorkflowRunTest {
 
-    @BeforeClass public static void diagnoseJenkins30395() {
-        JenkinsRuleExt.diagnoseJenkins30395();
-    }
-
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = new JenkinsRule() {
-        @Override public void before() throws Throwable {
-            assert !Thread.interrupted() : System.getProperties().get("diagnoseJenkins30395");
-            try {
-                super.before();
-            } catch (ClosedByInterruptException x) {
-                Object o = System.getProperties().get("diagnoseJenkins30395");
-                if (o instanceof Throwable) {
-                    x.initCause((Throwable) o);
-                }
-                throw x;
-            }
-        }
-    };
+    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
 
     @Test public void basics() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");

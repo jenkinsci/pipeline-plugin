@@ -39,11 +39,11 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import hudson.FilePath;
 import hudson.model.queue.QueueTaskFuture;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 
 public class DeleteDirStepTest {
 
-    @Rule
-    public JenkinsRule r = new JenkinsRule();
+    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
 
     @Test
     public void testDeleteEmptyWorkspace() throws Exception {

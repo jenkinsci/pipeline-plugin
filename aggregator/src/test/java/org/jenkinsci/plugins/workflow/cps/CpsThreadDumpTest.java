@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import static java.util.Arrays.asList;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsThreadDump.ThreadInfo;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -19,8 +20,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class CpsThreadDumpTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    @Rule public JenkinsRule j = JenkinsRuleExt.diagnoseJenkins30395();
     private WorkflowJob p;
 
     @Before

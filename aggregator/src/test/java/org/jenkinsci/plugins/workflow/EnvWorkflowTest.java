@@ -36,7 +36,7 @@ import org.jvnet.hudson.test.JenkinsRule;
  */
 public class EnvWorkflowTest {
 
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
 
     /**
      * Verifies if NODE_NAME environment variable is available on a slave node and on master.

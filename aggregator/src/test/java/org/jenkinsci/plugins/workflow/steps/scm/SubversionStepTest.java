@@ -31,6 +31,7 @@ import hudson.triggers.SCMTrigger;
 import java.util.Iterator;
 import java.util.List;
 import jenkins.util.VirtualFile;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -44,7 +45,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class SubversionStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
     @Rule public SubversionSampleRepoRule sampleRepo = new SubversionSampleRepoRule();
     @Rule public SubversionSampleRepoRule otherRepo = new SubversionSampleRepoRule();
 

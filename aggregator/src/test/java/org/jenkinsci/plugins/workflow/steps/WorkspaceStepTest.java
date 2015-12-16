@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.slaves.DumbSlave;
 import java.io.File;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -40,7 +41,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class WorkspaceStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
 
     @Issue("JENKINS-26072")
     @Test public void customWorkspace() throws Exception {
