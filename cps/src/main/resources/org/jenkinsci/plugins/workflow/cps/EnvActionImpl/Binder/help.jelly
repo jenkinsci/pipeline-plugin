@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler">
     <p>
         Environment variables are accessible from Groovy code as <code>env.VARNAME</code>.
         You can write to such properties as well:
@@ -26,7 +26,10 @@ node {
         The following is a general list of variables (by name) that are available;
         see the notes below the list for Workflow-specific details.
     </p>
-    <iframe src="${rootURL}/env-vars.html" width="100%"/> <!-- TODO rather inline EnvironmentContributor/EnvVarsHtml/index.groovy -->
+    <!-- Cf.  EnvironmentContributor/EnvVarsHtml/index.groovy -->
+    <j:forEach var="ec" items="${it.environmentContributors}">
+        <st:include it="${ec}" page="buildEnv" optional="true"/>
+    </j:forEach>
     <p>
         The following variables are currently unavailable inside a workflow script:
     </p>
@@ -34,6 +37,7 @@ node {
         <li><code>EXECUTOR_NUMBER</code></li>
         <li><code>NODE_LABELS</code></li>
         <li><code>WORKSPACE</code></li>
+        <!-- TODO when JENKINS-24141 fixed: SCM.all().each { e -> st.include(class:e.clazz, page:"buildEnv", optional:true) } -->
         <li>SCM-specific variables such as <code>SVN_REVISION</code></li>
     </ul>
     <p>
