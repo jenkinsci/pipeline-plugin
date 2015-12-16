@@ -2,6 +2,10 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.13 (upcoming)
+
+* [JENKINS-26126](https://issues.jenkins-ci.org/browse/JENKINS-26126) (partial): introspect Workflow steps to generate static reference documentation (link from _Snippet Generator_). Planned to be used for IDE auto-completion as well.
+
 ## 1.12 (Dec 14 2015)
 
 Same as beta 3.
