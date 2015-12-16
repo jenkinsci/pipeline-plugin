@@ -43,6 +43,7 @@ import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import org.apache.commons.httpclient.NameValuePair;
+import static org.hamcrest.CoreMatchers.*;
 import org.jenkinsci.plugins.workflow.steps.CatchErrorStep;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
@@ -186,6 +187,17 @@ public class SnippetizerTest {
         WebResponse response = wc.getPage(wrs).getWebResponse();
         assertEquals("text/plain", response.getContentType());
         assertEquals(responseText, response.getContentAsString().trim());
+    }
+
+    @Issue("JENKINS-26126")
+    @Test public void doStatic() throws Exception {
+        JenkinsRule.WebClient wc = r.createWebClient();
+        String html = wc.goTo(Snippetizer.STATIC_URL).getWebResponse().getContentAsString();
+        assertThat("text from LoadStep/help-path.html is included", html, containsString("the Groovy file to load"));
+        /* TODO see comment in Snippetizer
+        assertThat("text from RunWrapperBinder/help.jelly is included", html, containsString("may be used to refer to the currently running build"));
+        */
+        assertThat("content is written to the end", html, containsString("</body></html>"));
     }
 
 }

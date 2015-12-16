@@ -251,7 +251,12 @@ import org.kohsuke.stapler.StaplerResponse;
             pw.println("<h2><code>" + v.getName() + "</code></h2>");
             RequestDispatcher rd = req.getView(v, "help");
             if (rd != null) {
-                /* TODO does not work:
+                pw.println("(help for variables not currently supported here)");
+                /* TODO RequestDispatcher.include sends that content, but then closes the stream and prevents further output from appearing.
+                        Also ${rootURL} etc. are not set, but no idea what JellyContext to pass to Functions.initPageVariables
+                        Not clear how to fix these issues except by rewriting all of this to be driven from a static.jelly page.
+                        Also need to use new PrintWriter(new OutputStreamWriter(rsp.getOutputStream(), "UTF-8")) and pw.flush() at the end
+                        (cannot use getWriter since RequestDispatcher.include will call getOutputStream).
                 rd.include(req, rsp);
                 */
             } else {
@@ -312,7 +317,7 @@ import org.kohsuke.stapler.StaplerResponse;
         } else if (type instanceof DescribableHelper.HeterogeneousObjectType) {
             pw.println("<p><strong>Nested choice of objects</strong></p><ul>");
             for (Map.Entry<String,DescribableHelper.Schema> entry : ((DescribableHelper.HeterogeneousObjectType) type).getTypes().entrySet()) {
-                pw.println("<li><code>$class: '" + entry.getKey() + "'</code></li>");
+                pw.println("<li><code>" + DescribableHelper.CLAZZ + ": '" + entry.getKey() + "'</code></li>");
                 generateHelp(entry.getValue(), pw, nextHeaderLevel);
             }
             pw.println("</ul>");
