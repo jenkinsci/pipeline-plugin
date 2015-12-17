@@ -59,7 +59,7 @@ import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
  * @author Kohsuke Kawaguchi
  */
 public class InputStepTest extends Assert {
-    @Rule public JenkinsRule j = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule j = JenkinsRuleExt.workAroundJenkins30395();
 
     /**
      * Try out a parameter.

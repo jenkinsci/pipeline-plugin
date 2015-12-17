@@ -47,7 +47,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class GitStepRestartTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule r = JenkinsRuleExt.workAroundJenkins30395Restartable();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
     @Issue("JENKINS-26761")

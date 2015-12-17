@@ -33,7 +33,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 public class PwdStepTest {
 
-    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
 
     @Test public void basics() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");

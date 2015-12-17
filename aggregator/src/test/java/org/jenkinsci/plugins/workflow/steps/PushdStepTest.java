@@ -41,7 +41,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class PushdStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.diagnoseJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     private String pwdStep() {
         return Functions.isWindows() ? "bat 'cd'" : "sh 'pwd'";

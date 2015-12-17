@@ -36,7 +36,7 @@ import org.jvnet.hudson.test.TestExtension;
 public class BuildTriggerStepTest {
     
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule j = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule j = JenkinsRuleExt.workAroundJenkins30395();
 
     @Issue("JENKINS-25851")
     @Test public void buildTopLevelProject() throws Exception {

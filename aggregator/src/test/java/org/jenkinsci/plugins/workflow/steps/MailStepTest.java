@@ -45,7 +45,7 @@ import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
  */
 public class MailStepTest {
 
-    @Rule public JenkinsRule jenkinsRule = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule jenkinsRule = JenkinsRuleExt.workAroundJenkins30395();
 
     @Test
     public void test_missing_subject() throws Exception {

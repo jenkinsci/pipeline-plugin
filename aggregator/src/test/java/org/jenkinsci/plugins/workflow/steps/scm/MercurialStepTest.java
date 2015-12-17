@@ -45,7 +45,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 @For(GenericSCMStep.class) // formerly a dedicated MercurialStep
 public class MercurialStepTest {
 
-    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
     @Rule public MercurialSampleRepoRule sampleRepo = new MercurialSampleRepoRule();
     @Rule public MercurialSampleRepoRule otherRepo = new MercurialSampleRepoRule();
 

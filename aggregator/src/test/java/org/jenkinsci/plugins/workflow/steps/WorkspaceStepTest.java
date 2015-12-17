@@ -41,7 +41,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class WorkspaceStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
 
     @Issue("JENKINS-26072")
     @Test public void customWorkspace() throws Exception {

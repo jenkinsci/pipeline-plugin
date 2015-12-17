@@ -45,7 +45,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class SubversionStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
     @Rule public SubversionSampleRepoRule sampleRepo = new SubversionSampleRepoRule();
     @Rule public SubversionSampleRepoRule otherRepo = new SubversionSampleRepoRule();
 

@@ -32,10 +32,13 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.inject.Inject;
 import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
 
 public class SynchronousNonBlockingStepTest {
 
-    @Rule public JenkinsRule j = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule j = JenkinsRuleExt.workAroundJenkins30395();
 
     @ClassRule
     public static BuildWatcher buildWatcher = new BuildWatcher();

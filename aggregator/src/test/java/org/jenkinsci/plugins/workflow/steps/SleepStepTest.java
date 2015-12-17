@@ -44,7 +44,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class SleepStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule r = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     @Test public void sleepAndRestart() {
         r.addStep(new Statement() {

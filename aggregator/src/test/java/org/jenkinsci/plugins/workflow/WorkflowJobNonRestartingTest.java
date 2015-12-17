@@ -55,7 +55,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
 
     @BeforeClass public static void diagnoseJenkins30395() {
-        JenkinsRuleExt.diagnoseJenkins30395();
+        JenkinsRuleExt.workAroundJenkins30395();
     }
 
     WorkflowJob p;

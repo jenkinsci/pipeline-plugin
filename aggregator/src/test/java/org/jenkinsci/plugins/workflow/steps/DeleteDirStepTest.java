@@ -43,7 +43,7 @@ import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 
 public class DeleteDirStepTest {
 
-    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
 
     @Test
     public void testDeleteEmptyWorkspace() throws Exception {

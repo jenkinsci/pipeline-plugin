@@ -26,7 +26,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class BuildTriggerStepRestartTest extends Assert {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.diagnoseJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     @Test
     public void restartBetweenJobs() throws IOException {

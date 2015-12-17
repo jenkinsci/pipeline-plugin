@@ -21,7 +21,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
  * @author Kohsuke Kawaguchi
  */
 public class RestartingLoadStepTest {
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.diagnoseJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     @Inject
     Jenkins jenkins;

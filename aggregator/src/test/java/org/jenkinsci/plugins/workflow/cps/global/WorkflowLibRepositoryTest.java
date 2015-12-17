@@ -27,7 +27,7 @@ import org.jvnet.hudson.test.JenkinsRule;
  */
 public class WorkflowLibRepositoryTest {
 
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.diagnoseJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     @Inject
     Jenkins jenkins;

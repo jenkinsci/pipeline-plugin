@@ -49,7 +49,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 public class DynamicEnvironmentExpanderTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.diagnoseJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     @Issue("JENKINS-26163")
     @Test public void dynamics() {

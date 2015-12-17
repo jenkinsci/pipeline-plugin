@@ -37,7 +37,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class ToolStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
 
     @Test public void build() throws Exception {
         Maven.MavenInstallation tool = r.configureMaven3();

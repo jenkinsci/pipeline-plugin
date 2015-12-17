@@ -20,7 +20,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class CpsThreadDumpTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule j = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule j = JenkinsRuleExt.workAroundJenkins30395();
     private WorkflowJob p;
 
     @Before

@@ -48,7 +48,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class StageTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.diagnoseJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     @Before public void clear() {
         StageStepExecution.clear();

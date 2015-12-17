@@ -45,7 +45,7 @@ import org.jvnet.mock_javamail.Mailbox;
 public class CoreStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
 
     @Test public void artifactArchiver() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");

@@ -42,7 +42,7 @@ import static org.junit.Assert.*;
 public class StashTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = JenkinsRuleExt.diagnoseJenkins30395();
+    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
 
     @Issue("JENKINS-26942")
     @Test public void smokes() throws Exception {

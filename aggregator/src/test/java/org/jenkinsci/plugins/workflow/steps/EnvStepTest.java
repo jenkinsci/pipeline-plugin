@@ -39,7 +39,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class EnvStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.diagnoseJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     @Test public void overriding() {
         story.addStep(new Statement() {
