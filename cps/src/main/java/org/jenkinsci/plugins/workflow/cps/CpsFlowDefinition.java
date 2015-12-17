@@ -37,11 +37,22 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import net.sf.json.util.JSONUtils;
+
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.groovy.control.CompilationFailedException;
+import org.codehaus.groovy.control.CompilationUnit;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.codehaus.groovy.control.ProcessingUnit;
+import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
+import org.codehaus.groovy.syntax.SyntaxException;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
@@ -125,6 +136,29 @@ public class CpsFlowDefinition extends FlowDefinition {
                 return FormValidation.error(x.getLocalizedMessage());
             }
             return sandbox ? FormValidation.ok() : ScriptApproval.get().checking(value, GroovyLanguage.get());
+        }
+
+        public String doCheckScriptJson(@QueryParameter String value, @QueryParameter boolean sandbox) {
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.toString();
+            }
+            try {
+                new CpsGroovyShell(null).getClassLoader().parseClass(value);
+            } catch (CompilationFailedException x) {
+                return JSONArray.fromObject(CpsFlowDefinitionValidator.toCheckStatus(x).toArray()).toString();
+            }
+            if (sandbox) {
+                return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.toString();
+            } else {
+                FormValidation checking = ScriptApproval.get().checking(value, GroovyLanguage.get());
+                if (StringUtils.isBlank(checking.getMessage())) {
+                    return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.toString();
+                } else {
+                    return new CpsFlowDefinitionValidator.CheckStatus(ScriptApproval.get().checking(value, 
+                            GroovyLanguage.get()).getMessage(), "approval").toString();
+                }
+            }
         }
 
     }

@@ -49,18 +49,8 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
 
                 // force underlying textarea onchange which turns in Stapler validation check
                 editor.on('blur', function() {
-                    //textarea.trigger('change');
                     editor.session.clearAnnotations();
-                    var url = textarea.attr("checkUrl");
-                    /*
-                    var q = qs(this).addThis();
-                    if (depends.length>0) {
-                        depends.split(" ").each(function (n) {
-                            q.nearBy(n);
-                        });
-                    }
-                    url = url + q.toString();
-                    */
+                    var url = textarea.attr("checkUrl") + 'Json';
 
                     $.ajax({
                         url: url,
@@ -70,24 +60,22 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                         },
                         method: textarea.attr("checkMethod") || "get",
                         success: function(data) {
-                            if (data !== '<div/>') {
-                                editor.getSession().setAnnotations([{
-                                    row: 1,
-                                    column: 1,
-                                    text: data,
-                                    type: "error" // also warning and information
-                                }]);
+                            data = $.parseJSON(data);
+                            if (data.status && data.status === 'success') {
+                                return;
                             }
+                            var annotations = [];
+                            $.each(data, function(i, value) {
+                                annotations.push({
+                                    row: value.line - 1,
+                                    column: value.column,
+                                    text: value.message,
+                                    type: "error"
+                                });
+                            });
+                            editor.getSession().setAnnotations(annotations);
                         }
                     });
-                    /*
-                    editor.getSession().setAnnotations([{
-                        row: 1,
-                        column: 1,
-                        text: "Strange error",
-                        type: "error" // also warning and information
-                    }]);
-                    */
                 });
 
                 function showSamplesWidget() {
