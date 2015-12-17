@@ -422,6 +422,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         } else {
                             env.put("NODE_NAME", label);
                         }
+                        env.put("EXECUTOR_NUMBER", String.valueOf(getExecutor().getNumber()));
 
                         synchronized (runningTasks) {
                             runningTasks.put(cookie, new RunningTask());
