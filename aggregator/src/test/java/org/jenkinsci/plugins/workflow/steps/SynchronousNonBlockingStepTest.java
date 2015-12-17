@@ -32,9 +32,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.inject.Inject;
 import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertTrue;
 
 public class SynchronousNonBlockingStepTest {
 
