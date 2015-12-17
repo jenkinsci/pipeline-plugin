@@ -58,7 +58,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 
 - [X] `ConfigFileBuildWrapper` (`config-file-provider`): supported as of 2.9.1
 - [X] `Xvnc` (`xvnc`) supported as of 1.22
-- [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
+- [X] `BuildUser` (`build-user-vars`): supported as of 1.5
 - [ ] `DashboardBuilder` (`environment-dashboard`): [issue 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
 - [X] `TimestamperBuildWrapper` (`timestamper`): supported as of 1.7
 - [x] `MaskPasswordsBuildWrapper` (`mask-passwords`): supported as of 2.8
@@ -79,6 +79,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `gitlab-plugin`: supported as of 1.1.26
 - [X] `bitbucket`: supported as of 1.1.2
 - [ ] `bitbucket-pullrequest-builder`: [JENKINS-31749](https://issues.jenkins-ci.org/browse/JENKINS-31749)
+- [ ] `xtrigger`: [JENKINS-31933](https://issues.jenkins-ci.org/browse/JENKINS-31933)
 
 ## Clouds
 

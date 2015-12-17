@@ -2,21 +2,31 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.13 (upcoming)
+
+* [JENKINS-26126](https://issues.jenkins-ci.org/browse/JENKINS-26126) (partial): introspect Workflow steps to generate static reference documentation (link from _Snippet Generator_). Planned to be used for IDE auto-completion as well.
+* [JENKINS-31897](https://issues.jenkins-ci.org/browse/JENKINS-31897): parameters with default values may now be omitted from the `parameters` option to the `build` step.
+* [JENKINS-31909](https://issues.jenkins-ci.org/browse/JENKINS-31909): form validation warning about Groovy syntax errors was broken in 1.11.
+
+## 1.12 (Dec 14 2015)
+
+Same as beta 3.
+
 ## 1.12-beta-3 (Dec 09 2015)
 
 * [JENKINS-31386](https://issues.jenkins-ci.org/browse/JENKINS-31386): `checkout scm` now works also in _Workflow script from SCM_ to better interoperate with multibranch projects.
 * [JENKINS-31769](https://issues.jenkins-ci.org/browse/JENKINS-31769): fixed at least some hangs when `sh`/`bat` processes complete on laggy slaves.
 * [JENKINS-31902](https://issues.jenkins-ci.org/browse/JENKINS-31902): interrupting the `build` step failed to interrupt downstream Workflow builds.
 * [JENKINS-29413](https://issues.jenkins-ci.org/browse/JENKINS-29413): hung build when running the `parallel` step with an empty map.
-* [JENKINS-29881](https://issues.jenkins-ci.org/browse/JENKINS-29881): don't include empty changesets in `WorkflowRun.getChangeSets()`.
-* [JENKINS-31086](https://issues.jenkins-ci.org/browse/JENKINS-31086): Added `useDefaultExcludes` option, defaulting to true, to `stash`. When false, Ant default excludes are not used.
+* [JENKINS-29881](https://issues.jenkins-ci.org/browse/JENKINS-29881): do not include empty changesets in `WorkflowRun.getChangeSets()`.
+* [JENKINS-31086](https://issues.jenkins-ci.org/browse/JENKINS-31086): added `useDefaultExcludes` option to the `stash` step.
 
 ## 1.12-beta-2 (Nov 25 2015)
 
 * [JENKINS-29705](https://issues.jenkins-ci.org/browse/JENKINS-29705): added _Thread Dump_ link to running flow builds for diagnosing problems like hangs.
 * [JENKINS-31649](https://issues.jenkins-ci.org/browse/JENKINS-31649): correctly display pending queue items for blocked `node {}` tasks when on Jenkins 1.639+ (will not appear in 1.638 or 1.625.2).
 * [JENKINS-31691](https://issues.jenkins-ci.org/browse/JENKINS-31691): added `isUnix` step.
-* [JENKINS-31585](https://issues.jenkins-ci.org/browse/JENKINS-31585): make new script editor resizable.
+* [JENKINS-31585](https://issues.jenkins-ci.org/browse/JENKINS-31585): made new script editor resizable.
 
 ## 1.12-beta-1 (Nov 19 2015)
 

@@ -27,10 +27,12 @@ package org.jenkinsci.plugins.workflow.cps;
 import groovy.lang.GroovyObjectSupport;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.model.EnvironmentContributor;
 import hudson.model.Run;
 import hudson.util.LogTaskListener;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
@@ -39,6 +41,8 @@ import java.util.logging.Logger;
 import jenkins.model.RunAction2;
 import org.jenkinsci.plugins.workflow.steps.EnvironmentExpander;
 import org.jenkinsci.plugins.workflow.support.actions.EnvironmentAction;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 
@@ -125,6 +129,10 @@ public class EnvActionImpl extends GroovyObjectSupport implements EnvironmentAct
             } else {
                 throw new IllegalStateException("no associated build");
             }
+        }
+        @Restricted(DoNotUse.class)
+        public Collection<EnvironmentContributor> getEnvironmentContributors() {
+            return EnvironmentContributor.all();
         }
     }
 

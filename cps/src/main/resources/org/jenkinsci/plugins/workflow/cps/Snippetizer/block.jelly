@@ -94,5 +94,8 @@ THE SOFTWARE.
                 </f:dropdownListBlock>
             </j:forEach>
         </f:dropdownList>
+        <f:block>
+            <a href="${rootURL}/${it.STATIC_URL}" target="_blank">Static documentation</a>
+        </f:block>
     </f:optionalBlock>
 </j:jelly>
