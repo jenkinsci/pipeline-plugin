@@ -34,7 +34,6 @@ node {
         The following variables are currently unavailable inside a workflow script:
     </p>
     <ul>
-        <li><code>EXECUTOR_NUMBER</code></li>
         <li><code>NODE_LABELS</code></li>
         <li><code>WORKSPACE</code></li>
         <!-- TODO when JENKINS-24141 fixed: SCM.all().each { e -> st.include(class:e.clazz, page:"buildEnv", optional:true) } -->

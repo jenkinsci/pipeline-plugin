@@ -419,8 +419,10 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         env.put(COOKIE_VAR, cookie);
                         if (exec.getOwner() instanceof MasterComputer) {
                             env.put("NODE_NAME", "master");
+                            env.put("EXECUTOR_NUMBER", "master");
                         } else {
                             env.put("NODE_NAME", label);
+                            env.put("EXECUTOR_NUMBER", label);
                         }
 
                         synchronized (runningTasks) {
