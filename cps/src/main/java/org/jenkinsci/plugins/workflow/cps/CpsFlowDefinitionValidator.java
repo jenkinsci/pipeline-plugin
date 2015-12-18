@@ -30,7 +30,7 @@ public final class CpsFlowDefinitionValidator {
         if (errors.isEmpty()) {
             // Fallback to simple message
             CheckStatus st = new CheckStatus(x.getMessage(), "fail");
-            st.setLine(0);
+            st.setLine(1);
             st.setColumn(0);
             errors.add(st);
         }
