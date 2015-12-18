@@ -43,7 +43,7 @@ public class EnvWorkflowTest {
      *
      * @throws Exception
      */
-    @Test public void areAvailable() throws Exception {
+    @Test public void isNodeNameAvailable() throws Exception {
         r.createSlave("node-test", null, null);
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "workflow-test");
 
@@ -60,5 +60,30 @@ public class EnvWorkflowTest {
             "}\n"
         ));
         r.assertLogContains("My name on a slave is node-test", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+    }
+
+
+    /**
+     * Verifies if EXECUTOR_NUMBER environment variable is available on a slave node and on master.
+     *
+     * @throws Exception
+     */
+    @Test public void isExecutorNumberAvailable() throws Exception {
+        r.createSlave("node-test", null, null);
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "workflow-test");
+
+        p.setDefinition(new CpsFlowDefinition(
+                "node('master') {\n" +
+                        "  echo \"My number on master is ${env.EXECUTOR_NUMBER}\"\n" +
+                        "}\n"
+        ));
+        r.assertLogContains("My number on master is 0", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+
+        p.setDefinition(new CpsFlowDefinition(
+                "node('node-test') {\n" +
+                        "  echo \"My number on a slave is ${env.EXECUTOR_NUMBER}\"\n" +
+                        "}\n"
+        ));
+        r.assertLogContains("My number on a slave is 0", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
 }
