@@ -61,18 +61,31 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                         method: textarea.attr("checkMethod") || "get",
                         success: function(data) {
                             data = $.parseJSON(data);
-                            if (data.status && data.status === 'success') {
-                                return;
-                            }
                             var annotations = [];
-                            $.each(data, function(i, value) {
-                                annotations.push({
-                                    row: value.line - 1,
-                                    column: value.column,
-                                    text: value.message,
-                                    type: "error"
+                            if (data.status) {
+                                // Top level statuses
+                                if (data.status === 'success') {
+                                    return;
+                                }
+                                if (data.status === 'approval') {
+                                    annotations.push({
+                                        row: 0,
+                                        column: 0,
+                                        text: data.message,
+                                        type: "warning"
+                                    });
+                                }
+                            } else {
+                                // Syntax errors
+                                $.each(data, function(i, value) {
+                                    annotations.push({
+                                        row: value.line - 1,
+                                        column: value.column,
+                                        text: value.message,
+                                        type: "error"
+                                    });
                                 });
-                            });
+                            }
                             editor.getSession().setAnnotations(annotations);
                         }
                     });
