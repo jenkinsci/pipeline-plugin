@@ -38,14 +38,14 @@ import org.jvnet.mock_javamail.Mailbox;
 import javax.mail.Message;
 import javax.mail.internet.MimeMultipart;
 import java.io.IOException;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 
 /**
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 public class MailStepTest {
 
-    @Rule
-    public JenkinsRule jenkinsRule = new JenkinsRule();
+    @Rule public JenkinsRule jenkinsRule = JenkinsRuleExt.workAroundJenkins30395();
 
     @Test
     public void test_missing_subject() throws Exception {
