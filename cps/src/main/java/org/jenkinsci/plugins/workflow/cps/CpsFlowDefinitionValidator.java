@@ -1,3 +1,27 @@
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2015, CloudBees, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 package org.jenkinsci.plugins.workflow.cps;
 
 import java.util.ArrayList;
@@ -12,6 +36,9 @@ import net.sf.json.JSONObject;
 
 public final class CpsFlowDefinitionValidator {
 
+    private static final String SUCCESS_KEY = "success";
+    private static final String FAIL_KEY = "fail";
+
     private CpsFlowDefinitionValidator() {}
 
     public static List<CheckStatus> toCheckStatus(CompilationFailedException x) {
@@ -20,7 +47,7 @@ public final class CpsFlowDefinitionValidator {
             for (Object o : ((MultipleCompilationErrorsException) x).getErrorCollector().getErrors()) {
                 if (o instanceof SyntaxErrorMessage) {
                     SyntaxException cause = ((SyntaxErrorMessage) o).getCause();
-                    CheckStatus st = new CheckStatus(cause.getOriginalMessage(), "fail");
+                    CheckStatus st = new CheckStatus(cause.getOriginalMessage(), FAIL_KEY);
                     st.setLine(cause.getLine());
                     st.setColumn(cause.getStartColumn());
                     errors.add(st);
@@ -29,7 +56,7 @@ public final class CpsFlowDefinitionValidator {
         }
         if (errors.isEmpty()) {
             // Fallback to simple message
-            CheckStatus st = new CheckStatus(x.getMessage(), "fail");
+            CheckStatus st = new CheckStatus(x.getMessage(), FAIL_KEY);
             st.setLine(1);
             st.setColumn(0);
             errors.add(st);
@@ -39,7 +66,7 @@ public final class CpsFlowDefinitionValidator {
 
     public static final class CheckStatus {
 
-        public static final CheckStatus SUCCESS = new CheckStatus("", "success");
+        public static final CheckStatus SUCCESS = new CheckStatus("", SUCCESS_KEY);
 
         private String message;
         private String status;
