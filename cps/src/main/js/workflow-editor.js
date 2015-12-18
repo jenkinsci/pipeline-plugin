@@ -47,7 +47,6 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                     showSamplesWidget();
                 });
 
-                // force underlying textarea onchange which turns in Stapler validation check
                 editor.on('blur', function() {
                     editor.session.clearAnnotations();
                     var url = textarea.attr("checkUrl") + 'Json';
