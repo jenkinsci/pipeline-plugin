@@ -32,6 +32,7 @@ import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 
+import groovy.json.JsonOutput;
 import net.sf.json.JSONObject;
 
 public final class CpsFlowDefinitionValidator {
@@ -102,8 +103,8 @@ public final class CpsFlowDefinitionValidator {
             this.column = column;
         }
 
-        public String toString() {
-            return JSONObject.fromObject(this).toString();
+        public JSONObject asJSON() {
+            return JSONObject.fromObject(this);
         }
     }
 

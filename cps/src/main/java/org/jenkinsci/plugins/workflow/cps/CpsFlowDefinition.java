@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
+import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.util.JSONUtils;
@@ -138,27 +139,18 @@ public class CpsFlowDefinition extends FlowDefinition {
             return sandbox ? FormValidation.ok() : ScriptApproval.get().checking(value, GroovyLanguage.get());
         }
 
-        public String doCheckScriptJson(@QueryParameter String value, @QueryParameter boolean sandbox) {
+        public JSON doCheckScriptJson(@QueryParameter String value, @QueryParameter boolean sandbox) {
             Jenkins j = Jenkins.getInstance();
             if (j == null) {
-                return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.toString();
+                return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.asJSON();
             }
             try {
                 new CpsGroovyShell(null).getClassLoader().parseClass(value);
             } catch (CompilationFailedException x) {
-                return JSONArray.fromObject(CpsFlowDefinitionValidator.toCheckStatus(x).toArray()).toString();
+                return JSONArray.fromObject(CpsFlowDefinitionValidator.toCheckStatus(x).toArray());
             }
-            if (sandbox) {
-                return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.toString();
-            } else {
-                FormValidation checking = ScriptApproval.get().checking(value, GroovyLanguage.get());
-                if (StringUtils.isBlank(checking.getMessage())) {
-                    return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.toString();
-                } else {
-                    return new CpsFlowDefinitionValidator.CheckStatus(ScriptApproval.get().checking(value, 
-                            GroovyLanguage.get()).getMessage(), "approval").toString();
-                }
-            }
+            return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.asJSON();
+            // Approval requirements are managed by regular stapler form validation (via doCheckScript)
         }
 
     }

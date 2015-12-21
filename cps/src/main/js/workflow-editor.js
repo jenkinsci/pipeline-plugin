@@ -57,23 +57,11 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                             value: editor.getValue(),
                             sandbox: $("input[name='_.sandbox']").is(':checked')
                         },
-                        method: textarea.attr("checkMethod") || "get",
+                        method: textarea.attr('checkMethod') || 'POST',
                         success: function(data) {
-                            data = $.parseJSON(data);
                             var annotations = [];
-                            if (data.status) {
-                                // Top level statuses
-                                if (data.status === 'success') {
-                                    return;
-                                }
-                                if (data.status === 'approval') {
-                                    annotations.push({
-                                        row: 0,
-                                        column: 0,
-                                        text: data.message,
-                                        type: "warning"
-                                    });
-                                }
+                            if (data.status && data.status === 'success') {
+                                return;
                             } else {
                                 // Syntax errors
                                 $.each(data, function(i, value) {
@@ -81,7 +69,7 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                                         row: value.line - 1,
                                         column: value.column,
                                         text: value.message,
-                                        type: "error"
+                                        type: 'error'
                                     });
                                 });
                             }
