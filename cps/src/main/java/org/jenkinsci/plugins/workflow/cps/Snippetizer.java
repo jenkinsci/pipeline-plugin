@@ -28,7 +28,6 @@ import hudson.Extension;
 import hudson.Functions;
 import hudson.model.RootAction;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Comparator;
@@ -39,13 +38,11 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.lang.model.SourceVersion;
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -231,8 +228,9 @@ import org.kohsuke.stapler.StaplerResponse;
     }
 
     @Restricted(NoExternalUse.class)
-    public static final String STATIC_URL = ACTION_URL + "/static";
+    public static final String GDSL_URL = ACTION_URL + "/gdsl";
 
+<<<<<<< HEAD
     @Restricted(DoNotUse.class)
     public void doStatic(StaplerRequest req, StaplerResponse rsp) throws Exception {
         rsp.setContentType("text/html;charset=UTF-8");
@@ -328,6 +326,15 @@ import org.kohsuke.stapler.StaplerResponse;
             assert false : type;
         }
     }
+
+    @Restricted(NoExternalUse.class)
+    public static final String DSLD_URL = ACTION_URL + "/dsld";
+
+    @Restricted(NoExternalUse.class)
+    public static final String DSL_REF_URL = ACTION_URL + "/dslReference";
+
+    @Restricted(NoExternalUse.class)
+    public static final String DSL_HELP_URL = ACTION_URL + "/dslHelp";
 
     private static class StepDescriptorComparator implements Comparator<StepDescriptor>, Serializable {
         @Override

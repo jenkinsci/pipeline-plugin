@@ -272,7 +272,17 @@ public class DescribableHelper {
      * A type of a parameter to a class.
      */
     public static abstract class ParameterType {
-        ParameterType() {}
+        @Nonnull
+        private Type actualClass;
+
+        public Type getActualClass() {
+            return actualClass;
+        }
+
+        ParameterType(Type actualClass) {
+            this.actualClass = actualClass;
+        }
+
         static ParameterType of(Type type) {
             try {
                 if (type instanceof Class) {
@@ -291,13 +301,13 @@ public class DescribableHelper {
                         return new AtomicType(String.class);
                     }
                     if (c.isArray()) {
-                        return new ArrayType(of(c.getComponentType()));
+                        return new ArrayType(c, of(c.getComponentType()));
                     }
                     // Assume it is a nested object of some sort.
                     Set<Class<?>> subtypes = findSubtypes(c);
                     if ((subtypes.isEmpty() && !Modifier.isAbstract(c.getModifiers())) || subtypes.equals(Collections.singleton(c))) {
                         // Probably homogeneous. (Might be concrete but subclassable.)
-                        return new HomogeneousObjectType(schemaFor(c));
+                        return new HomogeneousObjectType(c, schemaFor(c));
                     } else {
                         // Definitely heterogeneous.
                         Map<String,List<Class<?>>> subtypesBySimpleName = new HashMap<String,List<Class<?>>>();
@@ -331,11 +341,11 @@ public class DescribableHelper {
                     }
                 }
                 if (acceptsList(type)) {
-                    return new ArrayType(of(((ParameterizedType) type).getActualTypeArguments()[0]));
+                    return new ArrayType(Collection.class, of(((ParameterizedType) type).getActualTypeArguments()[0]));
                 }
                 throw new UnsupportedOperationException("do not know how to categorize attributes of type " + type);
             } catch (Exception x) {
-                return new ErrorType(x);
+                return new ErrorType(x, type);
             }
         }
     }
@@ -343,6 +353,7 @@ public class DescribableHelper {
     public static final class AtomicType extends ParameterType {
         private final Class<?> clazz;
         AtomicType(Class<?> clazz) {
+            super(clazz);
             this.clazz = clazz;
         }
         /**
@@ -360,6 +371,7 @@ public class DescribableHelper {
         private final Class<?> clazz;
         private final String[] values;
         EnumType(Class<?> clazz, String[] values) {
+            super(clazz);
             this.clazz = clazz;
             this.values = values;
         }
@@ -382,7 +394,8 @@ public class DescribableHelper {
 
     public static final class ArrayType extends ParameterType {
         private final ParameterType elementType;
-        ArrayType(ParameterType elementType) {
+        ArrayType(Class<?> actualClass, ParameterType elementType) {
+            super(actualClass);
             this.elementType = elementType;
         }
         /**
@@ -398,7 +411,8 @@ public class DescribableHelper {
 
     public static final class HomogeneousObjectType extends ParameterType {
         private final Schema type;
-        HomogeneousObjectType(Schema type) {
+        HomogeneousObjectType(Class<?> actualClass, Schema type) {
+            super(actualClass);
             this.type = type;
         }
         /**
@@ -419,6 +433,7 @@ public class DescribableHelper {
         private final Class<?> supertype;
         private final Map<String,Schema> types;
         HeterogeneousObjectType(Class<?> supertype, Map<String,Schema> types) {
+            super(supertype);
             this.supertype = supertype;
             this.types = types;
         }
@@ -441,7 +456,8 @@ public class DescribableHelper {
 
     public static final class ErrorType extends ParameterType {
         private final Exception error;
-        ErrorType(Exception error) {
+        ErrorType(Exception error, Type type) {
+            super(type);
             LOG.log(Level.FINE, null, error);
             this.error = error;
         }

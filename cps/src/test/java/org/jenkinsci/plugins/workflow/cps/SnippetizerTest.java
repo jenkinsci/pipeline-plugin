@@ -204,16 +204,37 @@ public class SnippetizerTest {
     }
 
     @Issue("JENKINS-26126")
-    @Test public void doStatic() throws Exception {
+    @Test public void doDslHelp() throws Exception {
         JenkinsRule.WebClient wc = r.createWebClient();
-        String html = wc.goTo(Snippetizer.STATIC_URL).getWebResponse().getContentAsString();
+        String html = wc.goTo(Snippetizer.DSL_HELP_URL).getWebResponse().getContentAsString();
         assertThat("text from LoadStep/help-path.html is included", html, containsString("the Groovy file to load"));
         assertThat("SubversionSCM.workspaceUpdater is mentioned as an attribute of a value of GenericSCMStep.delegate", html, containsString("workspaceUpdater"));
         assertThat("CheckoutUpdater is mentioned as an option", html, containsString("CheckoutUpdater"));
-        /* TODO see comment in Snippetizer
         assertThat("text from RunWrapperBinder/help.jelly is included", html, containsString("may be used to refer to the currently running build"));
-        */
         assertThat("content is written to the end", html, containsString("</body></html>"));
     }
 
+    @Issue("JENKINS-26126")
+    @Test public void doGdsl() throws Exception {
+        JenkinsRule.WebClient wc = r.createWebClient();
+        String gdsl = wc.goTo(Snippetizer.GDSL_URL, "text/plain").getWebResponse().getContentAsString();
+        assertThat("Description is included as doc", gdsl, containsString("Build a job"));
+        assertThat("Timeout step appears", gdsl, containsString("name: 'timeout'"));
+
+        // Verify valid groovy syntax.
+        GroovyShell shell = new GroovyShell(r.jenkins.getPluginManager().uberClassLoader);
+        shell.parse(gdsl);
+    }
+
+    @Issue("JENKINS-26126")
+    @Test public void doDsld() throws Exception {
+        JenkinsRule.WebClient wc = r.createWebClient();
+        String dsld = wc.goTo(Snippetizer.DSLD_URL, "text/plain").getWebResponse().getContentAsString();
+        assertThat("Description is included as doc", dsld, containsString("Build a job"));
+        assertThat("Timeout step appears", dsld, containsString("name: 'timeout'"));
+
+        // Verify valid groovy sntax.
+        GroovyShell shell = new GroovyShell(r.jenkins.getPluginManager().uberClassLoader);
+        shell.parse(dsld);
+    }
 }
