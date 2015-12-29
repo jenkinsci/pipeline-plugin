@@ -25,9 +25,11 @@
 package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.scm.ChangeLogSet;
+import hudson.scm.PollingResult;
 import hudson.scm.SCM;
 import hudson.scm.SubversionSCM;
 import hudson.triggers.SCMTrigger;
+import hudson.util.StreamTaskListener;
 import java.util.Iterator;
 import java.util.List;
 import jenkins.util.VirtualFile;
@@ -35,11 +37,14 @@ import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class SubversionStepTest {
@@ -111,6 +116,28 @@ public class SubversionStepTest {
         entry = iterator.next();
         assertEquals("[otherfile2]", entry.getAffectedPaths().toString());
         assertFalse(iterator.hasNext());
+    }
+    
+    @Ignore("TODO returns SIGNIFICANT")
+    @Issue("JENKINS-32214")
+    @Test public void pollDuringBuild() throws Exception {
+        sampleRepo.init();
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.addTrigger(new SCMTrigger(""));
+        p.setDefinition(new CpsFlowDefinition(
+            "node {\n" +
+            "  svn '" + sampleRepo.trunkUrl() + "'\n" +
+            "  semaphore 'wait'" +
+            "}"));
+        SemaphoreStep.success("wait/1", null);
+        r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        sampleRepo.write("file2", "");
+        sampleRepo.svn("add", "file2");
+        sampleRepo.svn("commit", "--message=+file2");
+        WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+        SemaphoreStep.waitForStart("wait/2", b);
+        PollingResult r = p.poll(StreamTaskListener.fromStdout());
+        assertEquals(PollingResult.Change.NONE, r.change);
     }
 
 }
