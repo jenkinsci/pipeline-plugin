@@ -53,6 +53,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
 - [X] `ScoveragePublisher` (`scoverage`): supported as of 1.2.0
 - [ ] `AWSCodeDeployPublisher` (`codedeploy`): [issue 36](https://github.com/awslabs/aws-codedeploy-plugin/issues/36)
+- [X] `AnsiblePlaybookBuilder` (`ansible`): supported as of 0.4
 
 ## Build wrappers
 
