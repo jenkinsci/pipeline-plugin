@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Computer;
+import hudson.model.Executor;
 import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.User;
@@ -50,12 +51,15 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
 import org.apache.tools.ant.util.JavaEnvUtils;
 import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
+import org.jenkinsci.plugins.workflow.flow.FlowListener;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -66,11 +70,16 @@ import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.*;
+import org.jenkinsci.plugins.workflow.support.steps.ExecutorStep;
+import org.jenkinsci.plugins.workflow.support.steps.ExecutorStepExecution;
+import static org.junit.Assert.assertThat;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.TestExtension;
 
 /** Tests pertaining to {@code node} and {@code sh} steps. */
 public class ExecutorStepTest extends SingleJobTestBase {
@@ -414,5 +423,80 @@ public class ExecutorStepTest extends SingleJobTestBase {
             }
         });
     }
+    
+    /**
+     * Ensures that {@link FlowListener} callback is being invoked for the {@link ExecutorStepExecution}.
+     * It allows to record the executor, which is being utilized by the flow.
+     */
+    @Test
+    public void shouldInvokeFlowListenerCallbacksAndRecordNodes() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                DumbSlave s = createSlave(story.j);
+                s.setLabelString("remote quick");
+                s.getNodeProperties().add(new EnvironmentVariablesNodeProperty(
+                        new EnvironmentVariablesNodeProperty.Entry("ONSLAVE", "true")));
 
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(
+                    "node('" + s.getNodeName() + "') {\n" +
+                    "    sh('echo before=`basename $PWD`')\n" +
+                    "    sh('echo ONSLAVE=$ONSLAVE')\n" +
+                    "}"));
+
+                // Run build and wait for its completion
+                startBuilding();
+                while (!e.isComplete()) {
+                    e.waitForSuspension();
+                }
+
+                // Get the node invocation monitor
+                NodeInvocationListener listener = story.j.jenkins.getExtensionList(FlowListener.class)
+                        .get(NodeInvocationListener.class);
+                assertThat("NodeInvocationListener must be specified in the test", listener, notNullValue());
+                Node builtOn = listener.getBuiltOn();
+                assertThat("Node has not been recorded", builtOn, notNullValue());
+                assertThat("Node name differs from the expected one", builtOn.getNodeName(), equalTo(s.getNodeName()));
+            }
+        });
+    }
+    
+    /**
+     * Test extension, which locates the last usage of node declared by {@link ExecutorStep}.
+     */
+    @TestExtension("shouldInvokeFlowListenerCallbacksAndRecordNodes")
+    public static class NodeInvocationListener extends FlowListener {
+    
+        private Node builtOn;
+
+        @CheckForNull
+        public Node getBuiltOn() {
+            return builtOn;
+        }
+        
+        @Override
+        public void onNewHead(FlowNode node) { 
+            // We try to catch nodes, which indicate the start of the node() execution
+            if (!(node instanceof StepStartNode)) {
+                return;
+            }
+            
+            List<FlowNode> parents = node.getParents();
+            if (parents.isEmpty()) {
+                // Should never happen
+                return;
+            }
+            FlowNode firstParent = parents.get(0);
+            if (firstParent instanceof StepStartNode) { // Parent may be an ExecutorStep
+                StepStartNode candidate = (StepStartNode)firstParent;
+                if (candidate.getDescriptor() instanceof ExecutorStep.DescriptorImpl) {
+                    // We found ExecutorStep => we are within the node() call, which has been initialized
+                    Executor found = ExecutorStepExecution.findExecutor(candidate.getExecution());
+                    
+                    // Record the discovered node
+                    builtOn = found != null ? found.getOwner().getNode() : null;
+                }
+            }
+        }
+    }
 }

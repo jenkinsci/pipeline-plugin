@@ -37,6 +37,7 @@ import java.util.logging.Level;
 import static java.util.logging.Level.*;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import jenkins.model.Jenkins;
 import jenkins.model.Jenkins.MasterComputer;
@@ -518,6 +519,49 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
             private static final long serialVersionUID = 1L;
         }
+    }
+    
+    /**
+     * Looks for the executor, which is acquired by {@link ExecutorStep}.
+     * @param flowExecution Flow execution
+     * @return Found {@link Executor}. Null if it cannot be found
+     * @since TODO
+     */
+    @CheckForNull
+    public static Executor findExecutor(FlowExecution flowExecution) {
+        final Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins == null) {
+            return null;
+        }
+
+        for (Computer c : jenkins.getComputers()) {
+            for (Executor e : c.getExecutors()) {
+                final Queue.Executable exec = e.getCurrentExecutable();
+                if (exec == null) {
+                    continue;
+                }
+
+                SubTask subtask = exec.getParent();
+                if (subtask instanceof ExecutorStepExecution.PlaceholderTask) {
+                    ExecutorStepExecution.PlaceholderTask task = (ExecutorStepExecution.PlaceholderTask) subtask;
+                    FlowExecution taskExecution = null;
+                    try {
+                        taskExecution = task.context.get(FlowExecution.class);
+                    } catch (IOException ex) {
+                        // Do nothing
+                    } catch (InterruptedException ex) {
+                        // Do nothing
+                    }
+
+                    if (taskExecution != null && taskExecution.equals(flowExecution)) {
+                        return e;
+                    }
+                }
+            }
+        }
+        
+        // The method have not found the executor
+        return null;
     }
 
     private static final long serialVersionUID = 1L;
