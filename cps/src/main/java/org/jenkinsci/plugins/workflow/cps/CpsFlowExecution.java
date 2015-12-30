@@ -107,6 +107,7 @@ import org.jboss.marshalling.reflect.SerializableClassRegistry;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
+import org.jenkinsci.plugins.workflow.flow.FlowListener;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 
 /**
@@ -793,12 +794,18 @@ public class CpsFlowExecution extends FlowExecution {
         return heads.firstEntry().getValue();
     }
 
+    /**
+     * Notifies {@link GraphListener}s and {@link FlowListener}s that a new node has been created 
+     * @param node Node, which has been created
+     */
     void notifyListeners(FlowNode node) {
         if (listeners != null) {
             for (GraphListener listener : listeners) {
                 listener.onNewHead(node);
             }
         }
+        
+        FlowListener.fireNewHead(node);
     }
 
     @Override public Authentication getAuthentication() {

@@ -58,6 +58,7 @@ import java.util.TreeMap;
 
 import static org.jenkinsci.plugins.workflow.cps.ThreadTaskResult.*;
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.jenkinsci.plugins.workflow.flow.FlowListener;
 import org.kohsuke.stapler.ClassDescriptor;
 
 /**
@@ -134,6 +135,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
             StepExecution e = s.start(context);
             thread.setStep(e);
             sync = e.start();
+            FlowListener.fireStepExecutionStarted(e);
         } catch (Exception e) {
             if (e instanceof MissingContextVariableException)
                 reportMissingContextVariableException(context, (MissingContextVariableException)e);
