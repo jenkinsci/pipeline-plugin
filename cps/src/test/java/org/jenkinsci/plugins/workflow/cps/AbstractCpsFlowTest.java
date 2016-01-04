@@ -50,7 +50,14 @@ public abstract class AbstractCpsFlowTest {
     public TemporaryFolder tmp = new TemporaryFolder();
 
     @Rule
-    public JenkinsRule jenkins = new JenkinsRule();
+    public JenkinsRule jenkins = new JenkinsRule() {
+        @Override public void before() throws Throwable {
+            if (Thread.interrupted()) {
+                System.err.println("was interrupted before start");
+            }
+            super.before();
+        }
+    };
 
     /**
      * Currently executing flow.
