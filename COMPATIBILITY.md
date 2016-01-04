@@ -37,7 +37,6 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `HtmlPublisher` (`htmlpublisher`): supported as of 1.6
 - [ ] `JaCoCoPublisher` (`jacoco`): [JENKINS-27120](https://issues.jenkins-ci.org/browse/JENKINS-27120)
 - [ ] `Publisher` (`testng`): [JENKINS-27121](https://issues.jenkins-ci.org/browse/JENKINS-27121)
-- [ ] `GroovyPostbuildRecorder` (`groovy-postbuild`): [JENKINS-26918](https://issues.jenkins-ci.org/browse/JENKINS-26918)
 - [ ] `Gradle` (`gradle`): [JENKINS-27393](https://issues.jenkins-ci.org/browse/JENKINS-27393)
 - [ ] `CloverPublisher` (`clover`): [JENKINS-27302](https://issues.jenkins-ci.org/browse/JENKINS-27302)
 - [ ] `MsBuildBuilder` (`msbuild`): [JENKINS-26948](https://issues.jenkins-ci.org/browse/JENKINS-26948)
@@ -108,6 +107,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `customize-build-now`: supported as of 1.1
 - [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
 - [X] `embeddable-build-status`: scheduled to be supported as of 1.9
+- [X] `groovy-postbuild`: supported as of 2.3
 
 ## Custom steps
 
