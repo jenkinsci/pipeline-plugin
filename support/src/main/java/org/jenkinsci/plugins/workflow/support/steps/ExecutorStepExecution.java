@@ -348,8 +348,13 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                     LOGGER.log(FINE, "no running task corresponds to {0}", cookie);
                     return;
                 }
-                assert runningTask.execution != null && runningTask.launcher != null;
-                runningTask.execution.completed(null);
+                final AsynchronousExecution execution = runningTask.execution;
+                assert execution != null && runningTask.launcher != null;
+                Timer.get().submit(new Runnable() { // JENKINS-31614
+                    @Override public void run() {
+                        execution.completed(null);
+                    }
+                });
                 try {
                     runningTask.launcher.kill(Collections.singletonMap(COOKIE_VAR, cookie));
                 } catch (ChannelClosedException x) {
