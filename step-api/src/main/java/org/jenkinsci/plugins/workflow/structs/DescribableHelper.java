@@ -273,14 +273,14 @@ public class DescribableHelper {
      */
     public static abstract class ParameterType {
         @Nonnull
-        private Type actualClass;
+        private final Type actualType;
 
-        public Type getActualClass() {
-            return actualClass;
+        public Type getActualType() {
+            return actualType;
         }
 
-        ParameterType(Type actualClass) {
-            this.actualClass = actualClass;
+        ParameterType(Type actualType) {
+            this.actualType = actualType;
         }
 
         static ParameterType of(Type type) {
@@ -301,13 +301,13 @@ public class DescribableHelper {
                         return new AtomicType(String.class);
                     }
                     if (c.isArray()) {
-                        return new ArrayType(c, of(c.getComponentType()));
+                        return new ArrayType(c);
                     }
                     // Assume it is a nested object of some sort.
                     Set<Class<?>> subtypes = findSubtypes(c);
                     if ((subtypes.isEmpty() && !Modifier.isAbstract(c.getModifiers())) || subtypes.equals(Collections.singleton(c))) {
                         // Probably homogeneous. (Might be concrete but subclassable.)
-                        return new HomogeneousObjectType(c, schemaFor(c));
+                        return new HomogeneousObjectType(c);
                     } else {
                         // Definitely heterogeneous.
                         Map<String,List<Class<?>>> subtypesBySimpleName = new HashMap<String,List<Class<?>>>();
@@ -351,35 +351,20 @@ public class DescribableHelper {
     }
 
     public static final class AtomicType extends ParameterType {
-        private final Class<?> clazz;
         AtomicType(Class<?> clazz) {
             super(clazz);
-            this.clazz = clazz;
         }
-        /**
-         * A Java type: either {@link String}, or a {@link Class#isPrimitive} wrapper.
-         */
-        public Class<?> getType() {
-            return clazz;
-        }
+
         @Override public String toString() {
-            return Primitives.unwrap(clazz).getSimpleName();
+            return Primitives.unwrap((Class)getActualType()).getSimpleName();
         }
     }
 
     public static final class EnumType extends ParameterType {
-        private final Class<?> clazz;
         private final String[] values;
         EnumType(Class<?> clazz, String[] values) {
             super(clazz);
-            this.clazz = clazz;
             this.values = values;
-        }
-        /**
-         * Gets the Java type, usually an {@link Enum} but not necessarily.
-         */
-        public Class<?> getClazz() {
-            return clazz;
         }
         /**
          * A list of enumeration values.
@@ -388,12 +373,16 @@ public class DescribableHelper {
             return values.clone();
         }
         @Override public String toString() {
-            return clazz.getSimpleName() + Arrays.toString(values);
+            return ((Class)getActualType()).getSimpleName() + Arrays.toString(values);
         }
     }
 
     public static final class ArrayType extends ParameterType {
         private final ParameterType elementType;
+        ArrayType(Class<?> actualClass) {
+            this(actualClass, of(actualClass.getComponentType()));
+        }
+
         ArrayType(Class<?> actualClass, ParameterType elementType) {
             super(actualClass);
             this.elementType = elementType;
@@ -411,9 +400,9 @@ public class DescribableHelper {
 
     public static final class HomogeneousObjectType extends ParameterType {
         private final Schema type;
-        HomogeneousObjectType(Class<?> actualClass, Schema type) {
+        HomogeneousObjectType(Class<?> actualClass) {
             super(actualClass);
-            this.type = type;
+            this.type = schemaFor(actualClass);
         }
         /**
          * The schema representing a type of nested object.
@@ -430,18 +419,16 @@ public class DescribableHelper {
      * A parameter (or array element) which could take any of the indicated concrete object types.
      */
     public static final class HeterogeneousObjectType extends ParameterType {
-        private final Class<?> supertype;
         private final Map<String,Schema> types;
         HeterogeneousObjectType(Class<?> supertype, Map<String,Schema> types) {
             super(supertype);
-            this.supertype = supertype;
             this.types = types;
         }
         /**
          * The supertype of allowed implementations; typically {@code abstract} or an {@code interface}.
          */
         public Class<?> getSupertype() {
-            return supertype;
+            return (Class) getActualType();
         }
         /**
          * A map from names which could be passed to {@link #CLAZZ} to types of allowable nested objects.
@@ -450,7 +437,7 @@ public class DescribableHelper {
             return types;
         }
         @Override public String toString() {
-            return supertype.getSimpleName() + types;
+            return getSupertype().getSimpleName() + types;
         }
     }
 

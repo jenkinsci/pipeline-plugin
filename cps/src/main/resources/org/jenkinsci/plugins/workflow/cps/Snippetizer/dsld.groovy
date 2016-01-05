@@ -38,10 +38,10 @@ def scriptContext = []
 
 steps.each { StepDescriptor step, Schema schema ->
     def params = schema.mandatoryParameters().collectEntries { p ->
-        [p, objectTypeToMap(fetchActualClass(schema.parameters().get(p).actualClass))]
+        [p, objectTypeToMap(fetchActualClass(schema.parameters().get(p).actualType))]
     }
     def opts = schema.parameters().keySet().findAll { !(it in schema.mandatoryParameters()) }.collectEntries { k ->
-        [k, objectTypeToMap(fetchActualClass(schema.parameters().get(k).actualClass))]
+        [k, objectTypeToMap(fetchActualClass(schema.parameters().get(k).actualType))]
     }
 
     boolean requiresNode = step.requiredContext.contains(FilePath)
