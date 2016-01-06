@@ -60,7 +60,7 @@ public abstract class FlowNode extends Actionable implements Saveable {
 
     // this is a copy-on-write array so synchronization isn't needed between reader & writer.
     @edu.umd.cs.findbugs.annotations.SuppressWarnings("IS2_INCONSISTENT_SYNC")
-    private transient CopyOnWriteArrayList<Action> actions;
+    private transient CopyOnWriteArrayList<Action> actions = new CopyOnWriteArrayList<Action>();
 
     private transient final FlowExecution exec;
 
