@@ -823,10 +823,14 @@ public class CpsFlowExecution extends FlowExecution {
                     }
                 }
             } finally {
-                try {
-                    bc.commit();
-                } catch (IOException x) {
-                    LOGGER.log(Level.WARNING, null, x);
+                if (synchronous) {
+                    bc.abort(); // hack to skip save—we are holding a lock
+                } else {
+                    try {
+                        bc.commit();
+                    } catch (IOException x) {
+                        LOGGER.log(Level.WARNING, null, x);
+                    }
                 }
             }
         }
