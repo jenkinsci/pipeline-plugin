@@ -15,6 +15,7 @@ import hudson.tasks.Shell;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -35,7 +36,7 @@ import org.jvnet.hudson.test.TestExtension;
 public class BuildTriggerStepTest {
     
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule j = new JenkinsRule();
+    @Rule public JenkinsRule j = JenkinsRuleExt.workAroundJenkins30395();
 
     @Issue("JENKINS-25851")
     @Test public void buildTopLevelProject() throws Exception {
@@ -301,6 +302,17 @@ public class BuildTriggerStepTest {
         j.assertBuildStatusSuccess(us.scheduleBuild2(0));
         FreeStyleBuild ds1 = ds.getLastBuild();
         assertEquals(5, ds1.getNumber());
+    }
+
+    @Issue("JENKINS-31897")
+    @Test public void defaultParameters() throws Exception {
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("build job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'PARAM1', value: 'first']] "));
+        WorkflowJob ds = j.jenkins.createProject(WorkflowJob.class, "ds");
+        ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("PARAM1", "p1"), new StringParameterDefinition("PARAM2", "p2")));
+        ds.setDefinition(new CpsFlowDefinition("echo \"${PARAM1} - ${PARAM2}\""));
+        j.assertBuildStatusSuccess(us.scheduleBuild2(0));
+        j.assertLogContains("first - p2", ds.getLastBuild());
     }
 
 }

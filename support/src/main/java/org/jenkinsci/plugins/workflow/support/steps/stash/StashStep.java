@@ -30,8 +30,6 @@ import hudson.FilePath;
 import hudson.Util;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.flow.StashManager;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
@@ -41,11 +39,15 @@ import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
 public class StashStep extends AbstractStepImpl {
 
     private final @Nonnull String name;
     private @CheckForNull String includes;
     private @CheckForNull String excludes;
+    private boolean useDefaultExcludes = true;
 
     @DataBoundConstructor public StashStep(@Nonnull String name) {
         Jenkins.checkGoodName(name);
@@ -72,6 +74,14 @@ public class StashStep extends AbstractStepImpl {
         this.excludes = Util.fixEmpty(excludes);
     }
 
+    public boolean isUseDefaultExcludes() {
+        return useDefaultExcludes;
+    }
+
+    @DataBoundSetter public void setUseDefaultExcludes(boolean useDefaultExcludes) {
+        this.useDefaultExcludes = useDefaultExcludes;
+    }
+
     public static class Execution extends AbstractSynchronousNonBlockingStepExecution<Void> {
 
         private static final long serialVersionUID = 1L;
@@ -82,7 +92,8 @@ public class StashStep extends AbstractStepImpl {
         @StepContextParameter private transient TaskListener listener;
 
         @Override protected Void run() throws Exception {
-            StashManager.stash(build, step.name, workspace, listener, step.includes, step.excludes);
+            StashManager.stash(build, step.name, workspace, listener, step.includes, step.excludes,
+                    step.useDefaultExcludes);
             return null;
         }
 

@@ -37,7 +37,6 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `HtmlPublisher` (`htmlpublisher`): supported as of 1.6
 - [ ] `JaCoCoPublisher` (`jacoco`): [JENKINS-27120](https://issues.jenkins-ci.org/browse/JENKINS-27120)
 - [ ] `Publisher` (`testng`): [JENKINS-27121](https://issues.jenkins-ci.org/browse/JENKINS-27121)
-- [ ] `GroovyPostbuildRecorder` (`groovy-postbuild`): [JENKINS-26918](https://issues.jenkins-ci.org/browse/JENKINS-26918)
 - [ ] `Gradle` (`gradle`): [JENKINS-27393](https://issues.jenkins-ci.org/browse/JENKINS-27393)
 - [ ] `CloverPublisher` (`clover`): [JENKINS-27302](https://issues.jenkins-ci.org/browse/JENKINS-27302)
 - [ ] `MsBuildBuilder` (`msbuild`): [JENKINS-26948](https://issues.jenkins-ci.org/browse/JENKINS-26948)
@@ -53,12 +52,13 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `VSphereBuildStepContainer` (`vsphere-cloud`): [JENKINS-28930](https://issues.jenkins-ci.org/browse/JENKINS-28930)
 - [X] `ScoveragePublisher` (`scoverage`): supported as of 1.2.0
 - [ ] `AWSCodeDeployPublisher` (`codedeploy`): [issue 36](https://github.com/awslabs/aws-codedeploy-plugin/issues/36)
+- [X] `AnsiblePlaybookBuilder` (`ansible`): supported as of 0.4
 
 ## Build wrappers
 
 - [X] `ConfigFileBuildWrapper` (`config-file-provider`): supported as of 2.9.1
 - [X] `Xvnc` (`xvnc`) supported as of 1.22
-- [ ] `BuildUser` (`build-user-vars`): [JENKINS-26953](https://issues.jenkins-ci.org/browse/JENKINS-26953)
+- [X] `BuildUser` (`build-user-vars`): supported as of 1.5
 - [ ] `DashboardBuilder` (`environment-dashboard`): [issue 20](https://github.com/vipinsthename/environment-dashboard/issues/20)
 - [X] `TimestamperBuildWrapper` (`timestamper`): supported as of 1.7
 - [x] `MaskPasswordsBuildWrapper` (`mask-passwords`): supported as of 2.8
@@ -79,6 +79,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `gitlab-plugin`: supported as of 1.1.26
 - [X] `bitbucket`: supported as of 1.1.2
 - [ ] `bitbucket-pullrequest-builder`: [JENKINS-31749](https://issues.jenkins-ci.org/browse/JENKINS-31749)
+- [ ] `xtrigger`: [JENKINS-31933](https://issues.jenkins-ci.org/browse/JENKINS-31933)
 
 ## Clouds
 
@@ -100,12 +101,13 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `job-dsl`: Workflow creation supported as of 1.29
 - [X] `zentimestamp`: basic compatibility in 4.2
 - [ ] `claim`: [JENKINS-27206](https://issues.jenkins-ci.org/browse/JENKINS-27206)
-- [ ] `ListSubversionTagsParameterValue` (`subversion`): [JENKINS-27718](https://issues.jenkins-ci.org/browse/JENKINS-27718)
+- [X] `ListSubversionTagsParameterValue` (`subversion`): supported as of 2.5.6
 - [X] `authorize-project`: supported as of 1.1.0
 - [ ] `lockable-resources` : [JENKINS-30269](https://issues.jenkins-ci.org/browse/JENKINS-30269)
 - [X] `customize-build-now`: supported as of 1.1
 - [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
 - [X] `embeddable-build-status`: scheduled to be supported as of 1.9
+- [X] `groovy-postbuild`: supported as of 2.3
 
 ## Custom steps
 

@@ -53,13 +53,13 @@ import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.util.Arrays;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 
 /**
  * @author Kohsuke Kawaguchi
  */
 public class InputStepTest extends Assert {
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    @Rule public JenkinsRule j = JenkinsRuleExt.workAroundJenkins30395();
 
     /**
      * Try out a parameter.

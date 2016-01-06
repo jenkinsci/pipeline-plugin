@@ -62,7 +62,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 public class CoreWrapperStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     @Test public void useWrapper() throws Exception {
         story.addStep(new Statement() {

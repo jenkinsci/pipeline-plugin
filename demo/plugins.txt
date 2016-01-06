@@ -1,13 +1,13 @@
 ace-editor:1.0.1
 branch-api:1.0
 cloudbees-folder:5.1
-durable-task:1.6
+durable-task:1.7
 git:2.4.0
 git-client:1.19.0
 git-server:1.6
 javadoc:1.3
 jquery-detached:1.1.1
-junit:1.9
+junit:1.10
 mailer:1.16
 mapdb-api:1.0.6.0
 mercurial:1.54
