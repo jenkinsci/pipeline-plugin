@@ -48,7 +48,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -153,7 +152,8 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
     static {
         XSTREAM.registerConverter(new Converter() {
             private final RobustReflectionConverter ref = new RobustReflectionConverter(XSTREAM.getMapper(), JVM.newReflectionProvider());
-            private final Map<FlowNode,String> ids = new IdentityHashMap<FlowNode,String>(); // TODO clean up entries after completion
+            // IdentityHashMap could leak memory. WeakHashMap compares by equals, which will fail with NPE in FlowNode.hashCode.
+            private final Map<FlowNode,String> ids = CacheBuilder.newBuilder().weakKeys().<FlowNode,String>build().asMap();
             @Override public boolean canConvert(Class type) {
                 return FlowNode.class.isAssignableFrom(type);
             }
@@ -190,7 +190,8 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
         });
 
         try {
-            // TODO just make a public setter for it already
+            // TODO ugly, but we do not want public getters and setters for internal state.
+            // Really FlowNode ought to have been an interface and the concrete implementations defined here, by the storage.
             FlowNode$exec = FlowNode.class.getDeclaredField("exec");
             FlowNode$exec.setAccessible(true);
             FlowNode$parents = FlowNode.class.getDeclaredField("parents");
