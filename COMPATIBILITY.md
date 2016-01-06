@@ -153,6 +153,8 @@ Replace `AbstractBuild.getProject` with `Run.getParent`.
 
 If you need a `Node` where the build is running to replace `getBuiltOn`, you can use `FilePath.getComputer`.
 
+`TransientProjectActionFactory` can be replaced by `TransientActionFactory<Job>`.
+
 #### Constructor vs. setters
 
 It is a good idea to replace a lengthy `@DataBoundConstructor` with a short one taking just truly mandatory parameters (such as a server location).
