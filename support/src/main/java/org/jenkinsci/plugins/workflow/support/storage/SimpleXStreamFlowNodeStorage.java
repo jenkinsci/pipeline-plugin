@@ -24,6 +24,9 @@
 
 package org.jenkinsci.plugins.workflow.support.storage;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
@@ -48,6 +51,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
@@ -59,6 +63,11 @@ import javax.annotation.Nonnull;
 public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
     private final File dir;
     private final FlowExecution exec;
+    private final LoadingCache<String,FlowNode> nodeCache = CacheBuilder.newBuilder().softValues().build(new CacheLoader<String,FlowNode>() {
+        @Override public FlowNode load(String key) throws Exception {
+            return SimpleXStreamFlowNodeStorage.this.load(key).node;
+        }
+    });
 
     public SimpleXStreamFlowNodeStorage(FlowExecution exec, File dir) {
         this.exec = exec;
@@ -68,11 +77,16 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
     @Override
     public FlowNode getNode(String id) throws IOException {
         // TODO according to Javadoc this should return null if !getNodeFile(id).isFile()
-        return load(id).node;
+        try {
+            return nodeCache.get(id);
+        } catch (ExecutionException x) {
+            throw new IOException(x); // could unwrap if necessary
+        }
     }
 
     @Override
     public void storeNode(FlowNode n) throws IOException {
+        nodeCache.put(n.getId(), n);
         XmlFile f = getNodeFile(n.getId());
         if (!f.exists()) {
             f.write(new Tag(n, Collections.<Action>emptyList()));
