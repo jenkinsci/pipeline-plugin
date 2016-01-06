@@ -35,6 +35,7 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
 import static java.util.logging.Level.*;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
@@ -120,7 +121,7 @@ public abstract class FlowNode extends Actionable implements Saveable {
                 try {
                     parents.add(exec.getNode(id));
                 } catch (IOException x) {
-                    x.printStackTrace(); // TODO deal with this somehow
+                    LOGGER.log(Level.WARNING, null, x);
                 }
             }
         }

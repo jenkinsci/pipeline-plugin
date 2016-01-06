@@ -28,6 +28,8 @@ import java.io.IOException;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -55,7 +57,7 @@ public abstract class BlockEndNode<START extends BlockStartNode> extends FlowNod
             try {
                 start = (START) getExecution().getNode(startId);
             } catch (IOException x) {
-                x.printStackTrace(); // TODO
+                Logger.getLogger(BlockEndNode.class.getName()).log(Level.WARNING, null, x);
             }
         }
         return start;
