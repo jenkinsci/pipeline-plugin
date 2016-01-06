@@ -53,6 +53,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `ScoveragePublisher` (`scoverage`): supported as of 1.2.0
 - [ ] `AWSCodeDeployPublisher` (`codedeploy`): [issue 36](https://github.com/awslabs/aws-codedeploy-plugin/issues/36)
 - [X] `AnsiblePlaybookBuilder` (`ansible`): supported as of 0.4
+- [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
 
 ## Build wrappers
 
