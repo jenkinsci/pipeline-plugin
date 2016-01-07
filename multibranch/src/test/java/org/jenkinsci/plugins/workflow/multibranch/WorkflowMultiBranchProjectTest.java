@@ -25,8 +25,14 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
 import hudson.model.DescriptorVisibilityFilter;
+import hudson.plugins.git.GitSCM;
+import hudson.scm.ChangeLogParser;
+import hudson.scm.SCM;
+import hudson.scm.SCMDescriptor;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import jenkins.branch.BranchProperty;
@@ -36,16 +42,19 @@ import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.GitSCMSource;
 import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMSource;
+import jenkins.scm.impl.SingleSCMSource;
+import static org.hamcrest.Matchers.*;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
-import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.TestExtension;
 
 public class WorkflowMultiBranchProjectTest {
 
@@ -114,6 +123,37 @@ public class WorkflowMultiBranchProjectTest {
         // RateLimitBranchProperty & BuildRetentionBranchProperty hidden by JobPropertyStep.HideSuperfluousBranchProperties.
         // UntrustedBranchProperty hidden because it applies only to Project.
         assertEquals(Collections.<Class<? extends BranchProperty>>emptySet(), clazzes);
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Test public void applicableSCMs() throws Exception {
+        final WorkflowMultiBranchProject mp = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+        List<Class> scmTypes = new ArrayList<Class>();
+        List<SCMDescriptor<?>> scmDescriptors = SingleSCMSource.DescriptorImpl.getSCMDescriptors(mp);
+        for (SCMDescriptor<?> scmDescriptor : scmDescriptors) {
+            scmTypes.add(scmDescriptor.clazz);
+        }
+        assertThat(scmTypes, hasItem((Class) GitSCM.class));
+        assertThat(scmTypes, not(hasItem((Class) OldSCM.class)));
+        /* More realistic variant:
+        mp.getSourcesList().add(new BranchSource(new SingleSCMSource(null, "test", new NullSCM()), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+        JenkinsRule.WebClient wc = r.createWebClient();
+        wc.setJavaScriptEnabled(false); // TODO 404 fixed by https://github.com/jenkinsci/branch-api-plugin/pull/17
+        String html = wc.getPage(mp, "configure").getWebResponse().getContentAsString();
+        assertThat(html, containsString("GitSCM"));
+        assertThat(html, not(containsString("OldSCM")));
+        */
+    }
+    public static class OldSCM extends SCM {
+        @Override public ChangeLogParser createChangeLogParser() {return null;}
+        @TestExtension("applicableSCMs") public static class DescriptorImpl extends SCMDescriptor<OldSCM> {
+            public DescriptorImpl() {
+                super(null);
+            }
+            @Override public String getDisplayName() {
+                return "OldSCM";
+            }
+        }
     }
 
 }

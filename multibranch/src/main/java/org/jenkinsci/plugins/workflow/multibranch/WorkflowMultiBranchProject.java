@@ -25,13 +25,15 @@
 package org.jenkinsci.plugins.workflow.multibranch;
 
 import hudson.Extension;
+import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
-import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.branch.BranchProjectFactory;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.MultiBranchProjectDescriptor;
@@ -45,6 +47,8 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
  */
 @SuppressWarnings({"unchecked", "rawtypes"}) // core’s fault
 public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,WorkflowRun> {
+
+    private static final Logger LOGGER = Logger.getLogger(WorkflowMultiBranchProject.class.getName());
 
     static final String SCRIPT = "Jenkinsfile";
     static final SCMSourceCriteria CRITERIA = new SCMSourceCriteria() {
@@ -76,10 +80,22 @@ public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,W
         }
 
         @Override public List<SCMDescriptor<?>> getSCMDescriptors() {
-            // TODO this is a problem. We need to select only those compatible with Workflow.
-            // Yet SCMDescriptor.isApplicable requires an actual Job, whereas we can only pass WorkflowJob.class!
-            // Can we create a dummy WorkflowJob instance?
-            return SCM.all();
+            throw new IllegalStateException("TODO unused: https://github.com/jenkinsci/branch-api-plugin/pull/24");
+        }
+
+        @Override public boolean isApplicable(Descriptor descriptor) {
+            if (descriptor instanceof SCMDescriptor) {
+                SCMDescriptor d = (SCMDescriptor) descriptor;
+                // TODO would prefer to have SCMDescriptor.isApplicable(Class<? extends Job>)
+                try {
+                    if (!d.isApplicable(new WorkflowJob(null, null))) {
+                        return false;
+                    }
+                } catch (RuntimeException x) {
+                    LOGGER.log(Level.FINE, "SCMDescriptor.isApplicable hack failed", x);
+                }
+            }
+            return super.isApplicable(descriptor);
         }
 
     }
