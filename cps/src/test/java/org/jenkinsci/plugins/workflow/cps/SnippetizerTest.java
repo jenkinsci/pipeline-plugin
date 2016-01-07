@@ -204,9 +204,9 @@ public class SnippetizerTest {
     }
 
     @Issue("JENKINS-26126")
-    @Test public void doDslHelp() throws Exception {
+    @Test public void doDslRef() throws Exception {
         JenkinsRule.WebClient wc = r.createWebClient();
-        String html = wc.goTo(Snippetizer.DSL_HELP_URL).getWebResponse().getContentAsString();
+        String html = wc.goTo(Snippetizer.DSL_REF_URL).getWebResponse().getContentAsString();
         assertThat("text from LoadStep/help-path.html is included", html, containsString("the Groovy file to load"));
         assertThat("SubversionSCM.workspaceUpdater is mentioned as an attribute of a value of GenericSCMStep.delegate", html, containsString("workspaceUpdater"));
         assertThat("CheckoutUpdater is mentioned as an option", html, containsString("CheckoutUpdater"));
