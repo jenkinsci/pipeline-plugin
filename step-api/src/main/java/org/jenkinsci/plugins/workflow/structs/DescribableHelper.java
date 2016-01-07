@@ -279,6 +279,10 @@ public class DescribableHelper {
             return actualType;
         }
 
+        public Class<?> getType() {
+            return (Class) getActualType();
+        }
+
         ParameterType(Type actualType) {
             this.actualType = actualType;
         }
@@ -407,9 +411,13 @@ public class DescribableHelper {
         /**
          * The schema representing a type of nested object.
          */
-        public Schema getType() {
+        public Schema getSchemaType() {
             return type;
         }
+
+        /**
+         * The actual class underlying the type.
+         */
         @Override public String toString() {
             return type.getType().getSimpleName() + type;
         }
@@ -424,12 +432,7 @@ public class DescribableHelper {
             super(supertype);
             this.types = types;
         }
-        /**
-         * The supertype of allowed implementations; typically {@code abstract} or an {@code interface}.
-         */
-        public Class<?> getSupertype() {
-            return (Class) getActualType();
-        }
+
         /**
          * A map from names which could be passed to {@link #CLAZZ} to types of allowable nested objects.
          */
@@ -437,7 +440,7 @@ public class DescribableHelper {
             return types;
         }
         @Override public String toString() {
-            return getSupertype().getSimpleName() + types;
+            return getType().getSimpleName() + types;
         }
     }
 

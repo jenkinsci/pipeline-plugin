@@ -1,28 +1,29 @@
 package org.jenkinsci.plugins.workflow.cps.Snippetizer
 
+import org.jenkinsci.plugins.workflow.cps.Snippetizer
 
+
+def l = namespace(lib.LayoutTagLib)
 def st = namespace("jelly:stapler")
 
-p {
-    a(href: "${rootUrl}${my.DSL_HELP_URL}", target: "_blank") {
-        _("Click here for this doc in a new window.")
+l.layout(title:_("Jenkins Workflow Reference")) {
+
+    st.include(page: "sidepanel", it: app)
+    l.main_panel {
+        p {
+            a(href: "${rootURL}/${Snippetizer.GDSL_URL}", target: "_blank") {
+                raw(_("Click here for IntelliJ GDSL."))
+            }
+
+        }
+
+        p {
+            a(href: "${rootURL}/${Snippetizer.DSLD_URL}", target: "_blank") {
+                raw(_("Click here for Eclipse DSLD."))
+            }
+
+        }
+        st.include(page: "dslReferenceContent")
     }
-
 }
-
-p {
-    a(href: "${rootUrl}${my.GDSL_URL}", target: "_blank") {
-        _("Click here for IntelliJ GDSL.")
-    }
-
-}
-
-p {
-    a(href: "${rootUrl}${my.DSLD_URL}", target: "_blank") {
-        _("Click here for Eclipse DSLD.")
-    }
-
-}
-
-st.include(page: "dslReferenceContent")
 

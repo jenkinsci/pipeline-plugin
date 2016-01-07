@@ -125,7 +125,7 @@ def describeType(DescribableHelper.ParameterType type, int headerLevel) throws E
             p {
                 strong(_("Nested object"))
             }
-            generateHelp(((DescribableHelper.HomogeneousObjectType) type).getType(), nextHeaderLevel);
+            generateHelp(((DescribableHelper.HomogeneousObjectType) type).getSchemaType(), nextHeaderLevel);
         } else if (type instanceof DescribableHelper.HeterogeneousObjectType) {
             p {
                 strong(_("Nested choice of objects"))
