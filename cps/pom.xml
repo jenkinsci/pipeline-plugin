@@ -120,6 +120,7 @@
     <properties>
         <node.version>4.0.0</node.version>
         <npm.version>2.13.1</npm.version>
+        <npm.loglevel>--silent</npm.loglevel>
     </properties>
     <profiles>
         <!--
@@ -279,7 +280,7 @@
                                 </goals>
                                 <configuration>
                                     <!-- Note that this may not be omitted lest maven-release-plugin be confused (frontend-maven-plugin #109): -->
-                                    <arguments>install</arguments>
+                                    <arguments>install ${npm.loglevel}</arguments>
                                 </configuration>
                             </execution>
 
