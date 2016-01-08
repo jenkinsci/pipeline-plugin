@@ -54,6 +54,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `AWSCodeDeployPublisher` (`codedeploy`): [issue 36](https://github.com/awslabs/aws-codedeploy-plugin/issues/36)
 - [X] `AnsiblePlaybookBuilder` (`ansible`): supported as of 0.4
 - [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
+- [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
 
 ## Build wrappers
 
@@ -110,6 +111,8 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `embeddable-build-status`: scheduled to be supported as of 1.9
 - [X] `groovy-postbuild`: supported as of 2.3
 - [ ] `jira` : [JENKINS-28946](https://issues.jenkins-ci.org/browse/JENKINS-28946)
+- [ ] `ownership` : [JENKINS-32353](https://issues.jenkins-ci.org/browse/JENKINS-32353)
+- [ ] `job-restrictions`: [JENKINS-32355](https://issues.jenkins-ci.org/browse/JENKINS-32355)
 
 ## Custom steps
 
