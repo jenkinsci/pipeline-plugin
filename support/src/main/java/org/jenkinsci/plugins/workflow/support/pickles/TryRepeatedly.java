@@ -38,15 +38,19 @@ import javax.annotation.CheckForNull;
  * @author Kohsuke Kawaguchi
  */
 public abstract class TryRepeatedly<V> extends AbstractFuture<V> {
-    private final int seconds;
+    private final int delay;
     private ScheduledFuture<?> next;
 
-    protected TryRepeatedly(int seconds) {
-        this.seconds = seconds;
-        tryLater();
+    protected TryRepeatedly(int delay) {
+        this(delay, delay);
     }
 
-    private void tryLater() {
+    protected TryRepeatedly(int delay, int initialDelay) {
+        this.delay = delay;
+        tryLater(initialDelay);
+    }
+
+    private void tryLater(int currentDelay) {
         // TODO log a warning if trying for too long; probably Pickle.rehydrate should be given a TaskListener to note progress
 
         if (isCancelled())      return;
@@ -57,14 +61,14 @@ public abstract class TryRepeatedly<V> extends AbstractFuture<V> {
                 try {
                     V v = tryResolve();
                     if (v == null)
-                        tryLater();
+                        tryLater(delay);
                     else
                         set(v);
                 } catch (Throwable t) {
                     setException(t);
                 }
             }
-        }, seconds, TimeUnit.SECONDS);
+        }, currentDelay, TimeUnit.SECONDS);
     }
 
     @Override
