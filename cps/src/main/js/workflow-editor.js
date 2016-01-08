@@ -49,7 +49,7 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
 
                 editor.on('blur', function() {
                     editor.session.clearAnnotations();
-                    var url = textarea.attr("checkUrl") + 'Json';
+                    var url = textarea.attr("checkUrl") + 'Compile';
 
                     $.ajax({
                         url: url,
@@ -61,6 +61,8 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                         success: function(data) {
                             var annotations = [];
                             if (data.status && data.status === 'success') {
+                                // Fire script approval check - only if the script is syntactically correct
+                                textarea.trigger('change');
                                 return;
                             } else {
                                 // Syntax errors

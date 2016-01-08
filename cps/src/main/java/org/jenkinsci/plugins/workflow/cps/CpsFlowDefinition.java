@@ -131,15 +131,10 @@ public class CpsFlowDefinition extends FlowDefinition {
             if (j == null) {
                 return FormValidation.ok();
             }
-            try {
-                new CpsGroovyShell(null).getClassLoader().parseClass(value);
-            } catch (CompilationFailedException x) {
-                return FormValidation.error(x.getLocalizedMessage());
-            }
             return sandbox ? FormValidation.ok() : ScriptApproval.get().checking(value, GroovyLanguage.get());
         }
 
-        public JSON doCheckScriptJson(@QueryParameter String value, @QueryParameter boolean sandbox) {
+        public JSON doCheckScriptCompile(@QueryParameter String value, @QueryParameter boolean sandbox) {
             Jenkins j = Jenkins.getInstance();
             if (j == null) {
                 return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.asJSON();
