@@ -109,6 +109,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
 - [X] `embeddable-build-status`: scheduled to be supported as of 1.9
 - [X] `groovy-postbuild`: supported as of 2.3
+- [ ] `jira` : [JENKINS-28946](https://issues.jenkins-ci.org/browse/JENKINS-28946)
 
 ## Custom steps
 
