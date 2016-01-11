@@ -69,7 +69,7 @@ public final class STMFlowDefinition extends FlowDefinition {
     @Extension public static final class DescriptorImpl extends FlowDefinitionDescriptor {
 
         @Override public String getDisplayName() {
-            return "STM Workflow";
+            return "STM Pipeline";
         }
 
     }

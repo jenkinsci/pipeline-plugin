@@ -47,7 +47,7 @@ public class InputStep extends AbstractStepImpl implements Serializable {
     @DataBoundConstructor
     public InputStep(String message) {
         if (message==null)
-            message = "Workflow has paused and needs your input before proceeding";
+            message = "Pipeline has paused and needs your input before proceeding";
         this.message = message;
     }
 

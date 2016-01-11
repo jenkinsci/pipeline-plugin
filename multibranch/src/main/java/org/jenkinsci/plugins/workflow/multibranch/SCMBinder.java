@@ -92,7 +92,7 @@ class SCMBinder extends FlowDefinition {
         @Inject public Snippetizer snippetizer;
 
         @Override public String getDisplayName() {
-            return "Workflow script from " + WorkflowMultiBranchProject.SCRIPT;
+            return "Pipeline script from " + WorkflowMultiBranchProject.SCRIPT;
         }
 
     }

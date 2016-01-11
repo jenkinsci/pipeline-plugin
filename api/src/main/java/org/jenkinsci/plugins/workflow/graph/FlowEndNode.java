@@ -47,6 +47,6 @@ public class FlowEndNode extends BlockEndNode<FlowStartNode> {
 
     @Override
     protected String getTypeDisplayName() {
-        return "End of Workflow";
+        return "End of Pipeline";
     }
 }

@@ -25,5 +25,5 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <div>
-    Defines a new job type for workflows and provides their generic user interface.
+    Defines a new job type for pipelines and provides their generic user interface.
 </div>

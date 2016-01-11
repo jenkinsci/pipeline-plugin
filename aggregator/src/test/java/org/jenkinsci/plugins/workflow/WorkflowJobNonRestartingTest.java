@@ -148,14 +148,14 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
 
         idx = 0;
         for (String msg : new String[] {
-            "[Workflow] Retry the body up to N times : Start",
-            "[Workflow] retry {",
-            "[Workflow] } //retry",
-            "[Workflow] retry {",
-            "[Workflow] } //retry",
-            "[Workflow] retry {",
-            "[Workflow] } //retry",
-            "[Workflow] Retry the body up to N times : End",
+            "[Pipeline] Retry the body up to N times : Start",
+            "[Pipeline] retry {",
+            "[Pipeline] } //retry",
+            "[Pipeline] retry {",
+            "[Pipeline] } //retry",
+            "[Pipeline] retry {",
+            "[Pipeline] } //retry",
+            "[Pipeline] Retry the body up to N times : End",
         }) {
             idx = log.indexOf(msg, idx + 1);
             assertTrue(msg + " not found", idx != -1);

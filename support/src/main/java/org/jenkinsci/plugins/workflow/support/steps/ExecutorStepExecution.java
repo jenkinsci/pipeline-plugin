@@ -305,7 +305,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         @Override public String getDisplayName() {
             // TODO more generic to check whether FlowExecution.owner.executable is a ModelObject
             Run<?,?> r = run();
-            return r != null ? "part of " + r.getFullDisplayName() : "Unknown workflow node step";
+            return r != null ? "part of " + r.getFullDisplayName() : "Unknown Pipeline node step";
         }
 
         @Override public String getName() {

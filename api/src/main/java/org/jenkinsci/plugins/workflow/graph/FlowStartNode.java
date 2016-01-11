@@ -51,6 +51,6 @@ public class FlowStartNode extends BlockStartNode {
 
     @Override
     protected String getTypeDisplayName() {
-        return "Start of Workflow";
+        return "Start of Pipeline";
     }
 }
