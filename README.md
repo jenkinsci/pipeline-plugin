@@ -35,6 +35,8 @@ Read the [tutorial](TUTORIAL.md) to get started writing workflows.
 
 There is also a [DZone Refcard](https://dzone.com/refcardz/continuous-delivery-with-jenkins-workflow).
 
+A new collection of [examples, snippets, tips, and tricks](https://github.com/jenkinsci/workflow-examples) is in progress.
+
 # Installation
 
 Releases are available on the Jenkins update center.

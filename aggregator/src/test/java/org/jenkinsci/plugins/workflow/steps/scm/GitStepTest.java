@@ -34,6 +34,7 @@ import hudson.triggers.SCMTrigger;
 import java.util.Iterator;
 import java.util.List;
 import jenkins.util.VirtualFile;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -47,7 +48,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 public class GitStepTest {
 
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
     @Rule public GitSampleRepoRule otherRepo = new GitSampleRepoRule();
 
@@ -167,8 +168,6 @@ public class GitStepTest {
         assertFalse(iterator.hasNext());
     }
 
-    // TODO: Remove this Ignore after git plugin 2.4.1 is released.
-    @Ignore("This test is currently disabled until the fix for JENKINS-29326 is released in the git plugin 2.4.1 or later.")
     @Issue("JENKINS-29326")
     @Test
     public void identicalGitSCMs() throws Exception {

@@ -50,7 +50,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 public class WorkflowRunRestartTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     @Issue("JENKINS-25550")
     @Test public void hardKill() throws Exception {

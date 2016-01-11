@@ -4,6 +4,11 @@
   "description": "Jenkins Workflow UI",
   "author": "Tom Fennelly <tom.fennelly@gmail.com> (https://github.com/tfennelly)",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jenkinsci/workflow-plugin/tree/master/cps"
+  },
+  "readme": "../README.md",
   "devDependencies": {
     "gulp": "^3.9.0",
     "jenkins-js-builder": "0.0.26",
