@@ -501,7 +501,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
                     listener = new StreamBuildListener(new NullStream());
                 }
                 completed = new AtomicBoolean();
-                Queue.getInstance().schedule(new AfterRestartTask(this), 0);
+                Timer.get().submit(new Runnable() { // JENKINS-31614
+                    @Override public void run() {
+                        Queue.getInstance().schedule(new AfterRestartTask(WorkflowRun.this), 0);
+                    }
+                });
             }
         }
         checkouts(null); // only for diagnostics
