@@ -521,10 +521,12 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         }
     }
     
+    //TODO: add a method, which looks for all executors
     /**
      * Looks for the executor, which is acquired by {@link ExecutorStep}.
+     * If there are multiple executions in parallel, the first matching one will be returned.
      * @param flowExecution Flow execution
-     * @return Found {@link Executor}. Null if it cannot be found
+     * @return First found {@link Executor}. Null if it cannot be found
      * @since TODO
      */
     @CheckForNull

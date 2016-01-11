@@ -67,13 +67,10 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.durable_task.DurableTaskStep;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.AfterClass;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.hamcrest.Matchers.*;
 import org.jenkinsci.plugins.workflow.support.steps.ExecutorStep;
 import org.jenkinsci.plugins.workflow.support.steps.ExecutorStepExecution;
-import static org.junit.Assert.assertThat;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -429,6 +426,7 @@ public class ExecutorStepTest extends SingleJobTestBase {
      * It allows to record the executor, which is being utilized by the flow.
      */
     @Test
+    @Issue("JENKINS-32225")
     public void shouldInvokeFlowListenerCallbacksAndRecordNodes() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
@@ -437,18 +435,15 @@ public class ExecutorStepTest extends SingleJobTestBase {
                 s.getNodeProperties().add(new EnvironmentVariablesNodeProperty(
                         new EnvironmentVariablesNodeProperty.Entry("ONSLAVE", "true")));
 
+                // Create a project invoking the node() operation to acquire an executor
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
                     "node('" + s.getNodeName() + "') {\n" +
-                    "    sh('echo before=`basename $PWD`')\n" +
-                    "    sh('echo ONSLAVE=$ONSLAVE')\n" +
+                    "    sh('echo Hello`')\n" +
                     "}"));
 
                 // Run build and wait for its completion
-                startBuilding();
-                while (!e.isComplete()) {
-                    e.waitForSuspension();
-                }
+                story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
 
                 // Get the node invocation monitor
                 NodeInvocationListener listener = story.j.jenkins.getExtensionList(FlowListener.class)
@@ -482,10 +477,9 @@ public class ExecutorStepTest extends SingleJobTestBase {
             }
             
             List<FlowNode> parents = node.getParents();
-            if (parents.isEmpty()) {
-                // Should never happen
-                return;
-            }
+            assertThat("Got a StepStartNode without any parents. It should never happen", 
+                    parents.size(), not(equalTo(0)));
+            
             FlowNode firstParent = parents.get(0);
             if (firstParent instanceof StepStartNode) { // Parent may be an ExecutorStep
                 StepStartNode candidate = (StepStartNode)firstParent;

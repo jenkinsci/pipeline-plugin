@@ -47,7 +47,6 @@ public abstract class FlowListener implements ExtensionPoint {
      * {@link FlowExecution} should batch up changes to a group and call this once, 
      * as opposed to call this for every new node added.
      *
-     * One of the use cases of this listener is to persist the state of {@link FlowExecution}.
      * @param node Newly created node
      */
     public void onNewHead(@Nonnull FlowNode node) {
