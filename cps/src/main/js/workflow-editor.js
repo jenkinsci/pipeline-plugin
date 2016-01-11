@@ -54,8 +54,7 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                     $.ajax({
                         url: url,
                         data: {
-                            value: editor.getValue(),
-                            sandbox: $("input[name='_.sandbox']").is(':checked')
+                            value: editor.getValue()
                         },
                         method: textarea.attr('checkMethod') || 'POST',
                         success: function(data) {

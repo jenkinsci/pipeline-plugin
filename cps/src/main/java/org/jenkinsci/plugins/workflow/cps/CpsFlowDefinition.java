@@ -134,7 +134,7 @@ public class CpsFlowDefinition extends FlowDefinition {
             return sandbox ? FormValidation.ok() : ScriptApproval.get().checking(value, GroovyLanguage.get());
         }
 
-        public JSON doCheckScriptCompile(@QueryParameter String value, @QueryParameter boolean sandbox) {
+        public JSON doCheckScriptCompile(@QueryParameter String value) {
             Jenkins j = Jenkins.getInstance();
             if (j == null) {
                 return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.asJSON();
