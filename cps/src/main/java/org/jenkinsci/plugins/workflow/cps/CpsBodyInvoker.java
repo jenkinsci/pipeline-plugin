@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
+import org.jenkinsci.plugins.workflow.flow.FlowListener;
 
 /**
  * Builder pattern for accumulating configuration for executing the body.
@@ -165,6 +166,7 @@ public final class CpsBodyInvoker extends BodyInvoker {
             }
         }
 
+        FlowListener.fireBodyExecutionStarted(execution);
         return execution;
     }
 

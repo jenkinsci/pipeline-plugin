@@ -27,6 +27,8 @@ package org.jenkinsci.plugins.workflow.flow;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
 /**
+ * A low-level implementation of the Flow listener.
+ * A classic Jenkins extension point is implemented as {@link FlowListener}.
  * @author Kohsuke Kawaguchi
  * @author Jesse Glick
  */
