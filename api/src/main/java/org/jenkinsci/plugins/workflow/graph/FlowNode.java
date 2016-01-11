@@ -116,16 +116,21 @@ public abstract class FlowNode extends Actionable implements Saveable {
      */
     public List<FlowNode> getParents() {
         if (parents == null) {
-            parents = new ArrayList<FlowNode>(parentIds.size());
-            for (String id : parentIds) {
-                try {
-                    parents.add(exec.getNode(id));
-                } catch (IOException x) {
-                    LOGGER.log(Level.WARNING, null, x);
-                }
-            }
+            parents = loadParents(parentIds);
         }
         return parents;
+    }
+
+    private List<FlowNode> loadParents(List<String> parentIds) {
+        List<FlowNode> _parents = new ArrayList<FlowNode>(parentIds.size());
+        for (String parentId : parentIds) {
+            try {
+                _parents.add(exec.getNode(parentId));
+            } catch (IOException x) {
+                LOGGER.log(Level.WARNING, "failed to load parents of " + id, x);
+            }
+        }
+        return _parents;
     }
 
     @Restricted(DoNotUse.class)

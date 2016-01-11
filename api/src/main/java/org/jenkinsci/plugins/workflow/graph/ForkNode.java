@@ -29,6 +29,7 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 /**
  * @deprecated unused
  */
+@Deprecated
 public class ForkNode extends BlockStartNode {
     public ForkNode(FlowExecution storage, String id, FlowNode... parents) {
         super(storage, id, parents);

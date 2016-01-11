@@ -31,6 +31,7 @@ import java.util.List;
 /**
  * @deprecated unused
  */
+@Deprecated
 public class JoinNode extends BlockEndNode<ForkNode> {
     public JoinNode(FlowExecution exec, String id, ForkNode forkNode, List<FlowNode> parents) {
         super(exec, id, forkNode, parents);

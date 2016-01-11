@@ -811,7 +811,7 @@ public class CpsFlowExecution extends FlowExecution {
                     s = (Saveable) exec;
                 }
             } catch (IOException x) {
-                LOGGER.log(Level.WARNING, null, x);
+                LOGGER.log(Level.WARNING, "failed to notify listeners of changes to " + nodes + " in " + this, x);
             }
             BulkChange bc = new BulkChange(s);
             try {

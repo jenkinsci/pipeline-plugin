@@ -24,6 +24,10 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import com.google.common.base.Optional;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -62,7 +66,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -394,49 +397,32 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
         }
     }
 
-    // CacheBuilder would be more convenient, but apparently does not support null values. Memoizer does not support weak keys.
     @GuardedBy("completed")
-    private transient Map<FlowNode,String> logPrefixCache;
-    private String getLogPrefix(FlowNode node) {
+    private LoadingCache<FlowNode,Optional<String>> logPrefixCache;
+    private @CheckForNull String getLogPrefix(FlowNode node) {
         synchronized (completed) {
             if (logPrefixCache == null) {
-                logPrefixCache = new WeakHashMap<FlowNode,String>();
-            } else if (logPrefixCache.containsKey(node)) {
-                return logPrefixCache.get(node);
+                logPrefixCache = CacheBuilder.newBuilder().weakKeys().build(new CacheLoader<FlowNode,Optional<String>>() {
+                    @Override public @Nonnull Optional<String> load(FlowNode node) {
+                        if (node instanceof BlockEndNode) {
+                            return Optional.absent();
+                        }
+                        ThreadNameAction threadNameAction = node.getAction(ThreadNameAction.class);
+                        if (threadNameAction != null) {
+                            return Optional.of(threadNameAction.getThreadName());
+                        }
+                        for (FlowNode parent : node.getParents()) {
+                            String prefix = getLogPrefix(parent);
+                            if (prefix != null) {
+                                return Optional.of(prefix);
+                            }
+                        }
+                        return Optional.absent();
+                    }
+                });
             }
         }
-        
-        if (node instanceof BlockEndNode) {
-            synchronized (completed) {
-                logPrefixCache.put(node, null);
-            }
-            return null;
-        }
-
-        ThreadNameAction threadNameAction = node.getAction(ThreadNameAction.class);
-
-        if (threadNameAction != null) {
-            String name = threadNameAction.getThreadName();
-            synchronized (completed) {
-                logPrefixCache.put(node, name);
-            }
-            return name;
-        }
-
-        for (FlowNode parent : node.getParents()) {
-            String prefix = getLogPrefix(parent);
-            if (prefix != null) {
-                synchronized (completed) {
-                    logPrefixCache.put(node, prefix);
-                }
-                return prefix;
-            }
-        }
-
-        synchronized (completed) {
-            logPrefixCache.put(node, null);
-        }
-        return null;
+        return logPrefixCache.getUnchecked(node).orNull();
     }
 
     private static final class LogLinePrefixOutputFilter extends LineTransformationOutputStream {

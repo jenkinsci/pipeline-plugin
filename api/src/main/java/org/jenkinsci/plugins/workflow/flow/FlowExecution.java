@@ -164,6 +164,9 @@ public abstract class FlowExecution implements FlowActionStorage {
      */
     public abstract void addListener(GraphListener listener);
 
+    /**
+     * Reverse of {@link #addListener}.
+     */
     public /*abstract*/ void removeListener(GraphListener listener) {}
 
     /**
