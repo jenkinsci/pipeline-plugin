@@ -24,6 +24,10 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import com.google.common.base.Optional;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -59,10 +63,10 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -203,7 +207,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
             FlowExecutionList.get().register(owner);
             newExecution.addListener(new GraphL());
             completed = new AtomicBoolean();
-            logsToCopy = new LinkedHashMap<String,Long>();
+            logsToCopy = new ConcurrentSkipListMap<String,Long>();
             execution = newExecution;
             newExecution.start();
             executionPromise.set(newExecution);
@@ -322,22 +326,24 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
         if (logsToCopy == null) { // finished
             return;
         }
-        Iterator<Map.Entry<String,Long>> it = logsToCopy.entrySet().iterator();
+        if (logsToCopy instanceof LinkedHashMap) { // upgrade while build is running
+            logsToCopy = new ConcurrentSkipListMap<String,Long>(logsToCopy);
+        }
         boolean modified = false;
-        while (it.hasNext()) {
-            Map.Entry<String,Long> entry = it.next();
+        for (Map.Entry<String,Long> entry : logsToCopy.entrySet()) {
+            String id = entry.getKey();
             FlowNode node;
             try {
-                node = execution.getNode(entry.getKey());
+                node = execution.getNode(id);
             } catch (IOException x) {
                 LOGGER.log(Level.WARNING, null, x);
-                it.remove();
+                logsToCopy.remove(id);
                 modified = true;
                 continue;
             }
             if (node == null) {
-                LOGGER.log(Level.WARNING, "no such node {0}", entry.getKey());
-                it.remove();
+                LOGGER.log(Level.WARNING, "no such node {0}", id);
+                logsToCopy.remove(id);
                 modified = true;
                 continue;
             }
@@ -358,13 +364,13 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
                     try {
                         long revised = logText.writeRawLogTo(old, logger);
                         if (revised != old) {
-                            entry.setValue(revised);
+                            logsToCopy.put(id, revised);
                             modified = true;
                         }
                         if (logText.isComplete()) {
                             logText.writeRawLogTo(entry.getValue(), logger); // defend against race condition?
                             assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
-                            it.remove();
+                            logsToCopy.remove(id);
                             modified = true;
                         }
                     } finally {
@@ -374,11 +380,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
                     }
                 } catch (IOException x) {
                     LOGGER.log(Level.WARNING, null, x);
-                    it.remove();
+                    logsToCopy.remove(id);
                     modified = true;
                 }
             } else if (!node.isRunning()) {
-                it.remove();
+                logsToCopy.remove(id);
                 modified = true;
             }
         }
@@ -391,25 +397,32 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
         }
     }
 
-    private String getLogPrefix(FlowNode node) {
-        if (node instanceof BlockEndNode) {
-            return null;
-        }
-
-        ThreadNameAction threadNameAction = node.getAction(ThreadNameAction.class);
-
-        if (threadNameAction != null) {
-            return threadNameAction.getThreadName();
-        }
-
-        for (FlowNode parent : node.getParents()) {
-            String prefix = getLogPrefix(parent);
-            if (prefix != null) {
-                return prefix;
+    @GuardedBy("completed")
+    private LoadingCache<FlowNode,Optional<String>> logPrefixCache;
+    private @CheckForNull String getLogPrefix(FlowNode node) {
+        synchronized (completed) {
+            if (logPrefixCache == null) {
+                logPrefixCache = CacheBuilder.newBuilder().weakKeys().build(new CacheLoader<FlowNode,Optional<String>>() {
+                    @Override public @Nonnull Optional<String> load(FlowNode node) {
+                        if (node instanceof BlockEndNode) {
+                            return Optional.absent();
+                        }
+                        ThreadNameAction threadNameAction = node.getAction(ThreadNameAction.class);
+                        if (threadNameAction != null) {
+                            return Optional.of(threadNameAction.getThreadName());
+                        }
+                        for (FlowNode parent : node.getParents()) {
+                            String prefix = getLogPrefix(parent);
+                            if (prefix != null) {
+                                return Optional.of(prefix);
+                            }
+                        }
+                        return Optional.absent();
+                    }
+                });
             }
         }
-
-        return null;
+        return logPrefixCache.getUnchecked(node).orNull();
     }
 
     private static final class LogLinePrefixOutputFilter extends LineTransformationOutputStream {

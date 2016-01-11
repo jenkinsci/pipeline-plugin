@@ -35,6 +35,7 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
 import static java.util.logging.Level.*;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
@@ -53,13 +54,14 @@ import org.kohsuke.stapler.export.ExportedBean;
  */
 @ExportedBean
 public abstract class FlowNode extends Actionable implements Saveable {
-    private final List<FlowNode> parents;
+    private transient List<FlowNode> parents;
+    private final List<String> parentIds;
 
     private final String id;
 
     // this is a copy-on-write array so synchronization isn't needed between reader & writer.
     @edu.umd.cs.findbugs.annotations.SuppressWarnings("IS2_INCONSISTENT_SYNC")
-    private transient CopyOnWriteArrayList<Action> actions;
+    private transient CopyOnWriteArrayList<Action> actions = new CopyOnWriteArrayList<Action>();
 
     private transient final FlowExecution exec;
 
@@ -67,12 +69,22 @@ public abstract class FlowNode extends Actionable implements Saveable {
         this.id = id;
         this.exec = exec;
         this.parents = ImmutableList.copyOf(parents);
+        parentIds = ids();
     }
 
     protected FlowNode(FlowExecution exec, String id, FlowNode... parents) {
         this.id = id;
         this.exec = exec;
         this.parents = ImmutableList.copyOf(parents);
+        parentIds = ids();
+    }
+
+    private List<String> ids() {
+        List<String> ids = new ArrayList<String>(parents.size());
+        for (FlowNode n : parents) {
+            ids.add(n.id);
+        }
+        return ids;
     }
 
     /**
@@ -103,7 +115,22 @@ public abstract class FlowNode extends Actionable implements Saveable {
      * Returns a read-only view of parents.
      */
     public List<FlowNode> getParents() {
+        if (parents == null) {
+            parents = loadParents(parentIds);
+        }
         return parents;
+    }
+
+    private List<FlowNode> loadParents(List<String> parentIds) {
+        List<FlowNode> _parents = new ArrayList<FlowNode>(parentIds.size());
+        for (String parentId : parentIds) {
+            try {
+                _parents.add(exec.getNode(parentId));
+            } catch (IOException x) {
+                LOGGER.log(Level.WARNING, "failed to load parents of " + id, x);
+            }
+        }
+        return _parents;
     }
 
     @Restricted(DoNotUse.class)

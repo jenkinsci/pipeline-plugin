@@ -4,6 +4,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 
 ## 1.13 (upcoming)
 
+* [JENKINS-30055](https://issues.jenkins-ci.org/browse/JENKINS-30055): poor performance and file handle leaks when running a script with an enormous number of steps in quick succession
 * [JENKINS-26126](https://issues.jenkins-ci.org/browse/JENKINS-26126) (partial): introspect Workflow steps to generate static reference documentation (link from _Snippet Generator_). Planned to be used for IDE auto-completion as well.
 * [JENKINS-31614](https://issues.jenkins-ci.org/browse/JENKINS-31614): avoiding various deadlocks involving `Queue`.
 * [JENKINS-31897](https://issues.jenkins-ci.org/browse/JENKINS-31897): parameters with default values may now be omitted from the `parameters` option to the `build` step.

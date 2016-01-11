@@ -93,7 +93,10 @@ import java.util.logging.Logger;
 
 import static com.thoughtworks.xstream.io.ExtendedHierarchicalStreamWriterHelper.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.BulkChange;
 import hudson.init.Terminator;
+import hudson.model.Queue;
+import hudson.model.Saveable;
 import hudson.model.User;
 import hudson.security.ACL;
 import java.beans.Introspector;
@@ -714,6 +717,12 @@ public class CpsFlowExecution extends FlowExecution {
         listeners.add(listener);
     }
 
+    @Override public void removeListener(GraphListener listener) {
+        if (listeners != null) {
+            listeners.remove(listener);
+        }
+    }
+
     @Override
     public void interrupt(Result result, CauseOfInterruption... causes) throws IOException, InterruptedException {
         setResult(result);
@@ -793,10 +802,36 @@ public class CpsFlowExecution extends FlowExecution {
         return heads.firstEntry().getValue();
     }
 
-    void notifyListeners(FlowNode node) {
+    void notifyListeners(List<FlowNode> nodes, boolean synchronous) {
         if (listeners != null) {
-            for (GraphListener listener : listeners) {
-                listener.onNewHead(node);
+            Saveable s = Saveable.NOOP;
+            try {
+                Queue.Executable exec = owner.getExecutable();
+                if (exec instanceof Saveable) {
+                    s = (Saveable) exec;
+                }
+            } catch (IOException x) {
+                LOGGER.log(Level.WARNING, "failed to notify listeners of changes to " + nodes + " in " + this, x);
+            }
+            BulkChange bc = new BulkChange(s);
+            try {
+                for (FlowNode node : nodes) {
+                    for (GraphListener listener : listeners) {
+                        if (listener instanceof GraphListener.Synchronous == synchronous) {
+                            listener.onNewHead(node);
+                        }
+                    }
+                }
+            } finally {
+                if (synchronous) {
+                    bc.abort(); // hack to skip save—we are holding a lock
+                } else {
+                    try {
+                        bc.commit();
+                    } catch (IOException x) {
+                        LOGGER.log(Level.WARNING, null, x);
+                    }
+                }
             }
         }
     }

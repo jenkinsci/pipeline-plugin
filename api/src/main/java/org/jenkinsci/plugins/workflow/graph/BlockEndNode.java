@@ -24,29 +24,50 @@
 
 package org.jenkinsci.plugins.workflow.graph;
 
+import java.io.IOException;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.Nonnull;
 
 /**
- * @author Kohsuke Kawaguchi
- * @author Jesse Glick
+ * End of a block.
  * @see BlockStartNode
  */
 public abstract class BlockEndNode<START extends BlockStartNode> extends FlowNode {
-    private final START start;
+    private transient START start;
+    private final String startId;
 
     public BlockEndNode(FlowExecution exec, String id, START start, FlowNode... parents) {
         super(exec, id, parents);
         this.start = start;
+        startId = start.getId();
     }
 
     public BlockEndNode(FlowExecution exec, String id, START start, List<FlowNode> parents) {
         super(exec, id, parents);
         this.start = start;
+        startId = start.getId();
     }
 
-    public START getStartNode() {
+    /**
+     * Returns the matching start node.
+     * @return an earlier node matching this block
+     * @throws IllegalStateException if the start node could not be reloaded after deserialization
+     */
+    public @Nonnull START getStartNode() {
+        if (start == null) {
+            try {
+                start = (START) getExecution().getNode(startId);
+                if (start == null) {
+                    throw new IllegalStateException("Matching start node " + startId + " lost from deserialization");
+                }
+            } catch (IOException x) {
+                throw new IllegalStateException("Could not load matching start node: " + x);
+            }
+        }
         return start;
     }
 
