@@ -439,7 +439,7 @@ public class ExecutorStepTest extends SingleJobTestBase {
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
                     "node('" + s.getNodeName() + "') {\n" +
-                    "    sh('echo Hello`')\n" +
+                    "    echo 'Hello'\n" +
                     "}"));
 
                 // Run build and wait for its completion
