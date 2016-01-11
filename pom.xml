@@ -27,8 +27,8 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>plugin</artifactId>
-        <version>1.609.2</version> <!-- but see Jenkins-Version override below -->
+        <artifactId>plugin-pom</artifactId>
+        <version>0.1-SNAPSHOT</version> <!-- but see Jenkins-Version override below -->
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
@@ -49,7 +49,8 @@
       <tag>HEAD</tag>
   </scm>
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jenkins.version>1.609.2</jenkins.version>
+        <hpi-plugin.version>1.110</hpi-plugin.version>
     </properties>
     <modules>
         <module>step-api</module>
@@ -132,33 +133,6 @@
             </plugins>
         </pluginManagement>
         <plugins>
-            <!-- TODO replace with java.level=6 once we have a better plugin parent POM: -->
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>animal-sniffer-maven-plugin</artifactId>
-                <version>1.13</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <id>check</id>
-                    </execution>
-                </executions>
-                <configuration>
-                    <signature>
-                        <groupId>org.codehaus.mojo.signature</groupId>
-                        <artifactId>java16</artifactId>
-                    </signature>
-                </configuration>
-            </plugin>
             <plugin>
                 <!-- why is this necessary!? -->
                 <!-- fix attempted at https://github.com/jenkinsci/jenkins/commit/101507f49873de0239ccb7839649ea71187712b2 but apparently failed. -->
@@ -168,11 +142,6 @@
                 <configuration>
                     <providerSelection>1.8</providerSelection>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <version>1.110</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
