@@ -57,6 +57,8 @@ import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
 public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
@@ -143,6 +145,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
     private static final String COOKIE_VAR = "JENKINS_SERVER_COOKIE";
 
+    @ExportedBean
     public static final class PlaceholderTask implements ContinuedTask, Serializable, AccessControlled {
 
         /** keys are {@link #cookie}s */
@@ -283,6 +286,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             return hasPermission(Item.CANCEL);
         }
 
+        @Exported
         public @CheckForNull Run<?,?> run() {
             try {
                 if (!context.isReady()) {
