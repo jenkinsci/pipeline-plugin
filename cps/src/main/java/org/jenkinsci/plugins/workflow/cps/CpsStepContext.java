@@ -58,6 +58,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -165,10 +166,10 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     private transient volatile StepDescriptor stepDescriptor;
 
     /**
-     * Cached value of {@link #getProgramPromise}.
+     * Cached value of {@link #getThreadGroupSynchronously}.
      * Never null once set (might be overwritten).
      */
-    private transient volatile ListenableFuture<CpsThreadGroup> programPromise;
+    private transient volatile CpsThreadGroup threadGroup;
 
     @CpsVmThreadOnly
     CpsStepContext(StepDescriptor step, CpsThread thread, FlowExecutionOwner executionRef, FlowNode node, Closure body) {
@@ -227,40 +228,39 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      * This can block for the entire duration of the PREPARING state.
      */
     private @CheckForNull CpsThread getThreadSynchronously() throws InterruptedException, IOException {
-        try {
-            CpsThreadGroup g = getProgramPromise().get();
-            return getThread(g);
-        } catch (ExecutionException e) {
-            throw new IOException(e);
-        }
+        return getThread(getThreadGroupSynchronously());
     }
 
-    private static final ExecutorService getProgramPromiseExecutorService = new ContextResettingExecutorService(Executors.newCachedThreadPool(new NamingThreadFactory(new DaemonThreadFactory(), "CpsStepContext.getProgramPromise")));
-    private @Nonnull ListenableFuture<CpsThreadGroup> getProgramPromise() {
-        if (programPromise == null) {
-            final SettableFuture<CpsThreadGroup> f = SettableFuture.create();
-            // TODO is there some more convenient way of writing this using Futures.transform? FlowExecutionOwner.get should really return ListenableFuture<FlowExecution>
-            getProgramPromiseExecutorService.submit(new Runnable() {
-                @Override public void run() {
-                    try {
-                        ListenableFuture<CpsThreadGroup> pp;
-                        CpsFlowExecution flowExecution = getFlowExecution();
-                        while ((pp = flowExecution.programPromise) == null) {
-                            Thread.sleep(100); // TODO why is this occasionally not set right away?
-                        }
-                        f.set(pp.get());
-                    } catch (Throwable x) { // from getFlowExecution() or get()
-                        f.setException(x);
-                    }
+    private @Nonnull CpsThreadGroup getThreadGroupSynchronously() throws InterruptedException, IOException {
+        if (threadGroup == null) {
+            ListenableFuture<CpsThreadGroup> pp;
+            CpsFlowExecution flowExecution = getFlowExecution();
+            while ((pp = flowExecution.programPromise) == null) {
+                Thread.sleep(100); // TODO why is this occasionally not set right away?
+            }
+            try {
+                threadGroup = pp.get();
+            } catch (ExecutionException e) {
+                throw new IOException(e);
+            }
+        }
+        return threadGroup;
+    }
+
+    private static final ExecutorService isReadyExecutorService = new ContextResettingExecutorService(Executors.newCachedThreadPool(new NamingThreadFactory(new DaemonThreadFactory(), "CpsStepContext.isReady")));
+    @Override public boolean isReady() {
+        if (threadGroup == null) {
+            // but start computing it
+            isReadyExecutorService.submit(new Callable<Void>() {
+                @Override public Void call() throws Exception {
+                    getThreadGroupSynchronously();
+                    return null;
                 }
             });
-            programPromise = f;
+            return false;
+        } else {
+            return true;
         }
-        return programPromise;
-    }
-
-    @Override public boolean isReady() {
-        return getProgramPromise().isDone();
     }
 
     @Override
