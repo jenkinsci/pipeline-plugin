@@ -421,8 +421,8 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
                     }
                 });
             }
+            return logPrefixCache.getUnchecked(node).orNull();
         }
-        return logPrefixCache.getUnchecked(node).orNull();
     }
 
     private static final class LogLinePrefixOutputFilter extends LineTransformationOutputStream {
