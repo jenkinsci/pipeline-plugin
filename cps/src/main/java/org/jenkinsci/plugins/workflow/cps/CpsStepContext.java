@@ -28,6 +28,7 @@ import com.cloudbees.groovy.cps.Outcome;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import groovy.lang.Closure;
 import hudson.model.Descriptor;
 import hudson.model.Result;
@@ -247,7 +248,9 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
         return threadGroup;
     }
 
+    // As in c16a522, using jenkins.util.Timer for this could deadlock. TODO would like a standard unbounded executor service.
     private static final ExecutorService isReadyExecutorService = new ContextResettingExecutorService(Executors.newCachedThreadPool(new NamingThreadFactory(new DaemonThreadFactory(), "CpsStepContext.isReady")));
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
     @Override public boolean isReady() {
         if (threadGroup == null) {
             // but start computing it
