@@ -286,7 +286,6 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             return hasPermission(Item.CANCEL);
         }
 
-        @Exported
         public @CheckForNull Run<?,?> run() {
             try {
                 if (!context.isReady()) {

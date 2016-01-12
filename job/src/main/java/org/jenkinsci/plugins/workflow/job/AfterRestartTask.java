@@ -43,7 +43,7 @@ import org.kohsuke.stapler.export.ExportedBean;
 @ExportedBean
 class AfterRestartTask extends AbstractQueueTask implements Queue.FlyweightTask, Queue.TransientTask {
 
-    @Exported private final WorkflowRun run;
+    private final WorkflowRun run;
 
     AfterRestartTask(WorkflowRun run) {
         this.run = run;
