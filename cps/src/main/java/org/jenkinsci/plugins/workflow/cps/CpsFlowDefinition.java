@@ -37,11 +37,23 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
+import net.sf.json.JSON;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import net.sf.json.util.JSONUtils;
+
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.groovy.control.CompilationFailedException;
+import org.codehaus.groovy.control.CompilationUnit;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.codehaus.groovy.control.ProcessingUnit;
+import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
+import org.codehaus.groovy.syntax.SyntaxException;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
@@ -119,12 +131,21 @@ public class CpsFlowDefinition extends FlowDefinition {
             if (j == null) {
                 return FormValidation.ok();
             }
+            return sandbox ? FormValidation.ok() : ScriptApproval.get().checking(value, GroovyLanguage.get());
+        }
+
+        public JSON doCheckScriptCompile(@QueryParameter String value) {
+            Jenkins j = Jenkins.getInstance();
+            if (j == null) {
+                return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.asJSON();
+            }
             try {
                 new CpsGroovyShell(null).getClassLoader().parseClass(value);
             } catch (CompilationFailedException x) {
-                return FormValidation.error(x.getLocalizedMessage());
+                return JSONArray.fromObject(CpsFlowDefinitionValidator.toCheckStatus(x).toArray());
             }
-            return sandbox ? FormValidation.ok() : ScriptApproval.get().checking(value, GroovyLanguage.get());
+            return CpsFlowDefinitionValidator.CheckStatus.SUCCESS.asJSON();
+            // Approval requirements are managed by regular stapler form validation (via doCheckScript)
         }
 
     }

@@ -7,6 +7,7 @@ import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Ref;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinitionValidator;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -59,7 +60,10 @@ public class WorkflowLibRepositoryLocalTest extends Assert {
         git.push().call();
 
         // test if this script is accessible from form validation
+        assertEquals(cfdd.doCheckScriptCompile("import org.acme.Foo"), CpsFlowDefinitionValidator.CheckStatus.SUCCESS.asJSON());
+        assertNotEquals(cfdd.doCheckScriptCompile("import org.acme.NoSuchThing").toString(), CpsFlowDefinitionValidator.CheckStatus.SUCCESS.asJSON().toString()); // control test
+        // valid from script-security point of view
         assertSame(cfdd.doCheckScript("import org.acme.Foo", true), FormValidation.ok());
-        assertNotSame(cfdd.doCheckScript("import org.acme.NoSuchThing", true), FormValidation.ok());        // control test
+        assertSame(cfdd.doCheckScript("import org.acme.NoSuchThing", true), FormValidation.ok());
     }
 }
