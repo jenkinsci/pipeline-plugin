@@ -138,7 +138,7 @@ public class BuildTriggerStep extends AbstractStepImpl {
 
         public FormValidation doCheckPropagate(@QueryParameter boolean value, @QueryParameter boolean wait) {
             if (!value && !wait) {
-                return FormValidation.errorWithMarkup("It makes no sense to specify <code>propagate</code> if <code>wait</code> is disabled.");
+                return FormValidation.warningWithMarkup(Messages.BuildTriggerStep_explicitly_disabling_both_propagate_and_wait());
             }
             return FormValidation.ok();
         }
