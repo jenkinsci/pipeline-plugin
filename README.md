@@ -43,20 +43,20 @@ Releases are available on the Jenkins update center.
 You need to be running a sufficiently recent Jenkins release: an LTS in the 1.580.x line or newer (currently 1.596.x for the latest updates), or a weekly release.
 See the [changelog](CHANGES.md) for news.
 
-For OSS Jenkins users, install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
+For OSS Jenkins users, install _Pipeline_ (its dependencies will be pulled in automatically).
 You will need to restart Jenkins to complete installation.
 
-CloudBees Jenkins Enterprise users get Workflow automatically as of the 14.11 (1.580.1.1) release.
-Otherwise install _CloudBees Workflow: Aggregator_ from the update center.
+CloudBees Jenkins Enterprise users get Pipeline automatically as of the 14.11 (1.580.1.1) release.
+Otherwise install _CloudBees Pipeline_ from the update center.
 Again dependencies will be pulled in automatically, including all the OSS plugins.
 
 # News & questions
 
 * [Changelog](CHANGES.md)
-* [jenkins-workflow tag](http://stackoverflow.com/tags/jenkins-pipeline) on StackOverflow
+* [jenkins-pipeline tag](http://stackoverflow.com/tags/jenkins-pipeline) on StackOverflow
 * [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide) (file issues in the `workflow-plugin` component, or other components with the `workflow` label)
 * [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow) (mention `pipeline` in the subject)
-* [#JenkinsWorkflow](https://twitter.com/hashtag/JenkinsPipeline) on Twitter
+* [#JenkinsPipeline](https://twitter.com/hashtag/JenkinsPipeline) on Twitter
 
 # Demo
 
