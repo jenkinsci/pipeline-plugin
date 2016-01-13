@@ -32,7 +32,7 @@
     </parent>
     <artifactId>workflow-job</artifactId>
     <packaging>hpi</packaging>
-    <name>Workflow: Job</name>
+    <name>Pipeline: Job</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
     <dependencies>
         <dependency>
