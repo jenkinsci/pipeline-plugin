@@ -271,7 +271,7 @@ You may override the new `guessBrowser`, so that scripts do not need to specify 
 
 If you have a commit trigger, generally an `UnprotectedRootAction` which schedules builds, it will need a few changes.
 Use `SCMTriggerItem` rather than the deprecated `SCMedItem`; use `SCMTriggerItem.SCMTriggerItems.asSCMTriggerItem` rather than checking `instanceof`.
-Its `getSCMs` method can be used to enumerate configured SCMs, which in the case of a Pipeline will be those run in the last build.
+Its `getSCMs` method can be used to enumerate configured SCMs, which in the case of a pipeline will be those run in the last build.
 Use its `getSCMTrigger` method to look for a configured trigger (for example to check `isIgnorePostCommitHooks`).
 
 Ideally you will already be integrated with the `scm-api` plugin and implementing `SCMSource`; if not, now is a good time to try it.
@@ -341,7 +341,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 
 ## Custom steps
 
-Plugins can also implement custom pipeline steps with specialized behavior.
+Plugins can also implement custom Pipeline steps with specialized behavior.
 See [here](step-api/README.md) for more.
 
 ## Historical background

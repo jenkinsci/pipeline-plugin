@@ -2,19 +2,19 @@
 
 Building continuous delivery pipelines and similarly complex tasks in Jenkins using freestyle projects and traditional plugins can be awkward.
 You need to mix Parameterized Trigger, Copy Artifact, Promoted Builds, Conditional Build Step, and more just to express what should be a simple script.
-The Workflow plugin suite attempts to make it possible to directly write that script, what people often call a _workflow_ (sometimes abbreviated _flow_), while integrating with Jenkins features like slaves and publishers.
+The Pipeline plugin suite attempts to make it possible to directly write that script, what people often call a _workflow_ (sometimes abbreviated _flow_), while integrating with Jenkins features like slaves and publishers.
 
 # Features
 
 ## Scripted control flow
 
-Your whole workflow is a single Groovy script using an embedded DSL, possibly quite short and legible; there is no need to jump between multiple job configuration screens to see what is going on.
+Your whole pipeline is a single Groovy script using an embedded DSL, possibly quite short and legible; there is no need to jump between multiple job configuration screens to see what is going on.
 Conditions, loops, variables, parallel tasks, and so on are defined using regular language constructs.
 At any point you can insert a shell/batch script to do “real work” (compilation, etc.).
 
 ## Useful steps
 
-Standard DSL functions (“steps”) let you run external processes, grab slave nodes and workspaces, perform SCM checkouts, build other projects (workflow or freestyle), wait for external conditions, and so on.
+Standard DSL functions (“steps”) let you run external processes, grab slave nodes and workspaces, perform SCM checkouts, build other projects (pipeline or freestyle), wait for external conditions, and so on.
 Plugins can add further steps.
 
 ## Pause and resume execution
@@ -27,11 +27,11 @@ Executors need not be consumed while the flow is waiting.
 
 ## Pipeline stages
 
-Workflows can be divided into sequential stages, not only for labeling but to throttle concurrency.
+Pipelines can be divided into sequential stages, not only for labeling but to throttle concurrency.
 
 # Getting started
 
-Read the [tutorial](TUTORIAL.md) to get started writing workflows.
+Read the [tutorial](TUTORIAL.md) to get started writing pipelines.
 
 There is also a [DZone Refcard](https://dzone.com/refcardz/continuous-delivery-with-jenkins-workflow).
 
@@ -53,16 +53,16 @@ Again dependencies will be pulled in automatically, including all the OSS plugin
 # News & questions
 
 * [Changelog](CHANGES.md)
-* [jenkins-workflow tag](http://stackoverflow.com/tags/jenkins-workflow) on StackOverflow
+* [jenkins-workflow tag](http://stackoverflow.com/tags/jenkins-pipeline) on StackOverflow
 * [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide) (file issues in the `workflow-plugin` component, or other components with the `workflow` label)
-* [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow) (mention `workflow` in the subject)
-* [#JenkinsWorkflow](https://twitter.com/hashtag/JenkinsWorkflow) on Twitter
+* [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow) (mention `pipeline` in the subject)
+* [#JenkinsWorkflow](https://twitter.com/hashtag/JenkinsPipeline) on Twitter
 
 # Demo
 
 See the [demo overview](demo/README.md) using Docker if you want to try a complete setup quickly. In short:
 
-    docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo
+    docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/pipeline-demo
 
 and browse [localhost:8080](http://localhost:8080/).
 
