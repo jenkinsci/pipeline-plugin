@@ -359,7 +359,7 @@ public class CpsFlowExecution extends FlowExecution {
 
     private CpsScript parseScript() throws IOException {
         shell = new CpsGroovyShell(this);
-        CpsScript s = (CpsScript) shell.reparse("WorkflowScript", script);
+        CpsScript s = (CpsScript) shell.reparse("WorkflowScript",script);
 
         for (Entry<String, String> e : loadedScripts.entrySet()) {
             shell.reparse(e.getKey(), e.getValue());
