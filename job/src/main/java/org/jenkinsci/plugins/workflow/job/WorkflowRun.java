@@ -368,7 +368,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
                             modified = true;
                         }
                         if (logText.isComplete()) {
-                            logText.writeRawLogTo(entry.getValue(), logger); // defend against race condition?
+                            logText.writeRawLogTo(revised, logger); // defend against race condition?
                             assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
                             logsToCopy.remove(id);
                             modified = true;
