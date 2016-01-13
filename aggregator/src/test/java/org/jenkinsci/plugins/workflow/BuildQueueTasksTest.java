@@ -28,11 +28,19 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.RestartableJenkinsRule;
+import org.xml.sax.SAXException;
+
 import static org.junit.Assert.*;
+
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 import com.gargoylesoftware.htmlunit.Page;
 
@@ -43,30 +51,115 @@ import net.sf.json.JSONObject;
 
 public class BuildQueueTasksTest {
 
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     @Issue("JENKINS-28649")
     @Test public void queueAPI() throws Exception {
-        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        // try to use non-existent node to keep the build queued
-        p.setDefinition(new CpsFlowDefinition("node('linux') { echo 'test' }"));
+        // This is implicitly testing ExecutorStepExecution$PlaceholderTask as exported bean
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                // use non-existent node label to keep the build queued
+                p.setDefinition(new CpsFlowDefinition("node('linux') { echo 'test' }"));
+
+                WorkflowRun b = scheduleAndWaitQueued(p);
+                assertQueueAPIStatusOKAndAbort(b);
+            }
+        });
+    }
+
+    @Issue("JENKINS-28649")
+    @Test public void queueAPIRestartable() throws Exception {
+        // This is implicitly testing AfterRestartTask as exported bean
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                // use non-existent node label to keep the build queued
+                p.setDefinition(new CpsFlowDefinition("node('linux') { echo 'test' }"));
+                scheduleAndWaitQueued(p);
+                // Ok, the item is in he queue now, restart
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.getItemByFullName("p", WorkflowJob.class);
+                WorkflowRun b = p.getBuildByNumber(1);
+
+                assertQueueAPIStatusOKAndAbort(b);
+            }
+        });
+    }
+
+    @Issue("JENKINS-28649")
+    @Test public void computerAPI() throws Exception {
+        // This is implicitly testing ExecutorStepExecution$PlaceholderTask$PlaceholderExecutable as exported bean
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                        "node {\n" +
+                        "  echo 'test'\n " +
+                        "  semaphore 'watch'\n " +
+                        "}"));
+
+                WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
+                SemaphoreStep.waitForStart("watch/1", b);
+
+                assertComputerAPIStatusOK();
+
+                SemaphoreStep.success("watch/1", null);
+                story.j.waitUntilNoActivity();
+            }
+        });
+    }
+
+    @Issue("JENKINS-28649")
+    @Test public void computerAPIRestartable() throws Exception {
+        // This is implicitly testing AfterRestartTask#run as exported bean
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                        "node {\n" +
+                        "  echo 'test'\n " +
+                        "  semaphore 'watch'\n " +
+                        "}"));
+
+                WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
+                SemaphoreStep.waitForStart("watch/1", b);
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                assertComputerAPIStatusOK();
+
+                SemaphoreStep.success("watch/1", null);
+                story.j.waitUntilNoActivity();
+            }
+        });
+    }
+
+    private WorkflowRun scheduleAndWaitQueued(WorkflowJob p) throws InterruptedException, ExecutionException {
         QueueTaskFuture<WorkflowRun> build = p.scheduleBuild2(0);
 
         WorkflowRun b = build.getStartCondition().get();
-        CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
         int secondsWaiting = 0;
         while (true) {
             if (secondsWaiting > 5) {
                 assertTrue("No item queued after 5 seconds", false);
             }
-            if (r.jenkins.getQueue().getItems().length > 0) {
+            if (story.j.jenkins.getQueue().getItems().length > 0) {
                 break;
             }
             Thread.sleep(1000);
             secondsWaiting++;
         }
+        return b;
+    }
 
-        JenkinsRule.WebClient wc = r.createWebClient();
+    private void assertQueueAPIStatusOKAndAbort(WorkflowRun b)
+            throws IOException, SAXException, InterruptedException, ExecutionException {
+        JenkinsRule.WebClient wc = story.j.createWebClient();
         Page queue = wc.goTo("queue/api/json", "application/json");
 
         JSONObject o = JSONObject.fromObject(queue.getWebResponse().getContentAsString());
@@ -75,6 +168,7 @@ public class BuildQueueTasksTest {
         // Not going into de the content in this test
         assertEquals(1, items.size());
 
+        CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
         e.interrupt(Result.ABORTED);
 
         queue = wc.goTo("queue/api/json", "application/json");
@@ -82,6 +176,17 @@ public class BuildQueueTasksTest {
         items = o.getJSONArray("items");
 
         assertEquals(0, items.size());
+    }
+
+    private void assertComputerAPIStatusOK() throws IOException, SAXException {
+        JenkinsRule.WebClient wc = story.j.createWebClient();
+        Page queue = wc.goTo("computer/api/json?tree=computer[executors[*]]", "application/json");
+
+        JSONObject o = JSONObject.fromObject(queue.getWebResponse().getContentAsString());
+        JSONArray computers = o.getJSONArray("computer");
+        // Just check that the request returns HTTP 200 and there is some content.
+        // Not going into de the content in this test
+        assertEquals(1, computers.size());
     }
 
 }

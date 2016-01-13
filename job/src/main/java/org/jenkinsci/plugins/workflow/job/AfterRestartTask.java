@@ -33,7 +33,6 @@ import hudson.model.queue.AbstractQueueTask;
 import hudson.model.queue.CauseOfBlockage;
 import java.io.IOException;
 import org.acegisecurity.Authentication;
-import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 
 /**

@@ -57,7 +57,6 @@ import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 
 public class ExecutorStepExecution extends AbstractStepExecutionImpl {
@@ -396,6 +395,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         /**
          * Occupies {@link Executor} while workflow uses this slave.
          */
+        @ExportedBean
         private final class PlaceholderExecutable implements ContinuableExecutable {
 
             @Override public void run() {
