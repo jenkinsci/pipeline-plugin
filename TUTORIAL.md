@@ -44,12 +44,11 @@ You should see `#1` under _Build History_.
 
 ```
 Started by user anonymous
-Running: Print Message
+[Pipeline] echo
 hello from Pipeline
-Running: End of Pipeline
+[Pipeline] End of Pipeline
 Finished: SUCCESS
 ```
-
 
 
 
