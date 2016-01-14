@@ -1,5 +1,5 @@
 <p>
-    You may ask that this workflow build wait for completion of the downstream build.
+    You may ask that this Pipeline build wait for completion of the downstream build.
     In that case the return value of the step is an object on which you can obtain the following read-only properties:
     so you can inspect its <code>result</code> and so on.
 </p>
@@ -19,8 +19,8 @@
     <li><code>absoluteUrl</code></li>
 </ul>
 <p>
-    For a non-Workflow downstream build, the <code>buildVariables</code> property offers access to a map of defined build variables.
-    For a Workflow downstream build, this property gives access to any variables set globally on <code>env</code>.
+    For a non-Pipeline downstream build, the <code>buildVariables</code> property offers access to a map of defined build variables.
+    For a Pipeline downstream build, this property gives access to any variables set globally on <code>env</code>.
 </p>
 <p>
     Administrator-approved scripts outside the sandbox can use the <code>rawBuild</code> property to get access to a <code>hudson.model.Run</code> with further APIs.
