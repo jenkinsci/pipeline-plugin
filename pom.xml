@@ -50,7 +50,6 @@
   </scm>
     <properties>
         <jenkins.version>1.609.2</jenkins.version>
-        <hpi-plugin.version>1.110</hpi-plugin.version>
     </properties>
     <modules>
         <module>step-api</module>
@@ -107,8 +106,6 @@
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
-            <version>3.0.0</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
     <build>
@@ -138,7 +135,6 @@
                 <!-- fix attempted at https://github.com/jenkinsci/jenkins/commit/101507f49873de0239ccb7839649ea71187712b2 but apparently failed. -->
                 <groupId>org.codehaus.gmaven</groupId>
                 <artifactId>gmaven-plugin</artifactId>
-                <version>1.5-jenkins-3</version>
                 <configuration>
                     <providerSelection>1.8</providerSelection>
                 </configuration>
@@ -146,23 +142,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5</version>
                 <configuration>
-                    <!-- https://jira.codehaus.org/browse/MRELEASE-271 workaround -->
-                    <preparationGoals>clean install</preparationGoals>
-                    <goals>-DskipTests deploy</goals>
                     <tagNameFormat>workflow-@{project.version}</tagNameFormat>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.1</version> <!-- need MFINDBUGS-118 in 2.5 -->
             </plugin>
         </plugins>
     </build>
@@ -191,7 +173,6 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>3.0.2</version>
                         <configuration>
                             <xmlOutput>true</xmlOutput>
                             <failOnError>false</failOnError>
@@ -219,18 +200,5 @@
             </build>
         </profile>
     </profiles>
-
-    <repositories>
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
 
 </project>
