@@ -1,4 +1,4 @@
- This document is intended for new users of the Pipeline feature to learn how to write and understand flows.
+ This document is intended for new users of the Pipeline feature to learn how to write and understand pipelines.
 
 # Why Pipeline?
 
@@ -740,7 +740,7 @@ A [separate document](cps-global-lib/README.md) has details on this system.
 The **Pipeline: Multibranch** plugin offers a better way of versioning your Pipeline and managing your project.
 You need to create a distinct project type, **Multibranch Pipeline**.
 
-When you have a multibranch pipeline, the configuration screen will resemble **P script from SCM** in that your Pipeline script comes from source control, not the Jenkins job configuration.
+When you have a multibranch pipeline, the configuration screen will resemble **Pipeline script from SCM** in that your Pipeline script comes from source control, not the Jenkins job configuration.
 The difference is that you do not configure a single branch, but a **set** of branches, and Jenkins creates a subproject for each branch it finds in your repository.
 
 For example, if you select **Git** as the branch source (Subversion and Mercurial are also supported already), you will be prompted for the usual connection information,

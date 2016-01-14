@@ -22,7 +22,7 @@ Plugins can add further steps.
 If Jenkins is restarted (intentionally, or because of a crash) while your workflow is running, when it comes back up, execution is resumed where it left off.
 This applies to external processes (shell scripts) so long as the slave can be reattached, and losing the slave connection temporarily is not fatal either.
 
-Flows can pause in the middle and wait for a human to approve something, or enter some information.
+Pipelines can pause in the middle and wait for a human to approve something, or enter some information.
 Executors need not be consumed while the flow is waiting.
 
 ## Pipeline stages
@@ -53,16 +53,16 @@ Again dependencies will be pulled in automatically, including all the OSS plugin
 # News & questions
 
 * [Changelog](CHANGES.md)
-* [jenkins-pipeline tag](http://stackoverflow.com/tags/jenkins-pipeline) on StackOverflow
+* [jenkins-workflow tag](http://stackoverflow.com/tags/jenkins-workflow) on StackOverflow
 * [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide) (file issues in the `workflow-plugin` component, or other components with the `workflow` label)
-* [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow) (mention `pipeline` in the subject)
+* [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/pipeline) (mention `pipeline` in the subject)
 * [#JenkinsPipeline](https://twitter.com/hashtag/JenkinsPipeline) on Twitter
 
 # Demo
 
 See the [demo overview](demo/README.md) using Docker if you want to try a complete setup quickly. In short:
 
-    docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/pipeline-demo
+    docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo
 
 and browse [localhost:8080](http://localhost:8080/).
 
@@ -119,14 +119,14 @@ The snapshot Docker demo is mainly useful for verifying the effect of ongoing ch
 
 While the implementation is divided into a number of plugins, for ease of prototyping they are all kept in one repository using snapshot dependencies.
 
-* `step-api` defines a generic build step interface (not specific to flows) that many plugins could in the future depend on.
+* `step-api` defines a generic build step interface (not specific to pipelines) that many plugins could in the future depend on.
 * `basic-steps` add some generic step implementations. There is [more documentation there](basic-steps/CORE-STEPS.md).
-* `api` defines the essential aspects of flows and their executions. In particular, the engine running a flow is extensible and so could in the future support visual orchestration languages.
-* `support` adds general implementations of some internals needed by flows, such as storing state.
-* `job` provides the actual job type and top-level UI for defining and running flows.
+* `api` defines the essential aspects of pipelines and their executions. In particular, the engine running a flow is extensible and so could in the future support visual orchestration languages.
+* `support` adds general implementations of some internals needed by pipelines, such as storing state.
+* `job` provides the actual job type and top-level UI for defining and running pipelines.
 * `durable-task-step` uses the `durable-task` plugin to define a shell script step that can survive restarts.
 * `scm-step` adds SCM-related steps. There is [more documentation there](scm-step/README.md).
-* `cps` is the flow engine implementation based on the Groovy language, and supporting long-running flows using a _continuation passing style_ transformation of the script.
+* `cps` is the flow engine implementation based on the Groovy language, and supporting long-running pipelines using a _continuation passing style_ transformation of the script.
 * `cps-global-lib` adds a Git-backed repository for Groovy libraries available to scripts.
 * `stm` is a simple engine implementation using a _state transition machine_, less intended for end users than as a reference for how engines can work. Currently only partly implemented.
 * `aggregator` is a placeholder plugin allowing you to `mvn hpi:run` and see everything working together, as well as holding integration tests.
