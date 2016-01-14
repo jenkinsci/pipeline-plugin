@@ -25,5 +25,5 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <div>
-    Defines a project type for multibranch workflows.
+    Defines a project type for multibranch pipelines.
 </div>

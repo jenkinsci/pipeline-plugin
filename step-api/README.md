@@ -1,12 +1,12 @@
-# Writing Workflow steps
+# Writing Pipeline steps
 
-Plugins can implement custom Workflow steps with specialized behavior by adding a dependency on `workflow-step-api`.
-Remember to ensure that your baseline Jenkins version is at least as new as that required by the version of Workflow you are depending on.
+Plugins can implement custom Pipeline steps with specialized behavior by adding a dependency on `workflow-step-api`.
+Remember to ensure that your baseline Jenkins version is at least as new as that required by the version of Pipeline you are depending on.
 (The [changelog](../CHANGES.md) notes these baselines.)
 
 ## Creating a basic synchronous step
 
-When a Workflow step does something quick and nonblocking, you can make a “synchronous” step.
+When a Pipeline step does something quick and nonblocking, you can make a “synchronous” step.
 The Groovy execution waits for it to finish.
 
 Extend `AbstractStepImpl`.
@@ -14,7 +14,7 @@ Define mandatory parameters in a `@DataBoundConstructor`.
 Define optional parameters using `@DataBoundSetter`.
 (Both need matching getters.)
 
-Create a class, conventionally a nested `public static class Execution`, and extend `AbstractSynchronousNonBlockingStepExecution` (or `AbstractSynchronousStepExecution` in older versions of Workflow or for certain trivial steps).
+Create a class, conventionally a nested `public static class Execution`, and extend `AbstractSynchronousNonBlockingStepExecution` (or `AbstractSynchronousStepExecution` in older versions of Pipeline or for certain trivial steps).
 Parameterize it with the desired return value of the step (or `Void` if it need not return a value).
 The `run` method should do the work of the step.
 You can `@Inject` the step object to access its configuration.
@@ -31,8 +31,8 @@ The descriptor can also have the usual methods complementing `config.jelly` for 
 
 ## Creating an asynchronous step
 
-For the more general case that a Workflow step might block in network or disk I/O, and might need to survive Jenkins restarts, you can use a more powerful API.
-This relies on a callback system: the Workflow engine tells your step when to start, and your step tells Workflow when it is done.
+For the more general case that a Pipeline step might block in network or disk I/O, and might need to survive Jenkins restarts, you can use a more powerful API.
+This relies on a callback system: the Pipeline engine tells your step when to start, and your step tells Pipeline when it is done.
 
 Extend `AbstractStepExecutionImpl` rather than `AbstractSynchronousStepExecution`.
 You will be implementing a `start` method.
@@ -60,7 +60,7 @@ but generally it will need to interrupt whatever process you started.
 
 ## Creating a block-scoped step
 
-Workflow steps can also take “closures”: a code block which they may run zero or more times, optionally with some added context.
+Pipeline steps can also take “closures”: a code block which they may run zero or more times, optionally with some added context.
 
 Override `takesImplicitBlockArgument` in your descriptor.
 In `start`, or thereafter, call
@@ -82,5 +82,5 @@ You can pass various contextual objects, as per `@StepContextParameter` above.
 
 ## Using more APIs
 
-You can also add a dependency on `workflow-api` which brings in more Workflow-specific features.
-For example you can then receive a `FlowNode` as a `@StepContextParameter` and call `addAction` to customize the _Workflow Steps_ view.
+You can also add a dependency on `workflow-api` which brings in more Pipeline-specific features.
+For example you can then receive a `FlowNode` as a `@StepContextParameter` and call `addAction` to customize the _Pipeline Steps_ view.
