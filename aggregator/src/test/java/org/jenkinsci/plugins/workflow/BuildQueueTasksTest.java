@@ -24,6 +24,12 @@
 
 package org.jenkinsci.plugins.workflow;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -36,11 +42,6 @@ import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 import org.xml.sax.SAXException;
-
-import static org.junit.Assert.*;
-
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
 import com.gargoylesoftware.htmlunit.Page;
 
@@ -60,7 +61,7 @@ public class BuildQueueTasksTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 // use non-existent node label to keep the build queued
-                p.setDefinition(new CpsFlowDefinition("node('linux') { echo 'test' }"));
+                p.setDefinition(new CpsFlowDefinition("node('nonexistent') { echo 'test' }"));
 
                 WorkflowRun b = scheduleAndWaitQueued(p);
                 assertQueueAPIStatusOKAndAbort(b);
@@ -75,7 +76,7 @@ public class BuildQueueTasksTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 // use non-existent node label to keep the build queued
-                p.setDefinition(new CpsFlowDefinition("node('linux') { echo 'test' }"));
+                p.setDefinition(new CpsFlowDefinition("node('nonexistent') { echo 'test' }"));
                 scheduleAndWaitQueued(p);
                 // Ok, the item is in he queue now, restart
             }
@@ -108,7 +109,6 @@ public class BuildQueueTasksTest {
                 assertComputerAPIStatusOK();
 
                 SemaphoreStep.success("watch/1", null);
-                story.j.waitUntilNoActivity();
             }
         });
     }
@@ -119,11 +119,7 @@ public class BuildQueueTasksTest {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
-                p.setDefinition(new CpsFlowDefinition(
-                        "node {\n" +
-                        "  echo 'test'\n " +
-                        "  semaphore 'watch'\n " +
-                        "}"));
+                p.setDefinition(new CpsFlowDefinition("semaphore 'watch'"));
 
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
                 SemaphoreStep.waitForStart("watch/1", b);
@@ -134,7 +130,6 @@ public class BuildQueueTasksTest {
                 assertComputerAPIStatusOK();
 
                 SemaphoreStep.success("watch/1", null);
-                story.j.waitUntilNoActivity();
             }
         });
     }
