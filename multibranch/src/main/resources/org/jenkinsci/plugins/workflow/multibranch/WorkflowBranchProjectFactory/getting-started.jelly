@@ -23,8 +23,8 @@
  -->
 <?jelly escape-by-default='true'?>
 <st:compress xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
-  Pipeline Branch projects support building branches within a repository with a file named <code>Jenkinsfile</code> in the root directory.
-  This file should contain a valid 
-  <a target="_blank" href="https://github.com/jenkinsci/workflow-plugin/blob/master/TUTORIAL.md#understanding-flow-scripts">Jenkins Pipeline script</a>. See also: 
-  <a target="_blank" href="https://github.com/jenkinsci/workflow-plugin/blob/master/TUTORIAL.md#creating-multibranch-projects">Creating Multibranch Projects</a>.
+    Pipeline Branch projects support building branches within a repository with a file named <code>Jenkinsfile</code> in the root directory.
+    This file should contain a valid 
+    <a target="_blank" href="https://github.com/jenkinsci/workflow-plugin/blob/master/TUTORIAL.md#understanding-flow-scripts">Jenkins Pipeline script</a>. See also: 
+    <a target="_blank" href="https://github.com/jenkinsci/workflow-plugin/blob/master/TUTORIAL.md#creating-multibranch-projects">Creating Multibranch Projects</a>.
 </st:compress>
