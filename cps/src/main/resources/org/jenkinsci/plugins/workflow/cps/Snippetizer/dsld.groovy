@@ -89,7 +89,7 @@ steps.each { StepDescriptor step, Schema schema ->
 def globalVars = []
 
 for (GlobalVariable v : snippetizer.getGlobalVariables()) {
-    globalVars.add("property(name: '${v.getName()}', type: '${v.class}')")
+    globalVars.add("property(name: '${v.getName()}', type: '${v.class.canonicalName}')")
 }
 
 def st = namespace("jelly:stapler")
