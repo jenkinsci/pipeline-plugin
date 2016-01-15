@@ -55,6 +55,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `AnsiblePlaybookBuilder` (`ansible`): supported as of 0.4
 - [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
 - [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
+- [ ] `CheckStylePublisher` (`CheckStyle`) [JENKINS-32474](https://issues.jenkins-ci.org/browse/JENKINS-32474)
 
 ## Build wrappers
 
