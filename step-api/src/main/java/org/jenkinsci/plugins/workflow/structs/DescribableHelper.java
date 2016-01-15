@@ -279,10 +279,6 @@ public class DescribableHelper {
             return actualType;
         }
 
-        public Class<?> getType() {
-            return (Class) getActualType();
-        }
-
         ParameterType(Type actualType) {
             this.actualType = actualType;
         }
@@ -345,7 +341,7 @@ public class DescribableHelper {
                     }
                 }
                 if (acceptsList(type)) {
-                    return new ArrayType(Collection.class, of(((ParameterizedType) type).getActualTypeArguments()[0]));
+                    return new ArrayType(type, of(((ParameterizedType) type).getActualTypeArguments()[0]));
                 }
                 throw new UnsupportedOperationException("do not know how to categorize attributes of type " + type);
             } catch (Exception x) {
@@ -359,6 +355,10 @@ public class DescribableHelper {
             super(clazz);
         }
 
+        public Class<?> getType() {
+            return (Class) getActualType();
+        }
+
         @Override public String toString() {
             return Primitives.unwrap((Class)getActualType()).getSimpleName();
         }
@@ -370,6 +370,11 @@ public class DescribableHelper {
             super(clazz);
             this.values = values;
         }
+
+        public Class<?> getType() {
+            return (Class) getActualType();
+        }
+
         /**
          * A list of enumeration values.
          */
@@ -387,10 +392,11 @@ public class DescribableHelper {
             this(actualClass, of(actualClass.getComponentType()));
         }
 
-        ArrayType(Class<?> actualClass, ParameterType elementType) {
+        ArrayType(Type actualClass, ParameterType elementType) {
             super(actualClass);
             this.elementType = elementType;
         }
+
         /**
          * The element type of the array or list.
          */
@@ -408,6 +414,11 @@ public class DescribableHelper {
             super(actualClass);
             this.type = schemaFor(actualClass);
         }
+
+        public Class<?> getType() {
+            return (Class) getActualType();
+        }
+
         /**
          * The schema representing a type of nested object.
          */
@@ -431,6 +442,10 @@ public class DescribableHelper {
         HeterogeneousObjectType(Class<?> supertype, Map<String,Schema> types) {
             super(supertype);
             this.types = types;
+        }
+
+        public Class<?> getType() {
+            return (Class) getActualType();
         }
 
         /**
