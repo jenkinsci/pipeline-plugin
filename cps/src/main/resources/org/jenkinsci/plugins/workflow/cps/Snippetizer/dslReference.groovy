@@ -17,12 +17,14 @@ l.layout(title:_("Jenkins Workflow Reference")) {
 
         }
 
+        /* Commenting out DSLD until it's fixed.
         p {
             a(href: "${rootURL}/${Snippetizer.DSLD_URL}", target: "_blank") {
                 raw(_("Click here for Eclipse DSLD."))
             }
 
         }
+        */
         st.include(page: "dslReferenceContent")
     }
 }
