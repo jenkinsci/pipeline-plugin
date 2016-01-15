@@ -1,6 +1,6 @@
-# Plugin Compatibility with Workflow
+# Plugin Compatibility with Pipeline
 
-For architectural reasons, plugins providing various extensions of interest to builds cannot be made automatically compatible with Workflow.
+For architectural reasons, plugins providing various extensions of interest to builds cannot be made automatically compatible with Pipeline.
 Typically they require use of some newer APIs, large or small (see the bottom of this document for details).
 This document captures the ongoing status of plugins known to be compatible or incompatible.
 
@@ -97,11 +97,11 @@ Entries list the class name serving as the entry point to the relevant functiona
 ## Miscellaneous
 
 - [X] `rebuild`: supported as of 1.24
-- [X] `parameterized-trigger` (to support a workflow as downstream): supported as of 2.28
+- [X] `parameterized-trigger` (to support a pipeline as downstream): supported as of 2.28
 - [X] `build-token-root`: supported as of 1.2
 - [ ] `build-failure-analyzer`: [JENKINS-27123](https://issues.jenkins-ci.org/browse/JENKINS-27123)
 - [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
-- [X] `job-dsl`: Workflow creation supported as of 1.29
+- [X] `job-dsl`: Pipeline creation supported as of 1.29
 - [X] `zentimestamp`: basic compatibility in 4.2
 - [X] `claim`: scheduled to be supported as of 2.8
 - [X] `ListSubversionTagsParameterValue` (`subversion`): supported as of 2.5.6
@@ -118,25 +118,25 @@ Entries list the class name serving as the entry point to the relevant functiona
 
 ## Custom steps
 
-For cases when a first-class Workflow step (rather than an adaptation of functionality applicable to freestyle projects) makes sense.
+For cases when a first-class Pipeline step (rather than an adaptation of functionality applicable to freestyle projects) makes sense.
 
 - [X] `docker-workflow`: DSL based on `docker` global variable
 - [X] `credentials-binding`: `withCredentials` step as of 1.3
 - [X] `ssh-agent`: `sshagent` step as of 1.8
 - [X] `parallel-test-executor`: `splitTests` step since 1.6
 - [ ] `gerrit-trigger`: [JENKINS-26102](https://issues.jenkins-ci.org/browse/JENKINS-26102), [JENKINS-26103](https://issues.jenkins-ci.org/browse/JENKINS-26103)
-- [X] `mailer`: `mail` step in Workflow 1.2
+- [X] `mailer`: `mail` step in Pipeline 1.2
 - [ ] `artifactory`: [JENKINS-30121](https://issues.jenkins-ci.org/browse/JENKINS-30121)
 - [X] `email-ext`: `emailext` step scheduled for 2.41
 
 # Plugin Developer Guide
 
-If you are maintaining (or creating) a plugin and wish its features to work smoothly with Workflow, there are a number of special considerations.
+If you are maintaining (or creating) a plugin and wish its features to work smoothly with Pipeline, there are a number of special considerations.
 
 ## Extension points accessible via metastep
 
-Several common types of plugin features (`@Extension`s) can be invoked from a Workflow script without any special plugin dependencies so long as you use newer Jenkins core APIs.
-Then there is “metastep” in Workflow (`step`, `checkout`, `wrap`) which loads the extension by class name and calls it.
+Several common types of plugin features (`@Extension`s) can be invoked from a Pipeline script without any special plugin dependencies so long as you use newer Jenkins core APIs.
+Then there is “metastep” in Pipeline (`step`, `checkout`, `wrap`) which loads the extension by class name and calls it.
 
 ### General guidelines
 
@@ -166,7 +166,7 @@ If you need a `Node` where the build is running to replace `getBuiltOn`, you can
 
 It is a good idea to replace a lengthy `@DataBoundConstructor` with a short one taking just truly mandatory parameters (such as a server location).
 For all optional parameters, create a public setter marked with `@DataBoundSetter` (with any non-null default value set in the constructor or field initializer).
-This allows most parameters to be left at their default values in a workflow script, not to mention simplifying ongoing code maintenance because it is much easier to introduce new options this way.
+This allows most parameters to be left at their default values in a Pipeline script, not to mention simplifying ongoing code maintenance because it is much easier to introduce new options this way.
 
 For Java-level compatibility, leave any previous constructors in place, but mark them `@Deprecated`.
 Also remove `@DataBoundConstructor` from them (there can be only one).
@@ -196,7 +196,7 @@ public @CheckForNull String getStuff() {
 ```
 
 If you want a nonblank default, it is a little more complicated.
-If you do not care about XStream hygiene, for example because the `Describable` is a Workflow `Step` (or is only being used as part of one):
+If you do not care about XStream hygiene, for example because the `Describable` is a Pipeline `Step` (or is only being used as part of one):
 
 ```xml
 <f:entry field="stuff" title="${%Stuff}">
@@ -240,14 +240,14 @@ None of these considerations apply to mandatory parameters with no default, whic
 
 See the [user documentation](scm-step/README.md) for background. The `checkout` metastep uses an `SCM`.
 
-As the author of an SCM plugin, there are some changes you should make to ensure your plugin can be used from workflows.
+As the author of an SCM plugin, there are some changes you should make to ensure your plugin can be used from pipelines.
 You can use `mercurial-plugin` as a relatively straightforward code example.
 
 #### Basic update
 
 Make sure your Jenkins baseline is at least 1.568 (or 1.580.1, the next LTS).
 Check your plugin for compilation warnings relating to `hudson.scm.*` classes to see outstanding changes you need to make.
-Most importantly, various methods in `SCM` which formerly took an `AbstractBuild` now take a more generic `Run` (i.e., potentially a workflow build) plus a `FilePath` (i.e., a workspace).
+Most importantly, various methods in `SCM` which formerly took an `AbstractBuild` now take a more generic `Run` (i.e., potentially a Pipeline build) plus a `FilePath` (i.e., a workspace).
 Use the specified workspace rather than the former `build.getWorkspace()`, which only worked for traditional projects with a single workspace.
 Similarly, some methods formerly taking `AbstractProject` now take the more generic `Job`.
 Be sure to use `@Override` wherever possible to make sure you are using the right overloads.
@@ -262,7 +262,7 @@ Typically you will unconditionally return `true`.
 #### Checkout key
 
 You should override the new `getKey`.
-This allows a workflow job to match up checkouts from build to build so it knows how to look for changes.
+This allows a Pipeline job to match up checkouts from build to build so it knows how to look for changes.
 
 #### Browser selection
 
@@ -272,15 +272,15 @@ You may override the new `guessBrowser`, so that scripts do not need to specify 
 
 If you have a commit trigger, generally an `UnprotectedRootAction` which schedules builds, it will need a few changes.
 Use `SCMTriggerItem` rather than the deprecated `SCMedItem`; use `SCMTriggerItem.SCMTriggerItems.asSCMTriggerItem` rather than checking `instanceof`.
-Its `getSCMs` method can be used to enumerate configured SCMs, which in the case of a workflow will be those run in the last build.
+Its `getSCMs` method can be used to enumerate configured SCMs, which in the case of a pipeline will be those run in the last build.
 Use its `getSCMTrigger` method to look for a configured trigger (for example to check `isIgnorePostCommitHooks`).
 
 Ideally you will already be integrated with the `scm-api` plugin and implementing `SCMSource`; if not, now is a good time to try it.
-In the future workflows may take advantage of this API to support automatic creation of subprojects for each detected branch.
+In the future pipelines may take advantage of this API to support automatic creation of subprojects for each detected branch.
 
 #### Explicit integration
 
-If you want to provide a smoother experience for workflow users than is possible via the generic `scm` step,
+If you want to provide a smoother experience for Pipeline users than is possible via the generic `scm` step,
 you can add a (perhaps optional) dependency on `workflow-scm-step` to your plugin.
 Define a `SCMStep` using `SCMStepDescriptor` and you can define a friendly, script-oriented syntax.
 You still need to make the aforementioned changes, since at the end you are just preconfiguring an `SCM`.
@@ -289,14 +289,14 @@ You still need to make the aforementioned changes, since at the end you are just
 
 See the [user documentation](basic-steps/CORE-STEPS.md) for background. The metastep is `step`.
 
-To add support for use of a `Builder` or `Publisher` from a workflow, depend on Jenkins 1.577+, typically 1.580.1 ([tips](#basic-update)).
+To add support for use of a `Builder` or `Publisher` from a pipeline, depend on Jenkins 1.577+, typically 1.580.1 ([tips](#basic-update)).
 Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
 Also prefer `@DataBoundSetter`s to a sprawling `@DataBoundConstructor` ([tips](#constructor-vs-setters)).
 
 #### Mandatory workspace context
 
 Note that a `SimpleBuildStep` is designed to work also in a freestyle project, and thus assumes that a `FilePath workspace` is available (as well as some associated services, like a `Launcher`).
-That is always true in a freestyle build, but is a potential limitation for use from a Workflow build.
+That is always true in a freestyle build, but is a potential limitation for use from a Pipeline build.
 For example, you might legitimately want to take some action outside the context of any workspace:
 
 ```groovy
@@ -342,7 +342,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 
 ## Custom steps
 
-Plugins can also implement custom Workflow steps with specialized behavior.
+Plugins can also implement custom Pipeline steps with specialized behavior.
 See [here](step-api/README.md) for more.
 
 ## Historical background
@@ -350,8 +350,8 @@ See [here](step-api/README.md) for more.
 Traditional Jenkins `Job`s are defined in a fairly deep type hierarchy: `FreestyleProject` → `Project` → `AbstractProject` → `Job` → `AbstractItem` → `Item`.
 (As well as paired `Run` types: `FreestyleBuild`, etc.)
 In older versions of Jenkins, much of the interesting implementation was in `AbstractProject` (or `AbstractBuild`), which was packed full of assorted features not present in `Job` (or `Run`).
-Some of these features were also needed by Workflow, like having a programmatic way to start a build (optionally with parameters), or lazy-load build records, or integrate with SCM triggers.
-Others were not applicable to Workflow, like declaring a single SCM and a single workspace per build, or being tied to a specific label, or running a linear sequence of build steps within the scope of a single Java method call.
+Some of these features were also needed by Pipeline, like having a programmatic way to start a build (optionally with parameters), or lazy-load build records, or integrate with SCM triggers.
+Others were not applicable to Pipeline, like declaring a single SCM and a single workspace per build, or being tied to a specific label, or running a linear sequence of build steps within the scope of a single Java method call.
 
 `WorkflowJob` directly extends `Job` since it cannot act like an `AbstractProject`.
 Therefore some refactoring was needed, to make the relevant features available to other `Job` types without code or API duplication.
@@ -362,8 +362,8 @@ Each encapsulates a set of related functionality originally tied to `AbstractPro
 * `SCMTriggerItem` integrates with `SCMTrigger`, including a definition of which SCM or SCMs a job is using, and how it should perform polling. It also allows various plugins to interoperate with the Multiple SCMs plugin without needing an explicit dependency. Supersedes and deprecates `SCMedItem`.
 * `LazyBuildMixIn` handles the plumbing of lazy-loading build records (a system introduced in Jenkins 1.485).
 
-For Workflow compatibility, plugins formerly referring to `AbstractProject`/`AbstractBuild` will generally need to start dealing with `Job`/`Run` but may also need to refer to `ParameterizedJobMixIn` and/or `SCMTriggerItem`.
+For Pipeline compatibility, plugins formerly referring to `AbstractProject`/`AbstractBuild` will generally need to start dealing with `Job`/`Run` but may also need to refer to `ParameterizedJobMixIn` and/or `SCMTriggerItem`.
 (`LazyBuildMixIn` is rarely needed from outside code, as the methods defined in `Job`/`Run` suffice for typical purposes.)
 
-Future improvements to Workflow may well require yet more implementation code to be extracted from `AbstractProject`/`AbstractBuild`.
+Future improvements to Pipeline may well require yet more implementation code to be extracted from `AbstractProject`/`AbstractBuild`.
 The main constraint is the need to retain binary compatibility.

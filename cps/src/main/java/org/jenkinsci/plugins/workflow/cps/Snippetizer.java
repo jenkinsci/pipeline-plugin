@@ -237,7 +237,7 @@ import org.kohsuke.stapler.StaplerResponse;
     public void doStatic(StaplerRequest req, StaplerResponse rsp) throws Exception {
         rsp.setContentType("text/html;charset=UTF-8");
         PrintWriter pw = rsp.getWriter();
-        pw.println("<html><head><title>Jenkins Workflow Reference</title></head><body>");
+        pw.println("<html><head><title>Jenkins Pipeline Reference</title></head><body>");
         pw.println("<h1>Steps</h1>");
         for (StepDescriptor d : getStepDescriptors(false)) {
             generateStepHelp(d, pw);

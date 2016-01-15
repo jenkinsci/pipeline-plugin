@@ -22,6 +22,6 @@ public class BuildTriggerCancelledCause extends CauseOfInterruption {
 
     @Override
     public String getShortDescription() {
-        return "Calling workflow was cancelled";
+        return "Calling Pipeline was cancelled";
     }
 }

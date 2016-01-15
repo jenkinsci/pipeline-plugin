@@ -72,7 +72,7 @@ public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,W
     @Extension public static class DescriptorImpl extends MultiBranchProjectDescriptor {
 
         @Override public String getDisplayName() {
-            return "Multibranch Workflow";
+            return "Multibranch Pipeline";
         }
 
         @Override public TopLevelItem newInstance(ItemGroup parent, String name) {

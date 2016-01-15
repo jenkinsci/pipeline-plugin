@@ -32,7 +32,7 @@
     </parent>
     <artifactId>workflow-durable-task-step</artifactId>
     <packaging>hpi</packaging>
-    <name>Workflow: Durable Task Step</name>
+    <name>Pipeline: Durable Task Step</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
     <dependencies>
         <dependency>

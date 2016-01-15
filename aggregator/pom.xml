@@ -32,7 +32,7 @@
     </parent>
     <artifactId>workflow-aggregator</artifactId>
     <packaging>hpi</packaging>
-    <name>Workflow: Aggregator</name>
+    <name>Pipeline (formerly known as Workflow)</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
     <dependencies>
         <dependency>
