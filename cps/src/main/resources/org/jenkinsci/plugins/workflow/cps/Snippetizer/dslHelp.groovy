@@ -7,7 +7,7 @@ def st = namespace("jelly:stapler")
 
 p {
     a(href: "${rootURL}/${Snippetizer.DSL_REF_URL}", target: "_blank") {
-       raw(_("Click here for this doc in a new window."))
+       raw(_("Click here for the reference in a new window."))
     }
 
 }
@@ -25,6 +25,4 @@ p {
     }
 
 }
-
-st.include(page: "dslReferenceContent")
 
