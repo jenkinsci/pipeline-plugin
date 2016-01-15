@@ -113,27 +113,6 @@ public class BuildQueueTasksTest {
         });
     }
 
-    @Issue("JENKINS-28649")
-    @Test public void computerAPIRestartable() throws Exception {
-        // This is implicitly testing AfterRestartTask#run as exported bean
-        story.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
-                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
-                p.setDefinition(new CpsFlowDefinition("semaphore 'watch'"));
-
-                WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
-                SemaphoreStep.waitForStart("watch/1", b);
-            }
-        });
-        story.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
-                assertComputerAPIStatusOK();
-
-                SemaphoreStep.success("watch/1", null);
-            }
-        });
-    }
-
     private WorkflowRun scheduleAndWaitQueued(WorkflowJob p) throws InterruptedException, ExecutionException {
         QueueTaskFuture<WorkflowRun> build = p.scheduleBuild2(0);
 
