@@ -55,7 +55,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `AnsiblePlaybookBuilder` (`ansible`): supported as of 0.4
 - [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
 - [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
-- [ ] `XUnitPublisher` and `XUnitBuilder` (`xunit`): [JENKINS-27240](https://issues.jenkins-ci.org/browse/JENKINS-27240)
+- [X] `XUnitPublisher` and `XUnitBuilder` (`xunit`): scheduled to be supported as of 1.100
 
 ## Build wrappers
 
@@ -103,7 +103,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
 - [X] `job-dsl`: Workflow creation supported as of 1.29
 - [X] `zentimestamp`: basic compatibility in 4.2
-- [ ] `claim`: [JENKINS-27206](https://issues.jenkins-ci.org/browse/JENKINS-27206)
+- [X] `claim`: scheduled to be supported as of 2.8
 - [X] `ListSubversionTagsParameterValue` (`subversion`): supported as of 2.5.6
 - [X] `authorize-project`: supported as of 1.1.0
 - [ ] `lockable-resources` : [JENKINS-30269](https://issues.jenkins-ci.org/browse/JENKINS-30269)
