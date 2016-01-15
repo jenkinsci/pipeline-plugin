@@ -2,7 +2,7 @@
 
 Building continuous delivery pipelines and similarly complex tasks in Jenkins using freestyle projects and traditional plugins can be awkward.
 You need to mix Parameterized Trigger, Copy Artifact, Promoted Builds, Conditional Build Step, and more just to express what should be a simple script.
-The Pipeline plugin suite attempts to make it possible to directly write that script, what people often call a _workflow_ (sometimes abbreviated _flow_), while integrating with Jenkins features like slaves and publishers.
+The Pipeline plugin (formerly known as Workflow) suite attempts to make it possible to directly write that script, what people often call a _pipeline_, while integrating with Jenkins features like slaves and publishers.
 
 # Features
 
@@ -19,7 +19,7 @@ Plugins can add further steps.
 
 ## Pause and resume execution
 
-If Jenkins is restarted (intentionally, or because of a crash) while your workflow is running, when it comes back up, execution is resumed where it left off.
+If Jenkins is restarted (intentionally, or because of a crash) while your Pipeline is running, when it comes back up, execution is resumed where it left off.
 This applies to external processes (shell scripts) so long as the slave can be reattached, and losing the slave connection temporarily is not fatal either.
 
 Pipelines can pause in the middle and wait for a human to approve something, or enter some information.

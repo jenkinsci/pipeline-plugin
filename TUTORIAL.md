@@ -1,8 +1,8 @@
- This document is intended for new users of the Pipeline feature to learn how to write and understand pipelines.
+This document is intended for new users of the pipeline feature to learn how to write and understand pipelines.
 
 # Why Pipeline?
 
-Pipeline was built with the community’s requirements for a flexible, extensible, and script-based CD pipeline capability for Jenkins in mind. To that end, Pipeline:
+Pipeline (formerly known as Workflow) was built with the community’s requirements for a flexible, extensible, and script-based CD pipeline capability for Jenkins in mind. To that end, Pipeline:
 
 * Can support complex, real-world, CD Pipeline requirements: pipelines can fork/join, loop, *parallel*, to name a few
 * Is Resilient: pipeline executions can survive master restarts
