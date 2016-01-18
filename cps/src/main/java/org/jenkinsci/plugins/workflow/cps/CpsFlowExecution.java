@@ -101,6 +101,8 @@ import hudson.model.User;
 import hudson.security.ACL;
 import java.beans.Introspector;
 import java.util.LinkedHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.CheckForNull;
 import javax.annotation.concurrent.GuardedBy;
 
@@ -854,12 +856,16 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     @Restricted(DoNotUse.class)
-    @Terminator public static void suspendAll() throws InterruptedException, ExecutionException {
+    @Terminator public static void suspendAll() throws InterruptedException, ExecutionException, TimeoutException {
         LOGGER.fine("starting to suspend all executions");
         for (FlowExecution execution : FlowExecutionList.get()) {
             if (execution instanceof CpsFlowExecution) {
                 LOGGER.log(Level.FINE, "waiting to suspend {0}", execution);
-                ((CpsFlowExecution) execution).waitForSuspension();
+                CpsFlowExecution exec = (CpsFlowExecution) execution;
+                // Like waitForSuspension but with a timeout:
+                if (exec.programPromise != null) {
+                    exec.programPromise.get().scheduleRun().get(1, TimeUnit.MINUTES);
+                }
             }
         }
         LOGGER.fine("finished suspending all executions");
