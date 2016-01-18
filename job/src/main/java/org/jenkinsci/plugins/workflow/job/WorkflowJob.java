@@ -402,7 +402,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     }
 
     @Override public String getPronoun() {
-        return AlternativeUiTextProvider.get(PRONOUN, this, "Workflow");
+        return AlternativeUiTextProvider.get(PRONOUN, this, "Pipeline");
     }
 
     @Override public TopLevelItemDescriptor getDescriptor() {
@@ -560,7 +560,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     @Extension(ordinal=1) public static final class DescriptorImpl extends TopLevelItemDescriptor {
 
         @Override public String getDisplayName() {
-            return "Workflow";
+            return "Pipeline";
         }
 
         @Override public TopLevelItem newInstance(ItemGroup parent, String name) {

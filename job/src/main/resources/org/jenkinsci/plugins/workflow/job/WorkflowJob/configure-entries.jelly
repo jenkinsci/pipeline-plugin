@@ -37,7 +37,7 @@
         </f:advanced>
     </f:section>
 
-    <f:section title="Workflow">
+    <f:section title="Pipeline">
         <f:dropdownDescriptorSelector title="Definition" field="definition" descriptors="${descriptor.getDefinitionDescriptors(it)}"/>
     </f:section>
 </j:jelly>

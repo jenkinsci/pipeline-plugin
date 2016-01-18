@@ -50,6 +50,7 @@ THE SOFTWARE.
             </j:forEach>
         </d:tag>
     </d:taglib>
+    <f:entry title="Pipeline DSL Reference" help="/${it.DSL_HELP_URL}"/>
     <f:optionalBlock name="snippetizer" title="Snippet Generator" help="/${it.HELP_URL}">
         <f:section title="Steps"/>
         <!-- Similar to f:dropdownDescriptorSelector, but adds fallback content to block, and JENKINS-25130 adds per-selection help: -->
@@ -94,8 +95,5 @@ THE SOFTWARE.
                 </f:dropdownListBlock>
             </j:forEach>
         </f:dropdownList>
-        <f:block>
-            <a href="${rootURL}/${it.STATIC_URL}" target="_blank">Static documentation</a>
-        </f:block>
     </f:optionalBlock>
 </j:jelly>

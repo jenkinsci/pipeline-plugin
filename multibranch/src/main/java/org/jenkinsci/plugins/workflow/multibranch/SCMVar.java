@@ -60,7 +60,7 @@ import org.jenkinsci.plugins.workflow.support.pickles.XStreamPickle;
         Run<?,?> build = script.$build();
         // TODO some code overlap with SCMBinder.create, but not obvious how to factor out common parts
         if (!(build instanceof WorkflowRun)) {
-            throw new AbortException("not available outside a workflow build");
+            throw new AbortException("not available outside a Pipeline build");
         }
         Job<?,?> job = build.getParent();
         BranchJobProperty property = job.getProperty(BranchJobProperty.class);

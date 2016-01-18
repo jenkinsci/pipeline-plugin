@@ -2,36 +2,36 @@
 
 Building continuous delivery pipelines and similarly complex tasks in Jenkins using freestyle projects and traditional plugins can be awkward.
 You need to mix Parameterized Trigger, Copy Artifact, Promoted Builds, Conditional Build Step, and more just to express what should be a simple script.
-The Workflow plugin suite attempts to make it possible to directly write that script, what people often call a _workflow_ (sometimes abbreviated _flow_), while integrating with Jenkins features like slaves and publishers.
+The Pipeline plugin (formerly known as Workflow) suite attempts to make it possible to directly write that script, what people often call a _pipeline_, while integrating with Jenkins features like slaves and publishers.
 
 # Features
 
 ## Scripted control flow
 
-Your whole workflow is a single Groovy script using an embedded DSL, possibly quite short and legible; there is no need to jump between multiple job configuration screens to see what is going on.
+Your whole pipeline is a single Groovy script using an embedded DSL, possibly quite short and legible; there is no need to jump between multiple job configuration screens to see what is going on.
 Conditions, loops, variables, parallel tasks, and so on are defined using regular language constructs.
 At any point you can insert a shell/batch script to do “real work” (compilation, etc.).
 
 ## Useful steps
 
-Standard DSL functions (“steps”) let you run external processes, grab slave nodes and workspaces, perform SCM checkouts, build other projects (workflow or freestyle), wait for external conditions, and so on.
+Standard DSL functions (“steps”) let you run external processes, grab slave nodes and workspaces, perform SCM checkouts, build other projects (pipeline or freestyle), wait for external conditions, and so on.
 Plugins can add further steps.
 
 ## Pause and resume execution
 
-If Jenkins is restarted (intentionally, or because of a crash) while your workflow is running, when it comes back up, execution is resumed where it left off.
+If Jenkins is restarted (intentionally, or because of a crash) while your Pipeline is running, when it comes back up, execution is resumed where it left off.
 This applies to external processes (shell scripts) so long as the slave can be reattached, and losing the slave connection temporarily is not fatal either.
 
-Flows can pause in the middle and wait for a human to approve something, or enter some information.
+Pipelines can pause in the middle and wait for a human to approve something, or enter some information.
 Executors need not be consumed while the flow is waiting.
 
 ## Pipeline stages
 
-Workflows can be divided into sequential stages, not only for labeling but to throttle concurrency.
+Pipelines can be divided into sequential stages, not only for labeling but to throttle concurrency.
 
 # Getting started
 
-Read the [tutorial](TUTORIAL.md) to get started writing workflows.
+Read the [tutorial](TUTORIAL.md) to get started writing pipelines.
 
 There is also a [DZone Refcard](https://dzone.com/refcardz/continuous-delivery-with-jenkins-workflow).
 
@@ -43,11 +43,11 @@ Releases are available on the Jenkins update center.
 You need to be running a sufficiently recent Jenkins release: an LTS in the 1.580.x line or newer (currently 1.596.x for the latest updates), or a weekly release.
 See the [changelog](CHANGES.md) for news.
 
-For OSS Jenkins users, install _Workflow: Aggregator_ (its dependencies will be pulled in automatically).
+For OSS Jenkins users, install _Pipeline_ (its dependencies will be pulled in automatically).
 You will need to restart Jenkins to complete installation.
 
-CloudBees Jenkins Enterprise users get Workflow automatically as of the 14.11 (1.580.1.1) release.
-Otherwise install _CloudBees Workflow: Aggregator_ from the update center.
+CloudBees Jenkins Enterprise users get Pipeline automatically as of the 14.11 (1.580.1.1) release.
+Otherwise install _CloudBees Pipeline_ from the update center.
 Again dependencies will be pulled in automatically, including all the OSS plugins.
 
 # News & questions
@@ -55,8 +55,8 @@ Again dependencies will be pulled in automatically, including all the OSS plugin
 * [Changelog](CHANGES.md)
 * [jenkins-workflow tag](http://stackoverflow.com/tags/jenkins-workflow) on StackOverflow
 * [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide) (file issues in the `workflow-plugin` component, or other components with the `workflow` label)
-* [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/workflow) (mention `workflow` in the subject)
-* [#JenkinsWorkflow](https://twitter.com/hashtag/JenkinsWorkflow) on Twitter
+* [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/pipeline) (mention `pipeline` in the subject)
+* [#JenkinsPipeline](https://twitter.com/hashtag/JenkinsPipeline) on Twitter
 
 # Demo
 
@@ -119,14 +119,14 @@ The snapshot Docker demo is mainly useful for verifying the effect of ongoing ch
 
 While the implementation is divided into a number of plugins, for ease of prototyping they are all kept in one repository using snapshot dependencies.
 
-* `step-api` defines a generic build step interface (not specific to flows) that many plugins could in the future depend on.
+* `step-api` defines a generic build step interface (not specific to pipelines) that many plugins could in the future depend on.
 * `basic-steps` add some generic step implementations. There is [more documentation there](basic-steps/CORE-STEPS.md).
-* `api` defines the essential aspects of flows and their executions. In particular, the engine running a flow is extensible and so could in the future support visual orchestration languages.
-* `support` adds general implementations of some internals needed by flows, such as storing state.
-* `job` provides the actual job type and top-level UI for defining and running flows.
+* `api` defines the essential aspects of pipelines and their executions. In particular, the engine running a flow is extensible and so could in the future support visual orchestration languages.
+* `support` adds general implementations of some internals needed by pipelines, such as storing state.
+* `job` provides the actual job type and top-level UI for defining and running pipelines.
 * `durable-task-step` uses the `durable-task` plugin to define a shell script step that can survive restarts.
 * `scm-step` adds SCM-related steps. There is [more documentation there](scm-step/README.md).
-* `cps` is the flow engine implementation based on the Groovy language, and supporting long-running flows using a _continuation passing style_ transformation of the script.
+* `cps` is the flow engine implementation based on the Groovy language, and supporting long-running pipelines using a _continuation passing style_ transformation of the script.
 * `cps-global-lib` adds a Git-backed repository for Groovy libraries available to scripts.
 * `stm` is a simple engine implementation using a _state transition machine_, less intended for end users than as a reference for how engines can work. Currently only partly implemented.
 * `aggregator` is a placeholder plugin allowing you to `mvn hpi:run` and see everything working together, as well as holding integration tests.

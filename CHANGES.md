@@ -4,13 +4,16 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 
 ## 1.13 (upcoming)
 
+* [JENKINS-31153](https://issues.jenkins-ci.org/browse/JENKINS-31153): the Workflow feature was renamed to Pipeline.
 * [JENKINS-30055](https://issues.jenkins-ci.org/browse/JENKINS-30055): poor performance and file handle leaks when running a script with an enormous number of steps in quick succession
-* [JENKINS-26126](https://issues.jenkins-ci.org/browse/JENKINS-26126) (partial): introspect Workflow steps to generate static reference documentation (link from _Snippet Generator_). Planned to be used for IDE auto-completion as well.
+* [JENKINS-28649](https://issues.jenkins-ci.org/browse/JENKINS-28649): `@ExportedBean` errors when serving some REST API requests.
+* [JENKINS-26126](https://issues.jenkins-ci.org/browse/JENKINS-26126): introspect Workflow steps to generate static reference documentation (link from _Snippet Generator_); formatting rough, in progress. Initial GDSL for IntelliJ IDEA code completion also available. DSLD for Eclipse in testing.
 * [JENKINS-31614](https://issues.jenkins-ci.org/browse/JENKINS-31614): avoiding various deadlocks involving `Queue`.
 * [JENKINS-31897](https://issues.jenkins-ci.org/browse/JENKINS-31897): parameters with default values may now be omitted from the `parameters` option to the `build` step.
 * [JENKINS-31909](https://issues.jenkins-ci.org/browse/JENKINS-31909): form validation warning about Groovy syntax errors was broken in 1.11; [JENKINS-32067](https://issues.jenkins-ci.org/browse/JENKINS-32067) show these warnings right in the editor.
 * [JENKINS-31391](https://issues.jenkins-ci.org/browse/JENKINS-31391): pass `EXECUTOR_NUMBER` into `node {}`.
 * [JENKINS-32062](https://issues.jenkins-ci.org/browse/JENKINS-32062): mishandling of array-valued method arguments.
+* [JENKINS-29326](https://issues.jenkins-ci.org/browse/JENKINS-29326): in conjunction with Git plugin 2.4.1, avoid repeated links to Git commit information.
 
 ## 1.12 (Dec 14 2015)
 

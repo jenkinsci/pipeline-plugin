@@ -32,7 +32,7 @@ THE SOFTWARE.
     </parent>
     <artifactId>workflow-multibranch</artifactId>
     <packaging>hpi</packaging>
-    <name>Workflow: Multibranch</name>
+    <name>Pipeline: Multibranch</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
     <dependencies>
         <dependency>

@@ -13,7 +13,7 @@ node {
     </p>
     <p>
         These definitions will also be available via the REST API during the build or after its completion,
-        and from upstream Workflow builds using the <code>build</code> step.
+        and from upstream Pipeline builds using the <code>build</code> step.
     </p>
     <p>
         However any variables set this way are global to the workflow build.
@@ -24,7 +24,7 @@ node {
     <p>
         A set of environment variables are made available to all Jenkins projects, including workflows.
         The following is a general list of variables (by name) that are available;
-        see the notes below the list for Workflow-specific details.
+        see the notes below the list for Pipeline-specific details.
     </p>
     <!-- Cf.  EnvironmentContributor/EnvVarsHtml/index.groovy -->
     <j:forEach var="ec" items="${it.environmentContributors}">
