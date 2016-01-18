@@ -291,9 +291,6 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         public @CheckForNull Run<?,?> run() {
             try {
                 if (!context.isReady()) {
-                    if (runId != null) { // not stored prior to 1.13
-                        return Run.fromExternalizableId(runId);
-                    }
                     return null;
                 }
                 return context.get(Run.class);
@@ -304,15 +301,23 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             }
         }
 
+        public @CheckForNull Run<?,?> runForDisplay() {
+            Run<?,?> r = run();
+            if (r == null && /* not stored prior to 1.13 */runId != null) {
+                return Run.fromExternalizableId(runId);
+            }
+            return r;
+        }
+
         @Override public String getUrl() {
             // TODO ideally this would be found via FlowExecution.owner.executable, but how do we check for something with a URL? There is no marker interface for it: JENKINS-26091
-            Run<?,?> r = run();
+            Run<?,?> r = runForDisplay();
             return r != null ? r.getUrl() : "";
         }
 
         @Override public String getDisplayName() {
             // TODO more generic to check whether FlowExecution.owner.executable is a ModelObject
-            Run<?,?> r = run();
+            Run<?,?> r = runForDisplay();
             return r != null ? "part of " + r.getFullDisplayName() : "Unknown Pipeline node step";
         }
 
@@ -473,7 +478,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 synchronized (runningTasks) {
                     LOGGER.log(FINE, "waiting on {0}", cookie);
                     RunningTask runningTask = runningTasks.get(cookie);
-                    assert runningTask != null;
+                    assert runningTask != null : "no entry for " + cookie + " among " + runningTasks.keySet();
                     assert runningTask.execution == null;
                     assert runningTask.launcher == null;
                     runningTask.launcher = launcher;

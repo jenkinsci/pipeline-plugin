@@ -27,7 +27,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:t="/lib/hudson" xmlns:l="/lib/layout">
     <td class="pane">
         <div style="white-space: normal">
-            <j:set var="r" value="${it.parent.run()}"/>
+            <j:set var="r" value="${it.parent.runForDisplay()}"/>
             <j:set var="rAuth" value="${r != null and h.hasPermission(r.parent, r.parent.READ) ? r : null}"/>
             <j:choose>
                 <j:when test="${rAuth != null}">
