@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
@@ -45,7 +46,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 public class EchoStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
 
     @Test public void smokes() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
