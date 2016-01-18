@@ -171,6 +171,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
      * Never null once set (might be overwritten).
      */
     private transient volatile CpsThreadGroup threadGroup;
+    private transient volatile boolean loadingThreadGroup;
 
     @CpsVmThreadOnly
     CpsStepContext(StepDescriptor step, CpsThread thread, FlowExecutionOwner executionRef, FlowNode node, Closure body) {
@@ -253,13 +254,15 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
     @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
     @Override public boolean isReady() {
         if (threadGroup == null) {
-            // but start computing it
-            isReadyExecutorService.submit(new Callable<Void>() {
-                @Override public Void call() throws Exception {
-                    getThreadGroupSynchronously();
-                    return null;
-                }
-            });
+            if (!loadingThreadGroup) { // but start computing it
+                isReadyExecutorService.submit(new Callable<Void>() {
+                    @Override public Void call() throws Exception {
+                        getThreadGroupSynchronously();
+                        return null;
+                    }
+                });
+                loadingThreadGroup = true;
+            }
             return false;
         } else {
             return true;

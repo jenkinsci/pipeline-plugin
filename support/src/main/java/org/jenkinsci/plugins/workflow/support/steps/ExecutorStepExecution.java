@@ -63,8 +63,8 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
     @Inject(optional=true) private transient ExecutorStep step;
     @StepContextParameter private transient TaskListener listener;
-    // Here just for requiredContext; could perhaps be passed to the PlaceholderTask constructor:
     @StepContextParameter private transient Run<?,?> run;
+    // Here just for requiredContext; could perhaps be passed to the PlaceholderTask constructor:
     @StepContextParameter private transient FlowExecution flowExecution;
     @StepContextParameter private transient FlowNode flowNode;
 
@@ -77,7 +77,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
      */
     @Override
     public boolean start() throws Exception {
-        final PlaceholderTask task = new PlaceholderTask(getContext(), step.getLabel());
+        final PlaceholderTask task = new PlaceholderTask(getContext(), step.getLabel(), run);
         if (Queue.getInstance().schedule2(task, 0).getCreateItem() == null) {
             // There can be no duplicates. But could be refused if a QueueDecisionHandler rejects it for some odd reason.
             throw new IllegalStateException("failed to schedule task");
@@ -152,6 +152,8 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
         private final StepContext context;
         private String label;
+        /** Shortcut for {@link #run}. */
+        private String runId;
         /**
          * Unique cookie set once the task starts.
          * Serves multiple purposes:
@@ -161,9 +163,10 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
          */
         private String cookie;
 
-        PlaceholderTask(StepContext context, String label) {
+        PlaceholderTask(StepContext context, String label, Run<?,?> run) {
             this.context = context;
             this.label = label;
+            runId = run.getExternalizableId();
         }
 
         private Object readResolve() {
@@ -298,15 +301,23 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             }
         }
 
+        public @CheckForNull Run<?,?> runForDisplay() {
+            Run<?,?> r = run();
+            if (r == null && /* not stored prior to 1.13 */runId != null) {
+                return Run.fromExternalizableId(runId);
+            }
+            return r;
+        }
+
         @Override public String getUrl() {
             // TODO ideally this would be found via FlowExecution.owner.executable, but how do we check for something with a URL? There is no marker interface for it: JENKINS-26091
-            Run<?,?> r = run();
+            Run<?,?> r = runForDisplay();
             return r != null ? r.getUrl() : "";
         }
 
         @Override public String getDisplayName() {
             // TODO more generic to check whether FlowExecution.owner.executable is a ModelObject
-            Run<?,?> r = run();
+            Run<?,?> r = runForDisplay();
             return r != null ? "part of " + r.getFullDisplayName() : "Unknown Pipeline node step";
         }
 
@@ -467,7 +478,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 synchronized (runningTasks) {
                     LOGGER.log(FINE, "waiting on {0}", cookie);
                     RunningTask runningTask = runningTasks.get(cookie);
-                    assert runningTask != null;
+                    assert runningTask != null : "no entry for " + cookie + " among " + runningTasks.keySet();
                     assert runningTask.execution == null;
                     assert runningTask.launcher == null;
                     runningTask.launcher = launcher;
