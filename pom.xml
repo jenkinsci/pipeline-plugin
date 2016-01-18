@@ -35,7 +35,7 @@
     <version>1.13-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Workflow: Parent</name>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
     <licenses>
         <license>
             <name>MIT License</name>
