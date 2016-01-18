@@ -69,6 +69,7 @@ public class EnvWorkflowTest {
      * @throws Exception
      */
     @Test public void isExecutorNumberAvailable() throws Exception {
+        r.jenkins.setNumExecutors(1);
         r.createSlave("node-test", null, null);
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "workflow-test");
 
