@@ -864,7 +864,7 @@ public class CpsFlowExecution extends FlowExecution {
                 CpsFlowExecution exec = (CpsFlowExecution) execution;
                 // Like waitForSuspension but with a timeout:
                 if (exec.programPromise != null) {
-                    exec.programPromise.get().scheduleRun().get(1, TimeUnit.MINUTES);
+                    exec.programPromise.get(1, TimeUnit.MINUTES).scheduleRun().get(1, TimeUnit.MINUTES);
                 }
             }
         }
