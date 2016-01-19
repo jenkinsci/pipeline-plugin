@@ -36,7 +36,7 @@ public class LoadStepExecution extends AbstractStepExecutionImpl {
 
         Script script = shell.parse(cwd.child(step.getPath()).readToString());
 
-        node.addAction(new LabelAction("Loaded script: "+step.getPath()));
+        node.addAction(new LabelAction(step.getPath()));
 
         // execute body as another thread that shares the same head as this thread
         // as the body can pause.
