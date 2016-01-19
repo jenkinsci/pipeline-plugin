@@ -176,7 +176,7 @@ public abstract class FlowNode extends Actionable implements Saveable {
         } else {
             LabelAction a = getAction(LabelAction.class);
             if (a != null) {
-                return functionName + ": " + a.getDisplayName();
+                return functionName + " (" + a.getDisplayName() + ")";
             } else {
                 return functionName;
             }
