@@ -2,7 +2,7 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.13 (upcoming)
+## 1.13 (Jan 18 2016)
 
 * [JENKINS-31153](https://issues.jenkins-ci.org/browse/JENKINS-31153): the Workflow feature was renamed to Pipeline.
 * [JENKINS-30055](https://issues.jenkins-ci.org/browse/JENKINS-30055): poor performance and file handle leaks when running a script with an enormous number of steps in quick succession
