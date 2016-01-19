@@ -124,6 +124,11 @@
                         </archive>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.jvnet.localizer</groupId>
+                    <artifactId>maven-localizer-plugin</artifactId>
+                    <version>1.23</version>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
