@@ -8,7 +8,7 @@ Therefore selected build steps can be called directly from Pipelines.
 
 # Syntax
 
-As an example, you can write a pipeline script:
+As an example, you can write a Pipeline script:
 
 ```groovy
 node {

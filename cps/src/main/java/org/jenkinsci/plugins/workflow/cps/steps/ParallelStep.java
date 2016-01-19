@@ -225,7 +225,7 @@ public class ParallelStep extends Step {
 
         @Override
         public String getDisplayName() {
-            return "Execute parts of a Pipeline in parallel";
+            return "Execute in parallel";
         }
     }
 }
