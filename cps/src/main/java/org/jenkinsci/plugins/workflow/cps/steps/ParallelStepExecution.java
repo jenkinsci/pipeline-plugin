@@ -80,7 +80,7 @@ class ParallelStepExecution extends StepExecution {
 
         @Override
         public String getDisplayName() {
-            return "Parallel branch: "+branchName;
+            return "Branch: " + branchName;
         }
 
         @Nonnull
