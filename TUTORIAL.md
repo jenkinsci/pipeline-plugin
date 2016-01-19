@@ -612,7 +612,7 @@ step([$class: 'ArtifactArchiver', artifacts: 'pom.xml, src/'])
 Later,  `unarchive` these same files back into **other** workspaces.
 You could have just run `git` anew in each slave’s workspace, but this would result in duplicated changelog entries, as well as contacting the Git server twice.
 * A flow build is permitted to run as many SCM checkouts as it needs to, which is useful for projects working with multiple repositories, but not what we want here.
-* More importantly, if anyone pushes a new Git commit at  the wrong time, you might be testing different sources in some branches - which is prevented when you do the checkout just once and distribute sources to slaves yourseldf.
+* More importantly, if anyone pushes a new Git commit at  the wrong time, you might be testing different sources in some branches - which is prevented when you do the checkout just once and distribute sources to slaves yourself.
 
 The command `splitTests` returns a list of lists of strings.
 From each (list) entry, you construct one branch to run; the label (map key) is akin to a thread name, and will appear in the build log.
