@@ -28,12 +28,12 @@
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>1.12-SNAPSHOT</version>
+        <version>1.14-SNAPSHOT</version>
     </parent>
     <artifactId>workflow-step-api</artifactId>
     <packaging>hpi</packaging>
-    <name>Workflow: Step API</name>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
+    <name>Pipeline: Step API</name>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
     <dependencies>
         <dependency>
             <groupId>org.mockito</groupId>

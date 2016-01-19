@@ -46,7 +46,39 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                     textarea.val(editor.getValue());
                     showSamplesWidget();
                 });
-                
+
+                editor.on('blur', function() {
+                    editor.session.clearAnnotations();
+                    var url = textarea.attr("checkUrl") + 'Compile';
+
+                    $.ajax({
+                        url: url,
+                        data: {
+                            value: editor.getValue()
+                        },
+                        method: textarea.attr('checkMethod') || 'POST',
+                        success: function(data) {
+                            var annotations = [];
+                            if (data.status && data.status === 'success') {
+                                // Fire script approval check - only if the script is syntactically correct
+                                textarea.trigger('change');
+                                return;
+                            } else {
+                                // Syntax errors
+                                $.each(data, function(i, value) {
+                                    annotations.push({
+                                        row: value.line - 1,
+                                        column: value.column,
+                                        text: value.message,
+                                        type: 'error'
+                                    });
+                                });
+                            }
+                            editor.getSession().setAnnotations(annotations);
+                        }
+                    });
+                });
+
                 function showSamplesWidget() {
                     // If there's no workflow defined (e.g. on a new workflow), then
                     // we add a samples widget to let the user select some samples that
@@ -57,7 +89,7 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                 }
                 showSamplesWidget();
             });
-            
+
             // Make the editor resizable using jQuery UI resizable (http://api.jqueryui.com/resizable).
             // ACE Editor doesn't have this as a config option.
             $wfEditor.wrap('<div class="jquery-ui-1"></div>');

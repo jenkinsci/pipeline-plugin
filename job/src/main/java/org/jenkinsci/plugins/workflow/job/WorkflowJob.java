@@ -71,6 +71,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -401,7 +402,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     }
 
     @Override public String getPronoun() {
-        return AlternativeUiTextProvider.get(PRONOUN, this, "Workflow");
+        return AlternativeUiTextProvider.get(PRONOUN, this, "Pipeline");
     }
 
     @Override public TopLevelItemDescriptor getDescriptor() {
@@ -444,11 +445,11 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
         if (b == null) {
             return Collections.emptySet();
         }
-        List<SCM> scms = new LinkedList<SCM>();
+        Map<String,SCM> scms = new LinkedHashMap<String,SCM>();
         for (WorkflowRun.SCMCheckout co : b.checkouts(null)) {
-            scms.add(co.scm);
+            scms.put(co.scm.getKey(), co.scm);
         }
-        return scms;
+        return scms.values();
     }
 
     public @CheckForNull SCM getTypicalSCM() {
@@ -559,7 +560,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     @Extension(ordinal=1) public static final class DescriptorImpl extends TopLevelItemDescriptor {
 
         @Override public String getDisplayName() {
-            return "Workflow";
+            return "Pipeline";
         }
 
         @Override public TopLevelItem newInstance(ItemGroup parent, String name) {

@@ -158,7 +158,16 @@ public abstract class FlowExecution implements FlowActionStorage {
      */
     public abstract void interrupt(Result r, CauseOfInterruption... causes) throws IOException, InterruptedException;
 
+    /**
+     * Add a listener to changes in the flow graph structure.
+     * @param listener a listener to add
+     */
     public abstract void addListener(GraphListener listener);
+
+    /**
+     * Reverse of {@link #addListener}.
+     */
+    public /*abstract*/ void removeListener(GraphListener listener) {}
 
     /**
      * Checks whether this flow execution has finished executing completely.

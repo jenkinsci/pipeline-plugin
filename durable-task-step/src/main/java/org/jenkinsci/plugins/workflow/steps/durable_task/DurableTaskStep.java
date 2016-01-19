@@ -137,7 +137,10 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
         @Override public void stop(Throwable cause) throws Exception {
             FilePath workspace = getWorkspace();
             if (workspace != null) {
+                listener.getLogger().println("Sending interrupt signal to process");
                 controller.stop(workspace, getContext().get(Launcher.class));
+            } else {
+                listener.getLogger().println("Could not connect to " + node + " to send interrupt signal to process");
             }
         }
 
@@ -185,16 +188,17 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                 if (exitCode == null) {
                     LOGGER.log(Level.FINE, "still running in {0} on {1}", new Object[] {remote, node});
                 } else {
-                    recurrencePeriod = 0;
                     if (controller.writeLog(workspace, listener.getLogger())) {
                         LOGGER.log(Level.FINE, "last-minute output in {0} on {1}", new Object[] {remote, node});
                     }
-                    controller.cleanup(workspace);
+                    t.set(null); // do not interrupt cleanup
                     if (exitCode == 0) {
                         getContext().onSuccess(exitCode);
                     } else {
                         getContext().onFailure(new AbortException("script returned exit code " + exitCode));
                     }
+                    recurrencePeriod = 0;
+                    controller.cleanup(workspace);
                 }
             } catch (IOException x) {
                 LOGGER.log(Level.FINE, "could not check " + workspace, x);

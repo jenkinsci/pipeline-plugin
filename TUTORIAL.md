@@ -1,14 +1,14 @@
- This document is intended for new users of the Workflow feature to learn how to write and understand flows.
+This document is intended for new users of the pipeline feature to learn how to write and understand pipelines.
 
-# Why Workflow?
+# Why Pipeline?
 
-Workflow was built with the community’s requirements for a flexible, extensible, and script-based CD pipeline capability for Jenkins in mind. To that end, Workflow:
+Pipeline (formerly known as Workflow) was built with the community’s requirements for a flexible, extensible, and script-based CD pipeline capability for Jenkins in mind. To that end, Pipeline:
 
-* Can support complex, real-world, CD Pipeline requirements: Workflow pipelines can fork/join, loop, *parallel*, to name a few
-* Is Resilient: Workflow pipeline executions can survive master restarts
-* Is Pausable: Workflow pipelines can pause and wait for human input/approval
-* Is Efficient: Workflow pipelines can restart from saved checkpoints
-* Is Visualized: Workflow StageView provides status at-a-glance dashboards including trending
+* Can support complex, real-world, CD Pipeline requirements: pipelines can fork/join, loop, *parallel*, to name a few
+* Is Resilient: pipeline executions can survive master restarts
+* Is Pausable: pipelines can pause and wait for human input/approval
+* Is Efficient: pipelines can restart from saved checkpoints
+* Is Visualized: Pipeline StageView provides status at-a-glance dashboards including trending
 
 # Getting Started
 
@@ -16,26 +16,26 @@ Before you begin, ensure you have the following installed or running:
 
 + You must be running Jenkins 1.580.1 or later (1.609.1+ for latest features).
 
-+ Ensure Workflow is installed: navigate to **Plugin Manager**, install **Workflow: Aggregator** and restart Jenkins.
++ Ensure Pipeline is installed: navigate to **Plugin Manager**, install **Pipeline** and restart Jenkins.
 
-**Note**: If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Workflow (plus additional associated features).
+**Note**: If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Pipeline (plus additional associated features).
 
-If you want to play with Workflow without installing Jenkins separately (or accessing your production system), try running the [Docker demo](demo/README.md).
+If you want to play with Pipeline without installing Jenkins separately (or accessing your production system), try running the [Docker demo](demo/README.md).
 
-# Creating a Workflow
+# Creating a Pipeline
 
-To create a workflow, perform the following steps:
+To create a pipeline, perform the following steps:
 
-1. Click **New Item**, pick a name for your flow, select **Workflow**, and click **OK**.
+1. Click **New Item**, pick a name for your flow, select **Pipeline**, and click **OK**.
 
   You will be taken to the configuration screen for the flow.
 The _Script_ text area is important as this is where your flow script is defined. We'll start with a trivial script:
 ```groovy
-echo 'hello from Workflow'
+echo 'hello from Pipeline'
 ```
 **Note**: if you are not a Jenkins administrator, click the **Use Groovy Sandbox** option (read [here](https://wiki.jenkins-ci.org/display/JENKINS/Script+Security+Plugin#ScriptSecurityPlugin-GroovySandboxing) to learn more about this option).
 
-2. **Save** your workflow when you are done.
+2. **Save** your pipeline when you are done.
 
 3. Click **Build Now** to run it.
 You should see `#1` under _Build History_.
@@ -44,9 +44,9 @@ You should see `#1` under _Build History_.
 
 ```
 Started by user anonymous
-Running: Print Message
-hello from Workflow
-Running: End of Workflow
+[Pipeline] echo
+hello from Pipeline
+[Pipeline] End of Pipeline
 Finished: SUCCESS
 ```
 
@@ -55,17 +55,16 @@ Finished: SUCCESS
 
 
 
-
 ## Understanding Flow Scripts
 
-A workflow is a [Groovy](http://groovy-lang.org/documentation.html) script that tells Jenkins what to do when your flow is run.
-You do not need to know much general Groovy to use Workflow - relevant bits of syntax are introduced as needed.
+A pipeline is a [Groovy](http://groovy-lang.org/documentation.html) script that tells Jenkins what to do when your flow is run.
+You do not need to know much general Groovy to use Pipeline - relevant bits of syntax are introduced as needed.
 
-**Example** In this example, `echo` is a _step_: a function defined in a Jenkins plugin and made available to all workflows.
+**Example** In this example, `echo` is a _step_: a function defined in a Jenkins plugin and made available to all pipelines.
 Groovy functions can use a C/Java-like syntax such as:
 
 ```groovy
-echo("hello from Workflow");
+echo("hello from Pipeline");
 ```
 You can drop the semicolon (`;`), drop the parentheses (`(` and `)`), and use single quotes (`'`) instead of double (`"`) if you do not need to perform variable substitutions.
 
@@ -146,7 +145,7 @@ sh 'echo oops'
 
 as a flow script will not work: Jenkins does not know what system to run commands on.
 
-Unlike user-defined functions, workflow steps always take named parameters. Thus:
+Unlike user-defined functions, Pipeline steps always take named parameters. Thus:
 
 ```groovy
 git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
@@ -222,7 +221,7 @@ In the console output, you see the final command being run.
 
 ## Managing the Environment
 
-One way to use tools by default, is to add them to your executable path - by using the special variable `env` that is defined for all workflows:
+One way to use tools by default, is to add them to your executable path - by using the special variable `env` that is defined for all pipelines:
 
 ```groovy
 node {
@@ -257,7 +256,7 @@ See  Help in the **Snippet Generator** for the `withEnv` step for more details o
 
 ## Build Parameters
 
-If you have configured your workflow to accept parameters when it is built — **Build with Parameters** — they are accessible as Groovy variables of the same name.
+If you have configured your pipeline to accept parameters when it is built — **Build with Parameters** — they are accessible as Groovy variables of the same name.
 
 # Recording Test Results and Artifacts
 
@@ -319,7 +318,7 @@ Similarly, the elements of `userRemoteConfigs` are declared to be of type `UserR
 
 # Using Slaves
 
-Thus far, workflow has run only on the Jenkins master - assuming you had no slaves configured.
+Thus far, pipeline has run only on the Jenkins master - assuming you had no slaves configured.
 You can even force it to run on the master by telling the `node` step the following:
 
 ```groovy
@@ -504,7 +503,7 @@ java.io.NotSerializableException: java.util.regex.Matcher
 ```
 
 * This occurs because the `matcher` local variable is of a type (`Matcher`) not considered serializable by Java.
-Since workflows must survive Jenkins restarts, the state of the running program is periodically saved to disk so it can be resumed later
+Since pipelines must survive Jenkins restarts, the state of the running program is periodically saved to disk so it can be resumed later
 (saves occur after every step or in the middle of  steps such as `sh`).
 
 * The “state” includes the whole control flow including: local variables, positions in loops, and so on. As such: any variable values used in your program should be numbers, strings, or other serializable types, not “live” objects such as network connections.
@@ -530,8 +529,8 @@ node('remote') {
 ```
 
 However the safest approach is to isolate use of nonserializable state inside a method marked with the annotation `@NonCPS`.
-Such a method will be treated as “native” by the Workflow engine, and its local variables never saved.
-However it may _not_ make any calls to Workflow steps, so the `readFile` call must be pulled out:
+Such a method will be treated as “native” by the Pipeline engine, and its local variables never saved.
+However it may _not_ make any calls to Pipeline steps, so the `readFile` call must be pulled out:
 
 ```groovy
 node('remote') {
@@ -555,14 +554,14 @@ def version(text) {
 Here the logic inside the `version` function is run by the normal Groovy runtime, so any local variables are permitted.
 
 ## Creating Multiple Threads
-Workflows can use a `parallel` step to perform multiple actions at once.
+Pipelines can use a `parallel` step to perform multiple actions at once.
 This special step takes a map as its argument; keys are “branch names” (labels for your own benefit), and values are blocks to run.
 
 To see how this can be useful, install a new plugin: **Parallel Test Executor** (version 1.6 or later).
-This plugin includes a workflow step that lets you split apart slow test runs.
+This plugin includes a Pipeline step that lets you split apart slow test runs.
 Also make sure the JUnit plugin is at least version 1.3+.
 
-Now create a new workflow with the following script:
+Now create a new pipeline with the following script:
 
 ```groovy
 node('remote') {
@@ -633,14 +632,14 @@ Do not use `env` in this case:
 env.PATH = "${mvnHome}/bin:${env.PATH}"
 ```
 
-because environment variable overrides are  limited to being global to a workflow run, not local to the current thread (and thus slave).
+because environment variable overrides are  limited to being global to a pipeline run, not local to the current thread (and thus slave).
 You could, however, use the `withEnv` step as noted above.
 
 You may also have noticed that you are running `JUnitResultArchiver` several times, something that is not possible in a freestyle project.
 The test results recorded in the build are cumulative.
 
 When you view the log for a build with multiple branches, the output from each will be intermixed.
-It can be useful to click on the _Workflow Steps_ link on the build’s sidebar.
+It can be useful to click on the _Pipeline Steps_ link on the build’s sidebar.
 This will display a tree-table view of all the steps run so far in the build, grouped by logical block, for example `parallel` branch.
 You can click on individual steps and get more details, such as the log output for that step in isolation, the workspace associated with a `node` step, and so on.
 
@@ -666,7 +665,7 @@ Complex flows would be cumbersome to write and maintain in the textarea provided
 Therefore it makes sense to load the program from another source, one that you can maintain using version control and standalone Groovy editors.
 
 ## Building Entire Script from SCM
-The easiest way to do this is to select **Workflow script from SCM** when defining the workflow.
+The easiest way to do this is to select **Pipeline script from SCM** when defining the pipeline.
 
 In that case you do not enter any Groovy code in the Jenkins UI; you just indicate where in source code you want to retrieve the program.
 If you update this repository, a new build will be triggered, so long as your job is configured with an SCM polling trigger.
@@ -729,17 +728,19 @@ return this;
 
 In this case `devQAStaging` runs on the same node as the main source code checkout, while `production` runs outside of that block (and in fact allocates a different node).
 
+To reduce the amount of boilerplate needed in the master script, you can try the [Workflow Remote File Loader plugin](https://github.com/jenkinsci/workflow-remote-loader-plugin/blob/master/README.md#workflow-remote-file-loader-plugin).
+
 ## Retaining Global Libraries
 
-Plugins inject function and class names into a flow before it runs. The plugin bundled with Workflow allows you to eliminate the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
+Plugins inject function and class names into a flow before it runs. The plugin bundled with Pipeline allows you to eliminate the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
 A [separate document](cps-global-lib/README.md) has details on this system.
 
 ## Creating Multibranch Projects
 
-The **Workflow: Multibranch** plugin offers a better way of versioning your Workflow and managing your project.
-You need to create a distinct project type, **Multibranch Workflow**.
+The **Pipeline: Multibranch** plugin offers a better way of versioning your Pipeline and managing your project.
+You need to create a distinct project type, **Multibranch Pipeline**.
 
-When you have a multibranch workflow, the configuration screen will resemble **Workflow script from SCM** in that your Workflow script comes from source control, not the Jenkins job configuration.
+When you have a multibranch pipeline, the configuration screen will resemble **Pipeline script from SCM** in that your Pipeline script comes from source control, not the Jenkins job configuration.
 The difference is that you do not configure a single branch, but a **set** of branches, and Jenkins creates a subproject for each branch it finds in your repository.
 
 For example, if you select **Git** as the branch source (Subversion and Mercurial are also supported already), you will be prompted for the usual connection information,
@@ -751,11 +752,11 @@ Say you start with just a `master` branch, then you want to experiment with some
 Jenkins automatically detects the new branch in your repository and creates a new subproject for it—with its own build history unrelated to trunk, so no one will mind if it has red/yellow balls for a while.
 If you choose, you can ask for the subproject to be automatically removed after the branch is merged and deleted.
 
-If you want to change your Workflow script—for example, to add a new Jenkins publisher step corresponding to reports your `Makefile`/`pom.xml`/etc. is newly creating—you just edit `Jenkinsfile` in your change.
-The Workflow script is always synchronized with the rest of the source code you are working on: `checkout scm` checks out the same revision as the script is loaded from.
+If you want to change your Pipeline script—for example, to add a new Jenkins publisher step corresponding to reports your `Makefile`/`pom.xml`/etc. is newly creating—you just edit `Jenkinsfile` in your change.
+The Pipeline script is always synchronized with the rest of the source code you are working on: `checkout scm` checks out the same revision as the script is loaded from.
 
 # Exploring the Snippet Generator
-There are a number of workflow steps not discussed in this document, and plugins can add more.
+There are a number of Pipeline steps not discussed in this document, and plugins can add more.
 Even steps discussed here can take various special options that can be added from release to release.
 To browse all available steps and their syntax, a help tool is built into the flow definition screen.
 

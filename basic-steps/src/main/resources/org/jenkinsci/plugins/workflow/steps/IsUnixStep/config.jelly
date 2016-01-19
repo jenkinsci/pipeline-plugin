@@ -2,7 +2,7 @@
 <!--
 The MIT License
 
-Copyright 2014 Jesse Glick.
+Copyright 2015 CloudBees, Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,4 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:entry field="path" title="Script Path">
-        <f:textbox/>
-    </f:entry>
-</j:jelly>
+<j:jelly xmlns:j="jelly:core"/>

@@ -1,8 +1,8 @@
-Docker image for workflow demo
+Docker image for Pipeline demo
 ==============================
 
-This container includes Jenkins with workflow plugin and Jetty to demonstrate a continuous delivery pipeline of Java web application.
-It highlights key parts of the workflow plugin:
+This container includes Jenkins with Pipeline plugin and Jetty to demonstrate a continuous delivery pipeline of Java web application.
+It highlights key parts of the Pipeline plugin:
 
 Run it like:
 
@@ -15,7 +15,7 @@ VM's IP (instead of `localhost`).  You can get this by running `boot2docker ip` 
 
 The continuous delivery pipeline consists of the following sequence.
 
-* Loads the workflow script from [Jenkinsfile](https://github.com/jenkinsci/workflow-plugin/blob/master/demo/repo/Jenkinsfile) in a local Git repository.
+* Loads the Pipeline script from [Jenkinsfile](https://github.com/jenkinsci/workflow-plugin/blob/master/demo/repo/Jenkinsfile) in a local Git repository.
   You may clone from, edit, and push to `git://localhost/repo`.
   Each branch automatically creates a matching subproject that builds that branch.
 * Checks out source code from the same repository and commit as `Jenkinsfile`.
@@ -36,14 +36,14 @@ Sample demo scenario
 --------------------
 
 * Explain the setup of the continuous delivery pipeline in a picture
-* Go to [job configuration](http://localhost:8080/job/cd/configure) and walk through the workflow script
+* Go to [job configuration](http://localhost:8080/job/cd/configure) and walk through the Pipeline script
   and how that implements the pipeline explained above
-    * Discuss use of abstractions like functions to organize complex workflow
+    * Discuss use of abstractions like functions to organize complex pipeline
     * Highlight and explain some of the primitives, such as `stage`, `input`, and `node`
 * Get one build going, and watch [Jetty top page](http://localhost:8081/) to see ephemeral test instances
   deployed and deleted
-* When it gets to the pause, go to the pause UI in the [build top page](http://localhost:8080/job/cd/1/) (left on the action list) and terminate the workflow
-* Get another build going, but this time restart the Jenkins instance while the workflow is in progress
+* When it gets to the pause, go to the pause UI in the [build top page](http://localhost:8080/job/cd/1/) (left on the action list) and terminate the pipeline
+* Get another build going, but this time restart the Jenkins instance while the pipeline is in progress
   via [restart UI](http://localhost:8080/restart). Doing this while the integration test is running,
   as steps like Git checkout will get disrupted by restart.
 

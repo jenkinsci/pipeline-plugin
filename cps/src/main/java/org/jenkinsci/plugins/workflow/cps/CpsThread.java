@@ -259,6 +259,10 @@ public final class CpsThread implements Serializable {
         return promise;
     }
 
+    public List<StackTraceElement> getStackTrace() {
+        return program.getStackTrace();
+    }
+
     private static final Logger LOGGER = Logger.getLogger(CpsThread.class.getName());
 
     private static final long serialVersionUID = 1L;

@@ -93,17 +93,23 @@ import java.util.logging.Logger;
 
 import static com.thoughtworks.xstream.io.ExtendedHierarchicalStreamWriterHelper.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.BulkChange;
 import hudson.init.Terminator;
+import hudson.model.Queue;
+import hudson.model.Saveable;
 import hudson.model.User;
 import hudson.security.ACL;
 import java.beans.Introspector;
 import java.util.LinkedHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.CheckForNull;
 import javax.annotation.concurrent.GuardedBy;
 
 import org.acegisecurity.Authentication;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.jboss.marshalling.reflect.SerializableClassRegistry;
+
 import static org.jenkinsci.plugins.workflow.cps.persistence.PersistenceContext.*;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionList;
 import org.kohsuke.accmod.restrictions.DoNotUse;
@@ -529,7 +535,7 @@ public class CpsFlowExecution extends FlowExecution {
      *
      * <p>
      * If the {@link CpsThreadGroup} deserializatoin fails, {@link FutureCallback#onFailure(Throwable)} will
-     * be invoked (on a random thread, since {@link CpsVmThread} doesn't exist without a valid program.)
+     * be invoked (on a random thread, since CpsVmThread doesn't exist without a valid program.)
      */
     void runInCpsVmThread(final FutureCallback<CpsThreadGroup> callback) {
         if (programPromise == null) {
@@ -637,6 +643,31 @@ public class CpsFlowExecution extends FlowExecution {
         return r;
     }
 
+    /**
+     * Synchronously obtain the current state of the workflow program.
+     *
+     * <p>
+     * The workflow can be already completed, or it can still be running.
+     */
+    public CpsThreadDump getThreadDump() {
+        if (programPromise == null || isComplete()) {
+            return CpsThreadDump.EMPTY;
+        }
+        if (!programPromise.isDone()) {
+            // CpsThreadGroup state isn't ready yet, but this is probably one of the common cases
+            // when one wants to obtain the stack trace. Cf. JENKINS-26130.
+            return CpsThreadDump.UNKNOWN;
+        }
+
+        try {
+            return programPromise.get().getThreadDump();
+        } catch (InterruptedException e) {
+            throw new AssertionError(); // since we are checking programPromise.isDone() upfront
+        } catch (ExecutionException e) {
+            return CpsThreadDump.from(new Exception("Failed to resurrect program state",e));
+        }
+    }
+
     @Override
     public synchronized boolean isCurrentHead(FlowNode n) {
         for (FlowHead h : heads.values()) {
@@ -686,6 +717,12 @@ public class CpsFlowExecution extends FlowExecution {
             listeners = new CopyOnWriteArrayList<GraphListener>();
         }
         listeners.add(listener);
+    }
+
+    @Override public void removeListener(GraphListener listener) {
+        if (listeners != null) {
+            listeners.remove(listener);
+        }
     }
 
     @Override
@@ -767,10 +804,36 @@ public class CpsFlowExecution extends FlowExecution {
         return heads.firstEntry().getValue();
     }
 
-    void notifyListeners(FlowNode node) {
+    void notifyListeners(List<FlowNode> nodes, boolean synchronous) {
         if (listeners != null) {
-            for (GraphListener listener : listeners) {
-                listener.onNewHead(node);
+            Saveable s = Saveable.NOOP;
+            try {
+                Queue.Executable exec = owner.getExecutable();
+                if (exec instanceof Saveable) {
+                    s = (Saveable) exec;
+                }
+            } catch (IOException x) {
+                LOGGER.log(Level.WARNING, "failed to notify listeners of changes to " + nodes + " in " + this, x);
+            }
+            BulkChange bc = new BulkChange(s);
+            try {
+                for (FlowNode node : nodes) {
+                    for (GraphListener listener : listeners) {
+                        if (listener instanceof GraphListener.Synchronous == synchronous) {
+                            listener.onNewHead(node);
+                        }
+                    }
+                }
+            } finally {
+                if (synchronous) {
+                    bc.abort(); // hack to skip save—we are holding a lock
+                } else {
+                    try {
+                        bc.commit();
+                    } catch (IOException x) {
+                        LOGGER.log(Level.WARNING, null, x);
+                    }
+                }
             }
         }
     }
@@ -793,12 +856,16 @@ public class CpsFlowExecution extends FlowExecution {
     }
 
     @Restricted(DoNotUse.class)
-    @Terminator public static void suspendAll() throws InterruptedException, ExecutionException {
+    @Terminator public static void suspendAll() throws InterruptedException, ExecutionException, TimeoutException {
         LOGGER.fine("starting to suspend all executions");
         for (FlowExecution execution : FlowExecutionList.get()) {
             if (execution instanceof CpsFlowExecution) {
                 LOGGER.log(Level.FINE, "waiting to suspend {0}", execution);
-                ((CpsFlowExecution) execution).waitForSuspension();
+                CpsFlowExecution exec = (CpsFlowExecution) execution;
+                // Like waitForSuspension but with a timeout:
+                if (exec.programPromise != null) {
+                    exec.programPromise.get(1, TimeUnit.MINUTES).scheduleRun().get(1, TimeUnit.MINUTES);
+                }
             }
         }
         LOGGER.fine("finished suspending all executions");

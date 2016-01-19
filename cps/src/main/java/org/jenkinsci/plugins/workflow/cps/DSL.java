@@ -104,7 +104,7 @@ public class DSL extends GroovyObjectSupport implements Serializable {
         }
         final StepDescriptor d = functions.get(name);
         if (d == null) {
-            throw new NoSuchMethodError("No such DSL method " + name + " found among " + functions.keySet());
+            throw new NoSuchMethodError("No such DSL method '" + name + "' found among " + functions.keySet());
         }
 
         final NamedArgsAndClosure ps = parseArgs(d,args);

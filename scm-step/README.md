@@ -1,12 +1,12 @@
 # Introduction
 
-This plugin allows workflows to use standard Jenkins SCM plugins to check out source code.
+This plugin allows pipelines to use standard Jenkins SCM plugins to check out source code.
 The goals are the maximum possible compatibility with existing plugins, and great flexibility for script authors.
 
 # Features
 
 A freestyle project has a single SCM configured in the UI that governs the one and only workspace for the build.
-A workflow can be configured similarly, but the SCM definition becomes a regular step in its script.
+A Pipeline can be configured similarly, but the SCM definition becomes a regular step in its script.
 In the simplest case you would just do an SCM clone/update at the start of your script, as soon as you have allocated a slave with a workspace:
 
 ```
@@ -24,7 +24,7 @@ Jenkins will clone the repository into the workspace and continue with your scri
 While freestyle projects can use the Multiple SCMs plugin to check out more than one repository,
 or specify multiple locations in SCM plugins that support that (notably the Git plugin),
 this support is quite limited.
-In a workflow you can check out multiple SCMs, of the same or different kinds, in the same or different workspaces, wherever and whenever you like.
+In a Pipeline you can check out multiple SCMs, of the same or different kinds, in the same or different workspaces, wherever and whenever you like.
 For example, to check out and build several repositories in parallel, each on its own slave:
 
 ```
@@ -49,15 +49,15 @@ This means that you can run multiple SCMs, even from a dynamic list, and get a r
 
 ## Polling
 
-If you configure the _Poll SCM_ trigger in the workflow’s UI configuration screen, then by default Jenkins will also poll for changes according to the selected _Schedule_, and schedule new builds automatically if changes are detected.
+If you configure the _Poll SCM_ trigger in the Pipeline’s UI configuration screen, then by default Jenkins will also poll for changes according to the selected _Schedule_, and schedule new builds automatically if changes are detected.
 (Note that this configuration is not part of the flow script, because it affects activities that Jenkins runs outside of the flow.)
 Some SCMs allow polling with no workspace, which is ideal; others will try to lock the same slave and workspace previously used, to run polling on the slave.
 
 To avoid polling the server repeatedly, most SCM plugins allow remote commit triggers, such as the `/git/notifyCommit?url=…` HTTP endpoint in the case of the Git plugin.
-These also work with workflows, unless (as with freestyle projects) you checked _Ignore post-commit hooks_ in a _Poll SCM_ block.
+These also work with Pipelines, unless (as with freestyle projects) you checked _Ignore post-commit hooks_ in a _Poll SCM_ block.
 Depending on the SCM plugin, you may still need to configure a _Poll SCM_ trigger, though its _Schedule_ could be empty (or `@daily`, to serve as a fallback in case the commit triggers fail).
 
-Polling is supported across multiple SCMs (changes in one or more will trigger a new build), and again is done according to the SCMs used in the last build of the workflow.
+Polling is supported across multiple SCMs (changes in one or more will trigger a new build), and again is done according to the SCMs used in the last build of the pipeline.
 
 You may specify `poll: false` to disable polling for an SCM checkout.
 
@@ -114,6 +114,6 @@ This would correspond roughly to a freestyle project whose `config.xml` includes
 
 with no `<hudson.triggers.SCMTrigger>` (polling).
 
-# Supporting Workflow from an SCM plugin
+# Supporting Pipeline from an SCM plugin
 
 See the [compatibility guide](../COMPATIBILITY.md#plugin-developer-guide).

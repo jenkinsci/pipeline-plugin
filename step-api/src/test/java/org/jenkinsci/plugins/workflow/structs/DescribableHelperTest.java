@@ -41,7 +41,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.codehaus.groovy.runtime.GStringImpl;
+import static org.jenkinsci.plugins.workflow.structs.DescribableHelper.CLAZZ;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -54,6 +59,14 @@ public class DescribableHelperTest {
 
     @BeforeClass public static void isUnitTest() {
         Main.isUnitTest = true; // suppress HsErrPidList
+    }
+
+    private static final Logger logger = Logger.getLogger(DescribableHelper.class.getName());
+    @BeforeClass public static void logging() {
+        logger.setLevel(Level.ALL);
+        Handler handler = new ConsoleHandler();
+        handler.setLevel(Level.ALL);
+        logger.addHandler(handler);
     }
 
     @Test public void instantiate() throws Exception {
@@ -83,6 +96,19 @@ public class DescribableHelperTest {
             assertTrue(message, message.contains("java.lang.String"));
             assertTrue(message, message.contains("java.lang.Integer"));
         }
+    }
+
+    @Test public void schemaFor() throws Exception {
+        schema(C.class, "(text: String, flag: boolean, [shorty: short])");
+        schema(I.class, "(value: String, [flag: boolean], [text: String])");
+        DescribableHelper.Schema schema = DescribableHelper.schemaFor(Impl1.class);
+        assertEquals("Implementation #1", schema.getDisplayName());
+        assertEquals("<div>Overall help.</div>", schema.getHelp(null));
+        assertEquals("<div>The text to display.</div>", schema.getHelp("text"));
+        schema = DescribableHelper.schemaFor(C.class);
+        assertEquals("C", schema.getDisplayName());
+        assertNull(schema.getHelp(null));
+        assertNull(schema.getHelp("text"));
     }
 
     public static final class C {
@@ -133,19 +159,23 @@ public class DescribableHelperTest {
     }
 
     @Test public void bindMapsFQN() throws Exception {
-        assertEquals("UsesBase[Impl1[hello]]", DescribableHelper.instantiate(UsesBase.class, map("base", map("$class", Impl1.class.getName(), "text", "hello"))).toString());
+        assertEquals("UsesBase[Impl1[hello]]", DescribableHelper.instantiate(UsesBase.class, map("base", map(CLAZZ, Impl1.class.getName(), "text", "hello"))).toString());
     }
 
     // TODO also check case that a FQN is needed
 
     @Test public void gstring() throws Exception {
-        assertEquals("UsesBase[Impl1[hello world]]", DescribableHelper.instantiate(UsesBase.class, map("base", map("$class", "Impl1", "text", new GStringImpl(new Object[] {"hello", "world"}, new String[] {"", " "})))).toString());
+        assertEquals("UsesBase[Impl1[hello world]]", DescribableHelper.instantiate(UsesBase.class, map("base", map(CLAZZ, "Impl1", "text", new GStringImpl(new Object[] {"hello", "world"}, new String[] {"", " "})))).toString());
     }
 
     @Test public void nestedStructs() throws Exception {
-        roundTrip(UsesBase.class, map("base", map("$class", "Impl1", "text", "hello")));
-        roundTrip(UsesBase.class, map("base", map("$class", "Impl2", "flag", true)));
+        roundTrip(UsesBase.class, map("base", map(CLAZZ, "Impl1", "text", "hello")));
+        roundTrip(UsesBase.class, map("base", map(CLAZZ, "Impl2", "flag", true)));
         roundTrip(UsesImpl2.class, map("impl2", map()));
+        schema(UsesBase.class, "(base: Base{Impl1=(text: String), Impl2=([flag: boolean])})");
+        schema(UsesImpl2.class, "(impl2: Impl2([flag: boolean]))");
+        schema(UsesUnimplementedExtensionPoint.class, "(delegate: UnimplementedExtensionPoint{})");
+        schema(UsesSomeImplsBroken.class, "(delegate: SomeImplsBroken{FineImpl=()})");
     }
 
     public static class UsesBase {
@@ -185,7 +215,7 @@ public class DescribableHelperTest {
         }
         @Extension public static final class DescriptorImpl extends Descriptor<Base> {
             @Override public String getDisplayName() {
-                return "Impl1";
+                return "Implementation #1";
             }
         }
     }
@@ -209,8 +239,34 @@ public class DescribableHelperTest {
         }
     }
     
+    public static abstract class UnimplementedExtensionPoint extends AbstractDescribableImpl<UnimplementedExtensionPoint> {}
+    public static final class UsesUnimplementedExtensionPoint {
+        @DataBoundConstructor public UsesUnimplementedExtensionPoint(UnimplementedExtensionPoint delegate) {}
+    }
+
+    public static abstract class SomeImplsBroken extends AbstractDescribableImpl<SomeImplsBroken> {}
+    public static class BrokenImpl extends SomeImplsBroken {
+        @Extension public static class DescriptorImpl extends Descriptor<SomeImplsBroken> {
+            @Override public String getDisplayName() {
+                return "BrokenImpl";
+            }
+        }
+    }
+    public static class FineImpl extends SomeImplsBroken {
+        @DataBoundConstructor public FineImpl() {}
+        @Extension public static class DescriptorImpl extends Descriptor<SomeImplsBroken> {
+            @Override public String getDisplayName() {
+                return "FineImpl";
+            }
+        }
+    }
+    public static class UsesSomeImplsBroken {
+        @DataBoundConstructor public UsesSomeImplsBroken(SomeImplsBroken delegate) {}
+    }
+
     @Test public void enums() throws Exception {
         roundTrip(UsesEnum.class, map("e", "ZERO"));
+        schema(UsesEnum.class, "(e: E[ZERO])");
     }
 
     public static final class UsesEnum {
@@ -229,6 +285,7 @@ public class DescribableHelperTest {
 
     @Test public void urls() throws Exception {
         roundTrip(UsesURL.class, map("u", "http://nowhere.net/"));
+        schema(UsesURL.class, "([u: String])");
     }
 
     public static final class UsesURL {
@@ -238,6 +295,7 @@ public class DescribableHelperTest {
 
     @Test public void chars() throws Exception {
         roundTrip(UsesCharacter.class, map("c", "!"));
+        schema(UsesCharacter.class, "([c: char])");
     }
 
     public static final class UsesCharacter {
@@ -247,10 +305,12 @@ public class DescribableHelperTest {
 
     @Test public void stringArray() throws Exception {
         roundTrip(UsesStringArray.class, map("strings", Arrays.asList("one", "two")));
+        schema(UsesStringArray.class, "(strings: String[])");
     }
 
     @Test public void stringList() throws Exception {
         roundTrip(UsesStringList.class, map("strings", Arrays.asList("one", "two")));
+        schema(UsesStringList.class, "(strings: String[])");
     }
 
     public static final class UsesStringArray {
@@ -275,6 +335,7 @@ public class DescribableHelperTest {
 
     @Test public void structArrayHomo() throws Exception {
         roundTrip(UsesStructArrayHomo.class, map("impls", Arrays.asList(map(), map("flag", true))), "UsesStructArrayHomo[Impl2[false], Impl2[true]]");
+        schema(UsesStructArrayHomo.class, "(impls: Impl2([flag: boolean])[])");
     }
 
     public static final class UsesStructArrayHomo {
@@ -292,6 +353,7 @@ public class DescribableHelperTest {
 
     @Test public void structListHomo() throws Exception {
         roundTrip(UsesStructListHomo.class, map("impls", Arrays.asList(map(), map("flag", true))), "UsesStructListHomo[Impl2[false], Impl2[true]]");
+        schema(UsesStructListHomo.class, "(impls: Impl2([flag: boolean])[])");
     }
 
     public static final class UsesStructListHomo {
@@ -309,6 +371,7 @@ public class DescribableHelperTest {
 
     @Test public void structCollectionHomo() throws Exception {
         roundTrip(UsesStructCollectionHomo.class, map("impls", Arrays.asList(map(), map("flag", true))), "UsesStructCollectionHomo[Impl2[false], Impl2[true]]");
+        schema(UsesStructCollectionHomo.class, "(impls: Impl2([flag: boolean])[])");
     }
 
     public static final class UsesStructCollectionHomo {
@@ -325,7 +388,8 @@ public class DescribableHelperTest {
     }
 
     @Test public void structArrayHetero() throws Exception {
-        roundTrip(UsesStructArrayHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructArrayHetero[Impl1[hello], Impl2[true]]");
+        roundTrip(UsesStructArrayHetero.class, map("bases", Arrays.asList(map(CLAZZ, "Impl1", "text", "hello"), map(CLAZZ, "Impl2", "flag", true))), "UsesStructArrayHetero[Impl1[hello], Impl2[true]]");
+        schema(UsesStructArrayHetero.class, "(bases: Base{Impl1=(text: String), Impl2=([flag: boolean])}[])");
     }
 
     public static final class UsesStructArrayHetero {
@@ -342,7 +406,8 @@ public class DescribableHelperTest {
     }
 
     @Test public void structListHetero() throws Exception {
-        roundTrip(UsesStructListHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructListHetero[Impl1[hello], Impl2[true]]");
+        roundTrip(UsesStructListHetero.class, map("bases", Arrays.asList(map(CLAZZ, "Impl1", "text", "hello"), map(CLAZZ, "Impl2", "flag", true))), "UsesStructListHetero[Impl1[hello], Impl2[true]]");
+        schema(UsesStructListHetero.class, "(bases: Base{Impl1=(text: String), Impl2=([flag: boolean])}[])");
     }
 
     public static final class UsesStructListHetero {
@@ -359,7 +424,8 @@ public class DescribableHelperTest {
     }
 
     @Test public void structCollectionHetero() throws Exception {
-        roundTrip(UsesStructCollectionHetero.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "hello"), map("$class", "Impl2", "flag", true))), "UsesStructCollectionHetero[Impl1[hello], Impl2[true]]");
+        roundTrip(UsesStructCollectionHetero.class, map("bases", Arrays.asList(map(CLAZZ, "Impl1", "text", "hello"), map(CLAZZ, "Impl2", "flag", true))), "UsesStructCollectionHetero[Impl1[hello], Impl2[true]]");
+        schema(UsesStructCollectionHetero.class, "(bases: Base{Impl1=(text: String), Impl2=([flag: boolean])}[])");
     }
 
     public static final class UsesStructCollectionHetero {
@@ -376,7 +442,7 @@ public class DescribableHelperTest {
     }
 
     @Test public void defaultValuesStructCollectionCommon() throws Exception {
-        roundTrip(DefaultStructCollection.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "special"))), "DefaultStructCollection[Impl1[special]]");
+        roundTrip(DefaultStructCollection.class, map("bases", Arrays.asList(map(CLAZZ, "Impl1", "text", "special"))), "DefaultStructCollection[Impl1[special]]");
     }
 
     @Test public void defaultValuesStructCollectionEmpty() throws Exception {
@@ -390,7 +456,7 @@ public class DescribableHelperTest {
 
     @Issue("JENKINS-25779")
     @Test public void defaultValuesNestedStruct() throws Exception {
-        roundTrip(DefaultStructCollection.class, map("bases", Arrays.asList(map("$class", "Impl2"), map("$class", "Impl2", "flag", true))), "DefaultStructCollection[Impl2[false], Impl2[true]]");
+        roundTrip(DefaultStructCollection.class, map("bases", Arrays.asList(map(CLAZZ, "Impl2"), map(CLAZZ, "Impl2", "flag", true))), "DefaultStructCollection[Impl2[false], Impl2[true]]");
     }
 
     @Issue("JENKINS-25779")
@@ -407,7 +473,7 @@ public class DescribableHelperTest {
     }
 
     @Test public void defaultValuesStructArrayCommon() throws Exception {
-        roundTrip(DefaultStructArray.class, map("bases", Arrays.asList(map("$class", "Impl1", "text", "special")), "stuff", "val"), "DefaultStructArray[Impl1[special]];stuff=val");
+        roundTrip(DefaultStructArray.class, map("bases", Arrays.asList(map(CLAZZ, "Impl1", "text", "special")), "stuff", "val"), "DefaultStructArray[Impl1[special]];stuff=val");
     }
 
     @Issue("JENKINS-25779")
@@ -445,9 +511,9 @@ public class DescribableHelperTest {
         // PasswordParameterValue requires Secret.fromString and thus JenkinsRule.
         // For others: https://github.com/search?type=Code&q=user%3Ajenkinsci+user%3Acloudbees+%22extends+ParameterDefinition%22
         roundTrip(TakesParams.class, map("parameters", Arrays.asList(
-                map("$class", "BooleanParameterValue", "name", "flag", "value", true),
-                map("$class", "StringParameterValue", "name", "n", "value", "stuff"),
-                map("$class", "TextParameterValue", "name", "text", "value", "here\nthere"))),
+                map(CLAZZ, "BooleanParameterValue", "name", "flag", "value", true),
+                map(CLAZZ, "StringParameterValue", "name", "n", "value", "stuff"),
+                map(CLAZZ, "TextParameterValue", "name", "text", "value", "here\nthere"))),
             "TakesParams;BooleanParameterValue:flag=true;StringParameterValue:n=stuff;TextParameterValue:text=here\nthere");
     }
     public static final class TakesParams {
@@ -465,13 +531,13 @@ public class DescribableHelperTest {
     }
 
     @Test public void parametersDefinitionProperty() throws Exception {
-        roundTrip(ParametersDefinitionProperty.class, map("parameterDefinitions", Arrays.asList(map("$class", "BooleanParameterDefinition", "name", "flag", "defaultValue", false), map("$class", "StringParameterDefinition", "name", "text"))));
+        roundTrip(ParametersDefinitionProperty.class, map("parameterDefinitions", Arrays.asList(map(CLAZZ, "BooleanParameterDefinition", "name", "flag", "defaultValue", false), map(CLAZZ, "StringParameterDefinition", "name", "text"))));
     }
 
     @Issue("JENKINS-26619")
     @Test public void getterDescribableList() throws Exception {
         roundTrip(GitSCM.class, map(
-            "extensions", Arrays.asList(map("$class", CleanBeforeCheckout.class.getSimpleName())),
+            "extensions", Arrays.asList(map(CLAZZ, CleanBeforeCheckout.class.getSimpleName())),
             // Default values for these things do not work because GitSCM fails to use @DataBoundSetter:
             "branches", Arrays.asList(map("name", "*/master")),
             "doGenerateSubmoduleConfigurations", false,
@@ -501,6 +567,10 @@ public class DescribableHelperTest {
         }
         Map<String,Object> m2 = DescribableHelper.uninstantiate(o);
         assertEquals(m, m2);
+    }
+
+    private static void schema(Class<?> c, String schema) throws Exception {
+        assertEquals(schema, DescribableHelper.schemaFor(c).toString());
     }
 
 }

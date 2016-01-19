@@ -28,12 +28,12 @@
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>1.12-SNAPSHOT</version>
+        <version>1.14-SNAPSHOT</version>
     </parent>
     <artifactId>workflow-cps</artifactId>
     <packaging>hpi</packaging>
-    <name>Workflow: Groovy CPS Execution</name>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
+    <name>Pipeline: Groovy CPS Execution</name>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -75,7 +75,7 @@
         <dependency>
             <groupId>com.cloudbees</groupId>
             <artifactId>groovy-cps</artifactId>
-            <version>1.5</version>
+            <version>1.6</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.ui</groupId>
@@ -120,6 +120,7 @@
     <properties>
         <node.version>4.0.0</node.version>
         <npm.version>2.13.1</npm.version>
+        <npm.loglevel>--silent</npm.loglevel>
     </properties>
     <profiles>
         <!--
@@ -279,7 +280,7 @@
                                 </goals>
                                 <configuration>
                                     <!-- Note that this may not be omitted lest maven-release-plugin be confused (frontend-maven-plugin #109): -->
-                                    <arguments>install</arguments>
+                                    <arguments>install ${npm.loglevel}</arguments>
                                 </configuration>
                             </execution>
 

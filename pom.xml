@@ -32,10 +32,10 @@
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
-    <version>1.12-SNAPSHOT</version>
+    <version>1.14-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Workflow: Parent</name>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
+    <name>Pipeline: Parent</name>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
     <licenses>
         <license>
             <name>MIT License</name>
@@ -82,7 +82,7 @@
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>git</artifactId>
-                <version>2.3</version>
+                <version>2.4.1</version>
             </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
@@ -123,6 +123,11 @@
                             </manifestEntries>
                         </archive>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.jvnet.localizer</groupId>
+                    <artifactId>maven-localizer-plugin</artifactId>
+                    <version>1.23</version>
                 </plugin>
             </plugins>
         </pluginManagement>

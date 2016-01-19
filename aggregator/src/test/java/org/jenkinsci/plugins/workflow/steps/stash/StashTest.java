@@ -24,23 +24,25 @@
 
 package org.jenkinsci.plugins.workflow.steps.stash;
 
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.StashManager;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
-import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import static org.junit.Assert.*;
+
 public class StashTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = new JenkinsRule();
+    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
 
     @Issue("JENKINS-26942")
     @Test public void smokes() throws Exception {
@@ -69,4 +71,26 @@ public class StashTest {
         assertEquals("{}", StashManager.stashesOf(b).toString());
     }
 
+    @Issue("JENKINS-31086")
+    @Test public void testDefaultExcludes() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition(
+                "node {\n" +
+                        "  writeFile file: 'subdir/.gitignore', text: 'whatever'\n" +
+                        "  writeFile file: 'subdir/otherfile', text: 'whatever'\n" +
+                        "  dir('subdir') {stash name:'has-gitignore', useDefaultExcludes: false}\n" +
+                        "  dir('subdir') {stash name:'no-gitignore' }\n" +
+                        "  dir('first-unstash') {\n" +
+                        "    unstash('has-gitignore')\n" +
+                        "    echo \"gitignore exists? ${fileExists '.gitignore'}\"\n" +
+                        "  }\n" +
+                        "  dir('second-unstash') {\n" +
+                        "    unstash('no-gitignore')\n" +
+                        "    echo \"gitignore does not exist? ${fileExists '.gitignore'}\"\n" +
+                        "  }\n" +
+                        "}", true));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        r.assertLogContains("gitignore exists? true", b);
+        r.assertLogContains("gitignore does not exist? false", b);
+    }
 }

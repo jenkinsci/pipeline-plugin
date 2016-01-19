@@ -401,6 +401,17 @@ public class ParallelStepTest extends SingleJobTestBase {
         });
     }
 
+    @Issue("JENKINS-29413")
+    @Test public void emptyMap() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition("parallel [:]", true));
+                story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
+            }
+        });
+    }
+
     @Test
     @Issue("JENKINS-26122")
     public void parallelBranchLabels() {

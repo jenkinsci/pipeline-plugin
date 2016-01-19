@@ -36,8 +36,11 @@ import java.io.Serializable;
 import jenkins.branch.Branch;
 import jenkins.scm.api.SCMRevisionAction;
 import jenkins.scm.api.SCMSource;
+import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsScript;
 import org.jenkinsci.plugins.workflow.cps.GlobalVariable;
+import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.pickles.Pickle;
 import org.jenkinsci.plugins.workflow.support.pickles.SingleTypedPickleFactory;
@@ -57,11 +60,18 @@ import org.jenkinsci.plugins.workflow.support.pickles.XStreamPickle;
         Run<?,?> build = script.$build();
         // TODO some code overlap with SCMBinder.create, but not obvious how to factor out common parts
         if (!(build instanceof WorkflowRun)) {
-            throw new AbortException("not available outside a workflow build");
+            throw new AbortException("not available outside a Pipeline build");
         }
         Job<?,?> job = build.getParent();
         BranchJobProperty property = job.getProperty(BranchJobProperty.class);
         if (property == null) {
+            if (job instanceof WorkflowJob) {
+                FlowDefinition defn = ((WorkflowJob) job).getDefinition();
+                if (defn instanceof CpsScmFlowDefinition) {
+                    // JENKINS-31386: retrofit to work with standalone projects, minus the exact revision support.
+                    return ((CpsScmFlowDefinition) defn).getScm();
+                }
+            }
             throw new IllegalStateException("inappropriate context");
         }
         Branch branch = property.getBranch();

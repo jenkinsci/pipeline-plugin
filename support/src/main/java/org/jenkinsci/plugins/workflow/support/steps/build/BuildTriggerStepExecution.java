@@ -1,16 +1,20 @@
 package org.jenkinsci.plugins.workflow.support.steps.build;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import hudson.AbortException;
-import hudson.console.HyperlinkNote;
+import hudson.console.ModelHyperlinkNote;
 import hudson.model.Action;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Job;
+import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
+import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -44,7 +48,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         if (project == null) {
             throw new AbortException("No parameterized job named " + job + " found");
         }
-        listener.getLogger().println("Scheduling project: " + HyperlinkNote.encodeTo('/' + project.getUrl(), project.getFullDisplayName()));
+        listener.getLogger().println("Scheduling project: " + ModelHyperlinkNote.encodeTo(project));
 
         node.addAction(new LabelAction(Messages.BuildTriggerStepExecution_building_(project.getFullDisplayName())));
         List<Action> actions = new ArrayList<Action>();
@@ -54,6 +58,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         actions.add(new CauseAction(new Cause.UpstreamCause(invokingRun)));
         List<ParameterValue> parameters = step.getParameters();
         if (parameters != null) {
+            parameters = completeDefaultParameters(parameters, (Job) project);
             actions.add(new ParametersAction(parameters));
         }
         Integer quietPeriod = step.getQuietPeriod();
@@ -78,6 +83,29 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         }
     }
 
+    private List<ParameterValue> completeDefaultParameters(List<ParameterValue> parameters, Job<?,?> project) {
+        List<ParameterValue> completeListOfParameters = Lists.newArrayList(parameters);
+        List<String> names = Lists.transform(parameters, new Function<ParameterValue, String>() {
+            @Override public String apply(ParameterValue input) {
+                return input.getName();
+            }
+        });
+        if (project != null) {
+            ParametersDefinitionProperty pdp = project.getProperty(ParametersDefinitionProperty.class);
+            if (pdp != null) {
+                for (ParameterDefinition pDef : pdp.getParameterDefinitions()) {
+                    if (!names.contains(pDef.getName())) {
+                        ParameterValue defaultP = pDef.getDefaultParameterValue();
+                        if (defaultP != null) {
+                            completeListOfParameters.add(defaultP);
+                        }
+                    }
+                }
+            }
+        }
+        return completeListOfParameters;
+    }
+
     @Override
     public void stop(Throwable cause) {
         Jenkins jenkins = Jenkins.getInstance();
@@ -88,7 +116,7 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         Queue q = jenkins.getQueue();
 
         // if the build is still in the queue, abort it.
-        // BuildTriggerListener will report the failure, so this method shouldn't call getContext().onFailure()
+        // BuildQueueListener will report the failure, so this method shouldn't call getContext().onFailure()
         for (Queue.Item i : q.getItems()) {
             for (BuildTriggerAction bta : i.getActions(BuildTriggerAction.class)) {
                 if (bta.getStepContext().equals(getContext())) {
@@ -105,14 +133,19 @@ public class BuildTriggerStepExecution extends AbstractStepExecutionImpl {
         // so this method shouldn't call getContext().onFailure()
         for (Computer c : jenkins.getComputers()) {
             for (Executor e : c.getExecutors()) {
-                Queue.Executable exec = e.getCurrentExecutable();
-                if (exec instanceof Run) {
-                    Run<?,?> b = (Run) exec;
-                    for (BuildTriggerAction bta : b.getActions(BuildTriggerAction.class)) {
-                        if (bta.getStepContext().equals(getContext())) {
-                            e.interrupt(Result.ABORTED, new BuildTriggerCancelledCause(cause));
-                        }
-                    }
+                maybeInterrupt(e, cause);
+            }
+            for (Executor e : c.getOneOffExecutors()) {
+                maybeInterrupt(e, cause);
+            }
+        }
+    }
+    private void maybeInterrupt(Executor e, Throwable cause) {
+        Queue.Executable exec = e.getCurrentExecutable();
+        if (exec instanceof Run) {
+            for (BuildTriggerAction bta : ((Run) exec).getActions(BuildTriggerAction.class)) {
+                if (bta.getStepContext().equals(getContext())) {
+                    e.interrupt(Result.ABORTED, new BuildTriggerCancelledCause(cause));
                 }
             }
         }

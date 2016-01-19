@@ -11,7 +11,7 @@ exports.addSamplesWidget = function(editor) {
     var $aceEditor = $('#workflow-editor');
     var sampleSelect = $('<select></select>');
     
-    sampleSelect.append('<option >try sample workflow...</option>');
+    sampleSelect.append('<option >try sample Pipeline...</option>');
     for (var i = 0; i < samples.length; i++) {
         sampleSelect.append('<option value="' + samples[i].name + '">' + samples[i].title + '</option>');
     }

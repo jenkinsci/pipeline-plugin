@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import java.util.List;
+import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
@@ -44,7 +45,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class SleepStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule r = new RestartableJenkinsRule();
+    @Rule public RestartableJenkinsRule r = JenkinsRuleExt.workAroundJenkins30395Restartable();
 
     @Test public void sleepAndRestart() {
         r.addStep(new Statement() {

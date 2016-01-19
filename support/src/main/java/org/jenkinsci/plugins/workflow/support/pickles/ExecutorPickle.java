@@ -25,7 +25,6 @@
 package org.jenkinsci.plugins.workflow.support.pickles;
 
 import org.jenkinsci.plugins.workflow.pickles.Pickle;
-import org.jenkinsci.plugins.workflow.support.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import hudson.Extension;
 import hudson.model.Executor;
@@ -62,17 +61,19 @@ public class ExecutorPickle extends Pickle {
     }
 
     @Override public ListenableFuture<Executor> rehydrate() {
-        Queue.Item item = Queue.getInstance().schedule2(task, 0).getItem();
-        if (item == null) {
-            // TODO should also report when !ScheduleResult.created, since that is arguably an error
-            return Futures.immediateFailedFuture(new IllegalStateException("queue refused " + task));
-        }
-
-        final Future<Queue.Executable> future = item.getFuture().getStartCondition();
-
-        return new TryRepeatedly<Executor>(1) {
+        return new TryRepeatedly<Executor>(1, 0) {
+            Future<Queue.Executable> future;
             @Override
             protected Executor tryResolve() throws Exception {
+                if (future == null) {
+                    Queue.Item item = Queue.getInstance().schedule2(task, 0).getItem();
+                    if (item == null) {
+                        // TODO should also report when !ScheduleResult.created, since that is arguably an error
+                        throw new IllegalStateException("queue refused " + task);
+                    }
+                    future = item.getFuture().getStartCondition();
+                }
+
                 if (!future.isDone()) {
                     return null;
                 }
