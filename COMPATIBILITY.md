@@ -339,7 +339,7 @@ Replace `Trigger<AbstractProject>` with `Trigger<X>` where `X` is `Job` or perha
 
 ## Clouds
 
-Do not necessarily need any special integration, but are encouraged to use `OnceRetentionStrategy` from `durable-task` to allow flow builds to survive restarts.
+Do not necessarily need any special integration, but are encouraged to use `OnceRetentionStrategy` from `durable-task` to allow Pipeline builds to survive restarts.
 
 ## Custom steps
 

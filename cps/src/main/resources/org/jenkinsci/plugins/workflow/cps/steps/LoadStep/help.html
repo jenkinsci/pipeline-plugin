@@ -4,14 +4,14 @@
         The loaded file can contain statements at top level or just load and run a closure. For example:
     </p>
     <pre>
-    def flow
+    def pipeline
     node('slave') {
-        flow = load 'flow.groovy'
-        flow.functionA()
+        pipeline = load 'pipeline.groovy'
+        pipeline.functionA()
     }
-    flow.functionB()
+    pipeline.functionB()
     </pre>
     <p>
-    Where <code>flow.groovy</code> defines functionA and functionB functions (among others) before ending with <code>return this;</code>
+    Where <code>pipeline.groovy</code> defines functionA and functionB functions (among others) before ending with <code>return this;</code>
     <p>
 </div>

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <log>
-  <name>Workflow</name>
+  <name>Pipeline</name>
   <targets>
     <target>
       <name>org.jenkinsci.plugins.workflow</name>
