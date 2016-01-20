@@ -10,5 +10,6 @@
         <li><code>result</code></li>
         <li><code>displayName</code></li>
         <li><code>description</code></li>
+        <li><code>absoluteUrl</code></li>
     </ul>
 </j:jelly>
