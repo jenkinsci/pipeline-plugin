@@ -27,8 +27,8 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>plugin-pom</artifactId>
-        <version>0.1-SNAPSHOT</version> <!-- but see Jenkins-Version override below -->
+        <artifactId>plugin</artifactId>
+        <version>2.0-SNAPSHOT</version> <!-- but see Jenkins-Version override below -->
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
@@ -50,6 +50,8 @@
   </scm>
     <properties>
         <jenkins.version>1.609.2</jenkins.version>
+        <!-- TODO: Compilation errors to investigate when using 2.0 (htmlunit related) -->
+        <jenkins-test-harness.version>1.609.2</jenkins-test-harness.version>
     </properties>
     <modules>
         <module>step-api</module>
@@ -102,12 +104,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-        </dependency>
-    </dependencies>
     <build>
         <pluginManagement>
             <plugins>
@@ -121,11 +117,6 @@
                             </manifestEntries>
                         </archive>
                     </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.jvnet.localizer</groupId>
-                    <artifactId>maven-localizer-plugin</artifactId>
-                    <version>1.23</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -148,69 +139,11 @@
             </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>rerunFailingTests</id>
-            <activation>
-                <property>
-                    <name>!test</name>
-                </property>
-            </activation>
-            <properties>
-                <surefire.rerunFailingTestsCount>4</surefire.rerunFailingTestsCount>
-            </properties>
-        </profile>
-        <profile>
-            <id>findbugs</id>
-            <activation>
-                <property>
-                    <name>skipTests</name>
-                    <value>!true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                        <configuration>
-                            <xmlOutput>true</xmlOutput>
-                            <failOnError>false</failOnError>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>javadoc</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
             <url>http://repo.jenkins-ci.org/public/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
         </repository>
     </repositories>
 
@@ -218,12 +151,6 @@
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
             <url>http://repo.jenkins-ci.org/public/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
         </pluginRepository>
     </pluginRepositories>
 
