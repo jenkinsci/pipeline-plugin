@@ -35,6 +35,13 @@
     <name>Pipeline (formerly known as Workflow)</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
     <dependencies>
+        <dependency> <!-- TODO pending https://github.com/jenkinsci/plugin-pom/pull/3 -->
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>jenkins-war</artifactId>
+            <version>${jenkins.version}</version>
+            <type>war</type>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-step-api</artifactId>
