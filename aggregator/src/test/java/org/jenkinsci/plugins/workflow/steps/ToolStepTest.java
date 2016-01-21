@@ -33,6 +33,7 @@ import org.junit.Test;
 import org.junit.Rule;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.ToolInstallations;
 
 public class ToolStepTest {
 
@@ -40,7 +41,7 @@ public class ToolStepTest {
     @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
 
     @Test public void build() throws Exception {
-        Maven.MavenInstallation tool = r.configureMaven3();
+        Maven.MavenInstallation tool = ToolInstallations.configureMaven3();
         String name = tool.getName();
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("node {def home = tool '" + name + "'; sh \"M2_HOME=${home} ${home}/bin/mvn -version\"}"));
