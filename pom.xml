@@ -49,7 +49,7 @@
       <tag>HEAD</tag>
   </scm>
     <properties>
-        <jenkins.version>1.609.2</jenkins.version> <!-- but see Jenkins-Version override below -->
+        <jenkins.version>1.609.3</jenkins.version>
         <java.level>6</java.level>
     </properties>
     <modules>
@@ -104,21 +104,6 @@
         </dependencies>
     </dependencyManagement>
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin> <!-- TODO remove when 1.609.2 more widely installed -->
-                    <groupId>org.jenkins-ci.tools</groupId>
-                    <artifactId>maven-hpi-plugin</artifactId>
-                    <configuration> <!-- only applies to hpi goal, but if I use <execution> here it tries to run that goal on the parent POM which fails -->
-                        <archive>
-                            <manifestEntries>
-                                <Jenkins-Version>1.609.1</Jenkins-Version>
-                            </manifestEntries>
-                        </archive>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
             <plugin>
                 <!-- why is this necessary!? -->
