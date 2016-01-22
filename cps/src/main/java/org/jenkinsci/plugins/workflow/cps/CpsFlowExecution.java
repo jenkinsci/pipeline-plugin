@@ -539,7 +539,7 @@ public class CpsFlowExecution extends FlowExecution {
      */
     void runInCpsVmThread(final FutureCallback<CpsThreadGroup> callback) {
         if (programPromise == null) {
-            throw new IllegalStateException("broken flow");
+            throw new IllegalStateException("build storage unloadable, or build already finished");
         }
         // first we need to wait for programPromise to fullfil CpsThreadGroup, then we need to run in its runner, phew!
         Futures.addCallback(programPromise, new FutureCallback<CpsThreadGroup>() {
