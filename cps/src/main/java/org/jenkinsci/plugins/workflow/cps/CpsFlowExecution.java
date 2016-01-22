@@ -595,6 +595,10 @@ public class CpsFlowExecution extends FlowExecution {
     @Override
     public synchronized List<FlowNode> getCurrentHeads() {
         List<FlowNode> r = new ArrayList<FlowNode>();
+        if (heads == null) {
+            LOGGER.log(Level.WARNING, "List of flow heads unset for {0}, perhaps due to broken storage", this);
+            return r;
+        }
         for (FlowHead h : heads.values()) {
             r.add(h.get());
         }
