@@ -16,13 +16,13 @@ node {
         and from upstream Pipeline builds using the <code>build</code> step.
     </p>
     <p>
-        However any variables set this way are global to the workflow build.
+        However any variables set this way are global to the Pipeline build.
         For variables with node-specific content (such as file paths),
         you should instead use the <code>withEnv</code> step,
         to bind the variable only within a <code>node</code> block.
     </p>
     <p>
-        A set of environment variables are made available to all Jenkins projects, including workflows.
+        A set of environment variables are made available to all Jenkins projects, including Pipelines.
         The following is a general list of variables (by name) that are available;
         see the notes below the list for Pipeline-specific details.
     </p>
@@ -31,7 +31,7 @@ node {
         <st:include it="${ec}" page="buildEnv" optional="true"/>
     </j:forEach>
     <p>
-        The following variables are currently unavailable inside a workflow script:
+        The following variables are currently unavailable inside a Pipeline script:
     </p>
     <ul>
         <li><code>NODE_LABELS</code></li>

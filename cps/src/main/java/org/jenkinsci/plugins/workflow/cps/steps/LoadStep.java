@@ -38,7 +38,7 @@ public class LoadStep extends AbstractStepImpl {
 
         @Override
         public String getDisplayName() {
-            return "Evaluate a Groovy source file into the workflow script";
+            return "Evaluate a Groovy source file into the Pipeline script";
         }
     }
 

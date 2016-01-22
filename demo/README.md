@@ -24,7 +24,7 @@ The continuous delivery pipeline consists of the following sequence.
   thrown away when tests are done (this is done by using auto-deployment of Jetty)
 * Once integration tests are successful, the webapp gets to the staging server at http://localhost:8081/staging/
 * Human will manually inspect the staging instance, and when ready, approves the deployment to the production server at http://localhost:8081/production/
-* Workflow completes
+* Pipeline completes
 
 To log in to the container, get `nsenter` and [you can use docker-enter](http://jpetazzo.github.io/2014/06/23/docker-ssh-considered-evil/),
 or just use `docker exec -ti $container /bin/bash`.

@@ -23,7 +23,7 @@ If Jenkins is restarted (intentionally, or because of a crash) while your Pipeli
 This applies to external processes (shell scripts) so long as the slave can be reattached, and losing the slave connection temporarily is not fatal either.
 
 Pipelines can pause in the middle and wait for a human to approve something, or enter some information.
-Executors need not be consumed while the flow is waiting.
+Executors need not be consumed while the Pipeline is waiting.
 
 ## Pipeline stages
 
@@ -85,7 +85,7 @@ Webinar _Orchestrating the Continuous Delivery Process in Jenkins with Workflow_
 
 [Reusing build steps from freestyle projects](basic-steps/CORE-STEPS.md)
 
-[Using version control from a workflow](scm-step/README.md)
+[Using version control from a Pipeline](scm-step/README.md)
 
 [Using the global Groovy class library](cps-global-lib/README.md)
 
@@ -121,12 +121,12 @@ While the implementation is divided into a number of plugins, for ease of protot
 
 * `step-api` defines a generic build step interface (not specific to pipelines) that many plugins could in the future depend on.
 * `basic-steps` add some generic step implementations. There is [more documentation there](basic-steps/CORE-STEPS.md).
-* `api` defines the essential aspects of pipelines and their executions. In particular, the engine running a flow is extensible and so could in the future support visual orchestration languages.
+* `api` defines the essential aspects of pipelines and their executions. In particular, the engine running a Pipeline is extensible and so could in the future support visual orchestration languages.
 * `support` adds general implementations of some internals needed by pipelines, such as storing state.
 * `job` provides the actual job type and top-level UI for defining and running pipelines.
 * `durable-task-step` uses the `durable-task` plugin to define a shell script step that can survive restarts.
 * `scm-step` adds SCM-related steps. There is [more documentation there](scm-step/README.md).
-* `cps` is the flow engine implementation based on the Groovy language, and supporting long-running pipelines using a _continuation passing style_ transformation of the script.
+* `cps` is the Pipeline engine implementation based on the Groovy language, and supporting long-running pipelines using a _continuation passing style_ transformation of the script.
 * `cps-global-lib` adds a Git-backed repository for Groovy libraries available to scripts.
 * `stm` is a simple engine implementation using a _state transition machine_, less intended for end users than as a reference for how engines can work. Currently only partly implemented.
 * `aggregator` is a placeholder plugin allowing you to `mvn hpi:run` and see everything working together, as well as holding integration tests.

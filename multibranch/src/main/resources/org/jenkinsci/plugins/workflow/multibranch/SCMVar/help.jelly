@@ -27,7 +27,7 @@ THE SOFTWARE.
 <j:jelly xmlns:j="jelly:core">
     Represents the SCM configuration in a multibranch project build.
     Use <code>checkout scm</code> to check out sources matching <code>Jenkinsfile</code>.
-    <br/>You may also use this in a standalone project configured with <i>Workflow script from SCM</i>,
+    <br/>You may also use this in a standalone project configured with <i>Pipeline script from SCM</i>,
     though in that case the checkout will just be of the latest revision in the branch,
-    possibly newer than the revision from which the Workflow script was loaded.
+    possibly newer than the revision from which the Pipeline script was loaded.
 </j:jelly>
