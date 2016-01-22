@@ -167,7 +167,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
             if (workspace == null) {
                 return; // slave not yet ready, wait for another day
             }
-            // Do not allow this to take more than 3s for any given task:
+            // Do not allow this to take more than 10s for any given task:
             final AtomicReference<Thread> t = new AtomicReference<Thread>(Thread.currentThread());
             Timer.get().schedule(new Runnable() {
                 @Override public void run() {
@@ -176,7 +176,7 @@ public abstract class DurableTaskStep extends AbstractStepImpl {
                         _t.interrupt();
                     }
                 }
-            }, 3, TimeUnit.SECONDS);
+            }, 10, TimeUnit.SECONDS);
             try {
                 if (controller.writeLog(workspace, listener.getLogger())) {
                     getContext().saveState();

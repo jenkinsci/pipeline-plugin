@@ -2,6 +2,10 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.14 (upcoming)
+
+* [JENKINS-32547](https://issues.jenkins-ci.org/browse/JENKINS-32547): laxer timeout on `bat` step log collection is needed for WinRM-based EC2 slaves.
+
 ## 1.13 (Jan 18 2016)
 
 * [JENKINS-31153](https://issues.jenkins-ci.org/browse/JENKINS-31153): the Workflow feature was renamed to Pipeline.
