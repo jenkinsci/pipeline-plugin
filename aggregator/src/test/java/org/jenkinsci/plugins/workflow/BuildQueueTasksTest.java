@@ -52,7 +52,7 @@ import net.sf.json.JSONObject;
 
 public class BuildQueueTasksTest {
 
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Issue("JENKINS-28649")
     @Test public void queueAPI() throws Exception {

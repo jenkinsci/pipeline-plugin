@@ -28,7 +28,6 @@ import hudson.model.Result;
 import java.util.List;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -48,7 +47,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class StageTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Before public void clear() {
         StageStepExecution.clear();

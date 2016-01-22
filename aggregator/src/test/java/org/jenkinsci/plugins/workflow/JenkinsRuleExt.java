@@ -34,22 +34,14 @@ import hudson.slaves.RetentionStrategy;
 import hudson.slaves.SlaveComputer;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.Description;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.Statement;
-import org.jvnet.hudson.test.HudsonHomeLoader;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 /**
- * Utilities that could be added to {@link JenkinsRule} in the future but are not yet available in our baseline version.
+ * Utilities that could be added to {@link JenkinsRule} in the future but are not yet available in the selected {@code jenkins-test-harness}.
  */
 public class JenkinsRuleExt {
 
@@ -86,61 +78,6 @@ public class JenkinsRuleExt {
             env2.overrideAll(env);
             return env2;
         }
-    }
-
-    public static JenkinsRule workAroundJenkins30395() {
-        return new JenkinsRule() {
-            @Override public void before() throws Throwable {
-                if (Thread.interrupted()) {
-                    System.err.println("was interrupted before start");
-                }
-                super.before();
-            }
-        };
-    }
-    public static RestartableJenkinsRule workAroundJenkins30395Restartable() {
-        return new RestartableJenkinsRule() {
-            private Description description;
-            private final List<Statement> steps = new ArrayList<Statement>();
-            private TemporaryFolder tmp = new TemporaryFolder();
-            private Object target;
-            @Override
-            public Statement apply(final Statement base, FrameworkMethod method, Object target) {
-                this.description = Description.createTestDescription(
-                        method.getMethod().getDeclaringClass(), method.getName(), method.getAnnotations());
-                this.target = target;
-                return tmp.apply(new Statement() {
-                    @Override
-                    public void evaluate() throws Throwable {
-                        home = tmp.newFolder();
-                        base.evaluate();
-                        run();
-                    }
-                }, description);
-            }
-            public void addStep(final Statement step) {
-                steps.add(new Statement() {
-                    @Override
-                    public void evaluate() throws Throwable {
-                        j.jenkins.getInjector().injectMembers(step);
-                        j.jenkins.getInjector().injectMembers(target);
-                        step.evaluate();
-                    }
-                });
-            }
-            private void run() throws Throwable {
-                HudsonHomeLoader loader = new HudsonHomeLoader() {
-                    @Override
-                    public File allocate() throws Exception {
-                        return home;
-                    }
-                };
-                for (Statement step : steps) {
-                    j = workAroundJenkins30395().with(loader);
-                    j.apply(step,description).evaluate();
-                }
-            }
-        };
     }
 
     private JenkinsRuleExt() {}

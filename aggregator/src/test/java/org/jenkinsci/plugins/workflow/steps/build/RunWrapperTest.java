@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.steps.build;
 
 import hudson.model.Result;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -44,7 +43,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class RunWrapperTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule r = JenkinsRuleExt.workAroundJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule r = new RestartableJenkinsRule();
 
     @Test public void historyAndPickling() {
         r.addStep(new Statement() {

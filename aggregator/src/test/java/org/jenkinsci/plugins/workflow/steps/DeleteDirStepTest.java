@@ -25,25 +25,19 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import java.io.File;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import hudson.FilePath;
-import hudson.model.queue.QueueTaskFuture;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 
 public class DeleteDirStepTest {
 
-    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
+    @Rule public JenkinsRule r = new JenkinsRule();
 
     @Test
     public void testDeleteEmptyWorkspace() throws Exception {

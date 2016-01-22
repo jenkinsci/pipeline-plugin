@@ -39,7 +39,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class ScalabilityTest {
 
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Issue("JENKINS-30055")
     @Test public void manySteps() {

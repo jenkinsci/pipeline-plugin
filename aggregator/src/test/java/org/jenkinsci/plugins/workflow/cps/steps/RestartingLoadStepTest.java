@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.workflow.cps.steps;
 
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -20,7 +19,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
  * @author Kohsuke Kawaguchi
  */
 public class RestartingLoadStepTest {
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Inject
     Jenkins jenkins;
