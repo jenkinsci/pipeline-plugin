@@ -25,7 +25,7 @@
 package org.jenkinsci.plugins.workflow.steps.scm;
 
 import com.gargoylesoftware.htmlunit.WebResponse;
-import org.apache.commons.httpclient.NameValuePair;
+import com.gargoylesoftware.htmlunit.util.NameValuePair;
 import org.jvnet.hudson.test.JenkinsRule;
 
 /**

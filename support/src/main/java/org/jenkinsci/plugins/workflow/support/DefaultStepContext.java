@@ -28,6 +28,7 @@ import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.LauncherDecorator;
 import hudson.console.ConsoleLogFilter;
+import hudson.model.AbstractBuild;
 import hudson.model.Computer;
 import hudson.model.Job;
 import hudson.model.Node;
@@ -88,7 +89,7 @@ public abstract class DefaultStepContext extends StepContext {
                 ConsoleLogFilter filter = get(ConsoleLogFilter.class);
                 OutputStream os = new FileOutputStream(la.getLogFile(), true);
                 if (filter != null) {
-                    os = filter.decorateLogger(null, os);
+                    os = filter.decorateLogger((AbstractBuild) null, os);
                 }
                 listener = new StreamTaskListener(os);
                 final AtomicReference<GraphListener> graphListener = new AtomicReference<GraphListener>();

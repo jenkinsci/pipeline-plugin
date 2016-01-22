@@ -110,6 +110,12 @@
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -150,6 +156,18 @@
             <artifactId>sshd</artifactId>
             <version>1.6</version>
             <scope>test</scope><!-- from git-server via workflow-cps-global-lib and otherwise unavailable during tests -->
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>matrix-auth</artifactId>
+            <version>1.0.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>jenkins-test-harness-tools</artifactId>
+            <version>2.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
