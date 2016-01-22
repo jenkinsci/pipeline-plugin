@@ -1,6 +1,6 @@
 <div>
     If the body throws an exception, mark the build as a failure, but nonetheless
-    continue to execute the workflow from the statement following the <code>catchError</code> step.
+    continue to execute the Pipeline from the statement following the <code>catchError</code> step.
     This is <em>only</em> necessary when using certain post-build actions (notifiers)
     originally defined for freestyle projects which pay attention to the result of the ongoing build.
 <p><pre>
@@ -11,7 +11,7 @@ node {
     step([$class: 'Mailer', recipients: 'admin@somewhere'])
 }
 </pre>
-    <p>If the shell step fails, the flow build’s status will be set to failed, so that the subsequent mail step will see that this build is failed.
+    <p>If the shell step fails, the Pipeline build’s status will be set to failed, so that the subsequent mail step will see that this build is failed.
     In the case of the mail sender, this means that it will send mail.
     (It may also send mail if this build <em>succeeded</em> but previous ones failed, and so on.)
     Even in that case, this step can be replaced by the following idiom:
@@ -40,7 +40,7 @@ node {
     }
     echo 'Printed whether above succeeded or failed.'
 }
-// …and the workflow as a whole succeeds
+// …and the pipeline as a whole succeeds
 </pre>
     <p>See <a href="https://github.com/jenkinsci/workflow-plugin/blob/master/basic-steps/CORE-STEPS.md#interacting-with-build-status" target="_blank">this document</a> for background.
 </div>

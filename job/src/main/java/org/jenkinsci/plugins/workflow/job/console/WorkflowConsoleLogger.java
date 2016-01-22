@@ -34,7 +34,7 @@ import hudson.model.BuildListener;
  * Console logger used to write workflow related metadata in console text.
  *
  * It wraps the regular {@link BuildListener} to add a filter that annotates any text line sent to the console through
- * this logger. It also adds a prefix to the line ([Workflow]).
+ * this logger. It also adds a prefix to the line ([Pipeline]).
  *
  * Annotated lines will be rendered in a lighter color so they do not interefere with the important part of the log.
  */

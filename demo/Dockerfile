@@ -28,7 +28,7 @@ USER root
 RUN chown -R jenkins.jenkins /tmp/files
 USER jenkins
 WORKDIR /tmp/files
-RUN git init --bare repo && cd repo-wc && git init && git add . && git -c user.email=demo@jenkins-ci.org -c user.name="Workflow Demo" commit -m 'demo' && git push ../repo master
+RUN git init --bare repo && cd repo-wc && git init && git add . && git -c user.email=demo@jenkins-ci.org -c user.name="Pipeline Demo" commit -m 'demo' && git push ../repo master
 
 # Prepare local Maven repo. Note that $JENKINS_HOME is a volume so we cannot populate it now.
 RUN echo '<settings><mirrors><mirror><id>central</id><url>http://repo.jenkins-ci.org/simple/repo1-cache/</url><mirrorOf>central</mirrorOf></mirror></mirrors><localRepository>/usr/share/jenkins/ref/.m2/repository</localRepository></settings>' > /tmp/files/settings.xml
