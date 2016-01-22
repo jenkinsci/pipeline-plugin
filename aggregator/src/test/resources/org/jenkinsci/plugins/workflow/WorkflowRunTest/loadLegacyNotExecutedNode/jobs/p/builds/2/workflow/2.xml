@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage_-Tag plugin="workflow-support@1.11-beta-4">
+  <node class="org.jenkinsci.plugins.workflow.graph.FlowStartNode" plugin="workflow-api@1.11-beta-4">
+    <parents class="com.google.common.collect.ImmutableList"/>
+    <id>2</id>
+  </node>
+  <actions>
+    <com.cloudbees.workflow.cps.checkpoint.NotExecutedNodeAction plugin="workflow-cps-checkpoint@1.6-beta-2"/>
+  </actions>
+</org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage_-Tag>

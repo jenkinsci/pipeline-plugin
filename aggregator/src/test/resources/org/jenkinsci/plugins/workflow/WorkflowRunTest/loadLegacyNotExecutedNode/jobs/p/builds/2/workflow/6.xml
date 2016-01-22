@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage_-Tag plugin="workflow-support@1.11-beta-4">
+  <node class="org.jenkinsci.plugins.workflow.graph.FlowEndNode" plugin="workflow-api@1.11-beta-4">
+    <parents class="com.google.common.collect.ImmutableList">
+      <org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode>5</org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode>
+    </parents>
+    <id>6</id>
+    <start class="org.jenkinsci.plugins.workflow.graph.FlowStartNode">2</start>
+    <result>
+      <name>SUCCESS</name>
+      <ordinal>0</ordinal>
+      <color>BLUE</color>
+      <completeBuild>true</completeBuild>
+    </result>
+  </node>
+  <actions>
+    <org.jenkinsci.plugins.workflow.actions.TimingAction plugin="workflow-api@1.11-beta-4">
+      <startTime>1453476840928</startTime>
+    </org.jenkinsci.plugins.workflow.actions.TimingAction>
+  </actions>
+</org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage_-Tag>

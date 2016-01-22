@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage_-Tag plugin="workflow-support@1.11-beta-4">
+  <node class="org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode" plugin="workflow-cps@1.11-beta-4">
+    <parents class="com.google.common.collect.ImmutableList">
+      <org.jenkinsci.plugins.workflow.graph.FlowStartNode>2</org.jenkinsci.plugins.workflow.graph.FlowStartNode>
+    </parents>
+    <id>3</id>
+    <descriptorId>org.jenkinsci.plugins.workflow.steps.EchoStep</descriptorId>
+  </node>
+  <actions>
+    <org.jenkinsci.plugins.workflow.support.actions.LogActionImpl>
+      <charset>UTF-8</charset>
+    </org.jenkinsci.plugins.workflow.support.actions.LogActionImpl>
+    <com.cloudbees.workflow.cps.checkpoint.NotExecutedNodeAction plugin="workflow-cps-checkpoint@1.6-beta-2"/>
+  </actions>
+</org.jenkinsci.plugins.workflow.support.storage.SimpleXStreamFlowNodeStorage_-Tag>

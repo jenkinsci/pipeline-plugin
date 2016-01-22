@@ -53,6 +53,7 @@ import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.support.actions.NotExecutedNodeAction;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
@@ -84,7 +85,7 @@ public class WorkflowRunTest {
 
     @Test public void parameters() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("node {sh('echo param=' + PARAM)}",true));
+        p.setDefinition(new CpsFlowDefinition("node {sh('echo param=' + PARAM)}", true));
         p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("PARAM", null)));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("PARAM", "value"))));
         r.assertLogContains("param=value", b);
@@ -228,6 +229,17 @@ public class WorkflowRunTest {
         WorkflowRun b = p.getLastBuild();
         assertNotNull(b);
         r.assertBuildStatusSuccess(r.waitForCompletion(b));
+    }
+
+    @Issue("JENKINS-32561")
+    @LocalData
+    @Test
+    public void loadLegacyNotExecutedNode() throws Exception {
+        WorkflowJob p = r.jenkins.getItemByFullName("p", WorkflowJob.class);
+        assertNotNull(p);
+        WorkflowRun b = p.getLastBuild();
+        assertNotNull(b);
+        assertNotNull(b.getAction(NotExecutedNodeAction.class));
     }
 
     @Issue("JENKINS-29571")
