@@ -5,6 +5,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 ## 1.14 (upcoming)
 
 * [JENKINS-32547](https://issues.jenkins-ci.org/browse/JENKINS-32547): laxer timeout on `bat` step log collection is needed for WinRM-based EC2 slaves.
+* [JENKINS-30759](https://issues.jenkins-ci.org/browse/JENKINS-30759): sporadic `NullPointerException`s running very short-lived `node` blocks.
 
 ## 1.13 (Jan 18 2016)
 
