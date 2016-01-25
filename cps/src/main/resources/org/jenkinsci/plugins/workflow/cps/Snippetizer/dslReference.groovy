@@ -10,21 +10,6 @@ l.layout(title:_("Jenkins Pipeline Reference")) {
 
     st.include(page: "sidepanel", it: app)
     l.main_panel {
-        p {
-            a(href: "${rootURL}/${Snippetizer.GDSL_URL}", target: "_blank") {
-                raw(_("Click here for IntelliJ GDSL."))
-            }
-
-        }
-
-        /* Commenting out DSLD until it's fixed.
-        p {
-            a(href: "${rootURL}/${Snippetizer.DSLD_URL}", target: "_blank") {
-                raw(_("Click here for Eclipse DSLD."))
-            }
-
-        }
-        */
         st.include(page: "dslReferenceContent")
     }
 }
