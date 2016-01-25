@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow.steps.stash;
 
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.StashManager;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -42,7 +41,7 @@ import static org.junit.Assert.*;
 public class StashTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
+    @Rule public JenkinsRule r = new JenkinsRule();
 
     @Issue("JENKINS-26942")
     @Test public void smokes() throws Exception {

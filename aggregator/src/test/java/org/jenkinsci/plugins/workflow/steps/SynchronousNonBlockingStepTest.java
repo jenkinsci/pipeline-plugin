@@ -31,11 +31,10 @@ import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.inject.Inject;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 
 public class SynchronousNonBlockingStepTest {
 
-    @Rule public JenkinsRule j = JenkinsRuleExt.workAroundJenkins30395();
+    @Rule public JenkinsRule j = new JenkinsRule();
 
     @ClassRule
     public static BuildWatcher buildWatcher = new BuildWatcher();

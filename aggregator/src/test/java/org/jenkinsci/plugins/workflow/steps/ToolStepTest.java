@@ -25,7 +25,6 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.tasks.Maven;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.ClassRule;
@@ -38,7 +37,7 @@ import org.jvnet.hudson.test.ToolInstallations;
 public class ToolStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
+    @Rule public JenkinsRule r = new JenkinsRule();
 
     @Test public void build() throws Exception {
         Maven.MavenInstallation tool = ToolInstallations.configureMaven3();

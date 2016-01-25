@@ -34,13 +34,11 @@ import hudson.triggers.SCMTrigger;
 import java.util.Iterator;
 import java.util.List;
 import jenkins.util.VirtualFile;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
@@ -48,7 +46,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 public class GitStepTest {
 
-    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
+    @Rule public JenkinsRule r = new JenkinsRule();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
     @Rule public GitSampleRepoRule otherRepo = new GitSampleRepoRule();
 

@@ -66,7 +66,7 @@ import org.jvnet.hudson.test.recipes.LocalData;
 public class WorkflowRunTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
+    @Rule public JenkinsRule r = new JenkinsRule();
 
     @Test public void basics() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");

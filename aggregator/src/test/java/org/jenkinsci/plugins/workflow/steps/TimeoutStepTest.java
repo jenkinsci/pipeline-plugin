@@ -18,7 +18,6 @@ import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 import java.util.List;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -27,7 +26,7 @@ public class TimeoutStepTest extends Assert {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
 
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     /**
      * The simplest possible timeout step ever.
@@ -108,6 +107,7 @@ public class TimeoutStepTest extends Assert {
             public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.getItemByFullName("restarted", WorkflowJob.class);
                 WorkflowRun b = p.getBuildByNumber(1);
+                assertTrue("took more than 15s to restart?", b.isBuilding());
                 SemaphoreStep.success("restarted/1", null);
                 story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b));
             }

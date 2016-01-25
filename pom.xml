@@ -50,6 +50,7 @@
   </scm>
     <properties>
         <jenkins.version>1.642.1</jenkins.version>
+        <jenkins-test-harness.version>2.1</jenkins-test-harness.version>
     </properties>
     <modules>
         <module>step-api</module>
@@ -69,11 +70,6 @@
     </modules>
     <dependencyManagement>
         <dependencies>
-            <dependency> <!-- TODO pending https://github.com/jenkinsci/jenkins-test-harness/pull/2 -->
-                <groupId>org.eclipse.sisu</groupId>
-                <artifactId>org.eclipse.sisu.plexus</artifactId>
-                <version>0.1.0</version>
-            </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>script-security</artifactId>

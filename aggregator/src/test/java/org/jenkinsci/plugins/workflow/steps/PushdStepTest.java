@@ -26,7 +26,6 @@ package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.Functions;
 import java.io.File;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -41,7 +40,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class PushdStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     private String pwdStep() {
         return Functions.isWindows() ? "bat 'cd'" : "sh 'pwd'";

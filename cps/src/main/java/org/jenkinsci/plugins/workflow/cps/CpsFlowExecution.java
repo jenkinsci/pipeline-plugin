@@ -539,7 +539,7 @@ public class CpsFlowExecution extends FlowExecution {
      */
     void runInCpsVmThread(final FutureCallback<CpsThreadGroup> callback) {
         if (programPromise == null) {
-            throw new IllegalStateException("broken flow");
+            throw new IllegalStateException("build storage unloadable, or build already finished");
         }
         // first we need to wait for programPromise to fullfil CpsThreadGroup, then we need to run in its runner, phew!
         Futures.addCallback(programPromise, new FutureCallback<CpsThreadGroup>() {
@@ -595,6 +595,10 @@ public class CpsFlowExecution extends FlowExecution {
     @Override
     public synchronized List<FlowNode> getCurrentHeads() {
         List<FlowNode> r = new ArrayList<FlowNode>();
+        if (heads == null) {
+            LOGGER.log(Level.WARNING, "List of flow heads unset for {0}, perhaps due to broken storage", this);
+            return r;
+        }
         for (FlowHead h : heads.values()) {
             r.add(h.get());
         }
