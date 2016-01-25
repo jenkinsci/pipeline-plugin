@@ -51,7 +51,6 @@ import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import static org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject;
-import org.junit.Ignore;
 
 @Issue("JENKINS-30519")
 public class JobPropertyStepTest {
@@ -60,7 +59,6 @@ public class JobPropertyStepTest {
     @Rule public JenkinsRule r = new JenkinsRule();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
 
-    @Ignore("TODO fails with a JS TypeError, which goes away on new cores, maybe due to new HtmlUnit (1.627+); and needs https://github.com/jenkinsci/branch-api-plugin/pull/9")
     @SuppressWarnings("rawtypes")
     @Test public void configRoundTripParameters() throws Exception {
         StepConfigTester tester = new StepConfigTester(r);
@@ -77,7 +75,6 @@ public class JobPropertyStepTest {
         // TODO JENKINS-29711 means it seems to omit the required () but we are not currently testing the Snippetizer output anyway
     }
 
-    @Ignore("TODO as above")
     @SuppressWarnings("rawtypes")
     @Test public void configRoundTripBuildDiscarder() throws Exception {
         StepConfigTester tester = new StepConfigTester(r);
