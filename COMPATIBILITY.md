@@ -116,6 +116,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `ownership` : [JENKINS-32353](https://issues.jenkins-ci.org/browse/JENKINS-32353)
 - [ ] `job-restrictions`: [JENKINS-32355](https://issues.jenkins-ci.org/browse/JENKINS-32355)
 - [X] `buildtriggerbadge`: supported as of 2.2
+- [X] `radiatorview`: supported as of 1.25
 
 ## Custom steps
 
