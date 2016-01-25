@@ -305,8 +305,7 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 // when we let the last one go, it will now run till the completion
                 SemaphoreStep.success("suspendC/1", null);
-                while (!e.isComplete())
-                    waitForWorkflowToSuspend();
+                story.j.waitForCompletion(b);
 
                 // make sure all the three branches have executed to the end.
                 for (String branch : asList("A", "B", "C")) {

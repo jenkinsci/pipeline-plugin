@@ -107,6 +107,7 @@ public class TimeoutStepTest extends Assert {
             public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.getItemByFullName("restarted", WorkflowJob.class);
                 WorkflowRun b = p.getBuildByNumber(1);
+                assertTrue("took more than 15s to restart?", b.isBuilding());
                 SemaphoreStep.success("restarted/1", null);
                 story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b));
             }

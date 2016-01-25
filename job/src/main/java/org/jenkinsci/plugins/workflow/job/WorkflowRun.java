@@ -463,6 +463,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
         if (completed != null) {
             throw new IllegalStateException("double onLoad of " + this);
         } else if (Main.isUnitTest) {
+            // TODO JENKINS-22767: prior to 1.646, occasionally load the same build twice
             System.err.printf("loading %s @%h%n", this, this);
         }
         if (execution != null) {
