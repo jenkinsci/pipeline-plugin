@@ -24,9 +24,7 @@
 package org.jenkinsci.plugins.workflow.steps;
 
 import hudson.model.Result;
-import hudson.model.queue.QueueTaskFuture;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Assert;
@@ -37,15 +35,13 @@ import org.jvnet.mock_javamail.Mailbox;
 
 import javax.mail.Message;
 import javax.mail.internet.MimeMultipart;
-import java.io.IOException;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 
 /**
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 public class MailStepTest {
 
-    @Rule public JenkinsRule jenkinsRule = JenkinsRuleExt.workAroundJenkins30395();
+    @Rule public JenkinsRule jenkinsRule = new JenkinsRule();
 
     @Test
     public void test_missing_subject() throws Exception {

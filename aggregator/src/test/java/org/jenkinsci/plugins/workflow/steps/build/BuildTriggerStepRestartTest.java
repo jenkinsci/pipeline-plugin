@@ -7,7 +7,6 @@ import hudson.model.Result;
 import hudson.model.queue.QueueTaskFuture;
 import java.io.IOException;
 import java.util.Arrays;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -26,7 +25,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class BuildTriggerStepRestartTest extends Assert {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Test
     public void restartBetweenJobs() throws IOException {

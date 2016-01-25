@@ -46,7 +46,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public abstract class SingleJobTestBase extends Assert {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     // currently executing workflow and its build
     public WorkflowJob p;

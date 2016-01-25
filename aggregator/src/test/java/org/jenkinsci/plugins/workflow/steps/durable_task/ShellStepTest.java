@@ -10,7 +10,6 @@ import hudson.model.Result;
 import java.io.File;
 import java.io.Serializable;
 import java.util.concurrent.TimeoutException;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepAtomNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -37,7 +36,7 @@ public class ShellStepTest extends Assert {
     @ClassRule
     public static BuildWatcher buildWatcher = new BuildWatcher();
 
-    @Rule public JenkinsRule j = JenkinsRuleExt.workAroundJenkins30395();
+    @Rule public JenkinsRule j = new JenkinsRule();
 
     /**
      * Failure in the shell script should mark the step as red

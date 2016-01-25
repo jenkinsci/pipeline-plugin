@@ -37,7 +37,7 @@ import org.jvnet.hudson.test.JenkinsRule;
  */
 public class DSLTest {
     
-    @Rule public JenkinsRule r = JenkinsRuleExt.workAroundJenkins30395();
+    @Rule public JenkinsRule r = new JenkinsRule();
 
     @Test public void overrideFunction() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");

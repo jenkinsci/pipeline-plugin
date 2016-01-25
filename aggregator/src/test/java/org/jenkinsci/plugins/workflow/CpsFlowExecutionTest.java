@@ -50,7 +50,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 public class CpsFlowExecutionTest {
 
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
     
     private static WeakReference<ClassLoader> LOADER;
     public static void register(Object o) {

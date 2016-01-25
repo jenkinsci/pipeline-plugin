@@ -12,13 +12,12 @@ import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.util.Arrays;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 
 /**
  * @author Kohsuke Kawaguchi
  */
 public class ArtifactArchiverStepTest extends Assert {
-    @Rule public JenkinsRule j = JenkinsRuleExt.workAroundJenkins30395();
+    @Rule public JenkinsRule j = new JenkinsRule();
 
     /**
      * Archive and unarchive file

@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -39,7 +38,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class EnvStepTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
-    @Rule public RestartableJenkinsRule story = JenkinsRuleExt.workAroundJenkins30395Restartable();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Test public void overriding() {
         story.addStep(new Statement() {
