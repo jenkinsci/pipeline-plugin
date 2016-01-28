@@ -1,0 +1,148 @@
+.steps-box p {
+  margin: 0;
+  padding-bottom: 1em
+}
+
+.steps-box dd {
+  margin: 0 0 2em;
+  padding-left: 10px;
+  border-left: 3px solid #eee
+}
+
+.steps-box dd dd {
+  margin-bottom: 1em;
+}
+
+.steps-box dt>h2, .steps-box dt>h3 {
+  margin: 0
+}
+
+dt {
+  margin: 0;
+  padding-bottom: .5em;
+  padding-left: 10px;
+  border-left: 3px solid #eee;
+  font-size: 1.25em;
+  position: relative;
+}
+
+.root>dt, .root>dd {
+  margin-left: 10px;
+  box-sizing: border-box;
+}
+
+.root>dd {
+  overflow: hidden
+}
+
+.root>dt:before {
+  display: block;
+  cursor: pointer;
+  position: absolute;
+  left: -10px;
+  top: 2px;
+  box-shadow: #fff 0 -2px;
+  width: 17px;
+  height: 17px;
+  line-height: 17px;
+  font-size: 14px;
+  color: #9AB7D7;
+  text-shadow: #024 0 0 1px, #024 0 0 1px, #024 0 0 1px;
+  font-weight: bold;
+  text-align: center;
+  background: #eee;
+  text-align: center;
+  font-weight: bold;
+  width: 17px;
+  height: 17px;
+  line-height: 17px;
+  font-size: 14px;
+  color: #9AB7D7;
+  text-shadow: #024 0 0 1px, #024 0 0 1px, #024 0 0 1px;
+  font-weight: bold;
+  text-align: center;
+  background: #eee;
+  content: '\2013';
+  position: absolute;
+}
+
+.root>dt:hover:before {
+  box-shadow: inset 0 0 0 1px #ccc, #fff 0 -2px
+}
+
+.root>dt>code {
+  display: inline-block;
+}
+
+z.root>dt {
+  padding-left: 25px
+}
+
+.values-box>.value-title {
+  padding-bottom: .15em;
+  color: #aaa
+}
+
+.values-box>.list-item {
+  margin: 0;
+  padding: 0 0 0 13px;
+}
+
+.steps-box p, .steps-box ul, .steps-box ol, .steps-box dl {
+  margin: 0;
+  padding-bottom: 1em
+}
+
+.help>p:last-child, .help>ul:last-child, .help>ol:last-child, .help>dl:last-child,
+  .steps-box dl:last-child {
+  padding-top: 0;
+  padding-bottom: 0
+}
+
+.array-title {
+  border-left: 1px solid #eee;
+  padding-left: 10px;
+  color: #aaa;
+  font-size: .85em
+}
+
+.nested>dt {
+  border-left: 1px solid #eee;
+  font-weight: normal;
+  color: #aaa;
+}
+
+.nested>dd {
+  border-left: 1px solid #eee
+}
+
+dd.minimize {
+  height: 0 !important;
+  padding-bottom: 0;
+}
+
+dt.show-minimize {
+  padding-bottom: 0;
+  border-color: transparent
+}
+
+.root>dt.show-minimize:before {
+  content: '+'
+}
+
+.steps-box dt, .steps-box dd {
+  -webkit-transition: all .5s ease-in-out;
+  -moz-transition: all .5s ease-in-out;
+  -o-transition: all .5s ease-in-out;
+  transition: all .5s ease-in-out;
+}
+
+.env-vars > dt {
+  font-family:monospace;
+  font-size:1em;
+  padding-bottom:.25em;
+}
+
+.dsl-reference h1{
+  margin-bottom:0
+}

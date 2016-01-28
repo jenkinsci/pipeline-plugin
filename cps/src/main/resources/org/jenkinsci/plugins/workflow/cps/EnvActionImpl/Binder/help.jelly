@@ -27,9 +27,11 @@ node {
         see the notes below the list for Pipeline-specific details.
     </p>
     <!-- Cf.  EnvironmentContributor/EnvVarsHtml/index.groovy -->
-    <j:forEach var="ec" items="${it.environmentContributors}">
-        <st:include it="${ec}" page="buildEnv" optional="true"/>
-    </j:forEach>
+    <dl class="env-vars">
+      <j:forEach var="ec" items="${it.environmentContributors}">
+          <st:include it="${ec}" page="buildEnv" optional="true"/>
+      </j:forEach>
+    </dl>
     <p>
         The following variables are currently unavailable inside a Pipeline script:
     </p>
