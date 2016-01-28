@@ -1,5 +1,5 @@
 ace-editor:1.0.1
-branch-api:1.0
+branch-api:1.1
 cloudbees-folder:5.1
 credentials:1.24
 durable-task:1.7
