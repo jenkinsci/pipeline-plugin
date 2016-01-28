@@ -14,7 +14,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `PerforceScm` (`p4`, not the older `perforce`): supported as of 1.2.0
 - [ ] `DimensionsSCM` (`dimensionsscm`): [JENKINS-26165](https://issues.jenkins-ci.org/browse/JENKINS-26165)
 - [X] `IntegritySCM` (`integrity-plugin`): supported as of 1.36
-- [ ] `RepoScm` (`repo`): [JENKINS-26836](https://issues.jenkins-ci.org/browse/JENKINS-26836)
+- [X] `RepoScm` (`repo`): supported as of 1.9.0
 - [X] `teamconcert`: supported as of 1.9.4
 - [X] `CVSSCM` (`cvs`): scheduled to be supported in 2.13
 - [ ] `TeamFoundationServerScm` (`tfs`): [JENKINS-31803](https://issues.jenkins-ci.org/browse/JENKINS-31803)
