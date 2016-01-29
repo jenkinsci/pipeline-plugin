@@ -275,7 +275,7 @@ public class CpsFlowExecution extends FlowExecution {
         this(script, false, owner);
     }
 
-    protected CpsFlowExecution(String script, boolean sandbox, FlowExecutionOwner owner) throws IOException {
+    public CpsFlowExecution(String script, boolean sandbox, FlowExecutionOwner owner) throws IOException {
         this.owner = owner;
         this.script = script;
         this.sandbox = sandbox;
@@ -304,6 +304,10 @@ public class CpsFlowExecution extends FlowExecution {
 
     public FlowNodeStorage getStorage() {
         return storage;
+    }
+    
+    public String getScript() {
+        return script;
     }
 
     /**
