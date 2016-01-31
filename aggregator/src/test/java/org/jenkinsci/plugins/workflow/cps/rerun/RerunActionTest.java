@@ -75,7 +75,5 @@ public class RerunActionTest {
 
     // TODO test sandbox usage
     // TODO test permissions
-    // TODO test CpsScmFlowDefinition
-    // TODO test WorkflowMultiBranchProject
 
 }

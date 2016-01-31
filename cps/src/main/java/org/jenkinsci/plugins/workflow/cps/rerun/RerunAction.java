@@ -118,7 +118,7 @@ public class RerunAction implements Action {
 
     /** For whitebox testing. */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    @CheckForNull QueueTaskFuture/*<Run>*/ run(String script) {
+    public @CheckForNull QueueTaskFuture/*<Run>*/ run(String script) {
         // TODO add in additional actions from original: ParametersAction, SCMRevisionAction (used by SCMVar)
         return new ParameterizedJobMixIn() {
             @Override protected Job asJob() {
