@@ -53,7 +53,6 @@ import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.support.actions.NotExecutedNodeAction;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
@@ -229,17 +228,6 @@ public class WorkflowRunTest {
         WorkflowRun b = p.getLastBuild();
         assertNotNull(b);
         r.assertBuildStatusSuccess(r.waitForCompletion(b));
-    }
-
-    @Issue("JENKINS-32561")
-    @LocalData
-    @Test
-    public void loadLegacyNotExecutedNode() throws Exception {
-        WorkflowJob p = r.jenkins.getItemByFullName("p", WorkflowJob.class);
-        assertNotNull(p);
-        WorkflowRun b = p.getLastBuild();
-        assertNotNull(b);
-        assertNotNull(b.getAction(NotExecutedNodeAction.class));
     }
 
     @Issue("JENKINS-29571")
