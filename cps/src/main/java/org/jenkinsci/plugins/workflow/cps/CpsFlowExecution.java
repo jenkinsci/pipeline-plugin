@@ -33,6 +33,7 @@ import com.cloudbees.groovy.cps.impl.ThrowBlock;
 import com.cloudbees.groovy.cps.sandbox.DefaultInvoker;
 import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -308,6 +309,10 @@ public class CpsFlowExecution extends FlowExecution {
     
     public String getScript() {
         return script;
+    }
+
+    public Map<String,String> getLoadedScripts() {
+        return ImmutableMap.copyOf(loadedScripts);
     }
 
     /**
@@ -857,6 +862,15 @@ public class CpsFlowExecution extends FlowExecution {
             // Should not expose this to callers.
             return Jenkins.ANONYMOUS;
         }
+    }
+
+    /**
+     * Finds the expected next loaded script name, like {@code Script1}.
+     * @param path a file path being loaded (currently ignored)
+     */
+    @Restricted(NoExternalUse.class)
+    public String getNextScriptName(String path) {
+        return shell.generateScriptName().replaceFirst("[.]groovy$", "");
     }
 
     @Override public String toString() {

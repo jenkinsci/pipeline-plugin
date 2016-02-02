@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.cps.rerun;
 
+import hudson.FilePath;
+import hudson.XmlFile;
 import hudson.model.Item;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
@@ -34,6 +36,8 @@ import hudson.model.User;
 import hudson.security.ACL;
 import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.security.Permission;
+import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import jenkins.model.Jenkins;
 import jenkins.security.NotReallyRoleSensitiveCallable;
@@ -66,9 +70,10 @@ public class RerunActionTest {
             assertTrue(a.isEnabled());
             HtmlPage page = r.createWebClient().getPage(b1, a.getUrlName());
             HtmlForm form = page.getFormByName("config");
-            HtmlTextArea text = form.getTextAreaByName("_.script");
+            HtmlTextArea text = form.getTextAreaByName("_.mainScript");
             assertEquals("echo 'first script'", text.getText());
             text.setText("echo 'second script'");
+            // TODO loaded scripts
             HtmlPage redirect = r.submit(form);
             assertEquals(p.getAbsoluteUrl(), redirect.getUrl().toString());
             r.waitUntilNoActivity();
@@ -132,6 +137,23 @@ public class RerunActionTest {
                 return a.isEnabled();
             }
         });
+    }
+
+    @Test public void loadStep() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        FilePath f = r.jenkins.getWorkspaceFor(p).child("f.groovy");
+        f.write("echo 'original loaded text'", null);
+        p.setDefinition(new CpsFlowDefinition("node {load 'f.groovy'}", true));
+        WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        r.assertLogContains("original loaded text", b1);
+        WorkflowRun b2 = (WorkflowRun) b1.getAction(RerunAction.class).run("echo 'trying edits'; node {load 'f.groovy'}", Collections.singletonMap("Script1", "echo 'new loaded text'")).get();
+        r.assertBuildStatusSuccess(b2);
+        r.assertLogContains("trying edits", b2);
+        r.assertLogContains("new loaded text", b2);
+        System.out.println(new XmlFile(new File(b2.getRootDir(), "build.xml")).asString());
+        // TODO test multiple loads
+        // TODO load after restart
+        // TODO test rerun of rerun
     }
 
 }

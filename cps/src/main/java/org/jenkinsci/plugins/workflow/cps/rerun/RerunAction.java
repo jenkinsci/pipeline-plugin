@@ -40,13 +40,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
 import jenkins.model.TransientActionFactory;
 import jenkins.scm.api.SCMRevisionAction;
+import net.sf.json.JSONObject;
 import org.acegisecurity.AccessDeniedException;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -104,6 +107,10 @@ public class RerunAction implements Action {
         return getExecution().getScript();
     }
 
+    /* accessible to Jelly */ public Map<String,String> getOriginalLoadedScripts() {
+        return getExecution().getLoadedScripts();
+    }
+
     /* accessible to Jelly */ public Run getOwner() {
         return run;
     }
@@ -113,7 +120,12 @@ public class RerunAction implements Action {
         if (!isEnabled()) {
             throw new AccessDeniedException("not allowed to rerun"); // AccessDeniedException2 requires us to look up the specific Permission
         }
-        run(req.getSubmittedForm().getString("script"));
+        JSONObject form = req.getSubmittedForm();
+        Map<String,String> otherScripts = new HashMap<String,String>();
+        for (String clazz : getOriginalLoadedScripts().keySet()) {
+            otherScripts.put(clazz, form.getString(clazz));
+        }
+        run(form.getString("mainScript"), otherScripts);
         rsp.sendRedirect("../.."); // back to WorkflowJob; new build might not start instantly so cannot redirect to it
     }
 
@@ -123,10 +135,13 @@ public class RerunAction implements Action {
     );
 
     /** For whitebox testing. */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public @CheckForNull QueueTaskFuture/*<Run>*/ run(String script) {
+        return run(script, Collections.<String,String>emptyMap());
+    }
+
+    public @CheckForNull QueueTaskFuture/*<Run>*/ run(String script, Map<String,String> otherScripts) {
         List<Action> actions = new ArrayList<Action>();
-        actions.add(new RerunFlowFactoryAction(script, getExecution().isSandbox()));
+        actions.add(new RerunFlowFactoryAction(script, otherScripts, getExecution().isSandbox()));
         actions.add(new CauseAction(new Cause.UserIdCause(), new RerunCause(run)));
         for (Class<? extends Action> c : COPIED_ACTIONS) {
             actions.addAll(run.getActions(c));

@@ -24,13 +24,22 @@
 
 package org.jenkinsci.plugins.workflow.cps.rerun;
 
+import hudson.Extension;
 import hudson.model.Action;
 import hudson.model.InvisibleAction;
 import hudson.model.Queue;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.Nonnull;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowFactoryAction2;
+import org.jenkinsci.plugins.workflow.cps.steps.LoadStepExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 
@@ -39,20 +48,56 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
  */
 class RerunFlowFactoryAction extends InvisibleAction implements CpsFlowFactoryAction2, Queue.QueueAction {
 
-    private transient final String script;
+    private static final Logger LOGGER = Logger.getLogger(RerunFlowFactoryAction.class.getName());
+
+    private String mainScript;
+    private final Map<String,String> otherScripts;
     private transient final boolean sandbox;
     
-    RerunFlowFactoryAction(String script, boolean sandbox) {
-        this.script = script;
+    RerunFlowFactoryAction(@Nonnull String mainScript, @Nonnull Map<String,String> otherScripts, boolean sandbox) {
+        this.mainScript = mainScript;
+        this.otherScripts = new HashMap<String,String>(otherScripts);
         this.sandbox = sandbox;
     }
 
     @Override public CpsFlowExecution create(FlowDefinition def, FlowExecutionOwner owner, List<? extends Action> actions) throws IOException {
+        String script = mainScript;
+        mainScript = null; // minimize build.xml size
         return new CpsFlowExecution(script, sandbox, owner);
     }
 
     @Override public boolean shouldSchedule(List<Action> actions) {
         return true; // do not coalesce
+    }
+
+    @Extension public static class ReplacerImpl implements LoadStepExecution.Replacer {
+
+        @Override public String replace(String text, CpsFlowExecution execution, String clazz, TaskListener listener) {
+            try {
+                Queue.Executable executable = execution.getOwner().getExecutable();
+                if (executable instanceof Run) {
+                    RerunFlowFactoryAction action = ((Run) executable).getAction(RerunFlowFactoryAction.class);
+                    if (action != null) {
+                        String newText = action.otherScripts.remove(clazz);
+                        if (newText != null) {
+                            listener.getLogger().println("Replacing Groovy text with edited version");
+                            return newText;
+                        } else {
+                            listener.getLogger().println("Warning: no replacement Groovy text found for " + clazz);
+                        }
+                    } else {
+                        LOGGER.log(Level.FINE, "{0} was not a rerun", executable);
+                    }
+                } else {
+                    LOGGER.log(Level.FINE, "{0} was not a run at all", executable);
+                }
+            } catch (IOException x) {
+                LOGGER.log(Level.WARNING, null, x);
+            }
+            return text;
+        }
+
+
     }
 
 }
