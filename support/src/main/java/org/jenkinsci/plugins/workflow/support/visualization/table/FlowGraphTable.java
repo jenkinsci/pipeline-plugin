@@ -252,7 +252,7 @@ public class FlowGraphTable {
         }
 
         boolean isExecuted() {
-            return node.getAction(NotExecutedNodeAction.class) == null;
+            return NotExecutedNodeAction.isExecuted(node);
         }
 
         void addGraphChild(Row r) {
