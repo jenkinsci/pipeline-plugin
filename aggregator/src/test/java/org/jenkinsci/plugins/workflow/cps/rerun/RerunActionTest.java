@@ -27,6 +27,10 @@ package org.jenkinsci.plugins.workflow.cps.rerun;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
+import hudson.model.ParametersAction;
+import hudson.model.ParametersDefinitionProperty;
+import hudson.model.StringParameterDefinition;
+import hudson.model.StringParameterValue;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -73,7 +77,16 @@ public class RerunActionTest {
         r.assertLogContains("fourth script", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
 
-    // TODO test sandbox usage
+    @Test public void parameterized() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("param", "")));
+        p.setDefinition(new CpsFlowDefinition("echo \"run with ${param}\"", true));
+        WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("param", "some value"))));
+        r.assertLogContains("run with some value", b1);
+        WorkflowRun b2 = (WorkflowRun) b1.getAction(RerunAction.class).run("echo \"run again with ${param}\"").get();
+        r.assertLogContains("run again with some value", r.assertBuildStatusSuccess(b2));
+    }
+
     // TODO test permissions
 
 }

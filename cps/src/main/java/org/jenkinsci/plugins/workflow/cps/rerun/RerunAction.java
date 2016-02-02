@@ -24,11 +24,13 @@
 
 package org.jenkinsci.plugins.workflow.cps.rerun;
 
+import com.google.common.collect.ImmutableList;
 import hudson.Extension;
 import hudson.model.Action;
 import hudson.model.CauseAction;
 import hudson.model.Item;
 import hudson.model.Job;
+import hudson.model.ParametersAction;
 import hudson.model.Run;
 import hudson.model.queue.QueueTaskFuture;
 import java.io.IOException;
@@ -53,6 +55,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 /**
  * Attached to a {@link WorkflowRun} when it could be rerun.
  */
+@SuppressWarnings("rawtypes") // on Run
 public class RerunAction implements Action {
 
     private final Run run;
@@ -119,17 +122,20 @@ public class RerunAction implements Action {
         rsp.sendRedirect("../.."); // back to WorkflowJob; new build might not start instantly so cannot redirect to it
     }
 
+    private static final Iterable<Class<? extends Action>> COPIED_ACTIONS = ImmutableList.of(
+        ParametersAction.class,
+        SCMRevisionAction.class
+    );
+
     /** For whitebox testing. */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public @CheckForNull QueueTaskFuture/*<Run>*/ run(String script) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(new RerunFlowFactoryAction(script, getExecution().isSandbox()));
         actions.add(new CauseAction(new RerunCause(run)));
-        SCMRevisionAction rev = run.getAction(SCMRevisionAction.class);
-        if (rev != null) {
-            actions.add(rev);
+        for (Class<? extends Action> c : COPIED_ACTIONS) {
+            actions.addAll(run.getActions(c));
         }
-        // TODO add in additional actions from original: ParametersAction
         return new ParameterizedJobMixIn() {
             @Override protected Job asJob() {
                 return run.getParent();
