@@ -8,12 +8,17 @@
                 <h1>Rerun ${it.owner.displayName}</h1>
                 <f:form action="run" method="POST" name="config">
                     <f:entry field="script" title="Script">
-                        <f:textarea value="${it.originalScript}"/>
+                        <div id="workflow-editor-wrapper" style="display: none; position: relative">
+                            <f:textarea value="${it.originalScript}"/> <!-- TODO checkMethod="post" and set up syntax checking -->
+                            <div id="workflow-editor" class="pane-frame" style="height: 250px;"/>
+                        </div>
                     </f:entry>
+                    <!-- TODO snippetizer -->
                     <f:bottomButtonBar>
                         <f:submit value="Run"/>
                     </f:bottomButtonBar>
                 </f:form>
+                <st:adjunct includes="org.jenkinsci.plugins.workflow.cps.workflow-editor"/>
             </j:if>
         </l:main-panel>
     </l:layout>
