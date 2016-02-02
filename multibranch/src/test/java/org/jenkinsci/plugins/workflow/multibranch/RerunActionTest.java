@@ -24,11 +24,27 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty;
+import hudson.model.Item;
+import hudson.model.User;
+import hudson.security.ACL;
+import hudson.security.Permission;
+import hudson.security.ProjectMatrixAuthorizationStrategy;
+import java.io.File;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
+import jenkins.branch.MultiBranchProject;
+import jenkins.branch.OrganizationFolder;
+import jenkins.model.Jenkins;
 import jenkins.plugins.git.GitSCMSource;
+import jenkins.security.NotReallyRoleSensitiveCallable;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.rerun.RerunAction;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -38,7 +54,9 @@ import org.jenkinsci.plugins.workflow.steps.scm.GitStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -47,6 +65,7 @@ public class RerunActionTest {
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public JenkinsRule r = new JenkinsRule();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
+    @Rule public TemporaryFolder tmp = new TemporaryFolder();
 
     @Test public void scriptFromSCM() throws Exception {
         sampleRepo.init();
@@ -90,5 +109,54 @@ public class RerunActionTest {
         r.assertLogContains("INITIAL CONTENT", b2);
     }
 
+    @Ignore("TODO filed branch-api + matrix-auth bug: java.lang.ClassCastException: jenkins.branch.MultiBranchProject$3 cannot be cast to hudson.security.SidACL")
+    @Test public void permissions() throws Exception {
+        File clones = tmp.newFolder();
+        sampleRepo.init();
+        sampleRepo.write("Jenkinsfile", "");
+        sampleRepo.git("add", "Jenkinsfile");
+        sampleRepo.git("commit", "--all", "--message=init");
+        sampleRepo.git("clone", ".", new File(clones, "one").getAbsolutePath());
+        r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
+        ProjectMatrixAuthorizationStrategy pmas = new ProjectMatrixAuthorizationStrategy();
+        pmas.add(Jenkins.ADMINISTER, "admin");
+        pmas.add(Jenkins.READ, "dev1");
+        pmas.add(Jenkins.READ, "dev2");
+        pmas.add(Jenkins.READ, "dev3");
+        r.jenkins.setAuthorizationStrategy(pmas);
+        OrganizationFolder top = r.jenkins.createProject(OrganizationFolder.class, "top");
+        Map<Permission, Set<String>> perms = new HashMap<Permission, Set<String>>();
+        perms.put(Item.CONFIGURE, Collections.singleton("dev1")); // implies RERUN
+        perms.put(RerunAction.RERUN, Collections.singleton("dev2"));
+        perms.put(Item.BUILD, Collections.singleton("dev3")); // does not imply RERUN
+        top.addProperty(new AuthorizationMatrixProperty(perms));
+        top.getNavigators().add(new GitDirectorySCMNavigator(clones.getAbsolutePath()));
+        top.scheduleBuild2(0).getFuture().get();
+        top.getComputation().writeWholeLogTo(System.out);
+        assertEquals(1, top.getItems().size());
+        MultiBranchProject<?,?> one = top.getItem("one");
+        r.waitUntilNoActivity();
+        WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject((WorkflowMultiBranchProject) one, "master");
+        WorkflowRun b1 = p.getLastBuild();
+        assertEquals(1, b1.getNumber());
+        assertTrue(canRerun(b1, "admin"));
+        assertFalse("not sandboxed, so only safe for admins", canRerun(b1, "dev1"));
+        assertFalse(canRerun(b1, "dev2"));
+        assertFalse(canRerun(b1, "dev3"));
+        p.setDefinition(new CpsFlowDefinition("", true));
+        WorkflowRun b2 = p.scheduleBuild2(0).get();
+        assertTrue(canRerun(b2, "admin"));
+        assertTrue(canRerun(b2, "dev1"));
+        assertTrue(canRerun(b2, "dev2"));
+        assertFalse(canRerun(b2, "dev3"));
+    }
+    private static boolean canRerun(WorkflowRun b, String user) {
+        final RerunAction a = b.getAction(RerunAction.class);
+        return ACL.impersonate(User.get(user).impersonate(), new NotReallyRoleSensitiveCallable<Boolean,RuntimeException>() {
+            @Override public Boolean call() throws RuntimeException {
+                return a.isEnabled();
+            }
+        });
+    }
 
 }

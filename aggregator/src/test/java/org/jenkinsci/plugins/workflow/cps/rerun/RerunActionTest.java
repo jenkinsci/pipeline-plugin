@@ -27,10 +27,20 @@ package org.jenkinsci.plugins.workflow.cps.rerun;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
+import hudson.model.Item;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
+import hudson.model.Run;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
+import hudson.model.User;
+import hudson.security.ACL;
+import hudson.security.GlobalMatrixAuthorizationStrategy;
+import hudson.security.Permission;
+import java.util.List;
+import jenkins.model.Jenkins;
+import jenkins.security.NotReallyRoleSensitiveCallable;
+import org.hamcrest.Matchers;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -87,6 +97,40 @@ public class RerunActionTest {
         r.assertLogContains("run again with some value", r.assertBuildStatusSuccess(b2));
     }
 
-    // TODO test permissions
+    @Test public void permissions() throws Exception {
+        r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
+        GlobalMatrixAuthorizationStrategy gmas = new GlobalMatrixAuthorizationStrategy();
+        gmas.add(Jenkins.ADMINISTER, "admin");
+        gmas.add(Jenkins.READ, "dev1");
+        gmas.add(Item.CONFIGURE, "dev1"); // implies RERUN
+        gmas.add(Jenkins.READ, "dev2");
+        List<Permission> permissions = Run.PERMISSIONS.getPermissions();
+        assertThat(permissions, Matchers.hasItem(RerunAction.RERUN));
+        gmas.add(RerunAction.RERUN, "dev2");
+        gmas.add(Jenkins.READ, "dev3");
+        gmas.add(Item.BUILD, "dev3"); // does not imply RERUN
+        r.jenkins.setAuthorizationStrategy(gmas);
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("", false));
+        WorkflowRun b1 = p.scheduleBuild2(0).get();
+        assertTrue(canRerun(b1, "admin"));
+        assertFalse("not sandboxed, so only safe for admins", canRerun(b1, "dev1"));
+        assertFalse(canRerun(b1, "dev2"));
+        assertFalse(canRerun(b1, "dev3"));
+        p.setDefinition(new CpsFlowDefinition("", true));
+        WorkflowRun b2 = p.scheduleBuild2(0).get();
+        assertTrue(canRerun(b2, "admin"));
+        assertTrue(canRerun(b2, "dev1"));
+        assertTrue(canRerun(b2, "dev2"));
+        assertFalse(canRerun(b2, "dev3"));
+    }
+    private static boolean canRerun(WorkflowRun b, String user) {
+        final RerunAction a = b.getAction(RerunAction.class);
+        return ACL.impersonate(User.get(user).impersonate(), new NotReallyRoleSensitiveCallable<Boolean,RuntimeException>() {
+            @Override public Boolean call() throws RuntimeException {
+                return a.isEnabled();
+            }
+        });
+    }
 
 }

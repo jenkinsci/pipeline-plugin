@@ -114,6 +114,12 @@ THE SOFTWARE.
             <version>1.6</version>
             <scope>test</scope><!-- from git-server via workflow-cps-global-lib and otherwise unavailable during tests -->
         </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>matrix-auth</artifactId>
+            <version>1.0.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

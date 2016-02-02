@@ -33,6 +33,8 @@ import hudson.model.Job;
 import hudson.model.ParametersAction;
 import hudson.model.Run;
 import hudson.model.queue.QueueTaskFuture;
+import hudson.security.Permission;
+import hudson.security.PermissionScope;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,15 +84,7 @@ public class RerunAction implements Action {
     }
 
     /* accessible to Jelly */ public boolean isEnabled() {
-        Job job = run.getParent();
-        if (!job.hasPermission(Item.BUILD)) {
-            return false;
-        }
-        if (!job.hasPermission(Item.EXTENDED_READ)) {
-            // CONFIGURE would fail on a branch project, and anyway we are not changing the job configuration per se.
-            // We do want to be able to see the script (if CpsFlowDefinition).
-            // TODO but for multibranch we arguably want to limit this to people who could have changed the MultiBranchProject or OrganizationFolder.
-            // Do we need a new permission just for this action?
+        if (!run.hasPermission(RERUN)) {
             return false;
         }
         CpsFlowExecution exec = getExecution();
@@ -143,7 +137,13 @@ public class RerunAction implements Action {
         }.scheduleBuild2(0, actions.toArray(new Action[actions.size()]));
     }
 
+    public static final Permission RERUN = new Permission(Run.PERMISSIONS, "Rerun", Messages._Rerun_permission_description(), Item.CONFIGURE, PermissionScope.RUN);
+
     @Extension public static class Factory extends TransientActionFactory<Run> {
+
+        static {
+            RERUN.getEnabled(); // force registration during startup
+        }
 
         @Override public Class<Run> type() {
             return Run.class;
