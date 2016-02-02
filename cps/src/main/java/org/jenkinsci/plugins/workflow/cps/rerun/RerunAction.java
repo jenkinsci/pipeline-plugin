@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.workflow.cps.rerun;
 import com.google.common.collect.ImmutableList;
 import hudson.Extension;
 import hudson.model.Action;
+import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Item;
 import hudson.model.Job;
@@ -126,7 +127,7 @@ public class RerunAction implements Action {
     public @CheckForNull QueueTaskFuture/*<Run>*/ run(String script) {
         List<Action> actions = new ArrayList<Action>();
         actions.add(new RerunFlowFactoryAction(script, getExecution().isSandbox()));
-        actions.add(new CauseAction(new RerunCause(run)));
+        actions.add(new CauseAction(new Cause.UserIdCause(), new RerunCause(run)));
         for (Class<? extends Action> c : COPIED_ACTIONS) {
             actions.addAll(run.getActions(c));
         }
