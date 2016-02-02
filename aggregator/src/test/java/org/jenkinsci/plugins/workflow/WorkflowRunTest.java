@@ -84,7 +84,7 @@ public class WorkflowRunTest {
 
     @Test public void parameters() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("node {sh('echo param=' + PARAM)}", true));
+        p.setDefinition(new CpsFlowDefinition("node {sh('echo param=' + PARAM)}",true));
         p.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("PARAM", null)));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("PARAM", "value"))));
         r.assertLogContains("param=value", b);
