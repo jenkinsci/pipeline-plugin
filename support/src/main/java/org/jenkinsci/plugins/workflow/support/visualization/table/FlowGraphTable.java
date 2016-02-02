@@ -251,7 +251,7 @@ public class FlowGraphTable {
             return node instanceof BlockEndNode;
         }
 
-        boolean isExecuted() {
+        public boolean isExecuted() {
             return NotExecutedNodeAction.isExecuted(node);
         }
 

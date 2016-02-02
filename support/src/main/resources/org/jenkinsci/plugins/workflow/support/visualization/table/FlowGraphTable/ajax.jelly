@@ -41,33 +41,19 @@
 
         <j:forEach var="row" items="${it.rows}">
           <j:set var="node" value="${row.node}"/>
-          <!-- Greyed out if not executed -->
-          <j:if test="${!row.isExecuted()}">
-            <tr style="background: lightgrey">
-              <!-- tooltip is for now debugging only -->
-              <td style="padding-left: ${row.treeDepth*20+5}px" tooltip="ID: ${node.id}">
-                <a href="${rootURL}/${node.url}">
-                  ${row.displayName}
-                </a>
-              </td>
-              <j:forEach var="column" items="${columns}">
-                <st:include from="${column}" page="column"/>
-              </j:forEach>
-            </tr>
-          </j:if>
-          <j:if test="${row.isExecuted()}">
-            <tr>
-              <!-- tooltip is for now debugging only -->
-              <td style="padding-left: ${row.treeDepth*20+5}px" tooltip="ID: ${node.id}">
-                <a href="${rootURL}/${node.url}">
-                  ${row.displayName}
-                </a>
-              </td>
-              <j:forEach var="column" items="${columns}">
-                <st:include from="${column}" page="column"/>
-              </j:forEach>
-            </tr>
-          </j:if>
+          <tr style="opacity: ${row.isExecuted()?'1.0':'0.3'}"> <!-- Muted if not executed -->
+            <!-- tooltip is for now debugging only -->
+            <j:set var="exec_state" value=""/>
+            <j:if test="${!row.executed}"><j:set var="exec_state" value=" (${%not executed})"/></j:if>
+            <td style="padding-left: ${row.treeDepth*20+5}px" tooltip="ID: ${node.id}${exec_state}">
+              <a href="${rootURL}/${node.url}">
+                ${row.displayName}
+              </a>
+            </td>
+            <j:forEach var="column" items="${columns}">
+              <st:include from="${column}" page="column"/>
+            </j:forEach>
+          </tr>
         </j:forEach>
       </table>
     </div>
