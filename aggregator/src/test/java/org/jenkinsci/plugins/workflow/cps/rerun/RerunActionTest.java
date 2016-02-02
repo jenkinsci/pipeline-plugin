@@ -81,6 +81,7 @@ public class RerunActionTest {
         RerunCause cause = b2.getCause(RerunCause.class);
         assertNotNull(cause);
         assertEquals(1, cause.getNumber());
+        assertEquals(b1, cause.getOriginal());
         WorkflowRun b3 = (WorkflowRun) b2.getAction(RerunAction.class).run("echo 'third script'").get();
         r.assertLogContains("third script", r.assertBuildStatusSuccess(b3));
         p.setDefinition(new CpsFlowDefinition("echo 'fourth script'", false));

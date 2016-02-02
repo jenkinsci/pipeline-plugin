@@ -24,28 +24,50 @@
 
 package org.jenkinsci.plugins.workflow.cps.rerun;
 
+import hudson.console.ModelHyperlinkNote;
 import hudson.model.Cause;
+import hudson.model.Job;
 import hudson.model.Run;
+import hudson.model.TaskListener;
+import javax.annotation.CheckForNull;
 
 /**
  * Marker that a run is a rerun of an earlier one.
  */
-class RerunCause extends Cause {
+public class RerunCause extends Cause {
 
     private final int number;
+    private transient Job<?,?> job;
 
-    RerunCause(Run run) {
+    RerunCause(Run<?,?> run) {
         this.number = run.getNumber();
+        job = run.getParent();
+    }
+
+    @Override public void onLoad(Run<?,?> build) {
+        super.onLoad(build);
+        job = build.getParent();
     }
     
     public int getNumber() {
         return number;
     }
 
+    public @CheckForNull Run<?,?> getOriginal() {
+        return job.getBuildByNumber(number);
+    }
+
     @Override public String getShortDescription() {
         return "Reran #" + number;
     }
 
-    // TODO description.jelly with model-link
+    @Override public void print(TaskListener listener) {
+        Run<?,?> original = getOriginal();
+        if (original != null) {
+            listener.getLogger().println("Reran " + ModelHyperlinkNote.encodeTo(original));
+        } else {
+            super.print(listener); // same, without hyperlink
+        }
+    }
 
 }
