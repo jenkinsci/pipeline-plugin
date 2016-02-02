@@ -32,13 +32,16 @@ import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.queue.QueueTaskFuture;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
 import jenkins.model.TransientActionFactory;
+import jenkins.scm.api.SCMRevisionAction;
 import org.acegisecurity.AccessDeniedException;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -119,12 +122,19 @@ public class RerunAction implements Action {
     /** For whitebox testing. */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public @CheckForNull QueueTaskFuture/*<Run>*/ run(String script) {
-        // TODO add in additional actions from original: ParametersAction, SCMRevisionAction (used by SCMVar)
+        List<Action> actions = new ArrayList<Action>();
+        actions.add(new RerunFlowFactoryAction(script, getExecution().isSandbox()));
+        actions.add(new CauseAction(new RerunCause(run)));
+        SCMRevisionAction rev = run.getAction(SCMRevisionAction.class);
+        if (rev != null) {
+            actions.add(rev);
+        }
+        // TODO add in additional actions from original: ParametersAction
         return new ParameterizedJobMixIn() {
             @Override protected Job asJob() {
                 return run.getParent();
             }
-        }.scheduleBuild2(0, new RerunFlowFactoryAction(script, getExecution().isSandbox()), new CauseAction(new RerunCause(run)));
+        }.scheduleBuild2(0, actions.toArray(new Action[actions.size()]));
     }
 
     @Extension public static class Factory extends TransientActionFactory<Run> {

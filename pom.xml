@@ -50,7 +50,7 @@
   </scm>
     <properties>
         <jenkins.version>1.609.3</jenkins.version>
-        <jenkins-test-harness.version>2.1</jenkins-test-harness.version>
+        <jenkins-test-harness.version>2.2-SNAPSHOT</jenkins-test-harness.version> <!-- TODO https://github.com/jenkinsci/jenkins-test-harness/pull/9 -->
         <java.level>6</java.level>
     </properties>
     <modules>
@@ -80,6 +80,11 @@
                 <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>durable-task</artifactId>
                 <version>1.5</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>scm-api</artifactId>
+                <version>1.0</version>
             </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>

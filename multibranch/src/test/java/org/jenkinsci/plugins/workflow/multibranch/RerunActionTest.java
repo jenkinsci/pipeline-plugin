@@ -24,6 +24,11 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import jenkins.branch.BranchProperty;
+import jenkins.branch.BranchSource;
+import jenkins.branch.DefaultBranchPropertyStrategy;
+import jenkins.plugins.git.GitSCMSource;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.rerun.RerunAction;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -62,6 +67,28 @@ public class RerunActionTest {
         r.assertLogContains("this time loaded subsequent content", b);
     }
 
-    // TODO test WorkflowMultiBranchProject
+    @Test public void multibranch() throws Exception {
+        sampleRepo.init();
+        sampleRepo.write("Jenkinsfile", "node {checkout scm; echo readFile('file')}");
+        sampleRepo.write("file", "initial content");
+        sampleRepo.git("add", "Jenkinsfile");
+        sampleRepo.git("commit", "--all", "--message=init");
+        WorkflowMultiBranchProject mp = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+        mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+        WorkflowJob p = WorkflowMultiBranchProjectTest.scheduleAndFindBranchProject(mp, "master");
+        r.waitUntilNoActivity();
+        WorkflowRun b1 = p.getLastBuild();
+        assertNotNull(b1);
+        assertEquals(1, b1.getNumber());
+        r.assertLogContains("initial content", b1);
+        sampleRepo.write("file", "subsequent content");
+        sampleRepo.git("add", "file");
+        sampleRepo.git("commit", "--message=next");
+        ScriptApproval.get().approveSignature("method java.lang.String toUpperCase");
+        WorkflowRun b2 = (WorkflowRun) b1.getAction(RerunAction.class).run("node {checkout scm; echo readFile('file').toUpperCase()}").get();
+        assertEquals(2, b2.number);
+        r.assertLogContains("INITIAL CONTENT", b2);
+    }
+
 
 }
