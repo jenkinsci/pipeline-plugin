@@ -147,7 +147,12 @@ There are several considerations common to the various metasteps.
 
 #### Jenkins core dependency
 
-First, make sure the baseline Jenkins version in your `pom.xml` is sufficiently new (specific versions will be noted below).
+First, make sure the baseline Jenkins version in your `pom.xml` is sufficiently new.
+
+Suggested versions for:
+- [Basic usage](#user-content-basic-update)
+- [Build wrappers](#user-content-build-wrappers-1)
+
 This introduces some new API methods, and deprecates some old ones.
 
 If you are nervous about making your plugin depend on a recent Jenkins version,

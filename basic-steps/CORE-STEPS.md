@@ -36,7 +36,7 @@ Post-build actions (also known as _publishers_) are divided into two classes:
 When a recorder is run from a pipeline, it might set the build’s status (for example to unstable), but otherwise is likely to work intuitively.
 Running a notifier is trickier since normally a pipeline in progress has no status yet, unlike a freestyle project whose status is determined before the notifier is called.
 To help interoperate better with these, you can use the `catchError` step, or manually set a build status using `currentBuild.result`.
-See the help for the `catchError` step for examples.
+See the [help for the `catchError` step](src/main/resources/org/jenkinsci/plugins/workflow/steps/CatchErrorStep/help.html) for examples.
 
 ## Plain catch blocks
 

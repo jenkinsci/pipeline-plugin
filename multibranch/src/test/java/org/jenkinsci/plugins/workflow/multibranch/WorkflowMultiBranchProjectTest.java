@@ -138,7 +138,6 @@ public class WorkflowMultiBranchProjectTest {
         /* More realistic variant:
         mp.getSourcesList().add(new BranchSource(new SingleSCMSource(null, "test", new NullSCM()), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
         JenkinsRule.WebClient wc = r.createWebClient();
-        wc.setJavaScriptEnabled(false); // TODO 404 fixed by https://github.com/jenkinsci/branch-api-plugin/pull/17
         String html = wc.getPage(mp, "configure").getWebResponse().getContentAsString();
         assertThat(html, containsString("GitSCM"));
         assertThat(html, not(containsString("OldSCM")));
