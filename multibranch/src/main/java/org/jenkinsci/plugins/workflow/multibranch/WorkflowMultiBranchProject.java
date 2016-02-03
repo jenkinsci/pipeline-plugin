@@ -31,7 +31,6 @@ import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.scm.SCMDescriptor;
 import java.io.IOException;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.branch.BranchProjectFactory;
@@ -77,10 +76,6 @@ public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,W
 
         @Override public TopLevelItem newInstance(ItemGroup parent, String name) {
             return new WorkflowMultiBranchProject(parent, name);
-        }
-
-        @Override public List<SCMDescriptor<?>> getSCMDescriptors() {
-            throw new IllegalStateException("TODO unused: https://github.com/jenkinsci/branch-api-plugin/pull/24");
         }
 
         @Override public boolean isApplicable(Descriptor descriptor) {
