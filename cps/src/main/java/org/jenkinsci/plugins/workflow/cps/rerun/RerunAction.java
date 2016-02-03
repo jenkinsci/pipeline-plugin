@@ -59,7 +59,7 @@ import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
- * Attached to a {@link WorkflowRun} when it could be rerun.
+ * Attached to a {@link Run} when it could be rerun with script edits.
  */
 @SuppressWarnings("rawtypes") // on Run
 public class RerunAction implements Action {
