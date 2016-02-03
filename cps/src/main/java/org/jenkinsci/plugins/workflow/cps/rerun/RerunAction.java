@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.workflow.cps.rerun;
 
 import com.google.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Action;
 import hudson.model.Cause;
@@ -83,7 +84,11 @@ public class RerunAction implements Action {
     }
 
     private @CheckForNull CpsFlowExecution getExecution() {
-        FlowExecution exec = ((FlowExecutionOwner.Executable) run).asFlowExecutionOwner().getOrNull();
+        FlowExecutionOwner owner = ((FlowExecutionOwner.Executable) run).asFlowExecutionOwner();
+        if (owner == null) {
+            return null;
+        }
+        FlowExecution exec = owner.getOrNull();
         return exec instanceof CpsFlowExecution ? (CpsFlowExecution) exec : null;
     }
 
@@ -104,11 +109,13 @@ public class RerunAction implements Action {
     }
 
     /* accessible to Jelly */ public String getOriginalScript() throws Exception {
-        return getExecution().getScript();
+        CpsFlowExecution execution = getExecution();
+        return execution != null ? execution.getScript() : "???";
     }
 
     /* accessible to Jelly */ public Map<String,String> getOriginalLoadedScripts() {
-        return getExecution().getLoadedScripts();
+        CpsFlowExecution execution = getExecution();
+        return execution != null ? execution.getLoadedScripts() : /* ? */Collections.<String,String>emptyMap();
     }
 
     /* accessible to Jelly */ public Run getOwner() {
@@ -141,7 +148,11 @@ public class RerunAction implements Action {
 
     public @CheckForNull QueueTaskFuture/*<Run>*/ run(String script, Map<String,String> otherScripts) {
         List<Action> actions = new ArrayList<Action>();
-        actions.add(new RerunFlowFactoryAction(script, otherScripts, getExecution().isSandbox()));
+        CpsFlowExecution execution = getExecution();
+        if (execution == null) {
+            return null;
+        }
+        actions.add(new RerunFlowFactoryAction(script, otherScripts, execution.isSandbox()));
         actions.add(new CauseAction(new Cause.UserIdCause(), new RerunCause(run)));
         for (Class<? extends Action> c : COPIED_ACTIONS) {
             actions.addAll(run.getActions(c));
@@ -155,6 +166,7 @@ public class RerunAction implements Action {
 
     public static final Permission RERUN = new Permission(Run.PERMISSIONS, "Rerun", Messages._Rerun_permission_description(), Item.CONFIGURE, PermissionScope.RUN);
 
+    @SuppressFBWarnings(value="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT", justification="getEnabled return value discarded")
     @Extension public static class Factory extends TransientActionFactory<Run> {
 
         static {
