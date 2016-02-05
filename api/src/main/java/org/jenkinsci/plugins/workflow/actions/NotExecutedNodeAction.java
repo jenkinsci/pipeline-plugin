@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.support.actions;
+package org.jenkinsci.plugins.workflow.actions;
 
 import hudson.model.InvisibleAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;

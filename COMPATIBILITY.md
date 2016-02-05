@@ -57,6 +57,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
 - [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
 - [X] `XUnitPublisher` and `XUnitBuilder` (`xunit`): scheduled to be supported as of 1.100
+- [] `PerformancePublisher` (`performance`) [JENKINS-32650](https://issues.jenkins-ci.org/browse/JENKINS-32650)
 
 ## Build wrappers
 
@@ -116,6 +117,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `ownership` : [JENKINS-32353](https://issues.jenkins-ci.org/browse/JENKINS-32353)
 - [ ] `job-restrictions`: [JENKINS-32355](https://issues.jenkins-ci.org/browse/JENKINS-32355)
 - [X] `buildtriggerbadge`: supported as of 2.2
+- [X] `build-monitor-plugin`: supported as of 1.6+build.159 
 - [X] `radiatorview`: supported as of 1.25
 - [ ] `chucknorris`: [JENKINS-32594](https://issues.jenkins-ci.org/browse/JENKINS-32594)
 

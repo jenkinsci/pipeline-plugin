@@ -41,7 +41,6 @@ import hudson.XmlFile;
 import hudson.model.Action;
 import hudson.util.RobustReflectionConverter;
 import hudson.util.XStream2;
-import org.jenkinsci.plugins.workflow.support.actions.NotExecutedNodeAction;
 
 import java.io.File;
 import java.io.IOException;
@@ -151,7 +150,6 @@ public class SimpleXStreamFlowNodeStorage extends FlowNodeStorage {
     private static final Field FlowNode$parentIds;
 
     static {
-        XSTREAM.addCompatibilityAlias("com.cloudbees.workflow.cps.checkpoint.NotExecutedNodeAction", NotExecutedNodeAction.class);
         XSTREAM.registerConverter(new Converter() {
             private final RobustReflectionConverter ref = new RobustReflectionConverter(XSTREAM.getMapper(), JVM.newReflectionProvider());
             // IdentityHashMap could leak memory. WeakHashMap compares by equals, which will fail with NPE in FlowNode.hashCode.
