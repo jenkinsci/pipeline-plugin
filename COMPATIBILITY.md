@@ -58,6 +58,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
 - [X] `XUnitPublisher` and `XUnitBuilder` (`xunit`): scheduled to be supported as of 1.100
 - [] `PerformancePublisher` (`performance`) [JENKINS-32650](https://issues.jenkins-ci.org/browse/JENKINS-32650)
+- [ ] `zephyr-for-jira-test-management` : [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
 
 ## Build wrappers
 
