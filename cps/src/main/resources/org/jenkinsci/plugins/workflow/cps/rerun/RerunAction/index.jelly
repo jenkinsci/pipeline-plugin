@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form" xmlns:wfe="/org/jenkinsci/plugins/workflow/editor">
     <l:layout title="Rerun ${it.owner.displayName}" norefresh="true">
         <st:include page="sidepanel.jelly" it="${it.owner}"/>
         <l:main-panel>
@@ -8,15 +8,11 @@
                 <h1>Rerun ${it.owner.displayName}</h1>
                 <f:form action="run" method="POST" name="config">
                     <f:entry field="mainScript" title="Main Script">
-                        <div id="workflow-editor-wrapper" style="display: none; position: relative">
-                            <f:textarea value="${it.originalScript}"/> <!-- TODO checkMethod="post" and set up syntax checking -->
-                            <div id="workflow-editor" class="pane-frame" style="height: 250px;"/>
-                        </div>
+                      <wfe:workflow-editor script="${it.originalScript}" />
                     </f:entry>
                     <j:forEach var="loadedScript" items="${it.originalLoadedScripts.entrySet()}">
                         <f:entry field="${loadedScript.key}" title="${loadedScript.key}">
-                            <!-- TODO ACE not working on these -->
-                            <f:textarea value="${loadedScript.value}"/>
+                            <wfe:workflow-editor script="${loadedScript.value}" />
                         </f:entry>
                     </j:forEach>
                     <!-- TODO snippetizer -->
@@ -24,7 +20,6 @@
                         <f:submit value="Run"/>
                     </f:bottomButtonBar>
                 </f:form>
-                <st:adjunct includes="org.jenkinsci.plugins.workflow.cps.workflow-editor"/>
             </j:if>
         </l:main-panel>
     </l:layout>
