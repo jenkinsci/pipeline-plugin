@@ -1,6 +1,6 @@
 var samples = [];
 
-exports.addSamplesWidget = function(editor) {
+exports.addSamplesWidget = function(editor, editorId) {
     var $ = require('jqueryui-detached').getJQueryUI();
 
     if ($('#workflow-editor-wrapper .samples').length) {
@@ -8,7 +8,7 @@ exports.addSamplesWidget = function(editor) {
         return;
     }
 
-    var $aceEditor = $('#workflow-editor');
+    var $aceEditor = $('#' + editorId);
     var sampleSelect = $('<select></select>');
     
     sampleSelect.append('<option >try sample Pipeline...</option>');
