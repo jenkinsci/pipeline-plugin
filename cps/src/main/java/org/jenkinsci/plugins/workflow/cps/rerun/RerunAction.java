@@ -183,7 +183,7 @@ public class RerunAction implements Action {
             return "???";
         }
         try {
-            StringBuilder diff = new StringBuilder(diff("Jenkinsfile", originalAction.getOriginalScript(), getOriginalScript()));
+            StringBuilder diff = new StringBuilder(diff(/* TODO JENKINS-31838 */"Jenkinsfile", originalAction.getOriginalScript(), getOriginalScript()));
             Map<String,String> originalLoadedScripts = originalAction.getOriginalLoadedScripts();
             for (Map.Entry<String,String> entry : getOriginalLoadedScripts().entrySet()) {
                 String script = entry.getKey();
@@ -199,6 +199,7 @@ public class RerunAction implements Action {
     }
     private static String diff(String script, String oldText, String nueText) throws IOException {
         Diff hunks = Diff.diff(new StringReader(oldText), new StringReader(nueText), false);
+        // TODO rather than old vs. new could use (e.g.) build-10 vs. build-13
         return hunks.isEmpty() ? "" : hunks.toUnifiedDiff("old/" + script, "new/" + script, new StringReader(oldText), new StringReader(nueText), 3);
     }
 
