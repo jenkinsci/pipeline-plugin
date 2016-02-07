@@ -109,7 +109,7 @@ public class RerunActionTest {
         r.assertLogContains("INITIAL CONTENT", b2);
     }
 
-    @Ignore("TODO filed branch-api + matrix-auth bug: java.lang.ClassCastException: jenkins.branch.MultiBranchProject$3 cannot be cast to hudson.security.SidACL")
+    @Ignore("TODO JENKINS-31860: java.lang.ClassCastException: jenkins.branch.MultiBranchProject$3 cannot be cast to hudson.security.SidACL")
     @Test public void permissions() throws Exception {
         File clones = tmp.newFolder();
         sampleRepo.init();
