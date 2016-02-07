@@ -36,29 +36,37 @@ import javax.annotation.CheckForNull;
  */
 public class RerunCause extends Cause {
 
-    private final int number;
-    private transient Job<?,?> job;
+    private final int originalNumber;
+    private transient Run<?,?> run;
 
-    RerunCause(Run<?,?> run) {
-        this.number = run.getNumber();
-        job = run.getParent();
+    RerunCause(Run<?,?> original) {
+        this.originalNumber = original.getNumber();
     }
 
-    @Override public void onLoad(Run<?,?> build) {
-        super.onLoad(build);
-        job = build.getParent();
+    @Override public void onAddedTo(Run run) {
+        super.onAddedTo(run);
+        this.run = run;
+    }
+
+    @Override public void onLoad(Run<?,?> run) {
+        super.onLoad(run);
+        this.run = run;
+    }
+
+    public Run<?,?> getRun() {
+        return run;
     }
     
-    public int getNumber() {
-        return number;
+    public int getOriginalNumber() {
+        return originalNumber;
     }
 
     public @CheckForNull Run<?,?> getOriginal() {
-        return job.getBuildByNumber(number);
+        return run.getParent().getBuildByNumber(originalNumber);
     }
 
     @Override public String getShortDescription() {
-        return "Reran #" + number;
+        return "Reran #" + originalNumber;
     }
 
     @Override public void print(TaskListener listener) {

@@ -24,9 +24,11 @@
 
 package org.jenkinsci.plugins.workflow.cps.rerun;
 
+import com.cloudbees.diff.Diff;
 import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
+import hudson.Functions;
 import hudson.model.Action;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
@@ -38,6 +40,7 @@ import hudson.model.queue.QueueTaskFuture;
 import hudson.security.Permission;
 import hudson.security.PermissionScope;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -108,7 +111,7 @@ public class RerunAction implements Action {
         }
     }
 
-    /* accessible to Jelly */ public String getOriginalScript() throws Exception {
+    /* accessible to Jelly */ public String getOriginalScript() {
         CpsFlowExecution execution = getExecution();
         return execution != null ? execution.getScript() : "???";
     }
@@ -162,6 +165,41 @@ public class RerunAction implements Action {
                 return run.getParent();
             }
         }.scheduleBuild2(0, actions.toArray(new Action[actions.size()]));
+    }
+
+    public String getDiff() {
+        Run<?,?> original = run;
+        RerunCause cause;
+        while ((cause = original.getCause(RerunCause.class)) != null) {
+            Run<?,?> earlier = cause.getOriginal();
+            if (earlier == null) {
+                // Deleted? Oh well.
+                break;
+            }
+            original = earlier;
+        }
+        RerunAction originalAction = original.getAction(RerunAction.class);
+        if (originalAction == null) {
+            return "???";
+        }
+        try {
+            StringBuilder diff = new StringBuilder(diff("Jenkinsfile", originalAction.getOriginalScript(), getOriginalScript()));
+            Map<String,String> originalLoadedScripts = originalAction.getOriginalLoadedScripts();
+            for (Map.Entry<String,String> entry : getOriginalLoadedScripts().entrySet()) {
+                String script = entry.getKey();
+                String originalScript = originalLoadedScripts.get(script);
+                if (originalScript != null) {
+                    diff.append(diff(script, originalScript, entry.getValue()));
+                }
+            }
+            return diff.toString();
+        } catch (IOException x) {
+            return Functions.printThrowable(x);
+        }
+    }
+    private static String diff(String script, String oldText, String nueText) throws IOException {
+        Diff hunks = Diff.diff(new StringReader(oldText), new StringReader(nueText), false);
+        return hunks.isEmpty() ? "" : hunks.toUnifiedDiff("old/" + script, "new/" + script, new StringReader(oldText), new StringReader(nueText), 3);
     }
 
     public static final Permission RERUN = new Permission(Run.PERMISSIONS, "Rerun", Messages._Rerun_permission_description(), Item.CONFIGURE, PermissionScope.RUN);

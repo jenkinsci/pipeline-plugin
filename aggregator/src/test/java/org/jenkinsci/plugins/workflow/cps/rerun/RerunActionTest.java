@@ -42,6 +42,7 @@ import java.util.List;
 import jenkins.model.Jenkins;
 import jenkins.security.NotReallyRoleSensitiveCallable;
 import org.hamcrest.Matchers;
+import static org.hamcrest.Matchers.containsString;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -85,10 +86,15 @@ public class RerunActionTest {
         r.assertLogContains("second script", r.assertBuildStatusSuccess(b2));
         RerunCause cause = b2.getCause(RerunCause.class);
         assertNotNull(cause);
-        assertEquals(1, cause.getNumber());
+        assertEquals(1, cause.getOriginalNumber());
         assertEquals(b1, cause.getOriginal());
+        assertEquals(b2, cause.getRun());
         WorkflowRun b3 = (WorkflowRun) b2.getAction(RerunAction.class).run("echo 'third script'").get();
         r.assertLogContains("third script", r.assertBuildStatusSuccess(b3));
+        String diff = b3.getAction(RerunAction.class).getDiff();
+        assertThat(diff, containsString("-echo 'first script'"));
+        assertThat(diff, containsString("+echo 'third script'"));
+        System.out.println(diff);
         p.setDefinition(new CpsFlowDefinition("echo 'fourth script'", false));
         r.assertLogContains("fourth script", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
@@ -146,11 +152,17 @@ public class RerunActionTest {
         p.setDefinition(new CpsFlowDefinition("node {load 'f.groovy'}", true));
         WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("original loaded text", b1);
-        WorkflowRun b2 = (WorkflowRun) b1.getAction(RerunAction.class).run("echo 'trying edits'; node {load 'f.groovy'}", Collections.singletonMap("Script1", "echo 'new loaded text'")).get();
+        WorkflowRun b2 = (WorkflowRun) b1.getAction(RerunAction.class).run("echo 'trying edits'\nnode {load 'f.groovy'}", Collections.singletonMap("Script1", "echo 'new loaded text'")).get();
         r.assertBuildStatusSuccess(b2);
         r.assertLogContains("trying edits", b2);
         r.assertLogContains("new loaded text", b2);
         System.out.println(new XmlFile(new File(b2.getRootDir(), "build.xml")).asString());
+        String diff = b2.getAction(RerunAction.class).getDiff();
+        assertThat(diff, containsString("+echo 'trying edits'"));
+        assertThat(diff, containsString("Script1"));
+        assertThat(diff, containsString("-echo 'original loaded text'"));
+        assertThat(diff, containsString("+echo 'new loaded text'"));
+        System.out.println(diff);
         // TODO test multiple loads
         // TODO load after restart
         // TODO test rerun of rerun

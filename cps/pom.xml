@@ -94,6 +94,11 @@
             <artifactId>ace-editor</artifactId>
             <version>1.0.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.cloudbees</groupId>
+            <artifactId>diff4j</artifactId>
+            <version>1.2</version>
+        </dependency>
     </dependencies>
     <build>
         <resources>
