@@ -109,7 +109,7 @@ public class RerunActionTest {
         r.assertLogContains("INITIAL CONTENT", b2);
     }
 
-    @Ignore("TODO JENKINS-31860: java.lang.ClassCastException: jenkins.branch.MultiBranchProject$3 cannot be cast to hudson.security.SidACL")
+    @Ignore("TODO JENKINS-31860 planned to be fixed in matrix-auth 1.3")
     @Test public void permissions() throws Exception {
         File clones = tmp.newFolder();
         sampleRepo.init();
@@ -140,15 +140,16 @@ public class RerunActionTest {
         WorkflowRun b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
         assertTrue(canRerun(b1, "admin"));
+        assertTrue(canRerun(b1, "dev1"));
+        assertTrue(canRerun(b1, "dev2"));
+        assertFalse(canRerun(b1, "dev3"));
+        p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("", false));
+        b1 = p.scheduleBuild2(0).get();
+        assertTrue(canRerun(b1, "admin"));
         assertFalse("not sandboxed, so only safe for admins", canRerun(b1, "dev1"));
         assertFalse(canRerun(b1, "dev2"));
         assertFalse(canRerun(b1, "dev3"));
-        p.setDefinition(new CpsFlowDefinition("", true));
-        WorkflowRun b2 = p.scheduleBuild2(0).get();
-        assertTrue(canRerun(b2, "admin"));
-        assertTrue(canRerun(b2, "dev1"));
-        assertTrue(canRerun(b2, "dev2"));
-        assertFalse(canRerun(b2, "dev3"));
     }
     private static boolean canRerun(WorkflowRun b, String user) {
         final RerunAction a = b.getAction(RerunAction.class);
