@@ -8,6 +8,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 * [JENKINS-30759](https://issues.jenkins-ci.org/browse/JENKINS-30759): sporadic `NullPointerException`s running very short-lived `node` blocks.
 * [JENKINS-32133](https://issues.jenkins-ci.org/browse/JENKINS-32133): improved styling for generated reference documentation introduced in 1.13.
 * [JENKINS-32819](https://issues.jenkins-ci.org/browse/JENKINS-32819): fix script compilation check when CSRF is enabled.
+* Excessive metadata accidentally included in `build.xml` records in 1.13.
 
 ## 1.13 (Jan 18 2016)
 
