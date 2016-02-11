@@ -32,7 +32,7 @@
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
-    <version>1.14-beta-1-SNAPSHOT</version>
+    <version>1.14-beta-1</version>
     <packaging>pom</packaging>
     <name>Pipeline: Parent</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
@@ -46,7 +46,7 @@
         <connection>scm:git:git://github.com/jenkinsci/workflow-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/workflow-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/workflow-plugin</url>
-      <tag>HEAD</tag>
+      <tag>workflow-1.14-beta-1</tag>
   </scm>
     <properties>
         <jenkins.version>1.609.3</jenkins.version>
