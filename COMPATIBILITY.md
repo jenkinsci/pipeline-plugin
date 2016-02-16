@@ -57,7 +57,9 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
 - [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
 - [X] `XUnitPublisher` and `XUnitBuilder` (`xunit`): scheduled to be supported as of 1.100
-- [] `PerformancePublisher` (`performance`) [JENKINS-32650](https://issues.jenkins-ci.org/browse/JENKINS-32650)
+- [ ] `PerformancePublisher` (`performance`): [JENKINS-32650](https://issues.jenkins-ci.org/browse/JENKINS-32650)
+- [ ] `zephyr-for-jira-test-management` : [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
+- [ ] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
 
 ## Build wrappers
 
@@ -132,7 +134,7 @@ For cases when a first-class Pipeline step (rather than an adaptation of functio
 - [ ] `gerrit-trigger`: [JENKINS-26102](https://issues.jenkins-ci.org/browse/JENKINS-26102), [JENKINS-26103](https://issues.jenkins-ci.org/browse/JENKINS-26103)
 - [X] `mailer`: `mail` step in Pipeline 1.2
 - [ ] `artifactory`: [JENKINS-30121](https://issues.jenkins-ci.org/browse/JENKINS-30121)
-- [X] `email-ext`: `emailext` step scheduled for 2.41
+- [X] `email-ext`: `emailext` step since 2.41
 
 # Plugin Developer Guide
 

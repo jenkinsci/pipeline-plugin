@@ -64,21 +64,21 @@ jenkinsJSModules.import('ace-editor:ace-editor-122')
                         editor.session.clearAnnotations();
                         var url = textarea.attr("checkUrl") + 'Compile';
     
-                        $.ajax({
-                            url: url,
-                            data: {
+                        new Ajax.Request(url, { // jshint ignore:line
+                            method: textarea.attr('checkMethod') || 'POST',
+                            parameters: {
                                 value: editor.getValue()
                             },
-                            method: textarea.attr('checkMethod') || 'POST',
-                            success: function(data) {
+                            onSuccess : function(data) {
+                                var json = data.responseJSON;
                                 var annotations = [];
-                                if (data.status && data.status === 'success') {
+                                if (json.status && json.status === 'success') {
                                     // Fire script approval check - only if the script is syntactically correct
                                     textarea.trigger('change');
                                     return;
                                 } else {
                                     // Syntax errors
-                                    $.each(data, function(i, value) {
+                                    $.each(json, function(i, value) {
                                         annotations.push({
                                             row: value.line - 1,
                                             column: value.column,
