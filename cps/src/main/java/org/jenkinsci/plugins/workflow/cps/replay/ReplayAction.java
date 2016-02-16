@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.cps.rerun;
+package org.jenkinsci.plugins.workflow.cps.replay;
 
 import com.cloudbees.diff.Diff;
 import com.google.common.collect.ImmutableList;
@@ -61,6 +61,7 @@ import net.sf.json.JSONObject;
 import org.acegisecurity.AccessDeniedException;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
+import org.jenkinsci.plugins.workflow.cps.replay.Messages;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.kohsuke.stapler.QueryParameter;
@@ -69,19 +70,19 @@ import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
- * Attached to a {@link Run} when it could be rerun with script edits.
+ * Attached to a {@link Run} when it could be replayed with script edits.
  */
 @SuppressWarnings("rawtypes") // on Run
-public class RerunAction implements Action {
+public class ReplayAction implements Action {
 
     private final Run run;
 
-    private RerunAction(Run run) {
+    private ReplayAction(Run run) {
         this.run = run;
     }
 
     @Override public String getDisplayName() {
-        return "Rerun with Edits";
+        return "Replay";
     }
 
     @Override public String getIconFileName() {
@@ -89,7 +90,7 @@ public class RerunAction implements Action {
     }
 
     @Override public String getUrlName() {
-        return isEnabled() ? "rerun" : null;
+        return isEnabled() ? "replay" : null;
     }
 
     private @CheckForNull CpsFlowExecution getExecution() {
@@ -102,7 +103,7 @@ public class RerunAction implements Action {
     }
 
     /* accessible to Jelly */ public boolean isEnabled() {
-        if (!run.hasPermission(RERUN)) {
+        if (!run.hasPermission(REPLAY)) {
             return false;
         }
         CpsFlowExecution exec = getExecution();
@@ -134,7 +135,7 @@ public class RerunAction implements Action {
     @RequirePOST
     public void doRun(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException {
         if (!isEnabled()) {
-            throw new AccessDeniedException("not allowed to rerun"); // AccessDeniedException2 requires us to look up the specific Permission
+            throw new AccessDeniedException("not allowed to replay"); // AccessDeniedException2 requires us to look up the specific Permission
         }
         JSONObject form = req.getSubmittedForm();
         Map<String,String> otherScripts = new HashMap<String,String>();
@@ -161,8 +162,8 @@ public class RerunAction implements Action {
         if (execution == null) {
             return null;
         }
-        actions.add(new RerunFlowFactoryAction(script, otherScripts, execution.isSandbox()));
-        actions.add(new CauseAction(new Cause.UserIdCause(), new RerunCause(run)));
+        actions.add(new ReplayFlowFactoryAction(script, otherScripts, execution.isSandbox()));
+        actions.add(new CauseAction(new Cause.UserIdCause(), new ReplayCause(run)));
         for (Class<? extends Action> c : COPIED_ACTIONS) {
             actions.addAll(run.getActions(c));
         }
@@ -175,8 +176,8 @@ public class RerunAction implements Action {
 
     public String getDiff() {
         Run<?,?> original = run;
-        RerunCause cause;
-        while ((cause = original.getCause(RerunCause.class)) != null) {
+        ReplayCause cause;
+        while ((cause = original.getCause(ReplayCause.class)) != null) {
             Run<?,?> earlier = cause.getOriginal();
             if (earlier == null) {
                 // Deleted? Oh well.
@@ -184,7 +185,7 @@ public class RerunAction implements Action {
             }
             original = earlier;
         }
-        RerunAction originalAction = original.getAction(RerunAction.class);
+        ReplayAction originalAction = original.getAction(ReplayAction.class);
         if (originalAction == null) {
             return "???";
         }
@@ -218,11 +219,11 @@ public class RerunAction implements Action {
         return Jenkins.getActiveInstance().getDescriptorByType(CpsFlowDefinition.DescriptorImpl.class).doCheckScriptCompile(value);
     }
 
-    public static final Permission RERUN = new Permission(Run.PERMISSIONS, "Rerun", Messages._Rerun_permission_description(), Item.CONFIGURE, PermissionScope.RUN);
+    public static final Permission REPLAY = new Permission(Run.PERMISSIONS, "Replay", Messages._Replay_permission_description(), Item.CONFIGURE, PermissionScope.RUN);
 
     @Initializer(after=InitMilestone.PLUGINS_STARTED, before=InitMilestone.EXTENSIONS_AUGMENTED)
     public static void ensurePermissionRegistered() {
-        RERUN.getEnabled();
+        REPLAY.getEnabled();
     }
 
     @SuppressFBWarnings(value="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT", justification="getEnabled return value discarded")
@@ -233,7 +234,7 @@ public class RerunAction implements Action {
         }
 
         @Override public Collection<? extends Action> createFor(Run run) {
-            return run instanceof FlowExecutionOwner.Executable && run.getParent() instanceof ParameterizedJobMixIn.ParameterizedJob ? Collections.<Action>singleton(new RerunAction(run)) : Collections.<Action>emptySet();
+            return run instanceof FlowExecutionOwner.Executable && run.getParent() instanceof ParameterizedJobMixIn.ParameterizedJob ? Collections.<Action>singleton(new ReplayAction(run)) : Collections.<Action>emptySet();
         }
 
     }

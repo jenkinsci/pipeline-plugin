@@ -24,11 +24,14 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
-    <l:layout title="Rerun Diff" permission="${it.RERUN}">
-        <st:include page="sidepanel.jelly" it="${it.owner}"/>
-        <l:main-panel>
-            <f:textarea value="${it.diff}" readonly="true" codemirror-mode="diff" codemirror-config=""/>
-        </l:main-panel>
-    </l:layout>
+<j:jelly xmlns:j="jelly:core">
+    <j:set var="original" value="${it.original}"/>
+    <j:choose>
+        <j:when test="${original != null}">
+            Reran <a href="${rootURL}/${original.url}" class="model-link">#${it.originalNumber}</a> (<a href="${rootURL}/${it.run.url}replay/diff">diff</a>)
+        </j:when>
+        <j:otherwise>
+            Reran #${it.originalNumber}
+        </j:otherwise>
+    </j:choose>
 </j:jelly>

@@ -46,7 +46,7 @@ import jenkins.security.NotReallyRoleSensitiveCallable;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
-import org.jenkinsci.plugins.workflow.cps.rerun.RerunAction;
+import org.jenkinsci.plugins.workflow.cps.replay.ReplayAction;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
@@ -60,7 +60,7 @@ import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 
-public class RerunActionTest {
+public class ReplayActionTest {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public JenkinsRule r = new JenkinsRule();
@@ -81,7 +81,7 @@ public class RerunActionTest {
         sampleRepo.write("file", "subsequent content");
         sampleRepo.git("add", "file");
         sampleRepo.git("commit", "--message=next");
-        b = (WorkflowRun) b.getAction(RerunAction.class).run("node {checkout scm; echo \"this time loaded ${readFile 'file'}\"}").get();
+        b = (WorkflowRun) b.getAction(ReplayAction.class).run("node {checkout scm; echo \"this time loaded ${readFile 'file'}\"}").get();
         assertEquals(2, b.number);
         r.assertLogContains("this time loaded subsequent content", b);
     }
@@ -104,7 +104,7 @@ public class RerunActionTest {
         sampleRepo.git("add", "file");
         sampleRepo.git("commit", "--message=next");
         ScriptApproval.get().approveSignature("method java.lang.String toUpperCase");
-        WorkflowRun b2 = (WorkflowRun) b1.getAction(RerunAction.class).run("node {checkout scm; echo readFile('file').toUpperCase()}").get();
+        WorkflowRun b2 = (WorkflowRun) b1.getAction(ReplayAction.class).run("node {checkout scm; echo readFile('file').toUpperCase()}").get();
         assertEquals(2, b2.number);
         r.assertLogContains("INITIAL CONTENT", b2);
     }
@@ -126,9 +126,9 @@ public class RerunActionTest {
         r.jenkins.setAuthorizationStrategy(pmas);
         OrganizationFolder top = r.jenkins.createProject(OrganizationFolder.class, "top");
         Map<Permission, Set<String>> perms = new HashMap<Permission, Set<String>>();
-        perms.put(Item.CONFIGURE, Collections.singleton("dev1")); // implies RERUN
-        perms.put(RerunAction.RERUN, Collections.singleton("dev2"));
-        perms.put(Item.BUILD, Collections.singleton("dev3")); // does not imply RERUN
+        perms.put(Item.CONFIGURE, Collections.singleton("dev1")); // implies REPLAY
+        perms.put(ReplayAction.REPLAY, Collections.singleton("dev2"));
+        perms.put(Item.BUILD, Collections.singleton("dev3")); // does not imply REPLAY
         top.addProperty(new AuthorizationMatrixProperty(perms));
         top.getNavigators().add(new GitDirectorySCMNavigator(clones.getAbsolutePath()));
         top.scheduleBuild2(0).getFuture().get();
@@ -139,20 +139,20 @@ public class RerunActionTest {
         WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject((WorkflowMultiBranchProject) one, "master");
         WorkflowRun b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
-        assertTrue(canRerun(b1, "admin"));
-        assertTrue(canRerun(b1, "dev1"));
-        assertTrue(canRerun(b1, "dev2"));
-        assertFalse(canRerun(b1, "dev3"));
+        assertTrue(canReplay(b1, "admin"));
+        assertTrue(canReplay(b1, "dev1"));
+        assertTrue(canReplay(b1, "dev2"));
+        assertFalse(canReplay(b1, "dev3"));
         p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("", false));
         b1 = p.scheduleBuild2(0).get();
-        assertTrue(canRerun(b1, "admin"));
-        assertFalse("not sandboxed, so only safe for admins", canRerun(b1, "dev1"));
-        assertFalse(canRerun(b1, "dev2"));
-        assertFalse(canRerun(b1, "dev3"));
+        assertTrue(canReplay(b1, "admin"));
+        assertFalse("not sandboxed, so only safe for admins", canReplay(b1, "dev1"));
+        assertFalse(canReplay(b1, "dev2"));
+        assertFalse(canReplay(b1, "dev3"));
     }
-    private static boolean canRerun(WorkflowRun b, String user) {
-        final RerunAction a = b.getAction(RerunAction.class);
+    private static boolean canReplay(WorkflowRun b, String user) {
+        final ReplayAction a = b.getAction(ReplayAction.class);
         return ACL.impersonate(User.get(user).impersonate(), new NotReallyRoleSensitiveCallable<Boolean,RuntimeException>() {
             @Override public Boolean call() throws RuntimeException {
                 return a.isEnabled();

@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.cps.rerun;
+package org.jenkinsci.plugins.workflow.cps.replay;
 
 import hudson.Extension;
 import hudson.model.Action;
@@ -44,17 +44,17 @@ import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 
 /**
- * Attached to a run that is a rerun of an earlier one.
+ * Attached to a run that is a replay of an earlier one.
  */
-class RerunFlowFactoryAction extends InvisibleAction implements CpsFlowFactoryAction2, Queue.QueueAction {
+class ReplayFlowFactoryAction extends InvisibleAction implements CpsFlowFactoryAction2, Queue.QueueAction {
 
-    private static final Logger LOGGER = Logger.getLogger(RerunFlowFactoryAction.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ReplayFlowFactoryAction.class.getName());
 
     private String mainScript;
     private final Map<String,String> otherScripts;
     private transient final boolean sandbox;
     
-    RerunFlowFactoryAction(@Nonnull String mainScript, @Nonnull Map<String,String> otherScripts, boolean sandbox) {
+    ReplayFlowFactoryAction(@Nonnull String mainScript, @Nonnull Map<String,String> otherScripts, boolean sandbox) {
         this.mainScript = mainScript;
         this.otherScripts = new HashMap<String,String>(otherScripts);
         this.sandbox = sandbox;
@@ -76,7 +76,7 @@ class RerunFlowFactoryAction extends InvisibleAction implements CpsFlowFactoryAc
             try {
                 Queue.Executable executable = execution.getOwner().getExecutable();
                 if (executable instanceof Run) {
-                    RerunFlowFactoryAction action = ((Run) executable).getAction(RerunFlowFactoryAction.class);
+                    ReplayFlowFactoryAction action = ((Run) executable).getAction(ReplayFlowFactoryAction.class);
                     if (action != null) {
                         String newText = action.otherScripts.remove(clazz);
                         if (newText != null) {
@@ -86,7 +86,7 @@ class RerunFlowFactoryAction extends InvisibleAction implements CpsFlowFactoryAc
                             listener.getLogger().println("Warning: no replacement Groovy text found for " + clazz);
                         }
                     } else {
-                        LOGGER.log(Level.FINE, "{0} was not a rerun", executable);
+                        LOGGER.log(Level.FINE, "{0} was not a replay", executable);
                     }
                 } else {
                     LOGGER.log(Level.FINE, "{0} was not a run at all", executable);

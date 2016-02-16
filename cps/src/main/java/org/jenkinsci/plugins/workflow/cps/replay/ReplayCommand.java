@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.cps.rerun;
+package org.jenkinsci.plugins.workflow.cps.replay;
 
 import hudson.AbortException;
 import hudson.Extension;
@@ -33,18 +33,19 @@ import hudson.model.Run;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.io.IOUtils;
+import org.jenkinsci.plugins.workflow.cps.replay.Messages;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.spi.Setter;
 
-@Extension public class RerunCommand extends CLICommand {
+@Extension public class ReplayCommand extends CLICommand {
 
-    @Argument(required=true, index=0, metaVar="JOB", usage="Name of the job to rerun.", handler=JobHandler.class)
+    @Argument(required=true, index=0, metaVar="JOB", usage="Name of the job to replay.", handler=JobHandler.class)
     public Job<?,?> job;
 
-    @Option(name="-n", aliases="--number", metaVar="BUILD#", usage="Build to rerun, if not the last.")
+    @Option(name="-n", aliases="--number", metaVar="BUILD#", usage="Build to replay, if not the last.")
     public int number;
 
     @Option(name="-s", aliases="--script", metaVar="SCRIPT", usage="Name of script to edit, such as Script3, if not the main Jenkinsfile.")
@@ -53,11 +54,11 @@ import org.kohsuke.args4j.spi.Setter;
     // TODO could add follow/sync/wait/consoleOutput options as in BuildCommand, by factoring out a helper method from run() after the QueueTaskFuture has been obtained
 
     @Override public String getName() {
-        return "rerun-pipeline";
+        return "replay-pipeline";
     }
 
     @Override public String getShortDescription() {
-        return Messages.RerunCommand_shortDescription();
+        return Messages.ReplayCommand_shortDescription();
     }
 
     @Override protected int run() throws Exception {
@@ -65,7 +66,7 @@ import org.kohsuke.args4j.spi.Setter;
         if (run == null) {
             throw new AbortException("No such build");
         }
-        RerunAction action = run.getAction(RerunAction.class);
+        ReplayAction action = run.getAction(ReplayAction.class);
         if (action == null) {
             // Ideally this would be handled by the OptionHandler (rather than a generic JobHandler),
             // but that means duplicating some code from GenericItemOptionHandler,
@@ -73,7 +74,7 @@ import org.kohsuke.args4j.spi.Setter;
             throw new AbortException("Not a Pipeline build");
         }
         if (!action.isEnabled()) {
-            throw new AbortException("Not authorized to rerun builds of this job");
+            throw new AbortException("Not authorized to replay builds of this job");
         }
         String text = IOUtils.toString(stdin);
         if (script != null) {

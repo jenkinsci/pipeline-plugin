@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.cps.rerun;
+package org.jenkinsci.plugins.workflow.cps.replay;
 
 import hudson.console.ModelHyperlinkNote;
 import hudson.model.Cause;
@@ -32,14 +32,14 @@ import hudson.model.TaskListener;
 import javax.annotation.CheckForNull;
 
 /**
- * Marker that a run is a rerun of an earlier one.
+ * Marker that a run is a replay of an earlier one.
  */
-public class RerunCause extends Cause {
+public class ReplayCause extends Cause {
 
     private final int originalNumber;
     private transient Run<?,?> run;
 
-    RerunCause(Run<?,?> original) {
+    ReplayCause(Run<?,?> original) {
         this.originalNumber = original.getNumber();
     }
 
