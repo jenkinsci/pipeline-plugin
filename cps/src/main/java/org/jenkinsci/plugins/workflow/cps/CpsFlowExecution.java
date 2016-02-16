@@ -916,6 +916,7 @@ public class CpsFlowExecution extends FlowExecution {
             writeChild(w, context, "result", e.result, Result.class);
             writeChild(w, context, "script", e.script, String.class);
             writeChild(w, context, "loadedScripts", e.loadedScripts, Map.class);
+            writeChild(w, context, "sandbox", e.sandbox, Boolean.class);
             if (e.user != null) {
                 writeChild(w, context, "user", e.user, String.class);
             }
@@ -968,6 +969,10 @@ public class CpsFlowExecution extends FlowExecution {
                     if (nodeName.equals("loadedScripts")) {
                         Map loadedScripts = readChild(reader, context, Map.class, result);
                         setField(result, "loadedScripts", loadedScripts);
+                    } else
+                    if (nodeName.equals("sandbox")) {
+                        boolean sandbox = readChild(reader, context, Boolean.class, result);
+                        setField(result, "sandbox", sandbox);
                     } else
                     if (nodeName.equals("owner")) {
                         readChild(reader, context, Object.class, result); // for compatibility; discarded
