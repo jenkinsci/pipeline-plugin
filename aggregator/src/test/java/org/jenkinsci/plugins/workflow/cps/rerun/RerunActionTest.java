@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.workflow.cps.rerun;
 
 import hudson.FilePath;
 import hudson.XmlFile;
+import hudson.cli.CLICommandInvoker;
 import hudson.model.Item;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
@@ -41,6 +42,7 @@ import java.util.Collections;
 import java.util.List;
 import jenkins.model.Jenkins;
 import jenkins.security.NotReallyRoleSensitiveCallable;
+import org.apache.commons.io.IOUtils;
 import org.hamcrest.Matchers;
 import static org.hamcrest.Matchers.containsString;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
@@ -166,6 +168,26 @@ public class RerunActionTest {
         // TODO test multiple loads
         // TODO load after restart
         // TODO test rerun of rerun
+    }
+
+    @Test public void cli() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        FilePath f = r.jenkins.getWorkspaceFor(p).child("f.groovy");
+        f.write("'original text'", null);
+        p.setDefinition(new CpsFlowDefinition("node {def t = load 'f.groovy'; echo \"got ${t}\"}", true));
+        WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        r.assertLogContains("got original text", b1);
+        assertEquals(0, new CLICommandInvoker(r, "rerun-pipeline").withStdin(IOUtils.toInputStream("node {def t = load 'f.groovy'; echo \"received ${t}\"}")).invokeWithArgs("p").returnCode());
+        r.waitUntilNoActivity();
+        WorkflowRun b2 = p.getLastBuild();
+        assertEquals(2, b2.getNumber());
+        r.assertLogContains("received original text", b2);
+        assertEquals(0, new CLICommandInvoker(r, "rerun-pipeline").withStdin(IOUtils.toInputStream("'new text'")).invokeWithArgs("p", "-n", "1", "-s", "Script1").returnCode());
+        r.waitUntilNoActivity();
+        WorkflowRun b3 = p.getLastBuild();
+        assertEquals(3, b3.getNumber());
+        // Main script picked up from #1, not #2.
+        r.assertLogContains("got new text", b3);
     }
 
 }
