@@ -221,12 +221,12 @@ public class ReplayAction implements Action {
 
     public static final Permission REPLAY = new Permission(Run.PERMISSIONS, "Replay", Messages._Replay_permission_description(), Item.CONFIGURE, PermissionScope.RUN);
 
+    @SuppressFBWarnings(value="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT", justification="getEnabled return value discarded")
     @Initializer(after=InitMilestone.PLUGINS_STARTED, before=InitMilestone.EXTENSIONS_AUGMENTED)
     public static void ensurePermissionRegistered() {
         REPLAY.getEnabled();
     }
 
-    @SuppressFBWarnings(value="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT", justification="getEnabled return value discarded")
     @Extension public static class Factory extends TransientActionFactory<Run> {
 
         @Override public Class<Run> type() {
