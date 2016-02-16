@@ -6,6 +6,9 @@
         <l:main-panel>
             <j:if test="${it.enabled}">
                 <h1>Rerun ${it.owner.displayName}</h1>
+                <p>
+                    <j:out value="${%blurb}"/>
+                </p>
                 <f:form action="run" method="POST" name="config">
                     <f:entry field="mainScript" title="Main Script">
                       <wfe:workflow-editor script="${it.originalScript}" checkUrl="${rootURL}/${it.owner.url}${it.urlName}/checkScript" checkDependsOn=""/>
