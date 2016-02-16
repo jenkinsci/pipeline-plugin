@@ -27,6 +27,8 @@ package org.jenkinsci.plugins.workflow.cps.rerun;
 import hudson.FilePath;
 import hudson.XmlFile;
 import hudson.cli.CLICommandInvoker;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
 import hudson.model.Item;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
@@ -109,6 +111,14 @@ public class RerunActionTest {
         r.assertLogContains("run with some value", b1);
         WorkflowRun b2 = (WorkflowRun) b1.getAction(RerunAction.class).run("echo \"run again with ${param}\"").get();
         r.assertLogContains("run again with some value", r.assertBuildStatusSuccess(b2));
+    }
+
+    @Initializer(after=InitMilestone.EXTENSIONS_AUGMENTED, before=InitMilestone.JOB_LOADED) // same time as Jenkins global config is loaded (e.g., AuthorizationStrategy)
+    public static void assertPermissionId() {
+        String thePermissionId = "hudson.model.Run.Rerun";
+        Permission thePermission = Permission.fromId(thePermissionId);
+        assertEquals(RerunAction.RERUN, thePermission);
+        assertEquals(thePermissionId, thePermission.getId());
     }
 
     @Test public void permissions() throws Exception {

@@ -29,6 +29,8 @@ import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.Functions;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
 import hudson.model.Action;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
@@ -218,12 +220,13 @@ public class RerunAction implements Action {
 
     public static final Permission RERUN = new Permission(Run.PERMISSIONS, "Rerun", Messages._Rerun_permission_description(), Item.CONFIGURE, PermissionScope.RUN);
 
+    @Initializer(after=InitMilestone.PLUGINS_STARTED, before=InitMilestone.EXTENSIONS_AUGMENTED)
+    public static void ensurePermissionRegistered() {
+        RERUN.getEnabled();
+    }
+
     @SuppressFBWarnings(value="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT", justification="getEnabled return value discarded")
     @Extension public static class Factory extends TransientActionFactory<Run> {
-
-        static {
-            RERUN.getEnabled(); // force registration during startup
-        }
 
         @Override public Class<Run> type() {
             return Run.class;
