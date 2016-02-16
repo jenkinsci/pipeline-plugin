@@ -57,8 +57,9 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
 - [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
 - [X] `XUnitPublisher` and `XUnitBuilder` (`xunit`): scheduled to be supported as of 1.100
-- [] `PerformancePublisher` (`performance`) [JENKINS-32650](https://issues.jenkins-ci.org/browse/JENKINS-32650)
+- [ ] `PerformancePublisher` (`performance`): [JENKINS-32650](https://issues.jenkins-ci.org/browse/JENKINS-32650)
 - [ ] `zephyr-for-jira-test-management` : [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
+- [ ] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
 
 ## Build wrappers
 
