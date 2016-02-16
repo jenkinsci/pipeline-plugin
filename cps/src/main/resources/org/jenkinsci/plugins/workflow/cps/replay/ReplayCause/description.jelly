@@ -28,10 +28,10 @@ THE SOFTWARE.
     <j:set var="original" value="${it.original}"/>
     <j:choose>
         <j:when test="${original != null}">
-            Reran <a href="${rootURL}/${original.url}" class="model-link">#${it.originalNumber}</a> (<a href="${rootURL}/${it.run.url}replay/diff">diff</a>)
+            Replayed <a href="${rootURL}/${original.url}" class="model-link">#${it.originalNumber}</a> (<a href="${rootURL}/${it.run.url}replay/diff">diff</a>)
         </j:when>
         <j:otherwise>
-            Reran #${it.originalNumber}
+            Replayed #${it.originalNumber}
         </j:otherwise>
     </j:choose>
 </j:jelly>

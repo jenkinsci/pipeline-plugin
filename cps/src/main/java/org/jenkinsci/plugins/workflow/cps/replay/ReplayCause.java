@@ -66,13 +66,13 @@ public class ReplayCause extends Cause {
     }
 
     @Override public String getShortDescription() {
-        return "Reran #" + originalNumber;
+        return "Replayed #" + originalNumber;
     }
 
     @Override public void print(TaskListener listener) {
         Run<?,?> original = getOriginal();
         if (original != null) {
-            listener.getLogger().println("Reran " + ModelHyperlinkNote.encodeTo(original));
+            listener.getLogger().println("Replayed " + ModelHyperlinkNote.encodeTo(original));
         } else {
             super.print(listener); // same, without hyperlink
         }
