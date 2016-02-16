@@ -8,11 +8,11 @@
                 <h1>Rerun ${it.owner.displayName}</h1>
                 <f:form action="run" method="POST" name="config">
                     <f:entry field="mainScript" title="Main Script">
-                      <wfe:workflow-editor script="${it.originalScript}" />
+                      <wfe:workflow-editor script="${it.originalScript}" checkUrl="${rootURL}/${it.owner.url}${it.urlName}/checkScript" checkDependsOn=""/>
                     </f:entry>
                     <j:forEach var="loadedScript" items="${it.originalLoadedScripts.entrySet()}">
                         <f:entry field="${loadedScript.key}" title="${loadedScript.key}">
-                            <wfe:workflow-editor script="${loadedScript.value}" />
+                            <wfe:workflow-editor script="${loadedScript.value}" checkUrl="${rootURL}/${it.owner.url}${it.urlName}/checkScript" checkDependsOn=""/>
                         </f:entry>
                     </j:forEach>
                     <!-- TODO snippetizer -->

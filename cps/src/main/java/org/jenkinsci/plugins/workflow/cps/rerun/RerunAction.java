@@ -39,6 +39,7 @@ import hudson.model.Run;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.security.Permission;
 import hudson.security.PermissionScope;
+import hudson.util.FormValidation;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -53,11 +54,14 @@ import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
 import jenkins.model.TransientActionFactory;
 import jenkins.scm.api.SCMRevisionAction;
+import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 import org.acegisecurity.AccessDeniedException;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
@@ -201,6 +205,15 @@ public class RerunAction implements Action {
         Diff hunks = Diff.diff(new StringReader(oldText), new StringReader(nueText), false);
         // TODO rather than old vs. new could use (e.g.) build-10 vs. build-13
         return hunks.isEmpty() ? "" : hunks.toUnifiedDiff("old/" + script, "new/" + script, new StringReader(oldText), new StringReader(nueText), 3);
+    }
+
+    // Stub, we do not need to do anything here.
+    public FormValidation doCheckScript() {
+        return FormValidation.ok();
+    }
+
+    public JSON doCheckScriptCompile(@QueryParameter String value) {
+        return Jenkins.getActiveInstance().getDescriptorByType(CpsFlowDefinition.DescriptorImpl.class).doCheckScriptCompile(value);
     }
 
     public static final Permission RERUN = new Permission(Run.PERMISSIONS, "Rerun", Messages._Rerun_permission_description(), Item.CONFIGURE, PermissionScope.RUN);
