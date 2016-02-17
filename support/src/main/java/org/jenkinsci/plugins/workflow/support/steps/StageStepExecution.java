@@ -235,12 +235,12 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
 
     // TODO record the stage it got to and display that
     private static void cancel(StepContext context, StepContext newer) throws IOException, InterruptedException {
-        println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
-        println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
-        if (context.isReady()) {
+        if (context.isReady() && newer.isReady()) {
+            println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
+            println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
             context.onFailure(new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(newer.get(Run.class))));
         } else {
-            LOGGER.log(WARNING, "cannot cancel dead {0}", context);
+            LOGGER.log(WARNING, "cannot cancel dead {0} or {1}", new Object[] {context, newer});
         }
     }
 
