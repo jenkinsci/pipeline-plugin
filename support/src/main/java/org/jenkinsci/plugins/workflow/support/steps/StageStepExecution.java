@@ -11,7 +11,6 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -222,10 +221,14 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     }
 
     private static void println(StepContext context, String message) {
+        if (!context.isReady()) {
+            LOGGER.log(Level.FINE, "cannot print message ‘{0}’ to dead {1}", new Object[] {message, context});
+            return;
+        }
         try {
             context.get(TaskListener.class).getLogger().println(message);
         } catch (Exception x) {
-            LOGGER.log(WARNING, null, x);
+            LOGGER.log(WARNING, "failed to print message to dead " + context, x);
         }
     }
 
@@ -233,7 +236,11 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     private static void cancel(StepContext context, StepContext newer) throws IOException, InterruptedException {
         println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
         println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
-        context.onFailure(new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(newer.get(Run.class))));
+        if (context.isReady()) {
+            context.onFailure(new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(newer.get(Run.class))));
+        } else {
+            LOGGER.log(WARNING, "cannot cancel dead {0}", context);
+        }
     }
 
     /**
