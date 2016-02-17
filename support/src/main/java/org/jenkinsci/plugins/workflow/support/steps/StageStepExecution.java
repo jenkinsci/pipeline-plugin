@@ -26,6 +26,7 @@ import jenkins.model.CauseOfInterruption;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.actions.StageAction;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
@@ -303,6 +304,9 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     @Extension
     public static final class Listener extends RunListener<Run<?,?>> {
         @Override public void onCompleted(Run<?,?> r, TaskListener listener) {
+            if (!(r instanceof FlowExecutionOwner.Executable) || ((FlowExecutionOwner.Executable) r).asFlowExecutionOwner() == null) {
+                return;
+            }
             exit(r);
         }
     }
