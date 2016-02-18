@@ -121,19 +121,33 @@ public class SubversionStepTest {
         sampleRepo.init();
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition(
-            "node {\n" +
-            "  svn '" + sampleRepo.trunkUrl() + "'\n" +
-            "  semaphore 'wait'" +
-            "}"));
-        SemaphoreStep.success("wait/1", null);
-        r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+            "semaphore 'before'\n" +
+            "node {svn '" + sampleRepo.trunkUrl() + "'}\n" +
+            "semaphore 'after'"));
+        assertPolling(p, PollingResult.Change.INCOMPARABLE);
+        WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
+        SemaphoreStep.success("before/1", null);
+        SemaphoreStep.waitForStart("after/1", b1);
+        assertPolling(p, PollingResult.Change.NONE);
+        SemaphoreStep.success("after/1", null);
+        r.assertBuildStatusSuccess(r.waitForCompletion(b1));
         sampleRepo.write("file2", "");
         sampleRepo.svn("add", "file2");
         sampleRepo.svn("commit", "--message=+file2");
-        WorkflowRun b = p.scheduleBuild2(0).waitForStart();
-        SemaphoreStep.waitForStart("wait/2", b);
-        PollingResult r = p.poll(StreamTaskListener.fromStdout());
-        assertEquals(PollingResult.Change.NONE, r.change);
+        WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
+        SemaphoreStep.success("before/2", null);
+        SemaphoreStep.waitForStart("after/2", b2);
+        assertPolling(p, PollingResult.Change.NONE);
+        WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
+        SemaphoreStep.waitForStart("before/3", b3);
+        assertPolling(p, PollingResult.Change.NONE);
+        sampleRepo.write("file3", "");
+        sampleRepo.svn("add", "file3");
+        sampleRepo.svn("commit", "--message=+file3");
+        assertPolling(p, PollingResult.Change.SIGNIFICANT);
+    }
+    private static void assertPolling(WorkflowJob p, PollingResult.Change expectedChange) {
+        assertEquals(expectedChange, p.poll(StreamTaskListener.fromStdout()).change);
     }
 
 }

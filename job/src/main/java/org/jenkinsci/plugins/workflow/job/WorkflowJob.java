@@ -52,6 +52,7 @@ import hudson.model.RunMap;
 import hudson.model.TaskListener;
 import hudson.model.TopLevelItem;
 import hudson.model.TopLevelItemDescriptor;
+import hudson.model.listeners.SCMListener;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.model.queue.SubTask;
@@ -68,6 +69,7 @@ import hudson.triggers.TriggerDescriptor;
 import hudson.util.AlternativeUiTextProvider;
 import hudson.util.DescribableList;
 import hudson.widgets.HistoryWidget;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,6 +78,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
 import jenkins.model.BuildDiscarder;
@@ -108,6 +111,11 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
     private transient LazyBuildMixIn<WorkflowJob,WorkflowRun> buildMixIn;
     /** defaults to true */
     private @CheckForNull Boolean concurrentBuild;
+    /**
+     * Map from {@link SCM#getKey} to last version we encountered during polling.
+     * TODO is it important to persist this? {@link hudson.model.AbstractProject#pollingBaseline} is not persisted.
+     */
+    private transient volatile Map<String,SCMRevisionState> pollingBaselines;
 
     public WorkflowJob(ItemGroup parent, String name) {
         super(parent, name);
@@ -467,24 +475,32 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
 
     @Override public PollingResult poll(TaskListener listener) {
         // TODO call SCMPollListener
-        WorkflowRun b = getLastCompletedBuild();
-        if (b == null) {
+        WorkflowRun lastBuild = getLastBuild();
+        if (lastBuild == null) {
             listener.getLogger().println("no previous build to compare to");
-            return PollingResult.NO_CHANGES;
+            // Note that we have no equivalent of AbstractProject.NoSCM because without an initial build we do not know if this project has any SCM at all.
+            return Queue.getInstance().contains(this) ? PollingResult.NO_CHANGES : PollingResult.BUILD_NOW;
         }
-        Map<String,SCMRevisionState> runningStates = new HashMap<String,SCMRevisionState>(); // JENKINS-32214
-        WorkflowRun b2 = getLastBuild();
-        if (b2 != null && b2 != b) {
-            for (WorkflowRun.SCMCheckout co : b2.checkouts(listener)) {
-                runningStates.put(co.scm.getKey(), co.pollingBaseline);
-            }
+        WorkflowRun perhapsCompleteBuild = getLastSuccessfulBuild();
+        if (perhapsCompleteBuild == null) {
+            perhapsCompleteBuild = lastBuild;
         }
-        for (WorkflowRun.SCMCheckout co : b.checkouts(listener)) {
+        if (pollingBaselines == null) {
+            pollingBaselines = new ConcurrentHashMap<String,SCMRevisionState>();
+        }
+        PollingResult result = PollingResult.NO_CHANGES;
+        for (WorkflowRun.SCMCheckout co : perhapsCompleteBuild.checkouts(listener)) {
             if (!co.scm.supportsPolling()) {
                 listener.getLogger().println("polling not supported from " + co.workspace + " on " + co.node);
+                continue;
             }
-            if (co.pollingBaseline == null) {
-                listener.getLogger().println("no polling from " + co.workspace + " on " + co.node);
+            String key = co.scm.getKey();
+            SCMRevisionState pollingBaseline = pollingBaselines.get(key);
+            if (pollingBaseline == null) {
+                pollingBaseline = co.pollingBaseline; // after a restart, transient cache will be empty
+            }
+            if (pollingBaseline == null) {
+                listener.getLogger().println("no polling baseline in " + co.workspace + " on " + co.node);
                 continue;
             }
             try {
@@ -512,19 +528,17 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
                 }
                 PollingResult r;
                 try {
-                    SCMRevisionState pollingBaseline = runningStates.get(co.scm.getKey());
-                    if (pollingBaseline == null) {
-                        pollingBaseline = co.pollingBaseline;
-                    }
                     r = co.scm.compareRemoteRevisionWith(this, launcher, workspace, listener, pollingBaseline);
+                    if (r.remote != null) {
+                        pollingBaselines.put(key, r.remote);
+                    }
                 } finally {
                     if (lease != null) {
                         lease.release();
                     }
                 }
-                // TODO have to also record r.remote so we do not repoll; better to keep a Map<String,SCMRevisionState> pollingBaseline as a field here, initialized from SCMCheckout.pollingBaseline
-                if (r.hasChanges()) {
-                    return r;
+                if (r.change.compareTo(result.change) > 0) {
+                    result = r; // note that if we are using >1 checkout, we can clobber baseline/remote here; anyway SCMTrigger only calls hasChanges()
                 }
             } catch (AbortException x) {
                 listener.error("polling failed in " + co.workspace + " on " + co.node + ": " + x.getMessage());
@@ -532,7 +546,18 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
                 x.printStackTrace(listener.error("polling failed in " + co.workspace + " on " + co.node));
             }
         }
-        return PollingResult.NO_CHANGES;
+        return result;
+    }
+    @Extension public static final class SCMListenerImpl extends SCMListener {
+        @Override public void onCheckout(Run<?,?> build, SCM scm, FilePath workspace, TaskListener listener, File changelogFile, SCMRevisionState pollingBaseline) throws Exception {
+            if (build instanceof WorkflowRun && pollingBaseline != null) {
+                WorkflowJob job = ((WorkflowRun) build).getParent();
+                if (job.pollingBaselines == null) {
+                    job.pollingBaselines = new ConcurrentHashMap<String,SCMRevisionState>();
+                }
+                job.pollingBaselines.put(scm.getKey(), pollingBaseline);
+            }
+        }
     }
 
     @Override protected void performDelete() throws IOException, InterruptedException {
