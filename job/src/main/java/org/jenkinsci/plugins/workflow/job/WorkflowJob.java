@@ -57,6 +57,7 @@ import hudson.model.queue.QueueTaskFuture;
 import hudson.model.queue.SubTask;
 import hudson.scm.PollingResult;
 import hudson.scm.SCM;
+import hudson.scm.SCMRevisionState;
 import hudson.search.SearchIndexBuilder;
 import hudson.security.ACL;
 import hudson.slaves.WorkspaceList;
@@ -71,8 +72,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.CheckForNull;
@@ -471,6 +472,13 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             listener.getLogger().println("no previous build to compare to");
             return PollingResult.NO_CHANGES;
         }
+        Map<String,SCMRevisionState> runningStates = new HashMap<String,SCMRevisionState>(); // JENKINS-32214
+        WorkflowRun b2 = getLastBuild();
+        if (b2 != null && b2 != b) {
+            for (WorkflowRun.SCMCheckout co : b2.checkouts(listener)) {
+                runningStates.put(co.scm.getKey(), co.pollingBaseline);
+            }
+        }
         for (WorkflowRun.SCMCheckout co : b.checkouts(listener)) {
             if (!co.scm.supportsPolling()) {
                 listener.getLogger().println("polling not supported from " + co.workspace + " on " + co.node);
@@ -504,7 +512,11 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
                 }
                 PollingResult r;
                 try {
-                    r = co.scm.compareRemoteRevisionWith(this, launcher, workspace, listener, co.pollingBaseline);
+                    SCMRevisionState pollingBaseline = runningStates.get(co.scm.getKey());
+                    if (pollingBaseline == null) {
+                        pollingBaseline = co.pollingBaseline;
+                    }
+                    r = co.scm.compareRemoteRevisionWith(this, launcher, workspace, listener, pollingBaseline);
                 } finally {
                     if (lease != null) {
                         lease.release();

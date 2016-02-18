@@ -39,7 +39,6 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -117,7 +116,6 @@ public class SubversionStepTest {
         assertFalse(iterator.hasNext());
     }
     
-    @Ignore("TODO returns SIGNIFICANT")
     @Issue("JENKINS-32214")
     @Test public void pollDuringBuild() throws Exception {
         sampleRepo.init();
