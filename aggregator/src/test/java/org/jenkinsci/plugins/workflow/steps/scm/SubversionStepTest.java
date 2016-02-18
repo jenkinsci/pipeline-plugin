@@ -122,7 +122,6 @@ public class SubversionStepTest {
     @Test public void pollDuringBuild() throws Exception {
         sampleRepo.init();
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.addTrigger(new SCMTrigger(""));
         p.setDefinition(new CpsFlowDefinition(
             "node {\n" +
             "  svn '" + sampleRepo.trunkUrl() + "'\n" +
