@@ -24,8 +24,9 @@
 
 package org.jenkinsci.plugins.workflow.cps.replay;
 
-import org.jenkinsci.plugins.workflow.cps.replay.ReplayAction;
-import org.jenkinsci.plugins.workflow.cps.replay.ReplayCause;
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
 import hudson.FilePath;
 import hudson.XmlFile;
 import hudson.cli.CLICommandInvoker;
@@ -52,10 +53,10 @@ import static org.hamcrest.Matchers.containsString;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -70,7 +71,6 @@ public class ReplayActionTest {
         WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("first script", b1);
         WorkflowRun b2;
-        /* TODO broken by ACE integration, figure out how to resurrect:
         { // First time around, verify that UI elements are present and functional.
             ReplayAction a = b1.getAction(ReplayAction.class);
             assertNotNull(a);
@@ -87,8 +87,6 @@ public class ReplayActionTest {
             b2 = p.getBuildByNumber(2);
             assertNotNull(b2);
         } // Subsequently can use the faster whitebox method.
-        */
-        b2 = (WorkflowRun) b1.getAction(ReplayAction.class).run("echo 'second script'").get();
         r.assertLogContains("second script", r.assertBuildStatusSuccess(b2));
         ReplayCause cause = b2.getCause(ReplayCause.class);
         assertNotNull(cause);
