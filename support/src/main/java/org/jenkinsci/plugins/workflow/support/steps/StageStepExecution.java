@@ -11,7 +11,6 @@ import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,6 +26,7 @@ import jenkins.model.CauseOfInterruption;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.actions.StageAction;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
@@ -222,18 +222,26 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     }
 
     private static void println(StepContext context, String message) {
+        if (!context.isReady()) {
+            LOGGER.log(Level.FINE, "cannot print message ‘{0}’ to dead {1}", new Object[] {message, context});
+            return;
+        }
         try {
             context.get(TaskListener.class).getLogger().println(message);
         } catch (Exception x) {
-            LOGGER.log(WARNING, null, x);
+            LOGGER.log(WARNING, "failed to print message to dead " + context, x);
         }
     }
 
     // TODO record the stage it got to and display that
     private static void cancel(StepContext context, StepContext newer) throws IOException, InterruptedException {
-        println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
-        println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
-        context.onFailure(new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(newer.get(Run.class))));
+        if (context.isReady() && newer.isReady()) {
+            println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
+            println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
+            context.onFailure(new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(newer.get(Run.class))));
+        } else {
+            LOGGER.log(WARNING, "cannot cancel dead {0} or {1}", new Object[] {context, newer});
+        }
     }
 
     /**
@@ -296,6 +304,9 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     @Extension
     public static final class Listener extends RunListener<Run<?,?>> {
         @Override public void onCompleted(Run<?,?> r, TaskListener listener) {
+            if (!(r instanceof FlowExecutionOwner.Executable) || ((FlowExecutionOwner.Executable) r).asFlowExecutionOwner() == null) {
+                return;
+            }
             exit(r);
         }
     }
