@@ -425,14 +425,21 @@ public class CpsFlowExecution extends FlowExecution {
     @Override
     public void onLoad(FlowExecutionOwner owner) throws IOException {
         this.owner = owner;
-        initializeStorage();
         try {
-            if (!isComplete())
-                loadProgramAsync(getProgramDataFile());
-        } catch (IOException e) {
-            SettableFuture<CpsThreadGroup> p = SettableFuture.create();
-            programPromise = p;
-            loadProgramFailed(e, p);
+            initializeStorage();
+            try {
+                if (!isComplete()) {
+                    loadProgramAsync(getProgramDataFile());
+                }
+            } catch (IOException e) {
+                SettableFuture<CpsThreadGroup> p = SettableFuture.create();
+                programPromise = p;
+                loadProgramFailed(e, p);
+            }
+        } finally {
+            if (programPromise == null) {
+                programPromise = Futures.immediateFailedFuture(new IllegalStateException("completed or broken execution"));
+            }
         }
     }
 
