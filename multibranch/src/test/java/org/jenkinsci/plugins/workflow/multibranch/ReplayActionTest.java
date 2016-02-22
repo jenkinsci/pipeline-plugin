@@ -54,7 +54,6 @@ import org.jenkinsci.plugins.workflow.steps.scm.GitStep;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -109,7 +108,6 @@ public class ReplayActionTest {
         r.assertLogContains("INITIAL CONTENT", b2);
     }
 
-    @Ignore("TODO JENKINS-31860 planned to be fixed in matrix-auth 1.3")
     @Test public void permissions() throws Exception {
         File clones = tmp.newFolder();
         sampleRepo.init();
