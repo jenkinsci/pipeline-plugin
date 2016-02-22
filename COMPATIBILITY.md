@@ -60,6 +60,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `PerformancePublisher` (`performance`): [JENKINS-32650](https://issues.jenkins-ci.org/browse/JENKINS-32650)
 - [ ] `zephyr-for-jira-test-management` : [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
 - [ ] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
+- [X] `PerfSigRecorder` and 5 more (`performance-signature-dynatrace`): supported as of 2.0
 
 ## Build wrappers
 
