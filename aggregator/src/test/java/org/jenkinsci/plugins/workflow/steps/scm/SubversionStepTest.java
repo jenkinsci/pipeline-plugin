@@ -25,20 +25,24 @@
 package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.scm.ChangeLogSet;
+import hudson.scm.PollingResult;
 import hudson.scm.SCM;
 import hudson.scm.SubversionSCM;
 import hudson.triggers.SCMTrigger;
+import hudson.util.StreamTaskListener;
 import java.util.Iterator;
 import java.util.List;
 import jenkins.util.VirtualFile;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class SubversionStepTest {
@@ -110,6 +114,40 @@ public class SubversionStepTest {
         entry = iterator.next();
         assertEquals("[otherfile2]", entry.getAffectedPaths().toString());
         assertFalse(iterator.hasNext());
+    }
+    
+    @Issue("JENKINS-32214")
+    @Test public void pollDuringBuild() throws Exception {
+        sampleRepo.init();
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition(
+            "semaphore 'before'\n" +
+            "node {svn '" + sampleRepo.trunkUrl() + "'}\n" +
+            "semaphore 'after'"));
+        assertPolling(p, PollingResult.Change.INCOMPARABLE);
+        WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
+        SemaphoreStep.success("before/1", null);
+        SemaphoreStep.waitForStart("after/1", b1);
+        assertPolling(p, PollingResult.Change.NONE);
+        SemaphoreStep.success("after/1", null);
+        r.assertBuildStatusSuccess(r.waitForCompletion(b1));
+        sampleRepo.write("file2", "");
+        sampleRepo.svn("add", "file2");
+        sampleRepo.svn("commit", "--message=+file2");
+        WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
+        SemaphoreStep.success("before/2", null);
+        SemaphoreStep.waitForStart("after/2", b2);
+        assertPolling(p, PollingResult.Change.NONE);
+        WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
+        SemaphoreStep.waitForStart("before/3", b3);
+        assertPolling(p, PollingResult.Change.NONE);
+        sampleRepo.write("file3", "");
+        sampleRepo.svn("add", "file3");
+        sampleRepo.svn("commit", "--message=+file3");
+        assertPolling(p, PollingResult.Change.SIGNIFICANT);
+    }
+    private static void assertPolling(WorkflowJob p, PollingResult.Change expectedChange) {
+        assertEquals(expectedChange, p.poll(StreamTaskListener.fromStdout()).change);
     }
 
 }
