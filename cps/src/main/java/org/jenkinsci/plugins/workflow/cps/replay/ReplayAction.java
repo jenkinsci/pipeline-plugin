@@ -86,7 +86,7 @@ public class ReplayAction implements Action {
     }
 
     @Override public String getIconFileName() {
-        return isEnabled() ? "clock.png" : null;
+        return isEnabled() ? "redo.png" : null;
     }
 
     @Override public String getUrlName() {
