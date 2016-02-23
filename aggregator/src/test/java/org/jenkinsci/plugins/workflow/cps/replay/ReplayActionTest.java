@@ -68,8 +68,10 @@ public class ReplayActionTest {
     @Test public void editSimpleDefinition() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("echo 'first script'", false));
+        // Start off with a simple run of the first script.
         WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("first script", b1);
+        // Now will replay with a second script.
         WorkflowRun b2;
         { // First time around, verify that UI elements are present and functional.
             ReplayAction a = b1.getAction(ReplayAction.class);
@@ -93,12 +95,14 @@ public class ReplayActionTest {
         assertEquals(1, cause.getOriginalNumber());
         assertEquals(b1, cause.getOriginal());
         assertEquals(b2, cause.getRun());
+        // Replay #2 as #3. Note that the diff is going to be from #1 → #3, not #2 → #3.
         WorkflowRun b3 = (WorkflowRun) b2.getAction(ReplayAction.class).run("echo 'third script'").get();
         r.assertLogContains("third script", r.assertBuildStatusSuccess(b3));
         String diff = b3.getAction(ReplayAction.class).getDiff();
         assertThat(diff, containsString("-echo 'first script'"));
         assertThat(diff, containsString("+echo 'third script'"));
         System.out.println(diff);
+        // Make a persistent edit to the script and run, just to make sure there is no lingering effect.
         p.setDefinition(new CpsFlowDefinition("echo 'fourth script'", false));
         r.assertLogContains("fourth script", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
@@ -109,6 +113,7 @@ public class ReplayActionTest {
         p.setDefinition(new CpsFlowDefinition("echo \"run with ${param}\"", true));
         WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0, new ParametersAction(new StringParameterValue("param", "some value"))));
         r.assertLogContains("run with some value", b1);
+        // When we replay a parameterized build, we expect the original parameter values to be set.
         WorkflowRun b2 = (WorkflowRun) b1.getAction(ReplayAction.class).run("echo \"run again with ${param}\"").get();
         r.assertLogContains("run again with some value", r.assertBuildStatusSuccess(b2));
     }
@@ -116,14 +121,18 @@ public class ReplayActionTest {
     @Initializer(after=InitMilestone.EXTENSIONS_AUGMENTED, before=InitMilestone.JOB_LOADED) // same time as Jenkins global config is loaded (e.g., AuthorizationStrategy)
     public static void assertPermissionId() {
         String thePermissionId = "hudson.model.Run.Replay";
+        // An AuthorizationStrategy may be loading a permission by name during Jenkins startup.
         Permission thePermission = Permission.fromId(thePermissionId);
+        // Make sure it finds this addition, even though the PermissionGroup is in core.
         assertEquals(ReplayAction.REPLAY, thePermission);
         assertEquals(thePermissionId, thePermission.getId());
     }
 
     @Test public void permissions() throws Exception {
+        // assertPermissionId should have been run before we get here
         r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
         GlobalMatrixAuthorizationStrategy gmas = new GlobalMatrixAuthorizationStrategy();
+        // Set up an administrator, and three developer users with varying levels of access.
         gmas.add(Jenkins.ADMINISTER, "admin");
         gmas.add(Jenkins.READ, "dev1");
         gmas.add(Item.CONFIGURE, "dev1"); // implies REPLAY
@@ -135,15 +144,17 @@ public class ReplayActionTest {
         gmas.add(Item.BUILD, "dev3"); // does not imply REPLAY
         r.jenkins.setAuthorizationStrategy(gmas);
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("", false));
+        p.setDefinition(new CpsFlowDefinition("", /* whole-script approval */ false));
         WorkflowRun b1 = p.scheduleBuild2(0).get();
+        // Jenkins admins can of course do as they please. But developers without RUN_SCRIPTS are out of luck.
         assertTrue(canReplay(b1, "admin"));
         assertFalse("not sandboxed, so only safe for admins", canReplay(b1, "dev1"));
         assertFalse(canReplay(b1, "dev2"));
         assertFalse(canReplay(b1, "dev3"));
-        p.setDefinition(new CpsFlowDefinition("", true));
+        p.setDefinition(new CpsFlowDefinition("", /* sandbox */ true));
         WorkflowRun b2 = p.scheduleBuild2(0).get();
         assertTrue(canReplay(b2, "admin"));
+        // Developers with REPLAY (or CONFIGURE) can run it.
         assertTrue(canReplay(b2, "dev1"));
         assertTrue(canReplay(b2, "dev2"));
         assertFalse(canReplay(b2, "dev3"));
@@ -159,16 +170,21 @@ public class ReplayActionTest {
 
     @Test public void loadStep() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        // Shortcut to simulate checking out an external repo with an auxiliary script.
         FilePath f = r.jenkins.getWorkspaceFor(p).child("f.groovy");
         f.write("echo 'original loaded text'", null);
         p.setDefinition(new CpsFlowDefinition("node {load 'f.groovy'}", true));
+        // Initial build loads external script and prints a message.
         WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("original loaded text", b1);
+        // Editing main script to print an initial message, and editing loaded script as well.
         WorkflowRun b2 = (WorkflowRun) b1.getAction(ReplayAction.class).run("echo 'trying edits'\nnode {load 'f.groovy'}", Collections.singletonMap("Script1", "echo 'new loaded text'")).get();
         r.assertBuildStatusSuccess(b2);
         r.assertLogContains("trying edits", b2);
         r.assertLogContains("new loaded text", b2);
+        // Can take a look at the build.xml and see that we are not duplicating script content once edits are applied (not yet formally asserted).
         System.out.println(new XmlFile(new File(b2.getRootDir(), "build.xml")).asString());
+        // Diff should reflect both sets of changes.
         String diff = b2.getAction(ReplayAction.class).getDiff();
         assertThat(diff, containsString("+echo 'trying edits'"));
         assertThat(diff, containsString("Script1"));
@@ -182,16 +198,19 @@ public class ReplayActionTest {
 
     @Test public void cli() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        // As in loadStep, will set up a main and auxiliary script.
         FilePath f = r.jenkins.getWorkspaceFor(p).child("f.groovy");
         f.write("'original text'", null);
         p.setDefinition(new CpsFlowDefinition("node {def t = load 'f.groovy'; echo \"got ${t}\"}", true));
         WorkflowRun b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("got original text", b1);
+        // s/got/received/ on main script
         assertEquals(0, new CLICommandInvoker(r, "replay-pipeline").withStdin(IOUtils.toInputStream("node {def t = load 'f.groovy'; echo \"received ${t}\"}")).invokeWithArgs("p").returnCode());
         r.waitUntilNoActivity();
         WorkflowRun b2 = p.getLastBuild();
         assertEquals(2, b2.getNumber());
         r.assertLogContains("received original text", b2);
+        // s/original/new/ on auxiliary script, and explicitly asking to replay #1 rather than the latest
         assertEquals(0, new CLICommandInvoker(r, "replay-pipeline").withStdin(IOUtils.toInputStream("'new text'")).invokeWithArgs("p", "-n", "1", "-s", "Script1").returnCode());
         r.waitUntilNoActivity();
         WorkflowRun b3 = p.getLastBuild();

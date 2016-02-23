@@ -77,9 +77,11 @@ public class ReplayActionTest {
         p.setDefinition(new CpsScmFlowDefinition(new GitStep(sampleRepo.toString()).createSCM(), "Jenkinsfile"));
         WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
         r.assertLogContains("loaded initial content", b);
+        // Changing contents of a file in the repo. Since this is a standalone project, scm currently “floats” to the branch head.
         sampleRepo.write("file", "subsequent content");
         sampleRepo.git("add", "file");
         sampleRepo.git("commit", "--message=next");
+        // Replaying with a modified main script; checkout scm will get branch head.
         b = (WorkflowRun) b.getAction(ReplayAction.class).run("node {checkout scm; echo \"this time loaded ${readFile 'file'}\"}").get();
         assertEquals(2, b.number);
         r.assertLogContains("this time loaded subsequent content", b);
@@ -102,9 +104,11 @@ public class ReplayActionTest {
         sampleRepo.write("file", "subsequent content");
         sampleRepo.git("add", "file");
         sampleRepo.git("commit", "--message=next");
+        // Replaying main script with some upcasing.
         ScriptApproval.get().approveSignature("method java.lang.String toUpperCase");
         WorkflowRun b2 = (WorkflowRun) b1.getAction(ReplayAction.class).run("node {checkout scm; echo readFile('file').toUpperCase()}").get();
         assertEquals(2, b2.number);
+        // For a multibranch project, we expect checkout scm to retrieve the same repository revision as the (original) Jenkinsfile.
         r.assertLogContains("INITIAL CONTENT", b2);
     }
 
@@ -115,6 +119,8 @@ public class ReplayActionTest {
         sampleRepo.git("add", "Jenkinsfile");
         sampleRepo.git("commit", "--all", "--message=init");
         sampleRepo.git("clone", ".", new File(clones, "one").getAbsolutePath());
+        // Set up a secured instance with an organization folder.
+        // Developers have varying permissions set at the topmost (configurable) level.
         r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
         ProjectMatrixAuthorizationStrategy pmas = new ProjectMatrixAuthorizationStrategy();
         pmas.add(Jenkins.ADMINISTER, "admin");
@@ -137,10 +143,14 @@ public class ReplayActionTest {
         WorkflowJob p = WorkflowMultiBranchProjectTest.findBranchProject((WorkflowMultiBranchProject) one, "master");
         WorkflowRun b1 = p.getLastBuild();
         assertEquals(1, b1.getNumber());
+        // Multibranch projects are always sandboxed, so any dev with REPLAY (or CONFIGURE) can replay.
         assertTrue(canReplay(b1, "admin"));
+        // Note that while dev1 cannot actually configure the WorkflowJob (it is read-only; no one can),
+        // the implication CONFIGURE → REPLAY is done at a lower level than this suppression of CONFIGURE.
         assertTrue(canReplay(b1, "dev1"));
         assertTrue(canReplay(b1, "dev2"));
         assertFalse(canReplay(b1, "dev3"));
+        // For whole-script-approval standalone projects, you need RUN_SCRIPTS to replay.
         p = r.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition("", false));
         b1 = p.scheduleBuild2(0).get();
