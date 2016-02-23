@@ -30,6 +30,7 @@ import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 /**
  * Marker that a run is a replay of an earlier one.
@@ -39,7 +40,7 @@ public class ReplayCause extends Cause {
     private final int originalNumber;
     private transient Run<?,?> run;
 
-    ReplayCause(Run<?,?> original) {
+    ReplayCause(@Nonnull Run<?,?> original) {
         this.originalNumber = original.getNumber();
     }
 

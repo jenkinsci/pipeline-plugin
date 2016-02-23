@@ -51,6 +51,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
@@ -64,6 +65,8 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.replay.Messages;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -118,11 +121,13 @@ public class ReplayAction implements Action {
         }
     }
 
+    /** @see CpsFlowExecution#getScript */
     /* accessible to Jelly */ public String getOriginalScript() {
         CpsFlowExecution execution = getExecution();
         return execution != null ? execution.getScript() : "???";
     }
 
+    /** @see CpsFlowExecution#getLoadedScripts */
     /* accessible to Jelly */ public Map<String,String> getOriginalLoadedScripts() {
         CpsFlowExecution execution = getExecution();
         return execution != null ? execution.getLoadedScripts() : /* ? */Collections.<String,String>emptyMap();
@@ -132,6 +137,7 @@ public class ReplayAction implements Action {
         return run;
     }
 
+    @Restricted(DoNotUse.class)
     @RequirePOST
     public void doRun(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException {
         if (!isEnabled()) {
@@ -139,8 +145,8 @@ public class ReplayAction implements Action {
         }
         JSONObject form = req.getSubmittedForm();
         Map<String,String> otherScripts = new HashMap<String,String>();
-        for (String clazz : getOriginalLoadedScripts().keySet()) {
-            otherScripts.put(clazz, form.getString(clazz));
+        for (Map.Entry<String,String> entry : getOriginalLoadedScripts().entrySet()) {
+            otherScripts.put(entry.getKey(), form.optString(entry.getKey(), entry.getValue()));
         }
         run(form.getString("mainScript"), otherScripts);
         rsp.sendRedirect("../.."); // back to WorkflowJob; new build might not start instantly so cannot redirect to it
@@ -156,7 +162,13 @@ public class ReplayAction implements Action {
         return run(script, Collections.<String,String>emptyMap());
     }
 
-    public @CheckForNull QueueTaskFuture/*<Run>*/ run(String script, Map<String,String> otherScripts) {
+    /**
+     * For whitebox testing.
+     * @param script main script; replacement for {@link #getOriginalScript}
+     * @param otherScripts auxiliary scripts, keyed by class name; replacement for {@link #getOriginalLoadedScripts}
+     * @return a way to wait for the replayed build to complete
+     */
+    public @CheckForNull QueueTaskFuture/*<Run>*/ run(@Nonnull String script, @Nonnull Map<String,String> otherScripts) {
         List<Action> actions = new ArrayList<Action>();
         CpsFlowExecution execution = getExecution();
         if (execution == null) {
