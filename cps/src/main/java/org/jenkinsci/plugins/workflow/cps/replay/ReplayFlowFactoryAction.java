@@ -50,19 +50,19 @@ class ReplayFlowFactoryAction extends InvisibleAction implements CpsFlowFactoryA
 
     private static final Logger LOGGER = Logger.getLogger(ReplayFlowFactoryAction.class.getName());
 
-    private String mainScript;
-    private final Map<String,String> otherScripts;
+    private String replacementMainScript;
+    private final Map<String,String> replacementLoadedScripts;
     private transient final boolean sandbox;
     
-    ReplayFlowFactoryAction(@Nonnull String mainScript, @Nonnull Map<String,String> otherScripts, boolean sandbox) {
-        this.mainScript = mainScript;
-        this.otherScripts = new HashMap<String,String>(otherScripts);
+    ReplayFlowFactoryAction(@Nonnull String replacementMainScript, @Nonnull Map<String,String> replacementLoadedScripts, boolean sandbox) {
+        this.replacementMainScript = replacementMainScript;
+        this.replacementLoadedScripts = new HashMap<String,String>(replacementLoadedScripts);
         this.sandbox = sandbox;
     }
 
     @Override public CpsFlowExecution create(FlowDefinition def, FlowExecutionOwner owner, List<? extends Action> actions) throws IOException {
-        String script = mainScript;
-        mainScript = null; // minimize build.xml size
+        String script = replacementMainScript;
+        replacementMainScript = null; // minimize build.xml size
         return new CpsFlowExecution(script, sandbox, owner);
     }
 
@@ -78,7 +78,7 @@ class ReplayFlowFactoryAction extends InvisibleAction implements CpsFlowFactoryA
                 if (executable instanceof Run) {
                     ReplayFlowFactoryAction action = ((Run) executable).getAction(ReplayFlowFactoryAction.class);
                     if (action != null) {
-                        String newText = action.otherScripts.remove(clazz);
+                        String newText = action.replacementLoadedScripts.remove(clazz);
                         if (newText != null) {
                             listener.getLogger().println("Replacing Groovy text with edited version");
                             return newText;
