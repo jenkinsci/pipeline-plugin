@@ -82,7 +82,7 @@ public class ReplayActionTest {
         sampleRepo.git("add", "file");
         sampleRepo.git("commit", "--message=next");
         // Replaying with a modified main script; checkout scm will get branch head.
-        b = (WorkflowRun) b.getAction(ReplayAction.class).run("node {checkout scm; echo \"this time loaded ${readFile 'file'}\"}").get();
+        b = (WorkflowRun) b.getAction(ReplayAction.class).run("node {checkout scm; echo \"this time loaded ${readFile 'file'}\"}", Collections.<String,String>emptyMap()).get();
         assertEquals(2, b.number);
         r.assertLogContains("this time loaded subsequent content", b);
     }
@@ -106,7 +106,7 @@ public class ReplayActionTest {
         sampleRepo.git("commit", "--message=next");
         // Replaying main script with some upcasing.
         ScriptApproval.get().approveSignature("method java.lang.String toUpperCase");
-        WorkflowRun b2 = (WorkflowRun) b1.getAction(ReplayAction.class).run("node {checkout scm; echo readFile('file').toUpperCase()}").get();
+        WorkflowRun b2 = (WorkflowRun) b1.getAction(ReplayAction.class).run("node {checkout scm; echo readFile('file').toUpperCase()}", Collections.<String,String>emptyMap()).get();
         assertEquals(2, b2.number);
         // For a multibranch project, we expect checkout scm to retrieve the same repository revision as the (original) Jenkinsfile.
         r.assertLogContains("INITIAL CONTENT", b2);

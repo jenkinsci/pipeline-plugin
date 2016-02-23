@@ -78,12 +78,12 @@ import org.kohsuke.args4j.spi.Setter;
         }
         String text = IOUtils.toString(stdin);
         if (script != null) {
-            Map<String,String> scripts = new HashMap<String,String>(action.getOriginalLoadedScripts());
-            if (!scripts.containsKey(script)) {
-                throw new AbortException("Unrecognized script name among " + scripts.keySet());
+            Map<String,String> replacementLoadedScripts = new HashMap<String,String>(action.getOriginalLoadedScripts());
+            if (!replacementLoadedScripts.containsKey(script)) {
+                throw new AbortException("Unrecognized script name among " + replacementLoadedScripts.keySet());
             }
-            scripts.put(script, text);
-            action.run(action.getOriginalScript(), scripts);
+            replacementLoadedScripts.put(script, text);
+            action.run(action.getOriginalScript(), replacementLoadedScripts);
         } else {
             action.run(text, action.getOriginalLoadedScripts());
         }

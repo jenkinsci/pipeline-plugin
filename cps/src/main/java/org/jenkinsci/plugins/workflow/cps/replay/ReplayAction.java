@@ -62,7 +62,6 @@ import net.sf.json.JSONObject;
 import org.acegisecurity.AccessDeniedException;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
-import org.jenkinsci.plugins.workflow.cps.replay.Messages;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.kohsuke.accmod.Restricted;
@@ -144,11 +143,13 @@ public class ReplayAction implements Action {
             throw new AccessDeniedException("not allowed to replay"); // AccessDeniedException2 requires us to look up the specific Permission
         }
         JSONObject form = req.getSubmittedForm();
-        Map<String,String> otherScripts = new HashMap<String,String>();
+        // Copy originalLoadedScripts, replacing values with those from the form wherever defined.
+        Map<String,String> replacementLoadedScripts = new HashMap<String,String>();
         for (Map.Entry<String,String> entry : getOriginalLoadedScripts().entrySet()) {
-            otherScripts.put(entry.getKey(), form.optString(entry.getKey(), entry.getValue()));
+            // optString since you might be replaying a running build, which might have loaded a script after the page load but before submission.
+            replacementLoadedScripts.put(entry.getKey(), form.optString(entry.getKey(), entry.getValue()));
         }
-        run(form.getString("mainScript"), otherScripts);
+        run(form.getString("mainScript"), replacementLoadedScripts);
         rsp.sendRedirect("../.."); // back to WorkflowJob; new build might not start instantly so cannot redirect to it
     }
 
@@ -157,24 +158,19 @@ public class ReplayAction implements Action {
         SCMRevisionAction.class
     );
 
-    /** For whitebox testing. */
-    public @CheckForNull QueueTaskFuture/*<Run>*/ run(String script) {
-        return run(script, Collections.<String,String>emptyMap());
-    }
-
     /**
      * For whitebox testing.
-     * @param script main script; replacement for {@link #getOriginalScript}
-     * @param otherScripts auxiliary scripts, keyed by class name; replacement for {@link #getOriginalLoadedScripts}
+     * @param replacementMainScript main script; replacement for {@link #getOriginalScript}
+     * @param replacementLoadedScripts auxiliary scripts, keyed by class name; replacement for {@link #getOriginalLoadedScripts}
      * @return a way to wait for the replayed build to complete
      */
-    public @CheckForNull QueueTaskFuture/*<Run>*/ run(@Nonnull String script, @Nonnull Map<String,String> otherScripts) {
+    public @CheckForNull QueueTaskFuture/*<Run>*/ run(@Nonnull String replacementMainScript, @Nonnull Map<String,String> replacementLoadedScripts) {
         List<Action> actions = new ArrayList<Action>();
         CpsFlowExecution execution = getExecution();
         if (execution == null) {
             return null;
         }
-        actions.add(new ReplayFlowFactoryAction(script, otherScripts, execution.isSandbox()));
+        actions.add(new ReplayFlowFactoryAction(replacementMainScript, replacementLoadedScripts, execution.isSandbox()));
         actions.add(new CauseAction(new Cause.UserIdCause(), new ReplayCause(run)));
         for (Class<? extends Action> c : COPIED_ACTIONS) {
             actions.addAll(run.getActions(c));
