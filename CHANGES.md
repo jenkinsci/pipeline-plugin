@@ -7,6 +7,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 * [JENKINS-32727](https://issues.jenkins-ci.org/browse/JENKINS-32727): new facility to replay Pipeline builds with a modified script.
 * Simple `git` step now checks out a branch, not a detached head, for ease of committing to the workspace.
 * [JENKINS-33005](https://issues.jenkins-ci.org/browse/JENKINS-33005): hang running `stage` step which tries to cancel an earlier build that could not be loaded.
+* [JENKINS-32214](https://issues.jenkins-ci.org/browse/JENKINS-32214): polling for Subversion and Mercurial did not take into account changes already checked out in a running build.
 
 ## 1.14-beta-1 (Feb 10 2016)
 
