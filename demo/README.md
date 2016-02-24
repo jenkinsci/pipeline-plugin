@@ -19,6 +19,7 @@ The continuous delivery pipeline consists of the following sequence.
   You may clone from, edit, and push to `git://localhost/repo`.
   Each branch automatically creates a matching subproject that builds that branch.
 * Checks out source code from the same repository and commit as `Jenkinsfile`.
+* Loads a set of utility functions from a separate file `servers.groovy`.
 * Builds sources via Maven with unit testing.
 * Run two parallel integration tests that involve deploying the app to a PaaS-like ephemeral server instances, which get
   thrown away when tests are done (this is done by using auto-deployment of Jetty)

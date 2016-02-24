@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+    <st:documentation>
+        <st:attribute name="script">
+            The script.
+        </st:attribute>
+    </st:documentation>
+    <j:choose>
+        <j:when test="${h.isUnitTest}">
+            <!-- HtmlUnit and ACE do not seem to mix. -->
+            <f:textarea value="${script}" checkMethod="post" checkUrl="${attrs.checkUrl}" checkDependsOn="${attrs.checkDependsOn}"/>
+        </j:when>
+        <j:otherwise>
+            <div class="workflow-editor-wrapper" style="display: none; position: relative">
+                <f:textarea value="${script}" checkMethod="post" checkUrl="${attrs.checkUrl}" checkDependsOn="${attrs.checkDependsOn}"/>
+                <div class="pane-frame editor" style="height: 250px;"/>
+            </div>
+            <st:adjunct includes="org.jenkinsci.plugins.workflow.cps.workflow-editor"/>
+        </j:otherwise>
+    </j:choose>
+</j:jelly>
