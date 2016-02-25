@@ -61,6 +61,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `zephyr-for-jira-test-management` : [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
 - [ ] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
 - [X] `PerfSigRecorder` and 5 more (`performance-signature-dynatrace`): supported as of 2.0
+- [ ] `stashNotifier`: [issue 92](https://github.com/jenkinsci/stashnotifier-plugin/issues/92)
 
 ## Build wrappers
 
@@ -88,7 +89,6 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `bitbucket`: supported as of 1.1.2
 - [ ] `bitbucket-pullrequest-builder`: [JENKINS-31749](https://issues.jenkins-ci.org/browse/JENKINS-31749)
 - [ ] `xtrigger`: [JENKINS-31933](https://issues.jenkins-ci.org/browse/JENKINS-31933)
-- [ ] `stashNotifier`: [issue 92](https://github.com/jenkinsci/stashnotifier-plugin/issues/92)
 
 ## Clouds
 
