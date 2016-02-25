@@ -50,7 +50,7 @@ public class SleepStepTest {
         r.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = r.j.jenkins.createProject(WorkflowJob.class, "p");
-                p.setDefinition(new CpsFlowDefinition("semaphore 'start'; sleep 10"));
+                p.setDefinition(new CpsFlowDefinition("semaphore 'start'; sleep 10", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("start/1", b);
                 SemaphoreStep.success("start/1", null);
