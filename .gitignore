@@ -18,3 +18,4 @@ demo/snapshot/plugins/
 node
 node_modules
 generates-adjuncts
+pom.xml.versionsBackup
