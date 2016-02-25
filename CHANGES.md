@@ -2,7 +2,7 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.14 (upcoming)
+## 1.14 (Feb 25 2016)
 
 * [JENKINS-32727](https://issues.jenkins-ci.org/browse/JENKINS-32727): new facility to replay Pipeline builds with a modified script.
 * Simple `git` step now checks out a branch, not a detached head, for ease of committing to the workspace.
