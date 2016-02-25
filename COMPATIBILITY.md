@@ -58,9 +58,10 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
 - [X] `XUnitPublisher` and `XUnitBuilder` (`xunit`): scheduled to be supported as of 1.100
 - [ ] `PerformancePublisher` (`performance`): [JENKINS-32650](https://issues.jenkins-ci.org/browse/JENKINS-32650)
-- [ ] `zephyr-for-jira-test-management` : [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
+- [ ] `ZfjReporter` (`zephyr-for-jira-test-management`): [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
 - [ ] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
 - [X] `PerfSigRecorder` and 5 more (`performance-signature-dynatrace`): supported as of 2.0
+- [ ] `StashNotifier` (`stashNotifier`): [issue 92](https://github.com/jenkinsci/stashnotifier-plugin/issues/92)
 
 ## Build wrappers
 
