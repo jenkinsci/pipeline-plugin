@@ -11,7 +11,7 @@ Run it like:
 Jenkins runs on port 8080, and Jetty runs on port 8081.
 
 __Note__: If using [boot2docker](https://github.com/boot2docker/boot2docker), you will need to connect using the boot2docker
-VM's IP (instead of `localhost`).  You can get this by running `boot2docker ip` on the command line.
+VM's IP (instead of `localhost`).  You can get this by running `boot2docker ip` on the command line. Alternatively, you can use https://github.com/bsideup/forward2docker to auto forward ports to make them acessible from localhost.
 
 The continuous delivery pipeline consists of the following sequence.
 
