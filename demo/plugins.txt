@@ -6,10 +6,14 @@ durable-task:1.7
 git:2.4.2
 git-client:1.19.5
 git-server:1.6
+handlebars:1.1
 icon-shim:2.0.3
 jquery-detached:1.2
 mapdb-api:1.0.6.0
 mock-slave:1.8
+momentjs:1.1
+pipeline-rest-api:1.0
+pipeline-stage-view:1.0
 scm-api:1.0
 script-security:1.17
 ssh-credentials:1.11

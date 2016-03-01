@@ -51,5 +51,5 @@ Sample demo scenario
 CloudBees Jenkins Enterprise variant
 --------------------------
 
-If you would like to see CloudBees Jenkins Enterprise features (such as checkpoints and the stage pipeline view),
+If you would like to see CloudBees Jenkins Enterprise features (such as checkpoints),
 see the [extended demo page](https://registry.hub.docker.com/u/cloudbees/workflow-demo/).
