@@ -24,6 +24,8 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
+import hudson.FilePath;
+import hudson.slaves.WorkspaceList;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Test;
@@ -36,8 +38,19 @@ public class PwdStepTest {
 
     @Test public void basics() throws Exception {
         WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
-        p.setDefinition(new CpsFlowDefinition("node {echo \"cwd=${pwd()}\"}", true));
-        r.assertLogContains("cwd=" + r.jenkins.getWorkspaceFor(p), r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+        p.setDefinition(new CpsFlowDefinition("node {echo \"cwd='${pwd()}'\"}", true));
+        r.assertLogContains("cwd='" + r.jenkins.getWorkspaceFor(p) + "'", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+    }
+
+    // TODO use https://github.com/jenkinsci/jenkins/pull/2066
+    private static FilePath tempDir(FilePath ws) {
+        return ws.sibling(ws.getName() + System.getProperty(WorkspaceList.class.getName(), "@") + "tmp");
+    }
+
+    @Test public void tmp() throws Exception {
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition("node {echo \"tmp='${pwd tmp: true}'\"}", true));
+        r.assertLogContains("tmp='" + tempDir(r.jenkins.getWorkspaceFor(p)) + "'", r.assertBuildStatusSuccess(p.scheduleBuild2(0)));
     }
 
 }

@@ -24,9 +24,12 @@
 
 package org.jenkinsci.plugins.workflow.steps;
 
+import com.google.inject.Inject;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.slaves.WorkspaceList;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * Returns the working directory path.
@@ -40,7 +43,18 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * </pre>
  */
 public class PwdStep extends AbstractStepImpl {
+
+    private boolean tmp;
+
     @DataBoundConstructor public PwdStep() {}
+
+    public boolean isTmp() {
+        return tmp;
+    }
+
+    @DataBoundSetter public void setTmp(boolean tmp) {
+        this.tmp = tmp;
+    }
 
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {
 
@@ -58,12 +72,18 @@ public class PwdStep extends AbstractStepImpl {
 
     }
 
+    // TODO use https://github.com/jenkinsci/jenkins/pull/2066
+    private static FilePath tempDir(FilePath ws) {
+        return ws.sibling(ws.getName() + System.getProperty(WorkspaceList.class.getName(), "@") + "tmp");
+    }
+
     public static class Execution extends AbstractSynchronousStepExecution<String> {
         
         @StepContextParameter private transient FilePath cwd;
+        @Inject(optional=true) private transient PwdStep step;
 
         @Override protected String run() throws Exception {
-            return cwd.getRemote();
+            return (step.isTmp() ? tempDir(cwd) : cwd).getRemote();
         }
 
         private static final long serialVersionUID = 1L;
