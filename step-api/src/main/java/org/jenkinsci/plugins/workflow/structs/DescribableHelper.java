@@ -149,7 +149,7 @@ public class DescribableHelper {
         return new Schema(clazz);
     }
     
-    public static Schema schemaFor(Class<?> clazz, Stack<String> tracker) {
+    private static Schema schemaFor(Class<?> clazz, Stack<String> tracker) {
         return new Schema(clazz, tracker);
     }
 
@@ -163,14 +163,14 @@ public class DescribableHelper {
         private final List<String> mandatoryParameters;
 
         Schema(Class<?> clazz) {
-            this(clazz, null);
+            this(clazz, new Stack<String>());
         }
 
-        Schema(Class<?> clazz, Stack<String> tracker) {
+        Schema(Class<?> clazz, @Nonnull Stack<String> tracker) {
             this.type = clazz;
-            if(tracker == null){
+            /*if(tracker == null){
                 tracker = new Stack<String>();
-            }
+            }*/
             mandatoryParameters = new ArrayList<String>();
             parameters = new TreeMap<String,ParameterType>();
             String[] names = loadConstructorParamNames(clazz);
@@ -299,11 +299,8 @@ public class DescribableHelper {
             return of(type, new Stack<String>());
         }
 
-        static ParameterType of(Type type, Stack<String> tracker) {
+        private static ParameterType of(Type type, @Nonnull Stack<String> tracker) {
             try {
-                if(tracker == null){ //in case called externally
-                    tracker = new Stack<String>();
-                }
                 if (type instanceof Class) {
                     Class<?> c = (Class<?>) type;
                     if (c == String.class || Primitives.unwrap(c).isPrimitive()) {
