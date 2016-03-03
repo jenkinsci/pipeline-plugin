@@ -337,20 +337,16 @@ public class DescribableHelper {
                                 subtypesBySimpleName.put(simpleName, bySimpleName = new ArrayList<Class<?>>());
                             }
                             bySimpleName.add(subtype);
-                            LOG.log(Level.INFO, "Value of subtype: " + simpleName);
                         }
                         Map<String,Schema> types = new TreeMap<String,Schema>();
                         for (Map.Entry<String,List<Class<?>>> entry : subtypesBySimpleName.entrySet()) {
                             if (entry.getValue().size() == 1) { // normal case: unambiguous via simple name
                                 try {
                                     String key = entry.getKey();
-                                    LOG.log(Level.INFO, "entry value size=1 key: "+key+" stack size: "+tracker.size());
                                     if(tracker.search(key) < 0) {
                                         tracker.push(key);
                                         types.put(key, schemaFor(entry.getValue().get(0), tracker));
                                         tracker.pop();
-                                    } else {
-                                        LOG.log(Level.INFO, "I safelly triggered the stack!");
                                     }
                                 } catch (Exception x) {
                                     LOG.log(Level.FINE, "skipping subtype", x);
@@ -359,14 +355,11 @@ public class DescribableHelper {
                                 for (Class<?> subtype : entry.getValue()) {
                                     try {
                                         String name = subtype.getName();
-                                        LOG.log(Level.INFO, "entry value size!=1 name: "+name+" stack size: "+tracker.size());
                                         if(tracker.search(name) < 0) {
                                             tracker.push(name);
                                             types.put(name, schemaFor(subtype, tracker));
                                             tracker.pop();
-                                        } else {
-                                        LOG.log(Level.INFO, "I safelly triggered the stack!");
-                                    }
+                                        }
                                     } catch (Exception x) {
                                         LOG.log(Level.FINE, "skipping subtype", x);
                                     }
