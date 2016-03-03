@@ -52,6 +52,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -147,6 +148,10 @@ public class DescribableHelper {
     public static Schema schemaFor(Class<?> clazz) {
         return new Schema(clazz);
     }
+    
+    public static Schema schemaFor(Class<?> clazz, Stack<String> tracker) {
+        return new Schema(clazz, tracker);
+    }
 
     /**
      * Definition of how a particular class may be configured.
@@ -158,20 +163,27 @@ public class DescribableHelper {
         private final List<String> mandatoryParameters;
 
         Schema(Class<?> clazz) {
+            this(clazz, null);
+        }
+
+        Schema(Class<?> clazz, Stack<String> tracker) {
             this.type = clazz;
+            if(tracker == null){
+                tracker = new Stack<String>();
+            }
             mandatoryParameters = new ArrayList<String>();
             parameters = new TreeMap<String,ParameterType>();
             String[] names = loadConstructorParamNames(clazz);
             Type[] types = findConstructor(clazz, names.length).getGenericParameterTypes();
             for (int i = 0; i < names.length; i++) {
                 mandatoryParameters.add(names[i]);
-                parameters.put(names[i], ParameterType.of(types[i]));
+                parameters.put(names[i], ParameterType.of(types[i], tracker));
             }
             for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
                 for (Field f : c.getDeclaredFields()) {
                     if (f.isAnnotationPresent(DataBoundSetter.class)) {
                         f.setAccessible(true);
-                        parameters.put(f.getName(), ParameterType.of(f.getGenericType()));
+                        parameters.put(f.getName(), ParameterType.of(f.getGenericType(), tracker));
                     }
                 }
                 for (Method m : c.getDeclaredMethods()) {
@@ -181,7 +193,7 @@ public class DescribableHelper {
                             throw new IllegalStateException(m + " cannot be a @DataBoundSetter");
                         }
                         m.setAccessible(true);
-                        parameters.put(Introspector.decapitalize(m.getName().substring(3)), ParameterType.of(m.getGenericParameterTypes()[0]));
+                        parameters.put(Introspector.decapitalize(m.getName().substring(3)), ParameterType.of(m.getGenericParameterTypes()[0], tracker));
                     }
                 }
             }
@@ -282,8 +294,12 @@ public class DescribableHelper {
         ParameterType(Type actualType) {
             this.actualType = actualType;
         }
+        
+        static ParameterType of(Type type){
+            return of(type, new Stack<String>());
+        }
 
-        static ParameterType of(Type type) {
+        static ParameterType of(Type type, Stack<String> tracker) {
             try {
                 if (type instanceof Class) {
                     Class<?> c = (Class<?>) type;
@@ -318,19 +334,36 @@ public class DescribableHelper {
                                 subtypesBySimpleName.put(simpleName, bySimpleName = new ArrayList<Class<?>>());
                             }
                             bySimpleName.add(subtype);
+                            LOG.log(Level.INFO, "Value of subtype: " + simpleName);
                         }
                         Map<String,Schema> types = new TreeMap<String,Schema>();
                         for (Map.Entry<String,List<Class<?>>> entry : subtypesBySimpleName.entrySet()) {
                             if (entry.getValue().size() == 1) { // normal case: unambiguous via simple name
                                 try {
-                                    types.put(entry.getKey(), schemaFor(entry.getValue().get(0)));
+                                    String key = entry.getKey();
+                                    LOG.log(Level.INFO, "entry value size=1 key: "+key+" stack size: "+tracker.size());
+                                    if(tracker.search(key) < 0) {
+                                        tracker.push(key);
+                                        types.put(key, schemaFor(entry.getValue().get(0), tracker));
+                                        tracker.pop();
+                                    } else {
+                                        LOG.log(Level.INFO, "I safelly triggered the stack!");
+                                    }
                                 } catch (Exception x) {
                                     LOG.log(Level.FINE, "skipping subtype", x);
                                 }
                             } else { // have to diambiguate via FQN
                                 for (Class<?> subtype : entry.getValue()) {
                                     try {
-                                        types.put(subtype.getName(), schemaFor(subtype));
+                                        String name = subtype.getName();
+                                        LOG.log(Level.INFO, "entry value size!=1 name: "+name+" stack size: "+tracker.size());
+                                        if(tracker.search(name) < 0) {
+                                            tracker.push(name);
+                                            types.put(name, schemaFor(subtype, tracker));
+                                            tracker.pop();
+                                        } else {
+                                        LOG.log(Level.INFO, "I safelly triggered the stack!");
+                                    }
                                     } catch (Exception x) {
                                         LOG.log(Level.FINE, "skipping subtype", x);
                                     }
