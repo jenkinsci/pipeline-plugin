@@ -301,6 +301,9 @@ public class DescribableHelper {
 
         static ParameterType of(Type type, Stack<String> tracker) {
             try {
+                if(tracker == null){ //in case called externally
+                    tracker = new Stack<String>();
+                }
                 if (type instanceof Class) {
                     Class<?> c = (Class<?>) type;
                     if (c == String.class || Primitives.unwrap(c).isPrimitive()) {
