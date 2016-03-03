@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.workflow.support.steps;
 import javax.annotation.CheckForNull;
 
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -15,7 +16,7 @@ import hudson.Extension;
  *   <li>Older builds will not proceed (aborted) if a newer one already passed the milestone step</li>
  * </ol>
  */
-public class MilestoneStep {
+public class MilestoneStep extends AbstractStepImpl {
 
     @DataBoundSetter
     public @CheckForNull Integer concurrency;

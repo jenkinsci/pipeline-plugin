@@ -16,20 +16,23 @@ import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-import org.jenkinsci.plugins.workflow.support.steps.StageStepExecution.CanceledCause;
 
 import com.google.inject.Inject;
 
+import hudson.Extension;
 import hudson.XmlFile;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.model.listeners.RunListener;
+import jenkins.model.CauseOfInterruption;
 import jenkins.model.Jenkins;
 
 public class MilestoneStepExecution extends AbstractStepExecutionImpl {
@@ -41,7 +44,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
     @StepContextParameter private transient FlowNode node;
     @StepContextParameter private transient TaskListener listener;
 
-    private static Map<String, Map<Integer, Milestone>> milestonesByNameByJob;
+    private static Map<String, Map<Integer, Milestone>> milestonesByOrdinalByJob;
 
     @Override
     public boolean start() throws Exception {
@@ -60,10 +63,10 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         load();
         Job<?,?> job = r.getParent();
         String jobName = job.getFullName();
-        Map<Integer, Milestone> milestonesInJob = milestonesByNameByJob.get(jobName);
+        Map<Integer, Milestone> milestonesInJob = milestonesByOrdinalByJob.get(jobName);
         if (milestonesInJob == null) {
             milestonesInJob = new TreeMap<Integer,Milestone>();
-            milestonesByNameByJob.put(jobName, milestonesInJob);
+            milestonesByOrdinalByJob.put(jobName, milestonesInJob);
         }
         Milestone milestone = milestonesInJob.get(ordinal);
         if (milestone == null) {
@@ -72,6 +75,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         }
         milestone.concurrency = concurrency;
         int build = r.number;
+        String externalizableId = r.getExternalizableId(); 
         if (milestone.waitingContext != null) {
             // Someone has got to give up.
             if (milestone.waitingBuild < build) {
@@ -89,6 +93,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
                     LOGGER.log(WARNING, "could not cancel the current flow", x);
                 }
                 build = milestone.waitingBuild;
+                externalizableId = milestone.waitingBuildExternalizableId;
                 context = milestone.waitingContext;
             } else {
                 throw new IllegalStateException("the same flow is trying to reënter the milestone " + ordinal); // see 'e' with two dots, that's Jesse Glick for you! - KK
@@ -108,15 +113,53 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
                 }
             }
         }
-        milestone.waitingBuild = build;
-        milestone.waitingContext = context;
-        if (milestone.concurrency == null || milestone.holding.size() < milestone.concurrency) {
-            milestone.unblock("Proceeding");
+
+        // checking order
+        if (milestone.lastBuild != null && build < milestone.lastBuild) {
+            // cancel if it's older than the last one passing this milestone
+            try {
+                cancel(context, externalizableId);
+            } catch (Exception x) {
+                LOGGER.log(WARNING, "could not cancel the current flow", x);
+            }
         } else {
-            println(context, "Waiting for builds " + milestone.holding);
+            // It's in-order, try to proceed
+            milestone.waitingBuild = build;
+            milestone.waitingBuildExternalizableId = externalizableId;
+            milestone.waitingContext = context;
+            if (milestone.concurrency == null || milestone.holding.size() < milestone.concurrency) {
+                milestone.unblock("Proceeding");
+            } else {
+                println(context, "Waiting for builds " + milestone.holding);
+            }
         }
         cleanUp(job, jobName);
         save();
+    }
+
+    private static synchronized void exit(Run<?,?> r) {
+        load();
+        LOGGER.log(Level.FINE, "exit {0}: {1}", new Object[] {r, milestonesByOrdinalByJob});
+        Job<?,?> job = r.getParent();
+        String jobName = job.getFullName();
+        Map<Integer, Milestone> milestonesInJob = milestonesByOrdinalByJob.get(jobName);
+        if (milestonesInJob == null) {
+            return;
+        }
+        boolean modified = false;
+        for (Milestone milestone : milestonesInJob.values()) {
+            if (milestone.holding.contains(r.number)) {
+                milestone.holding.remove(r.number); // XSTR-757: do not rely on return value of TreeSet.remove(Object)
+                modified = true;
+                if (milestone.waitingContext != null) {
+                    milestone.unblock("Unblocked since " + r.getDisplayName() + " finished");
+                }
+            }
+        }
+        if (modified) {
+            cleanUp(job, jobName);
+            save();
+        }
     }
 
     private static void println(StepContext context, String message) {
@@ -142,8 +185,17 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         }
     }
 
+    private static void cancel(StepContext context, String buildExternalizableId) throws IOException, InterruptedException {
+        if (context.isReady()) {
+            println(context, "Canceled since build " + buildExternalizableId + " already got here");
+            context.onFailure(new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(buildExternalizableId)));
+        } else {
+            LOGGER.log(WARNING, "cannot cancel dead " + buildExternalizableId);
+        }
+    }
+
     private static void cleanUp(Job<?,?> job, String jobName) {
-        Map<Integer, Milestone> milestonesInJob = milestonesByNameByJob.get(jobName);
+        Map<Integer, Milestone> milestonesInJob = milestonesByOrdinalByJob.get(jobName);
         assert milestonesInJob != null;
         Iterator<Entry<Integer, Milestone>> it = milestonesInJob.entrySet().iterator();
         while (it.hasNext()) {
@@ -164,33 +216,33 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
             }
         }
         if (milestonesInJob.isEmpty()) {
-            milestonesByNameByJob.remove(jobName);
+            milestonesByOrdinalByJob.remove(jobName);
         }
     }
 
     @SuppressWarnings("unchecked")
     private static synchronized void load() {
-        if (milestonesByNameByJob == null) {
-            milestonesByNameByJob = new TreeMap<String, Map<Integer, Milestone>>();
+        if (milestonesByOrdinalByJob == null) {
+            milestonesByOrdinalByJob = new TreeMap<String, Map<Integer, Milestone>>();
             try {
                 XmlFile configFile = getConfigFile();
                 if (configFile.exists()) {
-                    milestonesByNameByJob = (Map<String, Map<Integer, Milestone>>) configFile.read();
+                    milestonesByOrdinalByJob = (Map<String, Map<Integer, Milestone>>) configFile.read();
                 }
             } catch (IOException x) {
                 LOGGER.log(WARNING, null, x);
             }
-            LOGGER.log(Level.FINE, "load: {0}", milestonesByNameByJob);
+            LOGGER.log(Level.FINE, "load: {0}", milestonesByOrdinalByJob);
         }
     }
 
     private static synchronized void save() {
         try {
-            getConfigFile().write(milestonesByNameByJob);
+            getConfigFile().write(milestonesByOrdinalByJob);
         } catch (IOException x) {
             LOGGER.log(WARNING, null, x);
         }
-        LOGGER.log(Level.FINE, "save: {0}", milestonesByNameByJob);
+        LOGGER.log(Level.FINE, "save: {0}", milestonesByOrdinalByJob);
     }
 
     private static XmlFile getConfigFile() throws IOException {
@@ -199,6 +251,16 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
             throw new IOException("Jenkins is not running"); // do not use Jenkins.getActiveInstance() as that is an ISE
         }
         return new XmlFile(new File(j.getRootDir(), MilestoneStep.class.getName() + ".xml"));
+    }
+
+    @Extension
+    public static final class Listener extends RunListener<Run<?,?>> {
+        @Override public void onCompleted(Run<?,?> r, TaskListener listener) {
+            if (!(r instanceof FlowExecutionOwner.Executable) || ((FlowExecutionOwner.Executable) r).asFlowExecutionOwner() == null) {
+                return;
+            }
+            exit(r);
+        }
     }
 
     private static final class Milestone {
@@ -226,10 +288,22 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         Integer waitingBuild;
 
         /**
+         * Externalizable ID of the build corresponding to {@link #waitingContext}, if any.
+         */
+        @Nullable
+        String waitingBuildExternalizableId;
+
+        /**
          * Last build that passed through the milestone, or null if none passed yet.
          */
         @CheckForNull
         Integer lastBuild;
+
+        /**
+         * Last build extenalizable ID hat passed through the milestone, or null if none passed yet.
+         */
+        @CheckForNull
+        String lastBuildExternalizableId;
 
         @Override public String toString() {
             return "Stage[holding=" + holding + ", waitingBuild=" + waitingBuild + ", concurrency=" + concurrency + "]";
@@ -249,9 +323,40 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
             waitingContext.onSuccess(null);
             holding.add(waitingBuild);
             lastBuild = waitingBuild;
+            lastBuildExternalizableId = waitingBuildExternalizableId;
             waitingContext = null;
             waitingBuild = null;
+            waitingBuildExternalizableId = null;
         }
     }
+
+    /**
+     * Records that a flow was canceled while waiting in a stage step because a newer flow entered that stage instead.
+     */
+    public static final class CanceledCause extends CauseOfInterruption {
+
+        private static final long serialVersionUID = 1;
+
+        private final String newerBuild;
+
+        CanceledCause(Run<?,?> newerBuild) {
+            this.newerBuild = newerBuild.getExternalizableId();
+        }
+
+        CanceledCause(String newerBuild) {
+            this.newerBuild = newerBuild;
+        }
+
+        public Run<?,?> getNewerBuild() {
+            return Run.fromExternalizableId(newerBuild);
+        }
+
+        @Override public String getShortDescription() {
+            return "Superseded by " + getNewerBuild().getDisplayName();
+        }
+
+    }
+
+    private static final long serialVersionUID = 1L;
 
 }
