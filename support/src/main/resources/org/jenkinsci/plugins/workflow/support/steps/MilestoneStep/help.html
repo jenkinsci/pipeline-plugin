@@ -1,8 +1,8 @@
 <div>
     <p>By default, Pipeline builds can run concurrently.</p>
     <p>
-        The milestone step forces all builds to go through in order, so a older build will never succeed the 
-        milestone if a newer one already passed it.
+        The milestone step forces all builds to go through in order, so an older build will never be allowed to
+        go into the milestone (it is aborted) if a newer one already passed it.
     </p>
     <p>
         It also lets you mark certain sections of a build as being constrained by limited concurrency. Newer builds are 
