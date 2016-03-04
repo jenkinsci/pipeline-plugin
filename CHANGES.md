@@ -4,6 +4,7 @@ Only noting significant user changes, not internal code cleanups and minor bug f
 
 ## 1.15 (upcoming)
 
+* [JENKINS-32925](https://issues.jenkins-ci.org/browse/JENKINS-32925): stack overflow displaying reference documentation in certain cases.
 * [JENKINS-27152](https://issues.jenkins-ci.org/browse/JENKINS-27152): offering `tmp` option to `pwd` step.
 
 ## 1.14 (Feb 25 2016)
