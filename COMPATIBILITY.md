@@ -62,6 +62,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
 - [X] `PerfSigRecorder` and 5 more (`performance-signature-dynatrace`): supported as of 2.0
 - [ ] `StashNotifier` (`stashNotifier`): [issue 92](https://github.com/jenkinsci/stashnotifier-plugin/issues/92)
+- [X] `LambdaUploadBuildStep`, `LambdaInvokeBuildStep`, `LambdaEventSourceBuildStep` (`aws-lambda`): supported as of 0.5.0
 
 ## Build wrappers
 
