@@ -75,7 +75,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         }
         milestone.concurrency = concurrency;
         int build = r.number;
-        String externalizableId = r.getExternalizableId(); 
+        String externalizableId = r.getExternalizableId();
         if (milestone.waitingContext != null) {
             // Someone has got to give up.
             if (milestone.waitingBuild < build) {
@@ -118,7 +118,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         if (milestone.lastBuild != null && build < milestone.lastBuild) {
             // cancel if it's older than the last one passing this milestone
             try {
-                cancel(context, externalizableId);
+                cancel(context, milestone.lastBuild, milestone.lastBuildExternalizableId);
             } catch (Exception x) {
                 LOGGER.log(WARNING, "could not cancel the current flow", x);
             }
@@ -185,9 +185,9 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         }
     }
 
-    private static void cancel(StepContext context, String buildExternalizableId) throws IOException, InterruptedException {
+    private static void cancel(StepContext context, Integer build, String buildExternalizableId) throws IOException, InterruptedException {
         if (context.isReady()) {
-            println(context, "Canceled since build " + buildExternalizableId + " already got here");
+            println(context, "Canceled since build #" + build + " already got here");
             context.onFailure(new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(buildExternalizableId)));
         } else {
             LOGGER.log(WARNING, "cannot cancel dead " + buildExternalizableId);
@@ -210,14 +210,8 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
                     it2.remove();
                 }
             }
-            if (holding.isEmpty()) {
-                assert entry.getValue().waitingContext == null : entry;
-                it.remove();
-            }
         }
-        if (milestonesInJob.isEmpty()) {
-            milestonesByOrdinalByJob.remove(jobName);
-        }
+        // TODO: remove milestones that no longer exist (because the step or the job was deleted)
     }
 
     @SuppressWarnings("unchecked")
@@ -315,7 +309,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
          * @param message a message to print to the log of the unblocked build
          */
         void unblock(String message) {
-            assert Thread.holdsLock(StageStepExecution.class);
+            assert Thread.holdsLock(MilestoneStepExecution.class);
             assert waitingContext != null;
             assert waitingBuild != null;
             assert !holding.contains(waitingBuild);
