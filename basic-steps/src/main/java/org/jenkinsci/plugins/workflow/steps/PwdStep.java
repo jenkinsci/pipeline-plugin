@@ -72,7 +72,7 @@ public class PwdStep extends AbstractStepImpl {
 
     }
 
-    // TODO use https://github.com/jenkinsci/jenkins/pull/2066
+    // TODO use 1.652 use WorkspaceList.tempDir
     private static FilePath tempDir(FilePath ws) {
         return ws.sibling(ws.getName() + System.getProperty(WorkspaceList.class.getName(), "@") + "tmp");
     }
