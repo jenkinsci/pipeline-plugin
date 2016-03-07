@@ -1,23 +1,26 @@
 #!groovy
 jettyUrl = 'http://localhost:8081/'
 
+def servers
+
 stage 'Dev'
 node {
     checkout scm
+    servers = load 'servers.groovy'
     mvn '-o clean package'
     dir('target') {stash name: 'war', includes: 'x.war'}
 }
 
 stage 'QA'
 parallel(longerTests: {
-    runTests(30)
+    runTests(servers, 30)
 }, quickerTests: {
-    runTests(20)
+    runTests(servers, 20)
 })
 
 stage name: 'Staging', concurrency: 1
 node {
-    deploy 'staging'
+    servers.deploy 'staging'
 }
 
 input message: "Does ${jettyUrl}staging/ look good?"
@@ -31,7 +34,7 @@ stage name: 'Production', concurrency: 1
 node {
     sh "wget -O - -S ${jettyUrl}staging/"
     echo 'Production server looks to be alive'
-    deploy 'production'
+    servers.deploy 'production'
     echo "Deployed to ${jettyUrl}production/"
 }
 
@@ -39,30 +42,11 @@ def mvn(args) {
     sh "${tool 'Maven 3.x'}/bin/mvn ${args}"
 }
 
-def runTests(duration) {
+def runTests(servers, duration) {
     node {
         checkout scm
-        runWithServer {url ->
-            mvn "-o -f sometests test -Durl=${url} -Dduration=${duration}"
+        servers.runWithServer {id ->
+            mvn "-o -f sometests test -Durl=${jettyUrl}${id}/ -Dduration=${duration}"
         }
-    }
-}
-
-def deploy(id) {
-    unstash 'war'
-    sh "cp x.war /tmp/webapps/${id}.war"
-}
-
-def undeploy(id) {
-    sh "rm /tmp/webapps/${id}.war"
-}
-
-def runWithServer(body) {
-    def id = UUID.randomUUID().toString()
-    deploy id
-    try {
-        body.call "${jettyUrl}${id}/"
-    } finally {
-        undeploy id
     }
 }

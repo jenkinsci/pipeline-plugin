@@ -24,30 +24,44 @@
 
 package org.jenkinsci.plugins.workflow.flow;
 
-import hudson.model.Queue.Executable;
+import hudson.model.Queue;
 import hudson.model.Run;
-
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import jenkins.model.TransientActionFactory;
 
 /**
  * We need something that's serializable in small moniker that helps us find THE instance
  * of {@link FlowExecution}.
- *
- * @author Jesse Glick
- * @author Kohsuke Kawaguchi
  */
-// this gets implemented by whoever that owns FlowExecution, like WorfklowRun
 public abstract class FlowExecutionOwner implements Serializable {
+
+    private static final Logger LOGGER = Logger.getLogger(FlowExecutionOwner.class.getName());
+
     /**
      * @throws IOException
      *      if fails to find {@link FlowExecution}.
      */
     @Nonnull
     public abstract FlowExecution get() throws IOException;
+
+    /**
+     * Same as {@link #get} but avoids throwing an exception or blocking.
+     * @return a valid flow execution, or null if not ready or invalid
+     */
+    public @CheckForNull FlowExecution getOrNull() {
+        try {
+            return get();
+        } catch (IOException x) {
+            LOGGER.log(Level.WARNING, null, x);
+            return null;
+        }
+    }
 
     /**
      * A directory (on the master) where information may be persisted.
@@ -61,8 +75,9 @@ public abstract class FlowExecutionOwner implements Serializable {
      *
      * (For anything that runs for a long enough time that demands flow, it better occupies an executor.
      * So this type restriction should still enable scriptler to use this.)
+     * @return preferably an {@link Executable}
      */
-    public abstract Executable getExecutable() throws IOException;
+    public abstract Queue.Executable getExecutable() throws IOException;
 
     /**
      * Returns the URL of the model object that owns {@link FlowExecution},
@@ -92,4 +107,19 @@ public abstract class FlowExecutionOwner implements Serializable {
      */
     @Override
     public abstract int hashCode();
+
+    /**
+     * Marker interface for queue executables from {@link #getExecutable}.
+     * A reasonable target type for {@link TransientActionFactory}.
+     */
+    public interface Executable extends Queue.Executable {
+        
+        /**
+         * Gets the associated owner moniker.
+         * @return the owner, or null if this instance is somehow inapplicable
+         */
+        @CheckForNull FlowExecutionOwner asFlowExecutionOwner();
+
+    }
+
 }

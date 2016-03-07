@@ -26,6 +26,8 @@ package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.model.Label;
 import hudson.plugins.git.GitSCM;
+import hudson.plugins.git.GitTagAction;
+import hudson.plugins.git.util.BuildData;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.triggers.SCMTrigger;
@@ -36,12 +38,17 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import static org.junit.Assert.*;
+import org.junit.ClassRule;
+
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.BuildWatcher;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class GitStepTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
     @Rule public JenkinsRule r = new JenkinsRule();
     @Rule public GitSampleRepoRule sampleRepo = new GitSampleRepoRule();
     @Rule public GitSampleRepoRule otherRepo = new GitSampleRepoRule();
@@ -160,6 +167,55 @@ public class GitStepTest {
         entry = iterator.next();
         assertEquals("[otherfile2]", entry.getAffectedPaths().toString());
         assertFalse(iterator.hasNext());
+    }
+
+    @Issue("JENKINS-29326")
+    @Test
+    public void identicalGitSCMs() throws Exception {
+        otherRepo.git("init");
+        otherRepo.write("firstfile", "");
+        otherRepo.git("add", "firstfile");
+        otherRepo.git("commit", "--message=init");
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "demo");
+        p.setDefinition(new CpsFlowDefinition(
+                "node {\n" +
+                        "    dir('main') {\n" +
+                        "        git($/" + otherRepo + "/$)\n" +
+                        "    }\n" +
+                        "    dir('other') {\n" +
+                        "        git($/" + otherRepo + "/$)\n" +
+                        "    }\n" +
+                        "}"));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals(1, b.getActions(BuildData.class).size());
+        assertEquals(1, b.getActions(GitTagAction.class).size());
+        assertEquals(0, b.getChangeSets().size());
+        assertEquals(1, p.getSCMs().size());
+
+        otherRepo.write("secondfile", "");
+        otherRepo.git("add", "secondfile");
+        otherRepo.git("commit", "--message=second");
+        WorkflowRun b2 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals(1, b2.getActions(BuildData.class).size());
+        assertEquals(1, b2.getActions(GitTagAction.class).size());
+        assertEquals(1, b2.getChangeSets().size());
+        assertFalse(b2.getChangeSets().get(0).isEmptySet());
+        assertEquals(1, p.getSCMs().size());
+    }
+
+    @Test public void commitToWorkspace() throws Exception {
+        sampleRepo.init();
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition(
+            "def rungit(cmd) {def gitcmd = \"git ${cmd}\"; if (isUnix()) {sh gitcmd} else {bat gitcmd}}\n" +
+            "node {\n" +
+            "  git url: $/" + sampleRepo + "/$\n" +
+            "  writeFile file: 'file', text: 'edited by build'\n" +
+            "  rungit 'commit --all --message=edits'\n" +
+            "  rungit 'show master'\n" +
+            "}"));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        r.assertLogContains("+edited by build", b);
     }
 
 }

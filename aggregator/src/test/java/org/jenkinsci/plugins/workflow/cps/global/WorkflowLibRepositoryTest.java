@@ -25,8 +25,8 @@ import org.jvnet.hudson.test.JenkinsRule;
  * @author Kohsuke Kawaguchi
  */
 public class WorkflowLibRepositoryTest {
-    @Rule
-    public RestartableJenkinsRule story = new RestartableJenkinsRule();
+
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Inject
     Jenkins jenkins;
@@ -126,7 +126,7 @@ public class WorkflowLibRepositoryTest {
                 WorkflowJob p = jenkins.createProject(WorkflowJob.class, "p");
 
                 p.setDefinition(new CpsFlowDefinition(
-                        "acmeVar.hello('Workflow');" +
+                        "acmeVar.hello('Pipeline');" +
                         "acmeVar.foo('seed');" +
                         "echo '['+acmeVar.bar()+']';"+
                         "acmeFunc(1,2);"+
@@ -136,7 +136,7 @@ public class WorkflowLibRepositoryTest {
                 // build this workflow
                 WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
 
-                story.j.assertLogContains("Hello Workflow", b);
+                story.j.assertLogContains("Hello Pipeline", b);
                 story.j.assertLogContains("[seed-set-get]", b);
                 story.j.assertLogContains("call(1,2)", b);
                 story.j.assertLogContains("title was yolo", b);

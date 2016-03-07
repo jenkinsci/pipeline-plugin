@@ -32,12 +32,6 @@ import hudson.scm.ChangeLogSet;
 import hudson.scm.NullSCM;
 import hudson.scm.SCMRevisionState;
 import hudson.triggers.SCMTrigger;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Iterator;
-import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
 import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
@@ -47,11 +41,22 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
 import org.jenkinsci.plugins.workflow.steps.scm.GitStep;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class CpsScmFlowDefinitionTest {
 
@@ -104,6 +109,23 @@ public class CpsScmFlowDefinitionTest {
         ChangeLogSet.Entry entry = iterator.next();
         assertEquals("[flow.groovy]", entry.getAffectedPaths().toString());
         assertFalse(iterator.hasNext());
+    }
+
+    @Issue("JENKINS-29881")
+    @Test public void emptyChangeLogEmptyChangeSets() throws Exception {
+        sampleRepo.init();
+        sampleRepo.write("flow.groovy", "echo 'version one'");
+        sampleRepo.git("add", "flow.groovy");
+        sampleRepo.git("commit", "--message=init");
+        WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsScmFlowDefinition(new GitStep(sampleRepo.toString()).createSCM(), "flow.groovy"));
+        WorkflowRun b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        r.assertLogContains("Cloning the remote Git repository", b);
+        r.assertLogContains("version one", b);
+        b = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+        assertEquals(2, b.number);
+        List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = b.getChangeSets();
+        assertEquals(Collections.emptyList(), changeSets);
     }
 
     // TODO 1.599+ use standard version

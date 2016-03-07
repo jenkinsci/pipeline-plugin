@@ -4,12 +4,12 @@
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>1.11-SNAPSHOT</version>
+        <version>1.15-SNAPSHOT</version>
     </parent>
     <artifactId>workflow-scm-step</artifactId>
     <packaging>hpi</packaging>
-    <name>Workflow: SCM Step</name>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
+    <name>Pipeline: SCM Step</name>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -20,6 +20,12 @@
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
             <optional>true</optional>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>

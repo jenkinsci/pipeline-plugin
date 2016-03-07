@@ -29,6 +29,8 @@ import hudson.model.Slave;
 import hudson.model.queue.QueueTaskFuture;
 import java.util.Collections;
 import java.util.Set;
+
+import hudson.security.WhoAmI;
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.workflow.actions.LogAction;
@@ -45,6 +47,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+
+import javax.mail.Folder;
 
 /**
  * Test of {@link WorkflowJob} that doesn't involve Jenkins restarts.
@@ -148,14 +152,14 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
 
         idx = 0;
         for (String msg : new String[] {
-            "[Workflow] Retry the body up to N times : Start",
-            "[Workflow] retry {",
-            "[Workflow] } //retry",
-            "[Workflow] retry {",
-            "[Workflow] } //retry",
-            "[Workflow] retry {",
-            "[Workflow] } //retry",
-            "[Workflow] Retry the body up to N times : End",
+            "[Pipeline] Retry the body up to N times : Start",
+            "[Pipeline] retry {",
+            "[Pipeline] } //retry",
+            "[Pipeline] retry {",
+            "[Pipeline] } //retry",
+            "[Pipeline] retry {",
+            "[Pipeline] } //retry",
+            "[Pipeline] Retry the body up to N times : End",
         }) {
             idx = log.indexOf(msg, idx + 1);
             assertTrue(msg + " not found", idx != -1);
@@ -221,5 +225,12 @@ public class WorkflowJobNonRestartingTest extends AbstractCpsFlowTest {
         jenkins.assertLogContains("such as: node", b); // make sure the 'node' is a suggested message. this comes from MissingContextVariableException
 //        jenkins.assertLogNotContains("Exception", b)   // haven't figured out how to hide this
         jenkins.assertBuildStatus(Result.FAILURE, b);
+    }
+
+    @Test
+    public void addAction() throws Exception {
+        WhoAmI a = new WhoAmI();
+        p.addAction(a);
+        assertNotNull(p.getAction(WhoAmI.class));
     }
 }

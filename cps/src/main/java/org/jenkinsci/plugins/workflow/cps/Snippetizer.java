@@ -26,11 +26,9 @@ package org.jenkinsci.plugins.workflow.cps;
 
 import hudson.Extension;
 import hudson.Functions;
-import hudson.model.Descriptor;
 import hudson.model.RootAction;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -205,7 +203,7 @@ import org.kohsuke.stapler.StaplerResponse;
 
     @Restricted(DoNotUse.class) // accessed via REST API
     public HttpResponse doGenerateSnippet(StaplerRequest req, @QueryParameter String json) throws Exception {
-        // TODO is there not an easier way to do this?
+        // TODO JENKINS-31458 is there not an easier way to do this?
         JSONObject jsonO = JSONObject.fromObject(json);
         Jenkins j = Jenkins.getActiveInstance();
         Class<?> c = j.getPluginManager().uberClassLoader.loadClass(jsonO.getString("stapler-class"));
@@ -228,6 +226,18 @@ import org.kohsuke.stapler.StaplerResponse;
             return HttpResponses.plainText(x.getMessage());
         }
     }
+
+    @Restricted(NoExternalUse.class)
+    public static final String GDSL_URL = ACTION_URL + "/gdsl";
+
+    @Restricted(NoExternalUse.class)
+    public static final String DSLD_URL = ACTION_URL + "/dsld";
+
+    @Restricted(NoExternalUse.class)
+    public static final String DSL_REF_URL = ACTION_URL + "/dslReference";
+
+    @Restricted(NoExternalUse.class)
+    public static final String DSL_HELP_URL = ACTION_URL + "/dslHelp";
 
     private static class StepDescriptorComparator implements Comparator<StepDescriptor>, Serializable {
         @Override

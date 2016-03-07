@@ -24,6 +24,10 @@
 
 package org.jenkinsci.plugins.workflow.job;
 
+import com.google.common.base.Optional;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -59,10 +63,10 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -104,7 +108,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @SuppressWarnings("SynchronizeOnNonFinalField")
 @SuppressFBWarnings(value="JLM_JSR166_UTILCONCURRENT_MONITORENTER", justification="completed is an unusual usage")
-public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Queue.Executable, LazyBuildMixIn.LazyLoadingRun<WorkflowJob,WorkflowRun> {
+public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements FlowExecutionOwner.Executable, LazyBuildMixIn.LazyLoadingRun<WorkflowJob,WorkflowRun> {
 
     private static final Logger LOGGER = Logger.getLogger(WorkflowRun.class.getName());
 
@@ -203,7 +207,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             FlowExecutionList.get().register(owner);
             newExecution.addListener(new GraphL());
             completed = new AtomicBoolean();
-            logsToCopy = new LinkedHashMap<String,Long>();
+            logsToCopy = new ConcurrentSkipListMap<String,Long>();
             execution = newExecution;
             newExecution.start();
             executionPromise.set(newExecution);
@@ -228,7 +232,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     LOGGER.log(Level.WARNING, null, x);
                 }
                 getExecutor().recordCauseOfInterruption(WorkflowRun.this, listener);
-                printLater("term", "Forcibly terminate running steps");
+                printLater("term", "Click here to forcibly terminate running steps");
             }
             @Override public boolean blocksRestart() {
                 return execution.blocksRestart();
@@ -297,7 +301,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             }
             @Override public void onFailure(Throwable t) {}
         });
-        printLater("kill", "Forcibly kill entire build");
+        printLater("kill", "Click here to forcibly kill entire build");
     }
 
     /** Immediately kills the build. */
@@ -322,22 +326,24 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (logsToCopy == null) { // finished
             return;
         }
-        Iterator<Map.Entry<String,Long>> it = logsToCopy.entrySet().iterator();
+        if (logsToCopy instanceof LinkedHashMap) { // upgrade while build is running
+            logsToCopy = new ConcurrentSkipListMap<String,Long>(logsToCopy);
+        }
         boolean modified = false;
-        while (it.hasNext()) {
-            Map.Entry<String,Long> entry = it.next();
+        for (Map.Entry<String,Long> entry : logsToCopy.entrySet()) {
+            String id = entry.getKey();
             FlowNode node;
             try {
-                node = execution.getNode(entry.getKey());
+                node = execution.getNode(id);
             } catch (IOException x) {
                 LOGGER.log(Level.WARNING, null, x);
-                it.remove();
+                logsToCopy.remove(id);
                 modified = true;
                 continue;
             }
             if (node == null) {
-                LOGGER.log(Level.WARNING, "no such node {0}", entry.getKey());
-                it.remove();
+                LOGGER.log(Level.WARNING, "no such node {0}", id);
+                logsToCopy.remove(id);
                 modified = true;
                 continue;
             }
@@ -358,13 +364,13 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     try {
                         long revised = logText.writeRawLogTo(old, logger);
                         if (revised != old) {
-                            entry.setValue(revised);
+                            logsToCopy.put(id, revised);
                             modified = true;
                         }
                         if (logText.isComplete()) {
-                            logText.writeRawLogTo(entry.getValue(), logger); // defend against race condition?
+                            logText.writeRawLogTo(revised, logger); // defend against race condition?
                             assert !node.isRunning() : "LargeText.complete yet " + node + " claims to still be running";
-                            it.remove();
+                            logsToCopy.remove(id);
                             modified = true;
                         }
                     } finally {
@@ -374,11 +380,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     }
                 } catch (IOException x) {
                     LOGGER.log(Level.WARNING, null, x);
-                    it.remove();
+                    logsToCopy.remove(id);
                     modified = true;
                 }
             } else if (!node.isRunning()) {
-                it.remove();
+                logsToCopy.remove(id);
                 modified = true;
             }
         }
@@ -391,25 +397,32 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         }
     }
 
-    private String getLogPrefix(FlowNode node) {
-        if (node instanceof BlockEndNode) {
-            return null;
-        }
-
-        ThreadNameAction threadNameAction = node.getAction(ThreadNameAction.class);
-
-        if (threadNameAction != null) {
-            return threadNameAction.getThreadName();
-        }
-
-        for (FlowNode parent : node.getParents()) {
-            String prefix = getLogPrefix(parent);
-            if (prefix != null) {
-                return prefix;
+    @GuardedBy("completed")
+    private transient LoadingCache<FlowNode,Optional<String>> logPrefixCache;
+    private @CheckForNull String getLogPrefix(FlowNode node) {
+        synchronized (completed) {
+            if (logPrefixCache == null) {
+                logPrefixCache = CacheBuilder.newBuilder().weakKeys().build(new CacheLoader<FlowNode,Optional<String>>() {
+                    @Override public @Nonnull Optional<String> load(FlowNode node) {
+                        if (node instanceof BlockEndNode) {
+                            return Optional.absent();
+                        }
+                        ThreadNameAction threadNameAction = node.getAction(ThreadNameAction.class);
+                        if (threadNameAction != null) {
+                            return Optional.of(threadNameAction.getThreadName());
+                        }
+                        for (FlowNode parent : node.getParents()) {
+                            String prefix = getLogPrefix(parent);
+                            if (prefix != null) {
+                                return Optional.of(prefix);
+                            }
+                        }
+                        return Optional.absent();
+                    }
+                });
             }
+            return logPrefixCache.getUnchecked(node).orNull();
         }
-
-        return null;
     }
 
     private static final class LogLinePrefixOutputFilter extends LineTransformationOutputStream {
@@ -450,6 +463,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         if (completed != null) {
             throw new IllegalStateException("double onLoad of " + this);
         } else if (Main.isUnitTest) {
+            // TODO JENKINS-22767: prior to 1.646, occasionally load the same build twice
             System.err.printf("loading %s @%h%n", this, this);
         }
         if (execution != null) {
@@ -474,7 +488,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
                     listener = new StreamBuildListener(new NullStream());
                 }
                 completed = new AtomicBoolean();
-                Queue.getInstance().schedule(new AfterRestartTask(this), 0);
+                Timer.get().submit(new Runnable() { // JENKINS-31614
+                    @Override public void run() {
+                        Queue.getInstance().schedule(new AfterRestartTask(WorkflowRun.this), 0);
+                    }
+                });
             }
         }
         checkouts(null); // only for diagnostics
@@ -549,6 +567,10 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
         return executionPromise;
     }
 
+    @Override public FlowExecutionOwner asFlowExecutionOwner() {
+        return new Owner(this);
+    }
+
     @Override
     public boolean hasntStartedYet() {
         return result == null && execution==null;
@@ -586,7 +608,11 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             for (SCMCheckout co : checkouts(null)) {
                 if (co.changelogFile != null && co.changelogFile.isFile()) {
                     try {
-                        changeSets.add(co.scm.createChangeLogParser().parse(this, co.scm.getEffectiveBrowser(), co.changelogFile));
+                        ChangeLogSet<? extends ChangeLogSet.Entry> changeLogSet =
+                                co.scm.createChangeLogParser().parse(this, co.scm.getEffectiveBrowser(), co.changelogFile);
+                        if (!changeLogSet.isEmptySet()) {
+                            changeSets.add(changeLogSet);
+                        }
                     } catch (Exception x) {
                         LOGGER.log(Level.WARNING, "could not parse " + co.changelogFile, x);
                     }
@@ -610,7 +636,9 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
     private void onCheckout(SCM scm, FilePath workspace, TaskListener listener, @CheckForNull File changelogFile, @CheckForNull SCMRevisionState pollingBaseline) throws Exception {
         if (changelogFile != null && changelogFile.isFile()) {
             ChangeLogSet<?> cls = scm.createChangeLogParser().parse(this, scm.getEffectiveBrowser(), changelogFile);
-            getChangeSets().add(cls);
+            if (!cls.isEmptySet()) {
+                getChangeSets().add(cls);
+            }
             for (SCMListener l : SCMListener.all()) {
                 l.onChangeLogParsed(this, scm, listener, cls);
             }
@@ -695,6 +723,17 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements Q
             } else {
                 throw new IOException(r + " did not yet start");
             }
+        }
+        @Override public FlowExecution getOrNull() {
+            try {
+                ListenableFuture<FlowExecution> promise = run().getExecutionPromise();
+                if (promise.isDone()) {
+                    return promise.get();
+                }
+            } catch (Exception x) {
+                LOGGER.log(/* not important */Level.FINE, null, x);
+            }
+            return null;
         }
         @Override public File getRootDir() throws IOException {
             return run().getRootDir();

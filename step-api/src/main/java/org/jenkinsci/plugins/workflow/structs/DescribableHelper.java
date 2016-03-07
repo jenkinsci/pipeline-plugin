@@ -26,12 +26,14 @@ package org.jenkinsci.plugins.workflow.structs;
 
 import hudson.Extension;
 import com.google.common.primitives.Primitives;
+import hudson.Util;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersDefinitionProperty;
 import java.beans.Introspector;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -50,20 +52,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import net.java.sezpoz.Index;
 import net.java.sezpoz.IndexItem;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.codehaus.groovy.reflection.ReflectionCache;
 import org.kohsuke.stapler.ClassDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.NoStaplerConstructorException;
+import org.kohsuke.stapler.lang.Klass;
 
 /**
  * Utility for converting between {@link Describable}s (and some other objects) and map-like representations.
@@ -80,7 +86,7 @@ public class DescribableHelper {
      * Other object types may be passed in “raw” as well, but JSON-like structures are encouraged instead.
      * Specifically a {@link List} may be used to represent any list- or array-valued argument.
      * A {@link Map} with {@link String} keys may be used to represent any class which is itself data-bound.
-     * In that case the special key {@code $class} is used to specify the {@link Class#getName};
+     * In that case the special key {@link #CLAZZ} is used to specify the {@link Class#getName};
      * or it may be omitted if the argument is declared to take a concrete type;
      * or {@link Class#getSimpleName} may be used in case the argument type is {@link Describable}
      * and only one subtype is registered (as a {@link Descriptor}) with that simple name.
@@ -136,6 +142,365 @@ public class DescribableHelper {
     }
 
     /**
+     * Loads a definition of the structure of a class: what kind of data you might get back from {@link #uninstantiate} on an instance,
+     * or might want to pass to {@link #instantiate}.
+     */
+    public static Schema schemaFor(Class<?> clazz) {
+        return new Schema(clazz);
+    }
+    
+    private static Schema schemaFor(Class<?> clazz, Stack<String> tracker) {
+        return new Schema(clazz, tracker);
+    }
+
+    /**
+     * Definition of how a particular class may be configured.
+     */
+    public static final class Schema {
+
+        private final Class<?> type;
+        private final Map<String,ParameterType> parameters;
+        private final List<String> mandatoryParameters;
+
+        Schema(Class<?> clazz) {
+            this(clazz, new Stack<String>());
+        }
+
+        Schema(Class<?> clazz, @Nonnull Stack<String> tracker) {
+            this.type = clazz;
+            /*if(tracker == null){
+                tracker = new Stack<String>();
+            }*/
+            mandatoryParameters = new ArrayList<String>();
+            parameters = new TreeMap<String,ParameterType>();
+            String[] names = loadConstructorParamNames(clazz);
+            Type[] types = findConstructor(clazz, names.length).getGenericParameterTypes();
+            for (int i = 0; i < names.length; i++) {
+                mandatoryParameters.add(names[i]);
+                parameters.put(names[i], ParameterType.of(types[i], tracker));
+            }
+            for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
+                for (Field f : c.getDeclaredFields()) {
+                    if (f.isAnnotationPresent(DataBoundSetter.class)) {
+                        f.setAccessible(true);
+                        parameters.put(f.getName(), ParameterType.of(f.getGenericType(), tracker));
+                    }
+                }
+                for (Method m : c.getDeclaredMethods()) {
+                    if (m.isAnnotationPresent(DataBoundSetter.class)) {
+                        Type[] parameterTypes = m.getGenericParameterTypes();
+                        if (!m.getName().startsWith("set") || parameterTypes.length != 1) {
+                            throw new IllegalStateException(m + " cannot be a @DataBoundSetter");
+                        }
+                        m.setAccessible(true);
+                        parameters.put(Introspector.decapitalize(m.getName().substring(3)), ParameterType.of(m.getGenericParameterTypes()[0], tracker));
+                    }
+                }
+            }
+        }
+
+        /**
+         * A concrete class, usually {@link Describable}.
+         */
+        public Class<?> getType() {
+            return type;
+        }
+
+        /**
+         * A map from parameter names to types.
+         * A parameter name is either the name of an argument to a {@link DataBoundConstructor},
+         * or the JavaBeans property name corresponding to a {@link DataBoundSetter}.
+         */
+        public Map<String,ParameterType> parameters() {
+            return parameters;
+        }
+
+        /**
+         * Mandatory (constructor) parameters, in order.
+         * Parameters at the end of the list may be omitted, in which case they are assumed to be null or some other default value
+         * (in these cases it would be better to use {@link DataBoundSetter} on the type definition).
+         * Will be keys in {@link #parameters}.
+         */
+        public List<String> mandatoryParameters() {
+            return mandatoryParameters;
+        }
+
+        /**
+         * Corresponds to {@link Descriptor#getDisplayName} where available.
+         */
+        public String getDisplayName() {
+            for (Descriptor<?> d : getDescriptorList()) {
+                if (d.clazz == type) {
+                    return d.getDisplayName();
+                }
+            }
+            return type.getSimpleName();
+        }
+
+        /**
+         * Loads help defined for this object as a whole or one of its parameters.
+         * Note that you may need to use {@link Util#replaceMacro(String, Map)}
+         * to replace {@code ${rootURL}} with some other value.
+         * @param parameter if specified, one of {@link #parameters}; else for the whole object
+         * @return some HTML (in English locale), if available, else null
+         * @see Descriptor#doHelp
+         */
+        public @CheckForNull String getHelp(@CheckForNull String parameter) throws IOException {
+            for (Klass<?> c = Klass.java(type); c != null; c = c.getSuperClass()) {
+                URL u = c.getResource(parameter == null ? "help.html" : "help-" + parameter + ".html");
+                if (u != null) {
+                    return IOUtils.toString(u, "UTF-8");
+                }
+            }
+            return null;
+        }
+
+        @Override public String toString() {
+            StringBuilder b = new StringBuilder("(");
+            boolean first = true;
+            Map<String,ParameterType> params = new TreeMap<String,ParameterType>(parameters());
+            for (String param : mandatoryParameters()) {
+                if (first) {
+                    first = false;
+                } else {
+                    b.append(", ");
+                }
+                b.append(param).append(": ").append(params.remove(param));
+            }
+            for (Map.Entry<String,ParameterType> entry : params.entrySet()) {
+                if (first) {
+                    first = false;
+                } else {
+                    b.append(", ");
+                }
+                b.append('[').append(entry.getKey()).append(": ").append(entry.getValue()).append(']');
+            }
+            return b.append(')').toString();
+        }
+
+    }
+
+    /**
+     * A type of a parameter to a class.
+     */
+    public static abstract class ParameterType {
+        @Nonnull
+        private final Type actualType;
+
+        public Type getActualType() {
+            return actualType;
+        }
+
+        ParameterType(Type actualType) {
+            this.actualType = actualType;
+        }
+        
+        static ParameterType of(Type type){
+            return of(type, new Stack<String>());
+        }
+
+        private static ParameterType of(Type type, @Nonnull Stack<String> tracker) {
+            try {
+                if (type instanceof Class) {
+                    Class<?> c = (Class<?>) type;
+                    if (c == String.class || Primitives.unwrap(c).isPrimitive()) {
+                        return new AtomicType(c);
+                    }
+                    if (Enum.class.isAssignableFrom(c)) {
+                        List<String> constants = new ArrayList<String>();
+                        for (Enum<?> value : c.asSubclass(Enum.class).getEnumConstants()) {
+                            constants.add(value.name());
+                        }
+                        return new EnumType(c, constants.toArray(new String[constants.size()]));
+                    }
+                    if (c == URL.class) {
+                        return new AtomicType(String.class);
+                    }
+                    if (c.isArray()) {
+                        return new ArrayType(c);
+                    }
+                    // Assume it is a nested object of some sort.
+                    Set<Class<?>> subtypes = findSubtypes(c);
+                    if ((subtypes.isEmpty() && !Modifier.isAbstract(c.getModifiers())) || subtypes.equals(Collections.singleton(c))) {
+                        // Probably homogeneous. (Might be concrete but subclassable.)
+                        return new HomogeneousObjectType(c);
+                    } else {
+                        // Definitely heterogeneous.
+                        Map<String,List<Class<?>>> subtypesBySimpleName = new HashMap<String,List<Class<?>>>();
+                        for (Class<?> subtype : subtypes) {
+                            String simpleName = subtype.getSimpleName();
+                            List<Class<?>> bySimpleName = subtypesBySimpleName.get(simpleName);
+                            if (bySimpleName == null) {
+                                subtypesBySimpleName.put(simpleName, bySimpleName = new ArrayList<Class<?>>());
+                            }
+                            bySimpleName.add(subtype);
+                        }
+                        Map<String,Schema> types = new TreeMap<String,Schema>();
+                        for (Map.Entry<String,List<Class<?>>> entry : subtypesBySimpleName.entrySet()) {
+                            if (entry.getValue().size() == 1) { // normal case: unambiguous via simple name
+                                try {
+                                    String key = entry.getKey();
+                                    if(tracker.search(key) < 0) {
+                                        tracker.push(key);
+                                        types.put(key, schemaFor(entry.getValue().get(0), tracker));
+                                        tracker.pop();
+                                    }
+                                } catch (Exception x) {
+                                    LOG.log(Level.FINE, "skipping subtype", x);
+                                }
+                            } else { // have to diambiguate via FQN
+                                for (Class<?> subtype : entry.getValue()) {
+                                    try {
+                                        String name = subtype.getName();
+                                        if(tracker.search(name) < 0) {
+                                            tracker.push(name);
+                                            types.put(name, schemaFor(subtype, tracker));
+                                            tracker.pop();
+                                        }
+                                    } catch (Exception x) {
+                                        LOG.log(Level.FINE, "skipping subtype", x);
+                                    }
+                                }
+                            }
+                        }
+                        return new HeterogeneousObjectType(c, types);
+                    }
+                }
+                if (acceptsList(type)) {
+                    return new ArrayType(type, of(((ParameterizedType) type).getActualTypeArguments()[0]));
+                }
+                throw new UnsupportedOperationException("do not know how to categorize attributes of type " + type);
+            } catch (Exception x) {
+                return new ErrorType(x, type);
+            }
+        }
+    }
+
+    public static final class AtomicType extends ParameterType {
+        AtomicType(Class<?> clazz) {
+            super(clazz);
+        }
+
+        public Class<?> getType() {
+            return (Class) getActualType();
+        }
+
+        @Override public String toString() {
+            return Primitives.unwrap((Class)getActualType()).getSimpleName();
+        }
+    }
+
+    public static final class EnumType extends ParameterType {
+        private final String[] values;
+        EnumType(Class<?> clazz, String[] values) {
+            super(clazz);
+            this.values = values;
+        }
+
+        public Class<?> getType() {
+            return (Class) getActualType();
+        }
+
+        /**
+         * A list of enumeration values.
+         */
+        public String[] getValues() {
+            return values.clone();
+        }
+        @Override public String toString() {
+            return ((Class)getActualType()).getSimpleName() + Arrays.toString(values);
+        }
+    }
+
+    public static final class ArrayType extends ParameterType {
+        private final ParameterType elementType;
+        ArrayType(Class<?> actualClass) {
+            this(actualClass, of(actualClass.getComponentType()));
+        }
+
+        ArrayType(Type actualClass, ParameterType elementType) {
+            super(actualClass);
+            this.elementType = elementType;
+        }
+
+        /**
+         * The element type of the array or list.
+         */
+        public ParameterType getElementType() {
+            return elementType;
+        }
+        @Override public String toString() {
+            return elementType + "[]";
+        }
+    }
+
+    public static final class HomogeneousObjectType extends ParameterType {
+        private final Schema type;
+        HomogeneousObjectType(Class<?> actualClass) {
+            super(actualClass);
+            this.type = schemaFor(actualClass);
+        }
+
+        public Class<?> getType() {
+            return (Class) getActualType();
+        }
+
+        /**
+         * The schema representing a type of nested object.
+         */
+        public Schema getSchemaType() {
+            return type;
+        }
+
+        /**
+         * The actual class underlying the type.
+         */
+        @Override public String toString() {
+            return type.getType().getSimpleName() + type;
+        }
+    }
+
+    /**
+     * A parameter (or array element) which could take any of the indicated concrete object types.
+     */
+    public static final class HeterogeneousObjectType extends ParameterType {
+        private final Map<String,Schema> types;
+        HeterogeneousObjectType(Class<?> supertype, Map<String,Schema> types) {
+            super(supertype);
+            this.types = types;
+        }
+
+        public Class<?> getType() {
+            return (Class) getActualType();
+        }
+
+        /**
+         * A map from names which could be passed to {@link #CLAZZ} to types of allowable nested objects.
+         */
+        public Map<String,Schema> getTypes() {
+            return types;
+        }
+        @Override public String toString() {
+            return getType().getSimpleName() + types;
+        }
+    }
+
+    public static final class ErrorType extends ParameterType {
+        private final Exception error;
+        ErrorType(Exception error, Type type) {
+            super(type);
+            LOG.log(Level.FINE, null, error);
+            this.error = error;
+        }
+        public Exception getError() {
+            return error;
+        }
+        @Override public String toString() {
+            return error.toString();
+        }
+    }
+
+    /**
      * Removes configuration of any properties based on {@link DataBoundSetter} which appear unmodified from the default.
      * @param clazz the class of {@code o}
      * @param allDataBoundProps all its properties, including those from its {@link DataBoundConstructor} as well as any {@link DataBoundSetter}s; some of the latter might be deleted
@@ -171,7 +536,7 @@ public class DescribableHelper {
         }
     }
 
-    private static final String CLAZZ = "$class";
+    public static final String CLAZZ = "$class";
 
     private static Object[] buildArguments(Class<?> clazz, Map<String,?> arguments, Type[] types, String[] names, boolean callEvenIfNoArgs) throws Exception {
         Object[] args = new Object[names.length];
@@ -211,7 +576,7 @@ public class DescribableHelper {
             Class<?> clazz;
             if (clazzS == null) {
                 if (Modifier.isAbstract(((Class) type).getModifiers())) {
-                    throw new UnsupportedOperationException("must specify $class with an implementation of " + type);
+                    throw new UnsupportedOperationException("must specify " + CLAZZ + " with an implementation of " + type);
                 }
                 clazz = (Class) type;
             } else if (clazzS.contains(".")) {
@@ -416,21 +781,21 @@ public class DescribableHelper {
         }
     }
 
-    static <T> Set<Class<? extends T>> findSubtypes(Class<T> supertype) {
-        Set<Class<? extends T>> clazzes = new HashSet<Class<? extends T>>();
+    static Set<Class<?>> findSubtypes(Class<?> supertype) {
+        Set<Class<?>> clazzes = new HashSet<Class<?>>();
         for (Descriptor<?> d : getDescriptorList()) {
             if (supertype.isAssignableFrom(d.clazz)) {
-                clazzes.add(d.clazz.asSubclass(supertype));
+                clazzes.add(d.clazz);
             }
         }
         if (supertype == ParameterValue.class) { // TODO JENKINS-26093 hack, pending core change
-            for (Class<? extends ParameterDefinition> d : findSubtypes(ParameterDefinition.class)) {
+            for (Class<?> d : findSubtypes(ParameterDefinition.class)) {
                 String name = d.getName();
                 if (name.endsWith("Definition")) {
                     try {
                         Class<?> c = d.getClassLoader().loadClass(name.replaceFirst("Definition$", "Value"));
                         if (supertype.isAssignableFrom(c)) {
-                            clazzes.add(c.asSubclass(supertype));
+                            clazzes.add(c);
                         }
                     } catch (ClassNotFoundException x) {
                         // ignore

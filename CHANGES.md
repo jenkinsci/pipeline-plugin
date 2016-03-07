@@ -2,7 +2,72 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.11 (upcoming)
+## 1.15-beta-1 (Mar 04 2016)
+
+* [JENKINS-32925](https://issues.jenkins-ci.org/browse/JENKINS-32925): stack overflow displaying reference documentation in certain cases.
+* [JENKINS-27152](https://issues.jenkins-ci.org/browse/JENKINS-27152): offering `tmp` option to `pwd` step.
+
+## 1.14 (Feb 25 2016)
+
+* [JENKINS-32727](https://issues.jenkins-ci.org/browse/JENKINS-32727): new facility to replay Pipeline builds with a modified script.
+* Simple `git` step now checks out a branch, not a detached head, for ease of committing to the workspace.
+* [JENKINS-33005](https://issues.jenkins-ci.org/browse/JENKINS-33005): hang running `stage` step which tries to cancel an earlier build that could not be loaded.
+* [JENKINS-32214](https://issues.jenkins-ci.org/browse/JENKINS-32214): polling for Subversion and Mercurial did not take into account changes already checked out in a running build.
+
+## 1.14-beta-1 (Feb 10 2016)
+
+* [JENKINS-32547](https://issues.jenkins-ci.org/browse/JENKINS-32547): laxer timeout on `bat` step log collection is needed for WinRM-based EC2 slaves.
+* [JENKINS-30759](https://issues.jenkins-ci.org/browse/JENKINS-30759): sporadic `NullPointerException`s running very short-lived `node` blocks.
+* [JENKINS-32133](https://issues.jenkins-ci.org/browse/JENKINS-32133): improved styling for generated reference documentation introduced in 1.13.
+* [JENKINS-32819](https://issues.jenkins-ci.org/browse/JENKINS-32819): fix script compilation check when CSRF is enabled.
+* Excessive metadata accidentally included in `build.xml` records in 1.13.
+
+## 1.13 (Jan 18 2016)
+
+* [JENKINS-31153](https://issues.jenkins-ci.org/browse/JENKINS-31153): the Workflow feature was renamed to Pipeline.
+* [JENKINS-30055](https://issues.jenkins-ci.org/browse/JENKINS-30055): poor performance and file handle leaks when running a script with an enormous number of steps in quick succession
+* [JENKINS-28649](https://issues.jenkins-ci.org/browse/JENKINS-28649): `@ExportedBean` errors when serving some REST API requests.
+* [JENKINS-26126](https://issues.jenkins-ci.org/browse/JENKINS-26126): introspect Workflow steps to generate static reference documentation (link from _Snippet Generator_); formatting rough, in progress. Initial GDSL for IntelliJ IDEA code completion also available. DSLD for Eclipse in testing.
+* [JENKINS-31614](https://issues.jenkins-ci.org/browse/JENKINS-31614): avoiding various deadlocks involving `Queue`.
+* [JENKINS-31897](https://issues.jenkins-ci.org/browse/JENKINS-31897): parameters with default values may now be omitted from the `parameters` option to the `build` step.
+* [JENKINS-31909](https://issues.jenkins-ci.org/browse/JENKINS-31909): form validation warning about Groovy syntax errors was broken in 1.11; [JENKINS-32067](https://issues.jenkins-ci.org/browse/JENKINS-32067) show these warnings right in the editor.
+* [JENKINS-31391](https://issues.jenkins-ci.org/browse/JENKINS-31391): pass `EXECUTOR_NUMBER` into `node {}`.
+* [JENKINS-32062](https://issues.jenkins-ci.org/browse/JENKINS-32062): mishandling of array-valued method arguments.
+* [JENKINS-29326](https://issues.jenkins-ci.org/browse/JENKINS-29326): in conjunction with Git plugin 2.4.1, avoid repeated links to Git commit information.
+
+## 1.12 (Dec 14 2015)
+
+Same as beta 3.
+
+## 1.12-beta-3 (Dec 09 2015)
+
+* [JENKINS-31386](https://issues.jenkins-ci.org/browse/JENKINS-31386): `checkout scm` now works also in _Workflow script from SCM_ to better interoperate with multibranch projects.
+* [JENKINS-31769](https://issues.jenkins-ci.org/browse/JENKINS-31769): fixed at least some hangs when `sh`/`bat` processes complete on laggy slaves.
+* [JENKINS-31902](https://issues.jenkins-ci.org/browse/JENKINS-31902): interrupting the `build` step failed to interrupt downstream Workflow builds.
+* [JENKINS-29413](https://issues.jenkins-ci.org/browse/JENKINS-29413): hung build when running the `parallel` step with an empty map.
+* [JENKINS-29881](https://issues.jenkins-ci.org/browse/JENKINS-29881): do not include empty changesets in `WorkflowRun.getChangeSets()`.
+* [JENKINS-31086](https://issues.jenkins-ci.org/browse/JENKINS-31086): added `useDefaultExcludes` option to the `stash` step.
+
+## 1.12-beta-2 (Nov 25 2015)
+
+* [JENKINS-29705](https://issues.jenkins-ci.org/browse/JENKINS-29705): added _Thread Dump_ link to running flow builds for diagnosing problems like hangs.
+* [JENKINS-31649](https://issues.jenkins-ci.org/browse/JENKINS-31649): correctly display pending queue items for blocked `node {}` tasks when on Jenkins 1.639+ (will not appear in 1.638 or 1.625.2).
+* [JENKINS-31691](https://issues.jenkins-ci.org/browse/JENKINS-31691): added `isUnix` step.
+* [JENKINS-31585](https://issues.jenkins-ci.org/browse/JENKINS-31585): made new script editor resizable.
+
+## 1.12-beta-1 (Nov 19 2015)
+
+* [JENKINS-25889](https://issues.jenkins-ci.org/browse/JENKINS-25889): error when submitting to an `input` step after a Jenkins restart.
+
+## 1.11 (Nov 12 2015)
+
+* _Workflow: Multibranch_ plugin now released as nonbeta and available from the regular update center. (Currently not included in _Workflow: Aggregator_.)
+
+## 1.11-beta-4 (Nov 09 2015)
+
+* Minor enhancements to JENKINS-28769.
+
+## 1.11-beta-3 (Nov 05 2015)
 
 * [JENKINS-28769](https://issues.jenkins-ci.org/browse/JENKINS-28769): syntax highlighting, example scripts, and basic code snippets for Workflow scripts in the browser.
 * When running the `build` step, the upstream log should now show a link to the downstream build.

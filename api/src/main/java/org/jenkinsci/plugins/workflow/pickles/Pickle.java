@@ -39,6 +39,7 @@ public abstract class Pickle implements Serializable {
     /**
      * Start preparing rehydration of this value, and when it's ready or fail, report that to the
      * given call.
+     * An implementation should return quickly and avoid acquiring locks in this method itself (as opposed to the future).
      */
     public abstract ListenableFuture<?> rehydrate();
 

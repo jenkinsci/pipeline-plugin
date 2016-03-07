@@ -1,11 +1,11 @@
-# Workflow Global Library
+# Pipeline Global Library
 
-When you have multiple workflow jobs, you often want to share some parts of the workflow
-scripts between them to keep workflow scripts [DRY](http://en.wikipedia.org/wiki/Don't_repeat_yourself).
+When you have multiple Pipeline jobs, you often want to share some parts of the Pipeline
+scripts between them to keep Pipeline scripts [DRY](http://en.wikipedia.org/wiki/Don't_repeat_yourself).
 A very common use case is that you have many projects that are built in the similar way.
 
 This plugin adds that functionality by creating a "shared library script" Git repository inside Jenkins.
-Every workflow script in your Jenkins see these shared library scripts in their classpath.
+Every Pipeline script in your Jenkins see these shared library scripts in their classpath.
 
 
 ### Directory structure
@@ -18,20 +18,20 @@ The directory structure of the shared library repository is as follows:
      |       +- foo
      |           +- Bar.groovy  # for org.foo.Bar class
      +- vars
-         +- foo.groovy          # for global 'foo' variable/function 
+         +- foo.groovy          # for global 'foo' variable/function
          +- foo.txt             # help for 'foo' variable/function
 
 The `src` directory should look like standard Java source directory structure.
-This directory is added to the classpath when executing workflows.
+This directory is added to the classpath when executing Pipelines.
 
 The `vars` directory hosts scripts that define global variables accessible from
-workflow scripts.
+Pipeline scripts.
 The basename of each `*.groovy` file should be a Groovy (~ Java) identifier, conventionally `camelCased`.
 The matching `*.txt`, if present, can contain documentation, processed through the system’s configured markup formatter
 (so may really be HTML, Markdown, etc., though the `txt` extension is required).
 
 The groovy source files in these directories get the same sandbox / CPS
-transformation just like your workflow scripts.
+transformation just like your Pipeline scripts.
 
 Other directories under the root are reserved for future enhancements.
 
@@ -41,7 +41,7 @@ This directory is managed by Git, and you'll deploy new changes through `git pus
 The repository is exposed in two endpoints:
 
  * `ssh://USERNAME@server:PORT/workflowLibs.git` through [Jenkins SSH](https://wiki.jenkins-ci.org/display/JENKINS/Jenkins+SSH)
- * `http://server/jenkins/workflowLibs.git` (when your Jenkins is `http://server/jenkins/`). As noted in [JENKINS-26537](https://issues.jenkins-ci.org/browse/JENKINS-26537), this mode will not currently work in an authenticated Jenkins instance.
+ * `http://LOCATION/workflowLibs.git` (when your Jenkins app is located on the url `http://LOCATION/`). As noted in [JENKINS-26537](https://issues.jenkins-ci.org/browse/JENKINS-26537), this mode will not currently work in an authenticated Jenkins instance. 
 
 Having the shared library script in Git allows you to track changes, perform
 tested deployments, and reuse the same scripts across a large number of instances.
@@ -80,8 +80,8 @@ class Point {
 
 However classes written like this cannot call step functions like `sh` or `git`.
 More often than not, what you want to define is a series of functions that in turn invoke
-other workflow step functions. You can do this by not explicitly defining the enclosing class,
-just like your main workflow script itself:
+other Pipeline step functions. You can do this by not explicitly defining the enclosing class,
+just like your main Pipeline script itself:
 
 ```groovy
 // src/org/foo/Zot.groovy
@@ -92,7 +92,7 @@ def checkOutFrom(repo) {
 }
 ```
 
-You can then call such function from your main workflow script like this:
+You can then call such function from your main Pipeline script like this:
 
 ```groovy
 def z = new org.foo.Zot()
@@ -106,13 +106,13 @@ define the `call` method:
 
 ```groovy
 // vars/helloWorld.groovy
-def call(msg) {
-    // you can call any valid step functions from your code, just like you can from workflow scripts
+def call(name) {
+    // you can call any valid step functions from your code, just like you can from Pipeline scripts
     echo "Hello world, ${name}"
 }
 ```
 
-Then your workflow can call this function like this:
+Then your Pipeline can call this function like this:
 
 ```groovy
 helloWorld "Joe"
@@ -131,7 +131,7 @@ def call(Closure body) {
 }
 ```
 
-Your workflow can call this function like this:
+Your Pipeline can call this function like this:
 
 ```groovy
 windows {
@@ -154,21 +154,21 @@ def setFoo(v) {
 def getFoo() {
     return this.foo;
 }
-def say(msg) {
+def say(name) {
     echo "Hello world, ${name}"
 }
 ```
 
-Then your workflow can call these functions like this:
+Then your Pipeline can call these functions like this:
 
 ```groovy
-acme.foo = 5;
+acme.foo = "5";
 echo acme.foo; // print 5
 acme.say "Joe" // print "Hello world, Joe"
 ```
 
 ### Define more structured DSL
-If you have a lot of workflow jobs that are mostly similar, the global function/variable mechanism gives you
+If you have a lot of Pipeline jobs that are mostly similar, the global function/variable mechanism gives you
 a handy tool to build a higher-level DSL that captures the similarity. For example, all Jenkins plugins are
 built and tested in the same way, so we might write a global function named `jenkinsPlugin` like this:
 
@@ -180,7 +180,7 @@ def call(body) {
     body.resolveStrategy = Closure.DELEGATE_FIRST
     body.delegate = config
     body()
-    
+
     // now build, based on the configuration provided
     node {
         git url: "https://github.com/jenkinsci/${config.name}-plugin.git"
@@ -190,7 +190,7 @@ def call(body) {
 }
 ```
 
-With this, the workflow script will look a whole lot simpler, to the point that people who don't know anything
+With this, the Pipeline script will look a whole lot simpler, to the point that people who don't know anything
 about Groovy can write it:
 
 ```groovy

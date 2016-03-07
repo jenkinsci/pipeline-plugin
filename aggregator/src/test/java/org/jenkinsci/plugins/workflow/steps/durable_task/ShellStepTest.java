@@ -36,8 +36,7 @@ public class ShellStepTest extends Assert {
     @ClassRule
     public static BuildWatcher buildWatcher = new BuildWatcher();
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    @Rule public JenkinsRule j = new JenkinsRule();
 
     /**
      * Failure in the shell script should mark the step as red

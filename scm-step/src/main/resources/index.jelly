@@ -25,5 +25,5 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <div>
-    Adds workflow steps to check out or update working sources from various SCMs (version control).
+    Adds Pipeline steps to check out or update working sources from various SCMs (version control).
 </div>

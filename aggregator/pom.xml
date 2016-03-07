@@ -28,12 +28,12 @@
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId>
         <artifactId>workflow-pom</artifactId>
-        <version>1.11-SNAPSHOT</version>
+        <version>1.15-SNAPSHOT</version>
     </parent>
     <artifactId>workflow-aggregator</artifactId>
     <packaging>hpi</packaging>
-    <name>Workflow: Aggregator</name>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
+    <name>Pipeline</name>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -70,13 +70,6 @@
             <artifactId>workflow-cps-global-lib</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- TODO not implemented:
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>workflow-stm</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-job</artifactId>
@@ -110,6 +103,12 @@
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -150,6 +149,18 @@
             <artifactId>sshd</artifactId>
             <version>1.6</version>
             <scope>test</scope><!-- from git-server via workflow-cps-global-lib and otherwise unavailable during tests -->
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>matrix-auth</artifactId>
+            <version>1.0.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>jenkins-test-harness-tools</artifactId>
+            <version>2.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>

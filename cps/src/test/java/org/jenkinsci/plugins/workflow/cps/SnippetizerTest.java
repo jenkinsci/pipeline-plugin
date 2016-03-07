@@ -25,8 +25,9 @@
 package org.jenkinsci.plugins.workflow.cps;
 
 import com.gargoylesoftware.htmlunit.HttpMethod;
-import com.gargoylesoftware.htmlunit.WebRequestSettings;
+import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.WebResponse;
+import com.gargoylesoftware.htmlunit.util.NameValuePair;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.GroovyShell;
 import hudson.model.BooleanParameterDefinition;
@@ -40,23 +41,29 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import org.apache.commons.httpclient.NameValuePair;
+import static org.hamcrest.CoreMatchers.*;
 import org.jenkinsci.plugins.workflow.steps.CatchErrorStep;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
 import org.jenkinsci.plugins.workflow.steps.PwdStep;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.jenkinsci.plugins.workflow.support.steps.ExecutorStep;
 import org.jenkinsci.plugins.workflow.support.steps.StageStep;
 import org.jenkinsci.plugins.workflow.support.steps.WorkspaceStep;
 import org.jenkinsci.plugins.workflow.support.steps.build.BuildTriggerStep;
 import org.jenkinsci.plugins.workflow.support.steps.input.InputStep;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Test;
 import org.jvnet.hudson.test.Email;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -66,6 +73,14 @@ public class SnippetizerTest {
 
     @ClassRule public static JenkinsRule r = new JenkinsRule();
     
+    private static final Logger logger = Logger.getLogger(DescribableHelper.class.getName());
+    @BeforeClass public static void logging() {
+        logger.setLevel(Level.ALL);
+        Handler handler = new ConsoleHandler();
+        handler.setLevel(Level.ALL);
+        logger.addHandler(handler);
+    }
+
     @Test public void basics() throws Exception {
         assertRoundTrip(new EchoStep("hello world"), "echo 'hello world'");
         StageStep s = new StageStep("Build");
@@ -174,7 +189,7 @@ public class SnippetizerTest {
 
     private void assertGenerateSnippet(@Nonnull String json, @Nonnull String responseText, @CheckForNull String referer) throws Exception {
         JenkinsRule.WebClient wc = r.createWebClient();
-        WebRequestSettings wrs = new WebRequestSettings(new URL(r.getURL(), Snippetizer.GENERATE_URL), HttpMethod.POST);
+        WebRequest wrs = new WebRequest(new URL(r.getURL(), Snippetizer.GENERATE_URL), HttpMethod.POST);
         if (referer != null) {
             wrs.setAdditionalHeader("Referer", referer);
         }
@@ -188,4 +203,38 @@ public class SnippetizerTest {
         assertEquals(responseText, response.getContentAsString().trim());
     }
 
+    @Issue("JENKINS-26126")
+    @Test public void doDslRef() throws Exception {
+        JenkinsRule.WebClient wc = r.createWebClient();
+        String html = wc.goTo(Snippetizer.DSL_REF_URL).getWebResponse().getContentAsString();
+        assertThat("text from LoadStep/help-path.html is included", html, containsString("the Groovy file to load"));
+        assertThat("SubversionSCM.workspaceUpdater is mentioned as an attribute of a value of GenericSCMStep.delegate", html, containsString("workspaceUpdater"));
+        assertThat("CheckoutUpdater is mentioned as an option", html, containsString("CheckoutUpdater"));
+        assertThat("text from RunWrapperBinder/help.jelly is included", html, containsString("may be used to refer to the currently running build"));
+        assertThat("content is written to the end", html, containsString("</body></html>"));
+    }
+
+    @Issue("JENKINS-26126")
+    @Test public void doGdsl() throws Exception {
+        JenkinsRule.WebClient wc = r.createWebClient();
+        String gdsl = wc.goTo(Snippetizer.GDSL_URL, "text/plain").getWebResponse().getContentAsString();
+        assertThat("Description is included as doc", gdsl, containsString("Build a job"));
+        assertThat("Timeout step appears", gdsl, containsString("name: 'timeout'"));
+
+        // Verify valid groovy syntax.
+        GroovyShell shell = new GroovyShell(r.jenkins.getPluginManager().uberClassLoader);
+        shell.parse(gdsl);
+    }
+
+    @Issue("JENKINS-26126")
+    @Test public void doDsld() throws Exception {
+        JenkinsRule.WebClient wc = r.createWebClient();
+        String dsld = wc.goTo(Snippetizer.DSLD_URL, "text/plain").getWebResponse().getContentAsString();
+        assertThat("Description is included as doc", dsld, containsString("Build a job"));
+        assertThat("Timeout step appears", dsld, containsString("name: 'timeout'"));
+
+        // Verify valid groovy sntax.
+        GroovyShell shell = new GroovyShell(r.jenkins.getPluginManager().uberClassLoader);
+        shell.parse(dsld);
+    }
 }

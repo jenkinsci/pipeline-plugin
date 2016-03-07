@@ -41,9 +41,11 @@
 
         <j:forEach var="row" items="${it.rows}">
           <j:set var="node" value="${row.node}"/>
-          <tr>
+          <tr style="opacity: ${row.isExecuted()?'1.0':'0.3'}"> <!-- Muted if not executed -->
             <!-- tooltip is for now debugging only -->
-            <td style="padding-left: ${row.treeDepth*20+5}px" tooltip="ID: ${node.id}">
+            <j:set var="exec_state" value=""/>
+            <j:if test="${!row.executed}"><j:set var="exec_state" value=" (${%not executed})"/></j:if>
+            <td style="padding-left: ${row.treeDepth*20+5}px" tooltip="ID: ${node.id}${exec_state}">
               <a href="${rootURL}/${node.url}">
                 ${row.displayName}
               </a>

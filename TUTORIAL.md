@@ -1,14 +1,14 @@
- This document is intended for new users of the Workflow feature to learn how to write and understand flows.
+This document is intended for new users of the pipeline feature to learn how to write and understand pipelines.
 
-# Why Workflow?
+# Why Pipeline?
 
-Workflow was built with the community’s requirements for a flexible, extensible, and script-based CD pipeline capability for Jenkins in mind. To that end, Workflow:
+Pipeline (formerly known as Workflow) was built with the community’s requirements for a flexible, extensible, and script-based CD pipeline capability for Jenkins in mind. To that end, Pipeline:
 
-* Can support complex, real-world, CD Pipeline requirements: Workflow pipelines can fork/join, loop, *parallel*, to name a few
-* Is Resilient: Workflow pipeline executions can survive master restarts
-* Is Pausable: Workflow pipelines can pause and wait for human input/approval
-* Is Efficient: Workflow pipelines can restart from saved checkpoints
-* Is Visualized: Workflow StageView provides status at-a-glance dashboards including trending
+* Can support complex, real-world, CD Pipeline requirements: pipelines can fork/join, loop, *parallel*, to name a few
+* Is Resilient: pipeline executions can survive master restarts
+* Is Pausable: pipelines can pause and wait for human input/approval
+* Is Efficient: pipelines can restart from saved checkpoints
+* Is Visualized: Pipeline StageView provides status at-a-glance dashboards including trending
 
 # Getting Started
 
@@ -16,26 +16,26 @@ Before you begin, ensure you have the following installed or running:
 
 + You must be running Jenkins 1.580.1 or later (1.609.1+ for latest features).
 
-+ Ensure Workflow is installed: navigate to **Plugin Manager**, install **Workflow: Aggregator** and restart Jenkins.
++ Ensure Pipeline is installed: navigate to **Plugin Manager**, install **Pipeline** and restart Jenkins.
 
-**Note**: If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Workflow (plus additional associated features).
+**Note**: If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Pipeline (plus additional associated features).
 
-If you want to play with Workflow without installing Jenkins separately (or accessing your production system), try running the [Docker demo](demo/README.md).
+If you want to play with Pipeline without installing Jenkins separately (or accessing your production system), try running the [Docker demo](demo/README.md).
 
-# Creating a Workflow
+# Creating a Pipeline
 
-To create a workflow, perform the following steps:
+To create a pipeline, perform the following steps:
 
-1. Click **New Item**, pick a name for your flow, select **Workflow**, and click **OK**.
+1. Click **New Item**, pick a name for your job, select **Pipeline**, and click **OK**.
 
-  You will be taken to the configuration screen for the flow.
-The _Script_ text area is important as this is where your flow script is defined. We'll start with a trivial script:
+  You will be taken to the configuration screen for the Pipeline.
+The _Script_ text area is important as this is where your Pipeline script is defined. We'll start with a trivial script:
 ```groovy
-echo 'hello from Workflow'
+echo 'hello from Pipeline'
 ```
 **Note**: if you are not a Jenkins administrator, click the **Use Groovy Sandbox** option (read [here](https://wiki.jenkins-ci.org/display/JENKINS/Script+Security+Plugin#ScriptSecurityPlugin-GroovySandboxing) to learn more about this option).
 
-2. **Save** your workflow when you are done.
+2. **Save** your pipeline when you are done.
 
 3. Click **Build Now** to run it.
 You should see `#1` under _Build History_.
@@ -44,9 +44,9 @@ You should see `#1` under _Build History_.
 
 ```
 Started by user anonymous
-Running: Print Message
-hello from Workflow
-Running: End of Workflow
+[Pipeline] echo
+hello from Pipeline
+[Pipeline] End of Pipeline
 Finished: SUCCESS
 ```
 
@@ -55,17 +55,16 @@ Finished: SUCCESS
 
 
 
+## Understanding Pipeline Scripts
 
-## Understanding Flow Scripts
+A pipeline is a [Groovy](http://groovy-lang.org/documentation.html) script that tells Jenkins what to do when your Pipeline is run.
+You do not need to know much general Groovy to use Pipeline - relevant bits of syntax are introduced as needed.
 
-A workflow is a [Groovy](http://groovy-lang.org/documentation.html) script that tells Jenkins what to do when your flow is run.
-You do not need to know much general Groovy to use Workflow - relevant bits of syntax are introduced as needed.
-
-**Example** In this example, `echo` is a _step_: a function defined in a Jenkins plugin and made available to all workflows.
+**Example** In this example, `echo` is a _step_: a function defined in a Jenkins plugin and made available to all pipelines.
 Groovy functions can use a C/Java-like syntax such as:
 
 ```groovy
-echo("hello from Workflow");
+echo("hello from Pipeline");
 ```
 You can drop the semicolon (`;`), drop the parentheses (`(` and `)`), and use single quotes (`'`) instead of double (`"`) if you do not need to perform variable substitutions.
 
@@ -75,15 +74,15 @@ Comments in Groovy, as in Java, can use single-line or multiline styles:
 /*
  * Copyright 2014 Yoyodyne, Inc.
  */
-// FIXME write this flow
+// FIXME write this
 ```
 
-# Creating a Simple Flow
+# Creating a Simple Pipeline
 
-The following sections guide you through creating a simple flow.
+The following sections guide you through creating a simple Pipeline.
 
 ## Setting Up
-To set up for creating a flow, ensure you have the following:
+To set up for creating a Pipeline, ensure you have the following:
 
 1. First, you need a Maven installation available to do builds with.
 Go to _Jenkins » Manage Jenkins » Configure System_, click **Add Maven**, give it the name **M3** and allow it to install automatically.
@@ -94,7 +93,7 @@ Go to _Jenkins » Manage Jenkins » Configure System_, click **Add Maven**, give
 
 ## Checking out and Building Sources
 
-Now, click on your flow and **Configure** it to edit its script.
+Now, click on your Pipeline and **Configure** it to edit its script.
 
 ```groovy
 node {
@@ -107,7 +106,7 @@ node {
 When you run this script:
 *  it should check out a Git repository and run Maven to build it.
 * it will run some tests that might (at random) pass, fail, or be skipped.
-If they fail, the `mvn` command will fail and your flow run will end with:
+If they fail, the `mvn` command will fail and your Pipeline run will end with:
 
 ```
 ERROR: script returned exit code 1
@@ -144,9 +143,9 @@ Many steps (such as: `git` and `sh` in this example) can only run in the context
 sh 'echo oops'
 ```
 
-as a flow script will not work: Jenkins does not know what system to run commands on.
+as a Pipeline script will not work: Jenkins does not know what system to run commands on.
 
-Unlike user-defined functions, workflow steps always take named parameters. Thus:
+Unlike user-defined functions, Pipeline steps always take named parameters. Thus:
 
 ```groovy
 git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
@@ -216,13 +215,13 @@ In the console output, you see the final command being run.
 **Example**:
 
 ```
-[flow] Running shell script
+[Pipeline] Running shell script
 + /path/to/jenkins/tools/hudson.tasks.Maven_MavenInstallation/M3/bin/mvn -B verify
 ```
 
 ## Managing the Environment
 
-One way to use tools by default, is to add them to your executable path - by using the special variable `env` that is defined for all workflows:
+One way to use tools by default, is to add them to your executable path - by using the special variable `env` that is defined for all pipelines:
 
 ```groovy
 node {
@@ -257,7 +256,7 @@ See  Help in the **Snippet Generator** for the `withEnv` step for more details o
 
 ## Build Parameters
 
-If you have configured your workflow to accept parameters when it is built — **Build with Parameters** — they are accessible as Groovy variables of the same name.
+If you have configured your pipeline to accept parameters when it is built — **Build with Parameters** — they are accessible as Groovy variables of the same name.
 
 # Recording Test Results and Artifacts
 
@@ -274,12 +273,12 @@ node {
 }
 ```
 
-* If tests fail, the flow is marked unstable (yellow ball), and you can browse the **Test Result Trend** to see the history.
-* You should  see **Last Successful Artifacts** on the flow index page.
+* If tests fail, the Pipeline is marked unstable (yellow ball), and you can browse the **Test Result Trend** to see the history.
+* You should  see **Last Successful Artifacts** on the Pipeline index page.
 
 ## Understanding Syntax
 
-The Maven option `-Dmaven.test.failure.ignore` allows the `mvn` command to exit normally (status 0) — so that the flow continues, even when test failures are recorded on disk.
+The Maven option `-Dmaven.test.failure.ignore` allows the `mvn` command to exit normally (status 0) — so that the Pipeline continues, even when test failures are recorded on disk.
 
 Run the `step` step twice.
 This step  allows you to use certain build (or post-build) steps already defined in Jenkins for use in traditional projects.
@@ -319,7 +318,7 @@ Similarly, the elements of `userRemoteConfigs` are declared to be of type `UserR
 
 # Using Slaves
 
-Thus far, workflow has run only on the Jenkins master - assuming you had no slaves configured.
+Thus far, pipeline has run only on the Jenkins master - assuming you had no slaves configured.
 You can even force it to run on the master by telling the `node` step the following:
 
 ```groovy
@@ -341,7 +340,7 @@ Leave _# of executors_ as 1.
 
 4. **Save**, then click on the new slave and **Launch**.
 
-5. Now, go back to your flow definition and request this slave’s label:
+5. Now, go back to your Pipeline definition and request this slave’s label:
 
 ```groovy
 node('remote') {
@@ -360,7 +359,7 @@ node('unix && 64bit') {
 When you **Build Now**, you see:
 
 ```
-Running on <yourslavename> in /<slaveroot>/workspace/<flowname>
+Running on <yourslavename> in /<slaveroot>/workspace/<jobname>
 ```
 
 and the `M3` Maven installation being unpacked to this slave root.
@@ -376,7 +375,7 @@ node('remote') {
 }
 ```
 
-The `input` step pauses flow execution.
+The `input` step pauses Pipeline execution.
 Its default `message` parameter gives a prompt, which is shown to a human.
 You can, optionally, request information back.
 
@@ -391,23 +390,23 @@ Proceed or Abort
 If you click **Proceed**, the build will proceed as before.
 First, go to the Jenkins main page and look at the **Build Executor Status** widget.
 
-* You will see an unnumbered entry under **master** named  **flowname #10**; executors #1 and #2 on the master are idle.
-* You will also see an entry under your slave, in a numbered row (probably #1) called **Building part of flowname #10**.
+* You will see an unnumbered entry under **master** named  **jobname #10**; executors #1 and #2 on the master are idle.
+* You will also see an entry under your slave, in a numbered row (probably #1) called **Building part of jobname #10**.
 
-Why are there two executors consumed by one flow build?
+Why are there two executors consumed by one Pipeline build?
 
-* Every flow build itself runs on the master, using a **flyweight executor** — an uncounted slot that is assumed to not take any significant computational power.
+* Every Pipeline build itself runs on the master, using a **flyweight executor** — an uncounted slot that is assumed to not take any significant computational power.
 * This executor represents the actual Groovy script, which is almost always idle, waiting for a step to complete.
 * Flyweight executors are always available.
 
 When you run a `node` step:
 * A regular heavyweight executor is allocated on a node (usually a slave) matching the label expression, as soon as one is available. This executor represents the real work being done on the node.
 
-* If you start a second build of the flow while the first is still paused with the one available executor, you will see both flow builds running on master.
-But only the first will have grabbed the one available executor on the slave; the other **part of flowname #11** will be shown in **Build Queue (1)**.
+* If you start a second build of the Pipeline while the first is still paused with the one available executor, you will see both Pipeline builds running on master.
+But only the first will have grabbed the one available executor on the slave; the other **part of jobname #11** will be shown in **Build Queue (1)**.
 (shortly after, the console log for the second build will note that it is still waiting for an available executor).
 
-To finish up, click the ▾ beside either executor entry for any running flow and select **Paused for Input**, then click **Proceed**
+To finish up, click the ▾ beside either executor entry for any running Pipeline and select **Paused for Input**, then click **Proceed**
 (you can also click the link in the console output).
 
 ## Allocating Workspaces
@@ -421,7 +420,7 @@ Now start your build twice in a row.
 The log for the second build will show
 
 ```
-Running on <yourslavename> in /<slaveroot>/workspace/<flowname>@2
+Running on <yourslavename> in /<slaveroot>/workspace/<jobname>@2
 ```
 
 The `@2` shows that the build used a separate workspace from the first one, with which it ran concurrently.
@@ -440,7 +439,7 @@ The `dir` step can be used to run a block with a different working directory (ty
 # Adding More Complex Logic
 
 Your Groovy script can include functions, conditional tests, loops, `try`/`catch`/`finally` blocks, and so on.
-Save this flow definition:
+Save this Pipeline definition:
 
 ```groovy
 node('remote') {
@@ -469,7 +468,7 @@ Here, you use:
 * There is also a `writeFile` step to save content to a text file in the workspace
 * `fileExists` step to check whether a file exists without loading it.
 
-When you run the flow you see:
+When you run the Pipeline you see:
 
 ```
 Building version 1.0-SNAPSHOT
@@ -504,7 +503,7 @@ java.io.NotSerializableException: java.util.regex.Matcher
 ```
 
 * This occurs because the `matcher` local variable is of a type (`Matcher`) not considered serializable by Java.
-Since workflows must survive Jenkins restarts, the state of the running program is periodically saved to disk so it can be resumed later
+Since pipelines must survive Jenkins restarts, the state of the running program is periodically saved to disk so it can be resumed later
 (saves occur after every step or in the middle of  steps such as `sh`).
 
 * The “state” includes the whole control flow including: local variables, positions in loops, and so on. As such: any variable values used in your program should be numbers, strings, or other serializable types, not “live” objects such as network connections.
@@ -530,8 +529,8 @@ node('remote') {
 ```
 
 However the safest approach is to isolate use of nonserializable state inside a method marked with the annotation `@NonCPS`.
-Such a method will be treated as “native” by the Workflow engine, and its local variables never saved.
-However it may _not_ make any calls to Workflow steps, so the `readFile` call must be pulled out:
+Such a method will be treated as “native” by the Pipeline engine, and its local variables never saved.
+However it may _not_ make any calls to Pipeline steps, so the `readFile` call must be pulled out:
 
 ```groovy
 node('remote') {
@@ -555,14 +554,14 @@ def version(text) {
 Here the logic inside the `version` function is run by the normal Groovy runtime, so any local variables are permitted.
 
 ## Creating Multiple Threads
-Workflows can use a `parallel` step to perform multiple actions at once.
+Pipelines can use a `parallel` step to perform multiple actions at once.
 This special step takes a map as its argument; keys are “branch names” (labels for your own benefit), and values are blocks to run.
 
 To see how this can be useful, install a new plugin: **Parallel Test Executor** (version 1.6 or later).
-This plugin includes a workflow step that lets you split apart slow test runs.
+This plugin includes a Pipeline step that lets you split apart slow test runs.
 Also make sure the JUnit plugin is at least version 1.3+.
 
-Now create a new workflow with the following script:
+Now create a new pipeline with the following script:
 
 ```groovy
 node('remote') {
@@ -592,9 +591,9 @@ If so, a Jenkins administrator will need to go to **Manage Jenkins » In-process
 Then try running your script again and it should work.
 A later version of the plugin may remove the need for this workaround.
 
-When you run this flow for the first time, it will check out a project and run all of its tests in sequence.
+When you run this Pipeline for the first time, it will check out a project and run all of its tests in sequence.
 The second and subsequent times you run it, the `splitTests` task will partition your tests into two sets of roughly equal runtime.
-The rest of the flow then runs these in parallel — so if you look at **trend** (in the **Build History** widget) you will see the second and subsequent builds taking roughly half the time of the first.
+The rest of the Pipeline then runs these in parallel — so if you look at **trend** (in the **Build History** widget) you will see the second and subsequent builds taking roughly half the time of the first.
 If you only have the one slave configured with its two executors, this won't save time, but you may have multiple slaves on different hardware matching the same label expression.
 
 This script is more complex than the previous ones so it bears some examination.
@@ -612,8 +611,8 @@ step([$class: 'ArtifactArchiver', artifacts: 'pom.xml, src/'])
 
 Later,  `unarchive` these same files back into **other** workspaces.
 You could have just run `git` anew in each slave’s workspace, but this would result in duplicated changelog entries, as well as contacting the Git server twice.
-* A flow build is permitted to run as many SCM checkouts as it needs to, which is useful for projects working with multiple repositories, but not what we want here.
-* More importantly, if anyone pushes a new Git commit at  the wrong time, you might be testing different sources in some branches - which is prevented when you do the checkout just once and distribute sources to slaves yourseldf.
+* A Pipeline build is permitted to run as many SCM checkouts as it needs to, which is useful for projects working with multiple repositories, but not what we want here.
+* More importantly, if anyone pushes a new Git commit at  the wrong time, you might be testing different sources in some branches - which is prevented when you do the checkout just once and distribute sources to slaves yourself.
 
 The command `splitTests` returns a list of lists of strings.
 From each (list) entry, you construct one branch to run; the label (map key) is akin to a thread name, and will appear in the build log.
@@ -621,7 +620,7 @@ The Maven project is set up to expect a file `exclusions.txt` at its root, and i
 When you run the `parallel` step, each branch is started at the same time, and the overall step completes when all the branches finish: “fork & join”.
 
 There are several new ideas at work here:
-* A single flow build allocates several executors, potentially on different slaves, at the same time.
+* A single Pipeline build allocates several executors, potentially on different slaves, at the same time.
 You can see these starting and finishing in the Jenkins executor widget on the main screen.
 
 * Each call to `node` gets its own workspace.
@@ -633,20 +632,20 @@ Do not use `env` in this case:
 env.PATH = "${mvnHome}/bin:${env.PATH}"
 ```
 
-because environment variable overrides are  limited to being global to a workflow run, not local to the current thread (and thus slave).
+because environment variable overrides are  limited to being global to a pipeline run, not local to the current thread (and thus slave).
 You could, however, use the `withEnv` step as noted above.
 
 You may also have noticed that you are running `JUnitResultArchiver` several times, something that is not possible in a freestyle project.
 The test results recorded in the build are cumulative.
 
 When you view the log for a build with multiple branches, the output from each will be intermixed.
-It can be useful to click on the _Workflow Steps_ link on the build’s sidebar.
+It can be useful to click on the _Pipeline Steps_ link on the build’s sidebar.
 This will display a tree-table view of all the steps run so far in the build, grouped by logical block, for example `parallel` branch.
 You can click on individual steps and get more details, such as the log output for that step in isolation, the workspace associated with a `node` step, and so on.
 
 # Creating Stages
 
-By default, flow builds can run concurrently.
+By default, Pipeline builds can run concurrently.
 The `stage` command lets you mark certain sections of a build as being constrained by limited concurrency (or, later, unconstrained).
 Newer builds are always given priority when entering such a throttled stage; older builds will simply exit early if they are preëmpted.
 
@@ -658,15 +657,15 @@ Every SCM push can still trigger a separate build of a quicker earlier stage as 
 Yet each build runs linearly and can even retain a single workspace, avoiding the need to identify and copy artifacts between builds.
 (Even if you dispose of a workspace from an earlier stage, you can retain information about it using simple local variables.)
 
-Consult the [Docker demo](demo/README.md) for an example of a flow using multiple `stage`s.
+Consult the [Docker demo](demo/README.md) for an example of a Pipeline using multiple `stage`s.
 
 # Loading Script Text from Version Control
 
-Complex flows would be cumbersome to write and maintain in the textarea provided in the Jenkins job configuration.
+Complex Pipelines would be cumbersome to write and maintain in the textarea provided in the Jenkins job configuration.
 Therefore it makes sense to load the program from another source, one that you can maintain using version control and standalone Groovy editors.
 
 ## Building Entire Script from SCM
-The easiest way to do this is to select **Workflow script from SCM** when defining the workflow.
+The easiest way to do this is to select **Pipeline script from SCM** when defining the pipeline.
 
 In that case you do not enter any Groovy code in the Jenkins UI; you just indicate where in source code you want to retrieve the program.
 If you update this repository, a new build will be triggered, so long as your job is configured with an SCM polling trigger.
@@ -674,7 +673,7 @@ If you update this repository, a new build will be triggered, so long as your jo
 ## Triggering Manual Loading
 
 For some cases, you may prefer to explicitly load Groovy script text from some source.
-The standard Groovy `evaluate` function can be used, but most likely you will want to load a flow definition from a workspace.
+The standard Groovy `evaluate` function can be used, but most likely you will want to load a Pipeline definition from a workspace.
 For this purpose, you can use the `load` step, which takes a filename in the workspace and runs it as Groovy source text.
 
 The loaded file can contain statements at top level, which are run immediately.
@@ -685,7 +684,7 @@ In that case the main script defined in the job can just load and run a closure 
 ```groovy
 node {
     git '…'
-    load 'flow.groovy'
+    load 'pipeline.groovy'
 }()
 ```
 
@@ -693,7 +692,7 @@ The subtle part here is that we actually have to do a bit of work with the `node
 Once we have loaded the code, we exit the initial `node` block to release the temporary workspace, so it is not locked for the duration of the build.
 The return value of the `load` step also becomes the return value of the `node` step, which we run as a closure with the parentheses `()`.
 
-Here `flow.groovy` could look like:
+Here `pipeline.groovy` could look like:
 
 ```groovy
 { ->
@@ -712,16 +711,16 @@ The helper script can alternately define functions and return `this`, in which c
 An older version of the [Docker demo](demo/README.md) showed this technique in practice:
 
 ```groovy
-def flow
+def pipeline
 node('slave') {
     git '…'
-    flow = load 'flow.groovy'
-    flow.devQAStaging()
+    pipeline = load 'pipeline.groovy'
+    pipeline.devQAStaging()
 }
-flow.production()
+pipeline.production()
 ```
 
-where [flow.groovy](https://github.com/jenkinsci/workflow-plugin-pipeline-demo/blob/641a3491d49570f4f8b9e3e583eb71bad1aa493f/flow.groovy) defines `devQAStaging` and `production` functions (among others) before ending with
+where [pipeline.groovy](https://github.com/jenkinsci/workflow-plugin-pipeline-demo/blob/641a3491d49570f4f8b9e3e583eb71bad1aa493f/flow.groovy) defines `devQAStaging` and `production` functions (among others) before ending with
 
 ```groovy
 return this;
@@ -729,17 +728,19 @@ return this;
 
 In this case `devQAStaging` runs on the same node as the main source code checkout, while `production` runs outside of that block (and in fact allocates a different node).
 
+To reduce the amount of boilerplate needed in the master script, you can try the [Workflow Remote File Loader plugin](https://github.com/jenkinsci/workflow-remote-loader-plugin/blob/master/README.md#workflow-remote-file-loader-plugin).
+
 ## Retaining Global Libraries
 
-Plugins inject function and class names into a flow before it runs. The plugin bundled with Workflow allows you to eliminate the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
+Plugins inject function and class names into a Pipeline before it runs. The plugin bundled with Pipeline allows you to eliminate the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
 A [separate document](cps-global-lib/README.md) has details on this system.
 
 ## Creating Multibranch Projects
 
-A new **Workflow: Multibranch** plugin (as of this writing still in beta) offers a better way of versioning your Workflow and managing your project.
-You need to create a distinct project type, **Multibranch Workflow**.
+The **Pipeline: Multibranch** plugin offers a better way of versioning your Pipeline and managing your project.
+You need to create a distinct project type, **Multibranch Pipeline**.
 
-When you have a multibranch workflow, the configuration screen will resemble **Workflow script from SCM** in that your Workflow script comes from source control, not the Jenkins job configuration.
+When you have a multibranch pipeline, the configuration screen will resemble **Pipeline script from SCM** in that your Pipeline script comes from source control, not the Jenkins job configuration.
 The difference is that you do not configure a single branch, but a **set** of branches, and Jenkins creates a subproject for each branch it finds in your repository.
 
 For example, if you select **Git** as the branch source (Subversion and Mercurial are also supported already), you will be prompted for the usual connection information,
@@ -748,16 +749,16 @@ Jenkins expects to find a script named `Jenkinsfile` in branches it can build.
 From this script, the command `checkout scm` suffices to check out your project’s source code inside some `node {}`.
 
 Say you start with just a `master` branch, then you want to experiment with some changes, so you `git checkout -b newfeature` and push some commits.
-Jenkins automatically detects the new branch in your repository and creates a new subproject for it — with its own build history unrelated to trunk, so no one will mind if it has red/yellow balls for a while.
+Jenkins automatically detects the new branch in your repository and creates a new subproject for it—with its own build history unrelated to trunk, so no one will mind if it has red/yellow balls for a while.
 If you choose, you can ask for the subproject to be automatically removed after the branch is merged and deleted.
 
-If you want to change your Workflow script — for example, to add a new Jenkins publisher step corresponding to reports your `Makefile`/`pom.xml`/etc. is newly creating — you just edit `Jenkinsfile` in your change.
-The Workflow script is always synchronized with the rest of the source code you are working on: `checkout scm` checks out the same revision as the script is loaded from.
+If you want to change your Pipeline script—for example, to add a new Jenkins publisher step corresponding to reports your `Makefile`/`pom.xml`/etc. is newly creating—you just edit `Jenkinsfile` in your change.
+The Pipeline script is always synchronized with the rest of the source code you are working on: `checkout scm` checks out the same revision as the script is loaded from.
 
 # Exploring the Snippet Generator
-There are a number of workflow steps not discussed in this document, and plugins can add more.
+There are a number of Pipeline steps not discussed in this document, and plugins can add more.
 Even steps discussed here can take various special options that can be added from release to release.
-To browse all available steps and their syntax, a help tool is built into the flow definition screen.
+To browse all available steps and their syntax, a help tool is built into the Pipeline definition screen.
 
 Click **Snippet Generator** beneath your script text area.
 You see a list of installed steps.
@@ -767,4 +768,4 @@ Click help icons to see all.
 
 When you are done, click **Generate Groovy** to see a Groovy snippet that will run the step exactly as you have configured it.
 This lets you see the function name used for the step, the names of any parameters it takes (if not a default parameter), and their syntax.
-You can copy and paste the generated code right into your flow, or use it as a starting point (perhaps trimming some unnecessary optional parameters).
+You can copy and paste the generated code right into your Pipeline, or use it as a starting point (perhaps trimming some unnecessary optional parameters).

@@ -12,23 +12,23 @@ import hudson.model.Result;
 import hudson.model.StringParameterDefinition;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.tasks.Shell;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
 import static org.junit.Assert.*;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.MockFolder;
-
-import java.util.Arrays;
-import java.util.List;
-import org.junit.ClassRule;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.FailureBuilder;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.MockFolder;
 import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.TestExtension;
 
@@ -176,6 +176,22 @@ public class BuildTriggerStepTest {
         j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(ds3b));
     }
 
+    @Issue("JENKINS-31902")
+    @Test public void interruptFlowDownstreamFlow() throws Exception {
+        WorkflowJob ds = j.jenkins.createProject(WorkflowJob.class, "ds");
+        ds.setDefinition(new CpsFlowDefinition("semaphore 'ds'", true));
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("build 'ds'", true));
+        WorkflowRun usb = us.scheduleBuild2(0).getStartCondition().get();
+        assertEquals(1, usb.getNumber());
+        SemaphoreStep.waitForStart("ds/1", null);
+        WorkflowRun dsb = ds.getLastBuild();
+        assertEquals(1, dsb.getNumber());
+        usb.doStop();
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(usb));
+        j.assertBuildStatus(Result.ABORTED, j.waitForCompletion(dsb));
+    }
+
     @SuppressWarnings("deprecation")
     @Test public void triggerWorkflow() throws Exception {
         WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
@@ -285,6 +301,17 @@ public class BuildTriggerStepTest {
         j.assertBuildStatusSuccess(us.scheduleBuild2(0));
         FreeStyleBuild ds1 = ds.getLastBuild();
         assertEquals(5, ds1.getNumber());
+    }
+
+    @Issue("JENKINS-31897")
+    @Test public void defaultParameters() throws Exception {
+        WorkflowJob us = j.jenkins.createProject(WorkflowJob.class, "us");
+        us.setDefinition(new CpsFlowDefinition("build job: 'ds', parameters: [[$class: 'StringParameterValue', name: 'PARAM1', value: 'first']] "));
+        WorkflowJob ds = j.jenkins.createProject(WorkflowJob.class, "ds");
+        ds.addProperty(new ParametersDefinitionProperty(new StringParameterDefinition("PARAM1", "p1"), new StringParameterDefinition("PARAM2", "p2")));
+        ds.setDefinition(new CpsFlowDefinition("echo \"${PARAM1} - ${PARAM2}\""));
+        j.assertBuildStatusSuccess(us.scheduleBuild2(0));
+        j.assertLogContains("first - p2", ds.getLastBuild());
     }
 
 }

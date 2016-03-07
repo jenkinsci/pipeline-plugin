@@ -54,7 +54,7 @@ public class WorkflowMultiBranchProjectFactory extends MultiBranchProjectFactory
         }
 
         @Override public String getDisplayName() {
-            return "Workflow Jenkinsfile";
+            return "Pipeline Jenkinsfile";
         }
 
     }

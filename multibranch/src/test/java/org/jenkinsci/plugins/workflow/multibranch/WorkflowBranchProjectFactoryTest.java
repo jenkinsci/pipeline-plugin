@@ -56,12 +56,13 @@ public class WorkflowBranchProjectFactoryTest {
                 sampleRepo.init();
                 sampleRepo.git("checkout", "-b", "dev/main");
                 ScriptApproval.get().approveSignature("method java.lang.String replaceFirst java.lang.String java.lang.String"); // TODO add to generic-whitelist
-                sampleRepo.write("Jenkinsfile",
+                String script =
                     "echo \"branch=${env.BRANCH_NAME}\"\n" +
                     "node {\n" +
                     "  checkout scm\n" +
                     "  echo \"workspace=${pwd().replaceFirst('.+dev', 'dev')}\"\n" +
-                    "}");
+                    "}";
+                sampleRepo.write("Jenkinsfile", script);
                 sampleRepo.git("add", "Jenkinsfile");
                 sampleRepo.git("commit", "--all", "--message=flow");
                 WorkflowMultiBranchProject mp = story.j.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
@@ -74,15 +75,18 @@ public class WorkflowBranchProjectFactoryTest {
                 story.j.assertLogContains("branch=dev/main", b1);
                 story.j.assertLogContains("workspace=dev%2Fmain", b1);
                 verifyProject(p);
+                sampleRepo.write("Jenkinsfile", script.replace("branch=", "Branch="));
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.getItemByFullName("p/dev%2Fmain", WorkflowJob.class);
                 assertNotNull(p);
-                WorkflowRun b2 = p.scheduleBuild2(0).get();
+                sampleRepo.git("commit", "--all", "--message=Flow");
+                sampleRepo.notifyCommit(story.j);
+                WorkflowRun b2 = p.getLastBuild();
                 assertEquals(2, b2.getNumber());
-                story.j.assertLogContains("branch=dev/main", b2);
+                story.j.assertLogContains("Branch=dev/main", b2);
                 story.j.assertLogContains("workspace=dev%2Fmain", b2);
                 verifyProject(p);
             }

@@ -58,8 +58,7 @@ import java.util.Arrays;
  * @author Kohsuke Kawaguchi
  */
 public class InputStepTest extends Assert {
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    @Rule public JenkinsRule j = new JenkinsRule();
 
     /**
      * Try out a parameter.

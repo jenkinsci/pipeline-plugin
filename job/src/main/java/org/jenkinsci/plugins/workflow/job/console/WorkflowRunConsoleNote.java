@@ -40,7 +40,7 @@ public class WorkflowRunConsoleNote extends ConsoleNote<Run<?, ?>> {
     /**
      * Prefix used in metadata lines.
      */
-    public static final String CONSOLE_NOTE_PREFIX = "[Workflow] ";
+    public static final String CONSOLE_NOTE_PREFIX = "[Pipeline] ";
 
     /**
      * CSS color selector.

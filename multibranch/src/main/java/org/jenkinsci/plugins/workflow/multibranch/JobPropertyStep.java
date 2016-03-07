@@ -78,7 +78,7 @@ public class JobPropertyStep extends AbstractStepImpl {
     public static class Execution extends AbstractSynchronousStepExecution<Void> {
 
         @Inject transient JobPropertyStep step;
-        @StepContextParameter Run<?,?> build;
+        @StepContextParameter transient Run<?,?> build;
 
         @SuppressWarnings("unchecked") // untypable
         @Override protected Void run() throws Exception {
@@ -107,6 +107,8 @@ public class JobPropertyStep extends AbstractStepImpl {
             return null;
         }
 
+        private static final long serialVersionUID = 1L;
+
     }
 
     @Extension public static class DescriptorImpl extends AbstractStepDescriptorImpl {
@@ -125,7 +127,7 @@ public class JobPropertyStep extends AbstractStepImpl {
 
         @Override public Step newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             // A modified version of RequestImpl.TypePair.convertJSON.
-            // Works around the fact that Stapler does not call back into Descriptor.newInstance for nested objects.
+            // TODO JENKINS-31458 Works around the fact that Stapler does not call back into Descriptor.newInstance for nested objects.
             List<JobProperty> properties = new ArrayList<JobProperty>();
             ClassLoader cl = req.getStapler().getWebApp().getClassLoader();
             @SuppressWarnings("unchecked") Set<Map.Entry<String,Object>> entrySet = formData.getJSONObject("propertiesMap").entrySet();

@@ -28,14 +28,14 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.609.2</version> <!-- but see Jenkins-Version override below -->
+        <version>2.2</version>
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
-    <version>1.11-SNAPSHOT</version>
+    <version>1.15-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Workflow: Parent</name>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Workflow+Plugin</url>
+    <name>Pipeline: Parent</name>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
     <licenses>
         <license>
             <name>MIT License</name>
@@ -49,7 +49,9 @@
       <tag>HEAD</tag>
   </scm>
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jenkins.version>1.609.3</jenkins.version>
+        <jenkins-test-harness.version>2.1</jenkins-test-harness.version>
+        <java.level>6</java.level>
     </properties>
     <modules>
         <module>step-api</module>
@@ -60,21 +62,16 @@
         <module>scm-step</module>
         <module>cps</module>
         <module>cps-global-lib</module>
-        <!-- TODO excluding until implemented enough to be used:
-        <module>stm</module>
-        -->
         <module>job</module>
         <module>aggregator</module>
-        <!-- TODO excluded since we cannot release a nonbeta of it while it has beta dependencies:
         <module>multibranch</module>
-        -->
     </modules>
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>script-security</artifactId>
-                <version>1.15</version>
+                <version>1.16</version>
             </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
@@ -83,8 +80,13 @@
             </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>scm-api</artifactId>
+                <version>1.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>git</artifactId>
-                <version>2.3</version>
+                <version>2.4.1</version>
             </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
@@ -104,149 +106,26 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-            <version>3.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin> <!-- TODO remove when 1.609.2 more widely installed -->
-                    <groupId>org.jenkins-ci.tools</groupId>
-                    <artifactId>maven-hpi-plugin</artifactId>
-                    <configuration> <!-- only applies to hpi goal, but if I use <execution> here it tries to run that goal on the parent POM which fails -->
-                        <archive>
-                            <manifestEntries>
-                                <Jenkins-Version>1.609.1</Jenkins-Version>
-                            </manifestEntries>
-                        </archive>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
-            <!-- TODO replace with java.level=6 once we have a better plugin parent POM: -->
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>animal-sniffer-maven-plugin</artifactId>
-                <version>1.13</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <id>check</id>
-                    </execution>
-                </executions>
-                <configuration>
-                    <signature>
-                        <groupId>org.codehaus.mojo.signature</groupId>
-                        <artifactId>java16</artifactId>
-                    </signature>
-                </configuration>
-            </plugin>
             <plugin>
                 <!-- why is this necessary!? -->
                 <!-- fix attempted at https://github.com/jenkinsci/jenkins/commit/101507f49873de0239ccb7839649ea71187712b2 but apparently failed. -->
                 <groupId>org.codehaus.gmaven</groupId>
                 <artifactId>gmaven-plugin</artifactId>
-                <version>1.5-jenkins-3</version>
                 <configuration>
                     <providerSelection>1.8</providerSelection>
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <version>1.110</version>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5</version>
                 <configuration>
-                    <!-- https://jira.codehaus.org/browse/MRELEASE-271 workaround -->
-                    <preparationGoals>clean install</preparationGoals>
-                    <goals>-DskipTests deploy</goals>
                     <tagNameFormat>workflow-@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.1</version> <!-- need MFINDBUGS-118 in 2.5 -->
-            </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>rerunFailingTests</id>
-            <activation>
-                <property>
-                    <name>!test</name>
-                </property>
-            </activation>
-            <properties>
-                <surefire.rerunFailingTestsCount>4</surefire.rerunFailingTestsCount>
-            </properties>
-        </profile>
-        <profile>
-            <id>findbugs</id>
-            <activation>
-                <property>
-                    <name>skipTests</name>
-                    <value>!true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>3.0.2</version>
-                        <configuration>
-                            <xmlOutput>true</xmlOutput>
-                            <failOnError>false</failOnError>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>javadoc</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <repositories>
         <repository>
@@ -254,6 +133,7 @@
             <url>http://repo.jenkins-ci.org/public/</url>
         </repository>
     </repositories>
+
     <pluginRepositories>
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>

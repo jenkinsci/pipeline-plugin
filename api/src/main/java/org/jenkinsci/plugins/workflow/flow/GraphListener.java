@@ -38,4 +38,12 @@ public interface GraphListener {
      * One of the use cases of this listener is to persist the state of {@link FlowExecution}.
      */
     void onNewHead(FlowNode node);
+
+    /**
+     * Listener which should be notified of events immediately as they occur.
+     * You must be very careful not to acquire locks or block.
+     * If you do not implement this marker interface, you will receive notifications in batched deliveries.
+     */
+    interface Synchronous extends GraphListener {}
+
 }

@@ -41,7 +41,7 @@ import javax.annotation.Nonnull;
 import org.jvnet.hudson.test.JenkinsRule;
 
 /**
- * Utilities that could be added to {@link JenkinsRule} in the future but are not yet available in our baseline version.
+ * Utilities that could be added to {@link JenkinsRule} in the future but are not yet available in the selected {@code jenkins-test-harness}.
  */
 public class JenkinsRuleExt {
 

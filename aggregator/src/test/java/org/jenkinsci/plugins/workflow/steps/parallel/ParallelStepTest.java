@@ -305,8 +305,7 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 // when we let the last one go, it will now run till the completion
                 SemaphoreStep.success("suspendC/1", null);
-                while (!e.isComplete())
-                    waitForWorkflowToSuspend();
+                story.j.waitForCompletion(b);
 
                 // make sure all the three branches have executed to the end.
                 for (String branch : asList("A", "B", "C")) {
@@ -397,6 +396,17 @@ public class ParallelStepTest extends SingleJobTestBase {
 
                 // make sure the table builds OK
                 buildTable();
+            }
+        });
+    }
+
+    @Issue("JENKINS-29413")
+    @Test public void emptyMap() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition("parallel [:]", true));
+                story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
             }
         });
     }

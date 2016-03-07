@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.workflow.cps.steps;
 import javax.inject.Inject;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
@@ -20,8 +19,7 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
  * @author Kohsuke Kawaguchi
  */
 public class RestartingLoadStepTest {
-    @Rule
-    public RestartableJenkinsRule story = new RestartableJenkinsRule();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Inject
     Jenkins jenkins;
@@ -51,7 +49,6 @@ public class RestartingLoadStepTest {
 
                 // get the build going
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
-                CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
 
                 // wait until the executor gets assigned and the execution pauses
                 SemaphoreStep.waitForStart("watchA/1", b);
@@ -63,15 +60,11 @@ public class RestartingLoadStepTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = jenkins.getItemByFullName("p", WorkflowJob.class);
                 WorkflowRun b = p.getBuildByNumber(1);
-                CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
 
                 // resume from where it left off
                 SemaphoreStep.success("watchA/1", null);
 
-                // wait until the completion
-                while (b.isBuilding())
-                    e.waitForSuspension();
-
+                story.j.waitForCompletion(b);
                 story.j.assertBuildStatusSuccess(b);
 
                 story.j.assertLogContains("o=42", b);
@@ -101,7 +94,6 @@ public class RestartingLoadStepTest {
 
                 // get the build going
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
-                CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
 
                 // wait until the executor gets assigned and the execution pauses
                 SemaphoreStep.waitForStart("watchB/1", b);
@@ -113,15 +105,11 @@ public class RestartingLoadStepTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = jenkins.getItemByFullName("p", WorkflowJob.class);
                 WorkflowRun b = p.getBuildByNumber(1);
-                CpsFlowExecution e = (CpsFlowExecution) b.getExecutionPromise().get();
 
                 // resume from where it left off
                 SemaphoreStep.success("watchB/1", null);
 
-                // wait until the completion
-                while (b.isBuilding())
-                    e.waitForSuspension();
-
+                story.j.waitForCompletion(b);
                 story.j.assertBuildStatusSuccess(b);
 
                 story.j.assertLogContains("o=42", b);

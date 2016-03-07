@@ -136,7 +136,7 @@ public class CpsScmFlowDefinition extends FlowDefinition {
         @Inject public Snippetizer snippetizer;
 
         @Override public String getDisplayName() {
-            return "Workflow script from SCM";
+            return "Pipeline script from SCM";
         }
 
         public Collection<? extends SCMDescriptor<?>> getApplicableDescriptors() {

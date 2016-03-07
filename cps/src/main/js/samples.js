@@ -1,11 +1,17 @@
 var samples = [];
 
-exports.addSamplesWidget = function(editor) {
-    var $ = require('jquery-detached').getJQuery();
-    var $aceEditor = $('#workflow-editor');
+exports.addSamplesWidget = function(editor, editorId) {
+    var $ = require('jqueryui-detached').getJQueryUI();
+
+    if ($('#workflow-editor-wrapper .samples').length) {
+        // Already there.
+        return;
+    }
+
+    var $aceEditor = $('#' + editorId);
     var sampleSelect = $('<select></select>');
     
-    sampleSelect.append('<option >try sample workflow...</option>');
+    sampleSelect.append('<option >try sample Pipeline...</option>');
     for (var i = 0; i < samples.length; i++) {
         sampleSelect.append('<option value="' + samples[i].name + '">' + samples[i].title + '</option>');
     }

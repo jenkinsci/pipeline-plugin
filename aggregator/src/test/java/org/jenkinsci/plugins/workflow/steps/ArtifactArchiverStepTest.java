@@ -17,8 +17,7 @@ import java.util.Arrays;
  * @author Kohsuke Kawaguchi
  */
 public class ArtifactArchiverStepTest extends Assert {
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    @Rule public JenkinsRule j = new JenkinsRule();
 
     /**
      * Archive and unarchive file

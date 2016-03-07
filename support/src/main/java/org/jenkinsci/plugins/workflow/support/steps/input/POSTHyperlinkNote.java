@@ -80,8 +80,7 @@ public final class POSTHyperlinkNote extends HyperlinkNote {
 
     @Override protected String extraAttributes() {
         // TODO perhaps add hoverNotification
-        // TODO do we need to add a crumb if security is enabled?
-        return " onclick=\"new Ajax.Request('" + url + "'); false\"";
+        return " onclick=\"new Ajax.Request('" + url + "'); return false\"";
     }
 
     // TODO why does there need to be a descriptor at all?

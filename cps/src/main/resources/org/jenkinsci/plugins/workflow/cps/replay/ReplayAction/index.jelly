@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form" xmlns:wfe="/org/jenkinsci/plugins/workflow/editor">
+    <l:layout title="Replay ${it.owner.displayName}" norefresh="true">
+        <st:include page="sidepanel.jelly" it="${it.owner}"/>
+        <l:main-panel>
+            <j:if test="${it.enabled}">
+                <h1>Replay ${it.owner.displayName}</h1>
+                <p>
+                    <j:out value="${%blurb}"/>
+                </p>
+                <f:form action="run" method="POST" name="config">
+                    <f:entry field="mainScript" title="Main Script">
+                      <wfe:workflow-editor script="${it.originalScript}" checkUrl="${rootURL}/${it.owner.url}${it.urlName}/checkScript" checkDependsOn=""/>
+                    </f:entry>
+                    <j:forEach var="loadedScript" items="${it.originalLoadedScripts.entrySet()}">
+                        <f:entry field="${loadedScript.key}" title="${loadedScript.key}">
+                            <wfe:workflow-editor script="${loadedScript.value}" checkUrl="${rootURL}/${it.owner.url}${it.urlName}/checkScript" checkDependsOn=""/>
+                        </f:entry>
+                    </j:forEach>
+                    <!-- TODO snippetizer -->
+                    <f:bottomButtonBar>
+                        <f:submit value="Run"/>
+                    </f:bottomButtonBar>
+                </f:form>
+            </j:if>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

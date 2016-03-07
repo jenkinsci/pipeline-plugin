@@ -34,8 +34,7 @@ import com.google.inject.Inject;
 
 public class SynchronousNonBlockingStepTest {
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    @Rule public JenkinsRule j = new JenkinsRule();
 
     @ClassRule
     public static BuildWatcher buildWatcher = new BuildWatcher();

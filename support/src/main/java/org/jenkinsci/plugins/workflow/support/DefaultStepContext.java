@@ -28,6 +28,7 @@ import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.LauncherDecorator;
 import hudson.console.ConsoleLogFilter;
+import hudson.model.AbstractBuild;
 import hudson.model.Computer;
 import hudson.model.Job;
 import hudson.model.Node;
@@ -38,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
@@ -87,13 +89,15 @@ public abstract class DefaultStepContext extends StepContext {
                 ConsoleLogFilter filter = get(ConsoleLogFilter.class);
                 OutputStream os = new FileOutputStream(la.getLogFile(), true);
                 if (filter != null) {
-                    os = filter.decorateLogger(null, os);
+                    os = filter.decorateLogger((AbstractBuild) null, os);
                 }
                 listener = new StreamTaskListener(os);
-                getExecution().addListener(new GraphListener() {
+                final AtomicReference<GraphListener> graphListener = new AtomicReference<GraphListener>();
+                graphListener.set(new GraphListener.Synchronous() {
                     @Override public void onNewHead(FlowNode node) {
                         try {
                             if (!getNode().isRunning()) {
+                                getExecution().removeListener(graphListener.get());
                                 listener.getLogger().close();
                             }
                         } catch (IOException x) {
@@ -101,6 +105,7 @@ public abstract class DefaultStepContext extends StepContext {
                         }
                     }
                 });
+                getExecution().addListener(graphListener.get());
             }
             return key.cast(listener);
         } else if (Node.class.isAssignableFrom(key)) {

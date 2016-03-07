@@ -27,11 +27,11 @@ class CpsVmExecutorService extends InterceptingExecutorService {
         return new Runnable() {
             @Override
             public void run() {
-                setUp();
+                String oldThreadName = setUp();
                 try {
                     r.run();
                 } finally {
-                    tearDown();
+                    tearDown(oldThreadName);
                 }
             }
         };
@@ -42,25 +42,31 @@ class CpsVmExecutorService extends InterceptingExecutorService {
         return new Callable<V>() {
             @Override
             public V call() throws Exception {
-                setUp();
+                String oldThreadName = setUp();
                 try {
                     return r.call();
                 } finally {
-                    tearDown();
+                    tearDown(oldThreadName);
                 }
             }
         };
     }
 
-    private void setUp() {
-        ACL.impersonate(cpsThreadGroup.getExecution().getAuthentication());
+    private String setUp() {
+        CpsFlowExecution execution = cpsThreadGroup.getExecution();
+        ACL.impersonate(execution.getAuthentication());
         CURRENT.set(cpsThreadGroup);
         cpsThreadGroup.busy = true;
+        Thread t = Thread.currentThread();
+        String oldThreadName = t.getName();
+        t.setName("Running " + execution);
+        return oldThreadName;
     }
 
-    private void tearDown() {
+    private void tearDown(String oldThreadName) {
         CURRENT.set(null);
         cpsThreadGroup.busy = false;
+        Thread.currentThread().setName(oldThreadName);
     }
 
     static ThreadLocal<CpsThreadGroup> CURRENT = new ThreadLocal<CpsThreadGroup>();

@@ -27,7 +27,7 @@ THE SOFTWARE.
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
     <f:dropdownDescriptorSelector field="scm" title="SCM" descriptors="${descriptor.applicableDescriptors}"/>
     <f:entry field="scriptPath" title="${%Script Path}">
-        <f:textbox default="flow.groovy"/>
+        <f:textbox default="Jenkinsfile"/>
     </f:entry>
     <st:include it="${descriptor.snippetizer}" page="block.jelly"/>
 </j:jelly>

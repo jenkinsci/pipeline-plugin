@@ -22,6 +22,7 @@ import hudson.remoting.ChannelClosedException;
 import hudson.remoting.RequestAbortedException;
 import hudson.security.ACL;
 import hudson.security.AccessControlled;
+import hudson.security.Permission;
 import hudson.slaves.WorkspaceList;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -33,16 +34,20 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import static java.util.logging.Level.*;
 import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import jenkins.model.Jenkins;
 import jenkins.model.Jenkins.MasterComputer;
 import jenkins.model.queue.AsynchronousExecution;
 import jenkins.util.Timer;
+import org.acegisecurity.AccessDeniedException;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.durabletask.executors.ContinuableExecutable;
 import org.jenkinsci.plugins.durabletask.executors.ContinuedTask;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
+import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
@@ -52,17 +57,14 @@ import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-
-import static java.util.logging.Level.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.kohsuke.stapler.export.ExportedBean;
 
 public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
     @Inject(optional=true) private transient ExecutorStep step;
     @StepContextParameter private transient TaskListener listener;
-    // Here just for requiredContext; could perhaps be passed to the PlaceholderTask constructor:
     @StepContextParameter private transient Run<?,?> run;
+    // Here just for requiredContext; could perhaps be passed to the PlaceholderTask constructor:
     @StepContextParameter private transient FlowExecution flowExecution;
     @StepContextParameter private transient FlowNode flowNode;
 
@@ -75,7 +77,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
      */
     @Override
     public boolean start() throws Exception {
-        final PlaceholderTask task = new PlaceholderTask(getContext(), step.getLabel());
+        final PlaceholderTask task = new PlaceholderTask(getContext(), step.getLabel(), run);
         if (Queue.getInstance().schedule2(task, 0).getCreateItem() == null) {
             // There can be no duplicates. But could be refused if a QueueDecisionHandler rejects it for some odd reason.
             throw new IllegalStateException("failed to schedule task");
@@ -142,13 +144,16 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
 
     private static final String COOKIE_VAR = "JENKINS_SERVER_COOKIE";
 
-    public static final class PlaceholderTask implements ContinuedTask, Serializable {
+    @ExportedBean
+    public static final class PlaceholderTask implements ContinuedTask, Serializable, AccessControlled {
 
         /** keys are {@link #cookie}s */
         private static final Map<String,RunningTask> runningTasks = new HashMap<String,RunningTask>();
 
         private final StepContext context;
         private String label;
+        /** Shortcut for {@link #run}. */
+        private String runId;
         /**
          * Unique cookie set once the task starts.
          * Serves multiple purposes:
@@ -158,9 +163,10 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
          */
         private String cookie;
 
-        PlaceholderTask(StepContext context, String label) {
+        PlaceholderTask(StepContext context, String label, Run<?,?> run) {
             this.context = context;
             this.label = label;
+            runId = run.getExternalizableId();
         }
 
         private Object readResolve() {
@@ -237,7 +243,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         }
 
         /**
-         * Something we can use to check abort permission.
+         * Something we can use to check abort and read permissions.
          * Normally this will be a {@link Run}.
          * However if things are badly broken, for example if the build has been deleted,
          * then as a fallback we use the Jenkins root.
@@ -245,33 +251,41 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
          * TODO make {@link FlowExecutionOwner} implement {@link AccessControlled}
          * so that an implementation could fall back to checking {@link Job} permission.
          */
-        private @Nonnull AccessControlled accessControlled() {
+        @Override public ACL getACL() {
             try {
                 if (!context.isReady()) {
-                    return Jenkins.getActiveInstance();
+                    return Jenkins.getActiveInstance().getACL();
                 }
                 FlowExecution exec = context.get(FlowExecution.class);
                 if (exec == null) {
-                    return Jenkins.getActiveInstance();
+                    return Jenkins.getActiveInstance().getACL();
                 }
                 Queue.Executable executable = exec.getOwner().getExecutable();
                 if (executable instanceof AccessControlled) {
-                    return (AccessControlled) executable;
+                    return ((AccessControlled) executable).getACL();
                 } else {
-                    return Jenkins.getActiveInstance();
+                    return Jenkins.getActiveInstance().getACL();
                 }
             } catch (Exception x) {
                 LOGGER.log(FINE, null, x);
-                return Jenkins.getActiveInstance();
+                return Jenkins.getActiveInstance().getACL();
             }
         }
 
+        @Override public void checkPermission(Permission p) throws AccessDeniedException {
+            getACL().checkPermission(p);
+        }
+
+        @Override public boolean hasPermission(Permission p) {
+            return getACL().hasPermission(p);
+        }
+
         @Override public void checkAbortPermission() {
-            accessControlled().checkPermission(Item.CANCEL);
+            checkPermission(Item.CANCEL);
         }
 
         @Override public boolean hasAbortPermission() {
-            return accessControlled().hasPermission(Item.CANCEL);
+            return hasPermission(Item.CANCEL);
         }
 
         public @CheckForNull Run<?,?> run() {
@@ -287,16 +301,24 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
             }
         }
 
+        public @CheckForNull Run<?,?> runForDisplay() {
+            Run<?,?> r = run();
+            if (r == null && /* not stored prior to 1.13 */runId != null) {
+                return Run.fromExternalizableId(runId);
+            }
+            return r;
+        }
+
         @Override public String getUrl() {
             // TODO ideally this would be found via FlowExecution.owner.executable, but how do we check for something with a URL? There is no marker interface for it: JENKINS-26091
-            Run<?,?> r = run();
+            Run<?,?> r = runForDisplay();
             return r != null ? r.getUrl() : "";
         }
 
         @Override public String getDisplayName() {
             // TODO more generic to check whether FlowExecution.owner.executable is a ModelObject
-            Run<?,?> r = run();
-            return r != null ? "part of " + r.getFullDisplayName() : "Unknown workflow node step";
+            Run<?,?> r = runForDisplay();
+            return r != null ? "part of " + r.getFullDisplayName() : "Unknown Pipeline node step";
         }
 
         @Override public String getName() {
@@ -339,8 +361,17 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                     LOGGER.log(FINE, "no running task corresponds to {0}", cookie);
                     return;
                 }
-                assert runningTask.execution != null && runningTask.launcher != null;
-                runningTask.execution.completed(null);
+                final AsynchronousExecution execution = runningTask.execution;
+                if (execution == null) {
+                    // JENKINS-30759: finished before asynch execution was even scheduled
+                    return;
+                }
+                assert runningTask.launcher != null;
+                Timer.get().submit(new Runnable() { // JENKINS-31614
+                    @Override public void run() {
+                        execution.completed(null);
+                    }
+                });
                 try {
                     runningTask.launcher.kill(Collections.singletonMap(COOKIE_VAR, cookie));
                 } catch (ChannelClosedException x) {
@@ -379,6 +410,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
         /**
          * Occupies {@link Executor} while workflow uses this slave.
          */
+        @ExportedBean
         private final class PlaceholderExecutable implements ContinuableExecutable {
 
             @Override public void run() {
@@ -413,6 +445,7 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                         } else {
                             env.put("NODE_NAME", label);
                         }
+                        env.put("EXECUTOR_NUMBER", String.valueOf(exec.getNumber()));
 
                         synchronized (runningTasks) {
                             runningTasks.put(cookie, new RunningTask());
@@ -449,7 +482,10 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 synchronized (runningTasks) {
                     LOGGER.log(FINE, "waiting on {0}", cookie);
                     RunningTask runningTask = runningTasks.get(cookie);
-                    assert runningTask != null;
+                    if (runningTask == null) {
+                        LOGGER.log(FINE, "running task apparently finished quickly for {0}", cookie);
+                        return;
+                    }
                     assert runningTask.execution == null;
                     assert runningTask.launcher == null;
                     runningTask.launcher = launcher;

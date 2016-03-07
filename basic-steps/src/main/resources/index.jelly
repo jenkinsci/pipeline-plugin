@@ -25,5 +25,5 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <div>
-    Commonly used steps for workflows.
+    Commonly used steps for Pipelines.
 </div>
