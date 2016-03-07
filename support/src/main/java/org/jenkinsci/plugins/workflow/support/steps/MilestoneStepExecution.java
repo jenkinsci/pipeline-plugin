@@ -108,6 +108,9 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
             Milestone milestone2 = entry.getValue();
             // If we were holding another stage in the same job, release it, unlocking its waiter to proceed.
             if (milestone2.holding.remove(build)) {
+                // Cancel older builds (holding or waiting to enter)
+                cancelOldersHoldingOrWaiting(milestone2, job.getBuildByNumber(build));
+                // If there is still a build applicable to proceed then unblock it
                 if (milestone2.waitingContext != null) {
                     milestone2.unblock("Unblocked since " + r.getDisplayName() + " is moving into milestone " + ordinal);
                 }
@@ -151,6 +154,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
             if (milestone.holding.contains(r.number)) {
                 milestone.holding.remove(r.number); // XSTR-757: do not rely on return value of TreeSet.remove(Object)
                 modified = true;
+                cancelOldersHoldingOrWaiting(milestone, r);
                 if (milestone.waitingContext != null) {
                     milestone.unblock("Unblocked since " + r.getDisplayName() + " finished");
                 }
@@ -159,6 +163,30 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         if (modified) {
             cleanUp(job, jobName);
             save();
+        }
+    }
+
+    /**
+     * Cancels any build holding the milestone which is older than r.
+     *
+     * @param r is a build leaving the milestone
+     * @param milestone the milestone which r is leaving (because it entered the next milestone or finished).
+     */
+    private static void cancelOldersHoldingOrWaiting(Milestone milestone, Run<?, ?> r) {
+        // Holding
+        for (Integer holderNumber : milestone.holding) {
+            if (r.number > holderNumber) {
+                Run<?, ?> holder = r.getParent().getBuildByNumber(holderNumber);
+                holder.getExecutor().interrupt(Result.NOT_BUILT, new CanceledCause(r.getExternalizableId()));
+            }
+        }
+        // Waiting
+        if (milestone.waitingContext != null) {
+            try {
+                milestone.cancelWaitingByRun(r);
+            } catch (Exception x) {
+                LOGGER.log(WARNING, "could not cancel an older flow (perhaps since deleted?)", x);
+            }
         }
     }
 
@@ -174,7 +202,6 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         }
     }
 
-    // TODO record the stage it got to and display that
     private static void cancel(StepContext context, StepContext newer) throws IOException, InterruptedException {
         if (context.isReady() && newer.isReady()) {
             println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
@@ -321,6 +348,15 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
             waitingContext = null;
             waitingBuild = null;
             waitingBuildExternalizableId = null;
+        }
+
+        void cancelWaitingByRun(Run<?, ?> r) throws IOException, InterruptedException {
+            if (waitingContext != null) {
+                cancel(waitingContext, r.number, r.getExternalizableId());
+                waitingContext = null;
+                waitingBuild = null;
+                waitingBuildExternalizableId = null;
+            }
         }
     }
 
