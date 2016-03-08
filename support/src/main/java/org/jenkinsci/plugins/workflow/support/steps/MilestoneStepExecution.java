@@ -29,6 +29,7 @@ import com.google.inject.Inject;
 
 import hudson.Extension;
 import hudson.XmlFile;
+import hudson.model.Executor;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -190,7 +191,12 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         for (Integer holderNumber : milestone.holding) {
             if (r.number > holderNumber) {
                 Run<?, ?> holder = r.getParent().getBuildByNumber(holderNumber);
-                holder.getExecutor().interrupt(Result.NOT_BUILT, new CanceledCause(r.getExternalizableId()));
+                Executor e = holder.getExecutor();
+                if (e != null) {
+                    e.interrupt(Result.NOT_BUILT, new CanceledCause(r.getExternalizableId()));
+                } else{
+                    LOGGER.log(WARNING, "could not cancel an older flow because it has no assigned executor");
+                }
             }
         }
         // Waiting

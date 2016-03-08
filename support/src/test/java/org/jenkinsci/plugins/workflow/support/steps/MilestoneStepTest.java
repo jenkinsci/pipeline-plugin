@@ -15,7 +15,7 @@ public class MilestoneStepTest {
     @Test
     public void configRoundTrip() throws Exception {
         MilestoneStep milestone = new StepConfigTester(r).configRoundTrip(new MilestoneStep(1));
-        assertEquals("ordinal", milestone.ordinal);
+        assertEquals(Integer.valueOf(1), milestone.ordinal);
         assertEquals(null, milestone.concurrency);
         milestone = new MilestoneStep(2);
         milestone.concurrency = 1;
