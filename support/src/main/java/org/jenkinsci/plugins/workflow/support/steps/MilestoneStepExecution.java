@@ -22,6 +22,8 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 
 import com.google.inject.Inject;
 
@@ -52,6 +54,12 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         return false;
     }
 
+    // Used in tests only
+    @Restricted(DoNotUse.class)
+    public static void clear() {
+        milestonesByOrdinalByJob = null;
+    }
+
     @Override
     public void stop(Throwable cause) throws Exception {
         throw new UnsupportedOperationException();
@@ -70,7 +78,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         }
         Milestone milestone = milestonesInJob.get(ordinal);
         if (milestone == null) {
-            milestone = new Milestone();
+            milestone = new Milestone(ordinal);
             milestonesInJob.put(ordinal, milestone);
         }
         milestone.concurrency = concurrency;
@@ -106,8 +114,13 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
                 continue;
             }
             Milestone milestone2 = entry.getValue();
-            // If we were holding another stage in the same job, release it, unlocking its waiter to proceed.
+            // If we were holding another milestone in the same job, release it, unlocking its waiter to proceed.
             if (milestone2.holding.remove(build)) {
+                // Ordering check
+                if(milestone2.ordinal != ordinal - 1) {
+                    throw new MilestoneStepException(
+                        String.format("Unordered milestone. Found ordinal %s but %s was expected.", ordinal, milestone2.ordinal + 1));
+                }
                 // Cancel older builds (holding or waiting to enter)
                 cancelOldersHoldingOrWaiting(milestone2, job.getBuildByNumber(build));
                 // If there is still a build applicable to proceed then unblock it
@@ -287,6 +300,11 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
     private static final class Milestone {
 
         /**
+         * Milestone ordinal.
+         */
+        Integer ordinal;
+
+        /**
          * Numbers of builds currently running in this milestone.
          */
         final Set<Integer> holding = new TreeSet<Integer>();
@@ -328,6 +346,10 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
 
         @Override public String toString() {
             return "Stage[holding=" + holding + ", waitingBuild=" + waitingBuild + ", concurrency=" + concurrency + "]";
+        }
+
+        Milestone(Integer ordinal) {
+            this.ordinal = ordinal;
         }
 
         /**

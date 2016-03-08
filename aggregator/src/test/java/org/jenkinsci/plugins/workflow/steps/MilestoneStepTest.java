@@ -3,18 +3,32 @@ package org.jenkinsci.plugins.workflow.steps;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.support.steps.MilestoneStepExecution;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
+
+import static org.junit.Assert.*;
 
 import hudson.model.Result;
 
 public class MilestoneStepTest {
 
+    @ClassRule
+    public static BuildWatcher buildWatcher = new BuildWatcher();
+
     @Rule
     public RestartableJenkinsRule story = new RestartableJenkinsRule();
+
+    @Before
+    public void clear() {
+        MilestoneStepExecution.clear();
+    }
 
     @Test
     public void buildsMustPassThroughInOrder() {
@@ -99,6 +113,24 @@ public class MilestoneStepTest {
                 // Once #2 continues and leaves milestone 1 then #1 is automatically cancelled
                 // TODO: determine why it's getting ABORTED instead of NOT_BUILT
                 story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b1));
+            }
+        });
+    }
+
+    @Test
+    public void milestoneOrder() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition(
+                        "milestone 1\n" +
+                        "milestone 3\n" +
+                        "milestone 2\n"));
+                WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
+                story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b1));
+                assertTrue("Unordered milestones must fail", b1.getLog().contains("Unordered milestone. Found ordinal 3 but 2 was expected"));
+                // TODO why is this not working?
+                // story.j.assertLogContains("Unordered milestone. Found ordinal 3 but 2 was expected", b1);
             }
         });
     }
