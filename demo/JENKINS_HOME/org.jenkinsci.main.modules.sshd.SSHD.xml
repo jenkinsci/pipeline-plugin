@@ -1,0 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<org.jenkinsci.main.modules.sshd.SSHD>
+  <port>2222</port>
+</org.jenkinsci.main.modules.sshd.SSHD>
