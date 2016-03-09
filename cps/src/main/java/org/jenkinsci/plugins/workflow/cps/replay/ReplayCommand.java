@@ -51,8 +51,6 @@ import org.kohsuke.args4j.spi.Setter;
     @Option(name="-s", aliases="--script", metaVar="SCRIPT", usage="Name of script to edit, such as Script3, if not the main Jenkinsfile.")
     public String script;
 
-    // TODO could add follow/sync/wait/consoleOutput options as in BuildCommand, by factoring out a helper method from run() after the QueueTaskFuture has been obtained
-
     @Override public String getName() {
         return "replay-pipeline";
     }
