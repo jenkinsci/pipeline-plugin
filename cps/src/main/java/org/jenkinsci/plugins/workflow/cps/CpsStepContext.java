@@ -238,7 +238,7 @@ public class CpsStepContext extends DefaultStepContext { // TODO add XStream cla
             ListenableFuture<CpsThreadGroup> pp;
             CpsFlowExecution flowExecution = getFlowExecution();
             while ((pp = flowExecution.programPromise) == null) {
-                Thread.sleep(100); // TODO why is this occasionally not set right away?
+                Thread.sleep(100); // TODO does JENKINS-33005 remove the need for this?
             }
             try {
                 threadGroup = pp.get();

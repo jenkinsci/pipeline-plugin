@@ -2,9 +2,25 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
-## 1.14 (upcoming)
+## 1.15-beta-1 (Mar 04 2016)
+
+* [JENKINS-32925](https://issues.jenkins-ci.org/browse/JENKINS-32925): stack overflow displaying reference documentation in certain cases.
+* [JENKINS-27152](https://issues.jenkins-ci.org/browse/JENKINS-27152): offering `tmp` option to `pwd` step.
+
+## 1.14 (Feb 25 2016)
+
+* [JENKINS-32727](https://issues.jenkins-ci.org/browse/JENKINS-32727): new facility to replay Pipeline builds with a modified script.
+* Simple `git` step now checks out a branch, not a detached head, for ease of committing to the workspace.
+* [JENKINS-33005](https://issues.jenkins-ci.org/browse/JENKINS-33005): hang running `stage` step which tries to cancel an earlier build that could not be loaded.
+* [JENKINS-32214](https://issues.jenkins-ci.org/browse/JENKINS-32214): polling for Subversion and Mercurial did not take into account changes already checked out in a running build.
+
+## 1.14-beta-1 (Feb 10 2016)
 
 * [JENKINS-32547](https://issues.jenkins-ci.org/browse/JENKINS-32547): laxer timeout on `bat` step log collection is needed for WinRM-based EC2 slaves.
+* [JENKINS-30759](https://issues.jenkins-ci.org/browse/JENKINS-30759): sporadic `NullPointerException`s running very short-lived `node` blocks.
+* [JENKINS-32133](https://issues.jenkins-ci.org/browse/JENKINS-32133): improved styling for generated reference documentation introduced in 1.13.
+* [JENKINS-32819](https://issues.jenkins-ci.org/browse/JENKINS-32819): fix script compilation check when CSRF is enabled.
+* Excessive metadata accidentally included in `build.xml` records in 1.13.
 
 ## 1.13 (Jan 18 2016)
 

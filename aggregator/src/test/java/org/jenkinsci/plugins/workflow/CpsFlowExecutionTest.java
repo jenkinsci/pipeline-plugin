@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.ListIterator;
 import org.codehaus.groovy.transform.ASTTransformationVisitor;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
 import org.jenkinsci.plugins.workflow.cps.CpsStepContext;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -120,7 +121,7 @@ public class CpsFlowExecutionTest {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
                         "echo 'a step'; semaphore 'one'; retry(2) {semaphore 'two'; node {semaphore 'three'}; semaphore 'four'}; semaphore 'five'; " +
-                        "parallel a: {node {semaphore 'six'}}, b: {semaphore 'seven'}; semaphore 'eight'"));
+                        "parallel a: {node {semaphore 'six'}}, b: {semaphore 'seven'}; semaphore 'eight'", true));
                 WorkflowRun b = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("one/1", b);
                 FlowExecution e = b.getExecution();
@@ -137,7 +138,8 @@ public class CpsFlowExecutionTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.getItemByFullName("p", WorkflowJob.class);
                 WorkflowRun b = p.getLastBuild();
-                FlowExecution e = b.getExecution();
+                CpsFlowExecution e = (CpsFlowExecution) b.getExecution();
+                assertTrue(e.isSandbox());
                 SemaphoreStep.success("three/1", null);
                 SemaphoreStep.waitForStart("four/1", b);
                 assertStepExecutions(e, "retry {}", "semaphore");

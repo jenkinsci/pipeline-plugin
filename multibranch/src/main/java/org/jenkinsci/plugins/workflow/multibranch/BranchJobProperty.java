@@ -33,10 +33,13 @@ import javax.annotation.Nonnull;
 import jenkins.branch.Branch;
 import org.acegisecurity.Authentication;
 import org.jenkinsci.plugins.workflow.job.WorkflowJobProperty;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
 /**
  * Marker for jobs based on a specific branch.
  */
+@ExportedBean
 public class BranchJobProperty extends WorkflowJobProperty {
 
     private @Nonnull Branch branch;
@@ -45,6 +48,7 @@ public class BranchJobProperty extends WorkflowJobProperty {
         this.branch = branch;
     }
 
+    @Exported
     public synchronized @Nonnull Branch getBranch() {
         return branch;
     }

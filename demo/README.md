@@ -6,12 +6,12 @@ It highlights key parts of the Pipeline plugin:
 
 Run it like:
 
-    docker run -p 8080:8080 -p 8081:8081 -p 9418:9418 -ti jenkinsci/workflow-demo
+    docker run --rm -p 2222:2222 -p 8080:8080 -p 8081:8081 -p 9418:9418 -ti jenkinsci/workflow-demo
 
-Jenkins runs on port 8080, and Jetty runs on port 8081.
+Jenkins runs on port 8080, and Jetty runs on port 8081. The Jenkins CLI is accessible via SSH on port 2222.
 
 __Note__: If using [boot2docker](https://github.com/boot2docker/boot2docker), you will need to connect using the boot2docker
-VM's IP (instead of `localhost`).  You can get this by running `boot2docker ip` on the command line.
+VM's IP (instead of `localhost`).  You can get this by running `boot2docker ip` on the command line. Alternatively, you can use https://github.com/bsideup/forward2docker to auto forward ports to make them acessible from localhost.
 
 The continuous delivery pipeline consists of the following sequence.
 
@@ -19,6 +19,7 @@ The continuous delivery pipeline consists of the following sequence.
   You may clone from, edit, and push to `git://localhost/repo`.
   Each branch automatically creates a matching subproject that builds that branch.
 * Checks out source code from the same repository and commit as `Jenkinsfile`.
+* Loads a set of utility functions from a separate file `servers.groovy`.
 * Builds sources via Maven with unit testing.
 * Run two parallel integration tests that involve deploying the app to a PaaS-like ephemeral server instances, which get
   thrown away when tests are done (this is done by using auto-deployment of Jetty)
@@ -50,5 +51,5 @@ Sample demo scenario
 CloudBees Jenkins Enterprise variant
 --------------------------
 
-If you would like to see CloudBees Jenkins Enterprise features (such as checkpoints and the stage pipeline view),
+If you would like to see CloudBees Jenkins Enterprise features (such as checkpoints),
 see the [extended demo page](https://registry.hub.docker.com/u/cloudbees/workflow-demo/).

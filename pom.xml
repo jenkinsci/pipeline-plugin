@@ -32,7 +32,7 @@
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
-    <version>1.14-SNAPSHOT</version>
+    <version>1.15-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Pipeline: Parent</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
@@ -61,9 +61,6 @@
         <module>scm-step</module>
         <module>cps</module>
         <module>cps-global-lib</module>
-        <!-- TODO excluding until implemented enough to be used:
-        <module>stm</module>
-        -->
         <module>job</module>
         <module>aggregator</module>
         <module>multibranch</module>
@@ -79,6 +76,11 @@
                 <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>durable-task</artifactId>
                 <version>1.5</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>scm-api</artifactId>
+                <version>1.0</version>
             </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>

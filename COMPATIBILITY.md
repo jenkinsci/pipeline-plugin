@@ -14,7 +14,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `PerforceScm` (`p4`, not the older `perforce`): supported as of 1.2.0
 - [ ] `DimensionsSCM` (`dimensionsscm`): [JENKINS-26165](https://issues.jenkins-ci.org/browse/JENKINS-26165)
 - [X] `IntegritySCM` (`integrity-plugin`): supported as of 1.36
-- [ ] `RepoScm` (`repo`): [JENKINS-26836](https://issues.jenkins-ci.org/browse/JENKINS-26836)
+- [X] `RepoScm` (`repo`): supported as of 1.9.0
 - [X] `teamconcert`: supported as of 1.9.4
 - [X] `CVSSCM` (`cvs`): scheduled to be supported in 2.13
 - [ ] `TeamFoundationServerScm` (`tfs`): [JENKINS-31803](https://issues.jenkins-ci.org/browse/JENKINS-31803)
@@ -57,6 +57,12 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
 - [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
 - [X] `XUnitPublisher` and `XUnitBuilder` (`xunit`): scheduled to be supported as of 1.100
+- [ ] `PerformancePublisher` (`performance`): [JENKINS-32650](https://issues.jenkins-ci.org/browse/JENKINS-32650)
+- [ ] `ZfjReporter` (`zephyr-for-jira-test-management`): [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
+- [ ] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
+- [X] `PerfSigRecorder` and 5 more (`performance-signature-dynatrace`): supported as of 2.0
+- [ ] `StashNotifier` (`stashNotifier`): [issue 92](https://github.com/jenkinsci/stashnotifier-plugin/issues/92)
+- [X] `LambdaUploadBuildStep`, `LambdaInvokeBuildStep`, `LambdaEventSourceBuildStep` (`aws-lambda`): supported as of 0.5.0
 
 ## Build wrappers
 
@@ -112,12 +118,14 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
 - [X] `embeddable-build-status`: scheduled to be supported as of 1.9
 - [X] `groovy-postbuild`: supported as of 2.3
-- [ ] `jira` : [JENKINS-28946](https://issues.jenkins-ci.org/browse/JENKINS-28946)
+- [X] `jira` : supported as of 2.2
 - [ ] `ownership` : [JENKINS-32353](https://issues.jenkins-ci.org/browse/JENKINS-32353)
 - [ ] `job-restrictions`: [JENKINS-32355](https://issues.jenkins-ci.org/browse/JENKINS-32355)
 - [X] `buildtriggerbadge`: supported as of 2.2
+- [X] `build-monitor-plugin`: supported as of 1.6+build.159 
 - [X] `radiatorview`: supported as of 1.25
 - [ ] `chucknorris`: [JENKINS-32594](https://issues.jenkins-ci.org/browse/JENKINS-32594)
+- [ ] `sidebar-link`: [JENKINS-33458](https://issues.jenkins-ci.org/browse/JENKINS-33458)
 
 ## Custom steps
 
@@ -130,7 +138,7 @@ For cases when a first-class Pipeline step (rather than an adaptation of functio
 - [ ] `gerrit-trigger`: [JENKINS-26102](https://issues.jenkins-ci.org/browse/JENKINS-26102), [JENKINS-26103](https://issues.jenkins-ci.org/browse/JENKINS-26103)
 - [X] `mailer`: `mail` step in Pipeline 1.2
 - [ ] `artifactory`: [JENKINS-30121](https://issues.jenkins-ci.org/browse/JENKINS-30121)
-- [X] `email-ext`: `emailext` step scheduled for 2.41
+- [X] `email-ext`: `emailext` step since 2.41
 
 # Plugin Developer Guide
 
@@ -147,7 +155,12 @@ There are several considerations common to the various metasteps.
 
 #### Jenkins core dependency
 
-First, make sure the baseline Jenkins version in your `pom.xml` is sufficiently new (specific versions will be noted below).
+First, make sure the baseline Jenkins version in your `pom.xml` is sufficiently new.
+
+Suggested versions for:
+- [Basic usage](#user-content-basic-update)
+- [Build wrappers](#user-content-build-wrappers-1)
+
 This introduces some new API methods, and deprecates some old ones.
 
 If you are nervous about making your plugin depend on a recent Jenkins version,

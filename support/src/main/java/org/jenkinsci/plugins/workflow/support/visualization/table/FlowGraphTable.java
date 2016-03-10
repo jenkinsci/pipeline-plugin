@@ -5,6 +5,7 @@ import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
 import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.actions.NotExecutedNodeAction;
 import org.jenkinsci.plugins.workflow.visualization.table.FlowNodeViewColumn;
 import org.jenkinsci.plugins.workflow.visualization.table.FlowNodeViewColumnDescriptor;
 
@@ -248,6 +249,10 @@ public class FlowGraphTable {
 
         boolean isEnd() {
             return node instanceof BlockEndNode;
+        }
+
+        public boolean isExecuted() {
+            return NotExecutedNodeAction.isExecuted(node);
         }
 
         void addGraphChild(Row r) {

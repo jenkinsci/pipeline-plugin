@@ -40,6 +40,8 @@ import hudson.plugins.git.GitTool;
 import hudson.plugins.git.Messages;
 import hudson.plugins.git.SubmoduleConfig;
 import hudson.plugins.git.UserRemoteConfig;
+import hudson.plugins.git.extensions.GitSCMExtension;
+import hudson.plugins.git.extensions.impl.LocalBranch;
 import hudson.scm.SCM;
 
 import java.io.IOException;
@@ -94,7 +96,7 @@ public final class GitStep extends SCMStep {
     }
 
     @Override public SCM createSCM() {
-        return new GitSCM(createRepoList(url, credentialsId), Collections.singletonList(new BranchSpec("*/" + branch)), false, Collections.<SubmoduleConfig>emptyList(), null, null, null);
+        return new GitSCM(createRepoList(url, credentialsId), Collections.singletonList(new BranchSpec("*/" + branch)), false, Collections.<SubmoduleConfig>emptyList(), null, null, Collections.<GitSCMExtension>singletonList(new LocalBranch(branch)));
     }
 
     // copied from GitSCM

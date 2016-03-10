@@ -33,6 +33,7 @@ import com.cloudbees.groovy.cps.impl.ThrowBlock;
 import com.cloudbees.groovy.cps.sandbox.DefaultInvoker;
 import com.cloudbees.groovy.cps.sandbox.SandboxInvoker;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -275,7 +276,7 @@ public class CpsFlowExecution extends FlowExecution {
         this(script, false, owner);
     }
 
-    protected CpsFlowExecution(String script, boolean sandbox, FlowExecutionOwner owner) throws IOException {
+    public CpsFlowExecution(String script, boolean sandbox, FlowExecutionOwner owner) throws IOException {
         this.owner = owner;
         this.script = script;
         this.sandbox = sandbox;
@@ -304,6 +305,14 @@ public class CpsFlowExecution extends FlowExecution {
 
     public FlowNodeStorage getStorage() {
         return storage;
+    }
+    
+    public String getScript() {
+        return script;
+    }
+
+    public Map<String,String> getLoadedScripts() {
+        return ImmutableMap.copyOf(loadedScripts);
     }
 
     /**
@@ -416,14 +425,21 @@ public class CpsFlowExecution extends FlowExecution {
     @Override
     public void onLoad(FlowExecutionOwner owner) throws IOException {
         this.owner = owner;
-        initializeStorage();
         try {
-            if (!isComplete())
-                loadProgramAsync(getProgramDataFile());
-        } catch (IOException e) {
-            SettableFuture<CpsThreadGroup> p = SettableFuture.create();
-            programPromise = p;
-            loadProgramFailed(e, p);
+            initializeStorage();
+            try {
+                if (!isComplete()) {
+                    loadProgramAsync(getProgramDataFile());
+                }
+            } catch (IOException e) {
+                SettableFuture<CpsThreadGroup> p = SettableFuture.create();
+                programPromise = p;
+                loadProgramFailed(e, p);
+            }
+        } finally {
+            if (programPromise == null) {
+                programPromise = Futures.immediateFailedFuture(new IllegalStateException("completed or broken execution"));
+            }
         }
     }
 
@@ -855,6 +871,15 @@ public class CpsFlowExecution extends FlowExecution {
         }
     }
 
+    /**
+     * Finds the expected next loaded script name, like {@code Script1}.
+     * @param path a file path being loaded (currently ignored)
+     */
+    @Restricted(NoExternalUse.class)
+    public String getNextScriptName(String path) {
+        return shell.generateScriptName().replaceFirst("[.]groovy$", "");
+    }
+
     @Override public String toString() {
         return "CpsFlowExecution[" + owner + "]";
     }
@@ -898,6 +923,7 @@ public class CpsFlowExecution extends FlowExecution {
             writeChild(w, context, "result", e.result, Result.class);
             writeChild(w, context, "script", e.script, String.class);
             writeChild(w, context, "loadedScripts", e.loadedScripts, Map.class);
+            writeChild(w, context, "sandbox", e.sandbox, Boolean.class);
             if (e.user != null) {
                 writeChild(w, context, "user", e.user, String.class);
             }
@@ -950,6 +976,10 @@ public class CpsFlowExecution extends FlowExecution {
                     if (nodeName.equals("loadedScripts")) {
                         Map loadedScripts = readChild(reader, context, Map.class, result);
                         setField(result, "loadedScripts", loadedScripts);
+                    } else
+                    if (nodeName.equals("sandbox")) {
+                        boolean sandbox = readChild(reader, context, Boolean.class, result);
+                        setField(result, "sandbox", sandbox);
                     } else
                     if (nodeName.equals("owner")) {
                         readChild(reader, context, Object.class, result); // for compatibility; discarded

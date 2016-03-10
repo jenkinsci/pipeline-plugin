@@ -35,12 +35,12 @@ Read the [tutorial](TUTORIAL.md) to get started writing pipelines.
 
 There is also a [DZone Refcard](https://dzone.com/refcardz/continuous-delivery-with-jenkins-workflow).
 
-A new collection of [examples, snippets, tips, and tricks](https://github.com/jenkinsci/workflow-examples) is in progress.
+A new collection of [examples, snippets, tips, and tricks](https://github.com/jenkinsci/pipeline-examples) is in progress.
 
 # Installation
 
 Releases are available on the Jenkins update center.
-You need to be running a sufficiently recent Jenkins release: an LTS in the 1.580.x line or newer (currently 1.596.x for the latest updates), or a weekly release.
+You need to be running a sufficiently recent Jenkins release: an LTS in the 1.580.x line or newer (currently 1.609.x for the latest updates), or a weekly release.
 See the [changelog](CHANGES.md) for news.
 
 For OSS Jenkins users, install _Pipeline_ (its dependencies will be pulled in automatically).
@@ -49,6 +49,8 @@ You will need to restart Jenkins to complete installation.
 CloudBees Jenkins Enterprise users get Pipeline automatically as of the 14.11 (1.580.1.1) release.
 Otherwise install _CloudBees Pipeline_ from the update center.
 Again dependencies will be pulled in automatically, including all the OSS plugins.
+
+For multibranch pipelines and organization folders, install _Pipeline: Multibranch_ plus at least one SCM provider, such as _GitHub Branch Source_.
 
 # News & questions
 
@@ -80,7 +82,6 @@ Jenkins Workflow Screencast (Jan 2015): [video](https://www.youtube.com/watch?v=
 
 Webinar _Orchestrating the Continuous Delivery Process in Jenkins with Workflow_ (Dec 2014): [video](http://youtu.be/ZqfiW8eVcuQ)
 
-
 # Detailed guides
 
 [Reusing build steps from freestyle projects](basic-steps/CORE-STEPS.md)
@@ -91,42 +92,4 @@ Webinar _Orchestrating the Continuous Delivery Process in Jenkins with Workflow_
 
 # Development
 
-* [Ongoing plugin compatibility list](COMPATIBILITY.md)
-* [Source repository](https://github.com/jenkinsci/workflow-plugin)
-* [Open pull requests](https://github.com/jenkinsci/workflow-plugin/pulls)
-* [CI job](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
-  [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/workflow-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/workflow-plugin/)
-* [Video tutorial on implementing a Step API](http://jenkins-ci.org/content/workflow-plugin-tutorial-writing-step-impl)
-* [Video walkthrough of code](https://www.youtube.com/watch?v=tZygoTlW6YE)
-
-## Running from sources
-
-If you want to try running recent development changes, rather than released binaries, you have two options. You can run directly from the source tree; from the root of the repository:
-
-    mvn -DskipTests clean install && mvn -f aggregator hpi:run
-
-Then visit http://localhost:8080/jenkins/ to play with the plugins.
-
-(If your IDE supports compile-on-save mode this is especially convenient since each `hpi:run` will pick up compiled changes from member plugins without needing to run to `package` phase.)
-
-You can also run the Docker demo with snapshot binaries:
-
-    make -C demo run-snapshot
-
-The snapshot Docker demo is mainly useful for verifying the effect of ongoing changes on future demo binary releases. You get the `cd` sample job set up, but your environment is thrown away if you kill the Docker container (for example with Ctrl-C). When using `hpi:run` the same `aggregator/work/` home directory is reused so long as you do not explicitly delete it.
-
-## Source organization
-
-While the implementation is divided into a number of plugins, for ease of prototyping they are all kept in one repository using snapshot dependencies.
-
-* `step-api` defines a generic build step interface (not specific to pipelines) that many plugins could in the future depend on.
-* `basic-steps` add some generic step implementations. There is [more documentation there](basic-steps/CORE-STEPS.md).
-* `api` defines the essential aspects of pipelines and their executions. In particular, the engine running a Pipeline is extensible and so could in the future support visual orchestration languages.
-* `support` adds general implementations of some internals needed by pipelines, such as storing state.
-* `job` provides the actual job type and top-level UI for defining and running pipelines.
-* `durable-task-step` uses the `durable-task` plugin to define a shell script step that can survive restarts.
-* `scm-step` adds SCM-related steps. There is [more documentation there](scm-step/README.md).
-* `cps` is the Pipeline engine implementation based on the Groovy language, and supporting long-running pipelines using a _continuation passing style_ transformation of the script.
-* `cps-global-lib` adds a Git-backed repository for Groovy libraries available to scripts.
-* `stm` is a simple engine implementation using a _state transition machine_, less intended for end users than as a reference for how engines can work. Currently only partly implemented.
-* `aggregator` is a placeholder plugin allowing you to `mvn hpi:run` and see everything working together, as well as holding integration tests.
+See the [contribution guide](CONTRIBUTING.md).

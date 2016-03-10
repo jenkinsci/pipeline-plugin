@@ -1,5 +1,6 @@
 target
 work
+.DS_Store
 
 .idea/
 *.iml
@@ -17,3 +18,4 @@ demo/snapshot/plugins/
 node
 node_modules
 generates-adjuncts
+pom.xml.versionsBackup

@@ -398,7 +398,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
     }
 
     @GuardedBy("completed")
-    private LoadingCache<FlowNode,Optional<String>> logPrefixCache;
+    private transient LoadingCache<FlowNode,Optional<String>> logPrefixCache;
     private @CheckForNull String getLogPrefix(FlowNode node) {
         synchronized (completed) {
             if (logPrefixCache == null) {

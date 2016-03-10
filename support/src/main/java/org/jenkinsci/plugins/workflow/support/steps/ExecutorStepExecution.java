@@ -362,7 +362,11 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                     return;
                 }
                 final AsynchronousExecution execution = runningTask.execution;
-                assert execution != null && runningTask.launcher != null;
+                if (execution == null) {
+                    // JENKINS-30759: finished before asynch execution was even scheduled
+                    return;
+                }
+                assert runningTask.launcher != null;
                 Timer.get().submit(new Runnable() { // JENKINS-31614
                     @Override public void run() {
                         execution.completed(null);
@@ -478,7 +482,10 @@ public class ExecutorStepExecution extends AbstractStepExecutionImpl {
                 synchronized (runningTasks) {
                     LOGGER.log(FINE, "waiting on {0}", cookie);
                     RunningTask runningTask = runningTasks.get(cookie);
-                    assert runningTask != null : "no entry for " + cookie + " among " + runningTasks.keySet();
+                    if (runningTask == null) {
+                        LOGGER.log(FINE, "running task apparently finished quickly for {0}", cookie);
+                        return;
+                    }
                     assert runningTask.execution == null;
                     assert runningTask.launcher == null;
                     runningTask.launcher = launcher;

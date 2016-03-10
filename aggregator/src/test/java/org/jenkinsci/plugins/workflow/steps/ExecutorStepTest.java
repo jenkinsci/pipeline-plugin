@@ -415,4 +415,15 @@ public class ExecutorStepTest extends SingleJobTestBase {
         });
     }
 
+    @Issue("JENKINS-30759")
+    @Test public void quickNodeBlock() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition("for (int i = 0; i < 50; i++) {node {echo \"ran node block #${i}\"}}"));
+                story.j.assertLogContains("ran node block #49", story.j.assertBuildStatusSuccess(p.scheduleBuild2(0)));
+            }
+        });
+    }
+
 }
