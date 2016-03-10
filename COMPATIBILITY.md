@@ -125,6 +125,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `build-monitor-plugin`: supported as of 1.6+build.159 
 - [X] `radiatorview`: supported as of 1.25
 - [ ] `chucknorris`: [JENKINS-32594](https://issues.jenkins-ci.org/browse/JENKINS-32594)
+- [ ] `sidebar-link`: [JENKINS-33458](https://issues.jenkins-ci.org/browse/JENKINS-33458)
 
 ## Custom steps
 
