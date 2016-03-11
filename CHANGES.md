@@ -2,6 +2,8 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+* [JENKINS-33256](https://issues.jenkins-ci.org/browse/JENKINS-33256): infrastructure for loading a trusted version of `Jenkinsfile` from a multibranch pipeline.
+
 ## 1.15-beta-1 (Mar 04 2016)
 
 * [JENKINS-32925](https://issues.jenkins-ci.org/browse/JENKINS-32925): stack overflow displaying reference documentation in certain cases.
