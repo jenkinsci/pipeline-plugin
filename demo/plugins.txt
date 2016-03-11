@@ -14,7 +14,7 @@ mock-slave:1.8
 momentjs:1.1
 pipeline-rest-api:1.0
 pipeline-stage-view:1.0
-scm-api:1.0
+scm-api:1.1
 script-security:1.17
 ssh-credentials:1.11
 workflow-aggregator:@VERSION@
