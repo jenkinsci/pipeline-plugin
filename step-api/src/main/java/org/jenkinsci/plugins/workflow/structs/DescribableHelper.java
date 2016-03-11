@@ -31,7 +31,6 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
-import hudson.model.ParametersDefinitionProperty;
 import java.beans.Introspector;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -632,22 +631,12 @@ public class DescribableHelper {
     }
 
     private static String[] loadConstructorParamNames(Class<?> clazz) {
-        if (clazz == ParametersDefinitionProperty.class) { // TODO pending core fix
-            return new String[] {"parameterDefinitions"};
-        }
         return new ClassDescriptor(clazz).loadConstructorParamNames();
     }
 
     // adapted from RequestImpl
     @SuppressWarnings("unchecked")
     private static <T> Constructor<T> findConstructor(Class<? extends T> clazz, int length) {
-        try { // may work without this, but only if the JVM happens to return the right overload first
-            if (clazz == ParametersDefinitionProperty.class && length == 1) { // TODO pending core fix
-                return (Constructor<T>) ParametersDefinitionProperty.class.getConstructor(List.class);
-            }
-        } catch (NoSuchMethodException x) {
-            throw new AssertionError(x);
-        }
         Constructor<T>[] ctrs = (Constructor<T>[]) clazz.getConstructors();
         for (Constructor<T> c : ctrs) {
             if (c.getAnnotation(DataBoundConstructor.class) != null) {

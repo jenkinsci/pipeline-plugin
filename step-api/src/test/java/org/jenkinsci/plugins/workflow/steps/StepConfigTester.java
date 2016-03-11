@@ -27,18 +27,14 @@ package org.jenkinsci.plugins.workflow.steps;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.AbstractProject;
-import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import jenkins.model.Jenkins;
-import net.sf.json.JSONObject;
 import static org.junit.Assert.*;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Utility to let you verify how {@link Step}s are configured in the UI.
@@ -84,20 +80,6 @@ public final class StepConfigTester {
             }
             @Override public String getDisplayName() {
                 return "Test step builder";
-            }
-            @Override public Builder newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-                // TODO JENKINS-31458 f:dropdownDescriptorSelector does not seem to work sensibly: the super method uses RequestImpl.bindJSON and ignores any StepDescriptor.newInstance override.
-                // Cf. Snippetizer.doGenerateSnippet, which also seems to lack a standard way of parsing part of a form using databinding.
-                JSONObject s = formData.getJSONObject("s");
-                Jenkins j = Jenkins.getActiveInstance();
-                Class<?> c;
-                try {
-                    c = j.getPluginManager().uberClassLoader.loadClass(s.getString("stapler-class"));
-                } catch (ClassNotFoundException x) {
-                    throw new FormException(x, "s");
-                }
-                Descriptor<?> descriptor = j.getDescriptor(c.asSubclass(Step.class));
-                return new StepBuilder((Step) descriptor.newInstance(req, s));
             }
         }
     }
