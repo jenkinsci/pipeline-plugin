@@ -25,5 +25,5 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <div>
-    Defines a project type for multibranch pipelines.
+    Enhances Pipeline plugin to handle branches better by automatically grouping builds from different branches.
 </div>

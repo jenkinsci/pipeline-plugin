@@ -34,6 +34,7 @@ THE SOFTWARE.
     <packaging>hpi</packaging>
     <name>Pipeline: Multibranch</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
+    <description>Enhances Pipeline plugin to handle branches better by automatically grouping builds from different branches</description>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
