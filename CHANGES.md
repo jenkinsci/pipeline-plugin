@@ -2,6 +2,8 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 1.15 (Mar 10 2016)
+
 * Now based on Jenkins core 1.642.x. `BuildDiscarderProperty` may now be referenced from the `properties` step without a disambiguating package name.
 * [JENKINS-33256](https://issues.jenkins-ci.org/browse/JENKINS-33256): infrastructure for loading a trusted version of `Jenkinsfile` from a multibranch pipeline.
 
