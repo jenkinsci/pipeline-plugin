@@ -25,8 +25,9 @@
 package org.jenkinsci.plugins.workflow.support.steps.input;
 
 import java.util.Collections;
+
+import org.jenkinsci.plugins.structs.describable.DescribableModel;
 import org.jenkinsci.plugins.workflow.steps.StepConfigTester;
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Rule;
@@ -52,7 +53,7 @@ public class InputStepTest {
     @WithoutJenkins
     @Test public void uninstantiate() throws Exception {
         InputStep s = new InputStep("hello world");
-        assertEquals(Collections.singletonMap("message", s.getMessage()), DescribableHelper.uninstantiate(s));
+        assertEquals(Collections.singletonMap("message", s.getMessage()), DescribableModel.uninstantiate_(s));
     }
 
 }

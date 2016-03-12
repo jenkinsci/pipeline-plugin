@@ -1,9 +1,17 @@
 package org.jenkinsci.plugins.workflow.cps.Snippetizer
 
+import org.jenkinsci.plugins.structs.describable.ArrayType
+import org.jenkinsci.plugins.structs.describable.AtomicType
+import org.jenkinsci.plugins.structs.describable.DescribableModel
+import org.jenkinsci.plugins.structs.describable.DescribableParameter
+import org.jenkinsci.plugins.structs.describable.EnumType
+import org.jenkinsci.plugins.structs.describable.ErrorType
+import org.jenkinsci.plugins.structs.describable.HeterogeneousObjectType
+import org.jenkinsci.plugins.structs.describable.HomogeneousObjectType
+import org.jenkinsci.plugins.structs.describable.ParameterType
 import org.jenkinsci.plugins.workflow.cps.GlobalVariable
 import org.jenkinsci.plugins.workflow.cps.Snippetizer
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper
 
 import javax.servlet.RequestDispatcher
 
@@ -69,7 +77,7 @@ def generateStepHelp(StepDescriptor d) throws Exception {
     }
     dd(class:'step-body'){
       try {
-        generateHelp(DescribableHelper.schemaFor(d.clazz), 3);
+        generateHelp(new DescribableModel(d.clazz), 3);
       } catch (Exception x) {
         pre { code(x) }
       }
@@ -77,24 +85,24 @@ def generateStepHelp(StepDescriptor d) throws Exception {
   }.call()
 }
 
-def generateHelp(DescribableHelper.Schema schema, int headerLevel) throws Exception {
+def generateHelp(DescribableModel model, int headerLevel) throws Exception {
   return {
-    String help = schema.getHelp(null);
+    String help = model.help;
     if (help != null && !help.equals("")) {
       div(class:"help", style:"display: block") { raw(help) }
     }
     dl(class:'help-list mandatory'){
       // TODO else could use RequestDispatcher (as in Descriptor.doHelp) to serve template-based help
-      for (String attr : schema.mandatoryParameters()) {
-        dt(class:'help-title'){ code(attr)     }
+      model.parameters.findAll{ it.required }.each { p ->
+        dt(class:'help-title'){ code(p.name)     }
         dd(class:'help-body'){
-          generateAttrHelp(schema, attr, headerLevel);
+          generateAttrHelp(p, headerLevel);
         }
       }
     }
     dl(class:'help-list optional'){
-      for (String attr : schema.parameters().keySet()) {
-        if (schema.mandatoryParameters().contains(attr)) {
+      for (String attr : model.parameters().keySet()) {
+        if (model.mandatoryParameters().contains(attr)) {
           continue;
         }
         dt(class:'help-title'){
@@ -103,76 +111,75 @@ def generateHelp(DescribableHelper.Schema schema, int headerLevel) throws Except
 
         }
         dd(class:'help-body'){
-          generateAttrHelp(schema, attr, headerLevel);
+          generateAttrHelp(model, attr, headerLevel);
         }
       }
     }
   }.call()
 }
 
-def generateAttrHelp(DescribableHelper.Schema schema, String attr, int headerLevel) throws Exception {
+def generateAttrHelp(DescribableParameter param, int headerLevel) throws Exception {
   return {
-    String help = schema.getHelp(attr);
+    String help = param.help;
     if (help != null && !help.equals("")) {
       div(class:"help", style:"display: block") { raw(help) }
     }
-    DescribableHelper.ParameterType type = schema.parameters().get(attr);
-    describeType(type, headerLevel);
+    describeType(param.type, headerLevel);
   }.call()
 }
 
-def describeType(DescribableHelper.ParameterType type, int headerLevel) throws Exception {
+def describeType(ParameterType type, int headerLevel) throws Exception {
   return {
     int nextHeaderLevel = Math.min(6, headerLevel + 1);
-    if (type instanceof DescribableHelper.AtomicType) {
+    if (type instanceof AtomicType) {
       div {
         strong(_("Type:"))
         text(type)
       }
-    } else if (type instanceof DescribableHelper.EnumType) {
+    } else if (type instanceof EnumType) {
       div(class:'values-box nested'){
         div(class:'marker-title value-title'){
           span(_("Values:"))
         }
-        for (String v : ((DescribableHelper.EnumType) type).getValues()) {
+        for (String v : ((EnumType) type).getValues()) {
           div(class:'value list-item') { code(v) }
         }
       }
-    } else if (type instanceof DescribableHelper.ArrayType) {
+    } else if (type instanceof ArrayType) {
       div(class:'array-list-box marker'){
         div(class:'array-title marker-title'){
           span(_("Array/List:"))
         }
         div(class:'array-list'){
-          describeType(((DescribableHelper.ArrayType) type).getElementType(), headerLevel)
+          describeType(((ArrayType) type).getElementType(), headerLevel)
         }
       }
-    } else if (type instanceof DescribableHelper.HomogeneousObjectType) {
+    } else if (type instanceof HomogeneousObjectType) {
       dl(class:'nested-object-box nested') {
         dt(_("Nested object"))
         dd{
-          generateHelp(((DescribableHelper.HomogeneousObjectType) type).getSchemaType(), nextHeaderLevel);
+          generateHelp(((HomogeneousObjectType) type).getSchemaType(), nextHeaderLevel);
         }
       }
-    } else if (type instanceof DescribableHelper.HeterogeneousObjectType) {
+    } else if (type instanceof HeterogeneousObjectType) {
       dl(class:'nested-choice-box nested') {
         dt(_("Nested choice of objects"))
         dd{
 
           dl(class:'schema') {
-            for (Map.Entry<String, DescribableHelper.Schema> entry : ((DescribableHelper.HeterogeneousObjectType) type).getTypes().entrySet()) {
+            for (Map.Entry<String, DescribableModel> entry : ((HeterogeneousObjectType) type).getTypes().entrySet()) {
               dt {
-                code(DescribableHelper.CLAZZ + ": '" + entry.getKey() + "'")
+                code(DescribableModel.CLAZZ + ": '" + entry.key + "'")
               }
               dd{
-                generateHelp(entry.getValue(), nextHeaderLevel);
+                generateHelp(entry.value, nextHeaderLevel);
               }
             }
           }
         }
       }
-    } else if (type instanceof DescribableHelper.ErrorType) {
-      Exception x = ((DescribableHelper.ErrorType) type).getError();
+    } else if (type instanceof ErrorType) {
+      Exception x = ((ErrorType) type).getError();
       pre { code(x) }
     } else {
       assert false: type;

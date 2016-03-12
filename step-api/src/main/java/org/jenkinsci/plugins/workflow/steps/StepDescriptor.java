@@ -31,7 +31,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
+
+import org.jenkinsci.plugins.structs.describable.DescribableModel;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -93,14 +94,14 @@ public abstract class StepDescriptor extends Descriptor<Step> {
 
     /**
      * Used when a {@link Step} is instantiated programmatically.
-     * The default implementation just uses {@link DescribableHelper#instantiate}.
+     * The default implementation just uses {@link DescribableModel#instantiate}.
      * @param arguments
      *      Named arguments and values, à la Ant task or Maven mojos.
-     *      Generally should follow the semantics of {@link DescribableHelper#instantiate}.
+     *      Generally should follow the semantics of {@link DescribableModel#instantiate}.
      * @return an instance of {@link #clazz}
      */
     public Step newInstance(Map<String,Object> arguments) throws Exception {
-        return DescribableHelper.instantiate(clazz, arguments);
+        return new DescribableModel<>(clazz).instantiate(arguments);
     }
 
     /**
@@ -110,7 +111,7 @@ public abstract class StepDescriptor extends Descriptor<Step> {
      * @throws UnsupportedOperationException if this descriptor lacks the ability to do such a calculation
      */
     public Map<String,Object> defineArguments(Step step) throws UnsupportedOperationException {
-        return DescribableHelper.uninstantiate(step);
+        return DescribableModel.uninstantiate_(step);
     }
 
 
