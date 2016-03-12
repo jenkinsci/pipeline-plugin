@@ -73,6 +73,9 @@ import org.kohsuke.stapler.lang.Klass;
 /**
  * Utility for converting between {@link Describable}s (and some other objects) and map-like representations.
  * Ultimately should live in Jenkins core (or Stapler).
+ *
+ * @deprecated
+ *      Moved to the structs plugin
  */
 public class DescribableHelper {
 
