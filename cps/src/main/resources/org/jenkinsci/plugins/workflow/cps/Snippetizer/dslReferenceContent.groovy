@@ -101,17 +101,17 @@ def generateHelp(DescribableModel model, int headerLevel) throws Exception {
       }
     }
     dl(class:'help-list optional'){
-      for (String attr : model.parameters().keySet()) {
-        if (model.mandatoryParameters().contains(attr)) {
+      for (DescribableParameter p : model.parameters) {
+        if (p.required) {
           continue;
         }
         dt(class:'help-title'){
-          code(attr)
+          code(p.name)
           raw(" (optional)")
 
         }
         dd(class:'help-body'){
-          generateAttrHelp(model, attr, headerLevel);
+          generateAttrHelp(p, headerLevel);
         }
       }
     }
