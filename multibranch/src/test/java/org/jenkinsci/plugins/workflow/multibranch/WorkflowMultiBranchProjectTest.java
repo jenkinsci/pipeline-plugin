@@ -53,6 +53,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.steps.scm.GitSampleRepoRule;
 import static org.junit.Assert.*;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -159,6 +160,7 @@ public class WorkflowMultiBranchProjectTest {
         }
     }
 
+    @Ignore("TODO cloudbees-folder 5.5+")
     @Issue("JENKINS-32179")
     @Test public void conflictingBranches() throws Exception {
         sampleRepo.init();
