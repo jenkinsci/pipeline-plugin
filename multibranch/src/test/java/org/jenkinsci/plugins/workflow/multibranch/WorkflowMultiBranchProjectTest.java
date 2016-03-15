@@ -37,13 +37,11 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchPropertyDescriptor;
-import jenkins.branch.BranchPropertyStrategyDescriptor;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.GitSCMSource;
 import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMSource;
-import jenkins.scm.api.SCMSourceDescriptor;
 import jenkins.scm.impl.SingleSCMSource;
 import static org.hamcrest.Matchers.*;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
@@ -127,7 +125,9 @@ public class WorkflowMultiBranchProjectTest {
         // RateLimitBranchProperty & BuildRetentionBranchProperty hidden by JobPropertyStep.HideSuperfluousBranchProperties.
         // UntrustedBranchProperty hidden because it applies only to Project.
         assertEquals(Collections.<Class<? extends BranchProperty>>emptySet(), clazzes);
+        /* TODO uncomment when branch-api 1.5+:
         assertEquals(Collections.<BranchPropertyStrategyDescriptor>emptyList(), r.jenkins.getDescriptorByType(BranchSource.DescriptorImpl.class).propertyStrategyDescriptors(p, r.jenkins.getDescriptorByType(SingleSCMSource.DescriptorImpl.class)));
+        */
     }
 
     @SuppressWarnings("rawtypes")
