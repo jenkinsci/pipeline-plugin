@@ -24,7 +24,10 @@
 
 package org.jenkinsci.plugins.workflow.multibranch;
 
+import hudson.ExtensionList;
 import hudson.model.DescriptorVisibilityFilter;
+import hudson.model.Item;
+import hudson.model.listeners.ItemListener;
 import hudson.plugins.git.GitSCM;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.SCM;
@@ -53,6 +56,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 
@@ -152,6 +156,32 @@ public class WorkflowMultiBranchProjectTest {
             @Override public String getDisplayName() {
                 return "OldSCM";
             }
+        }
+    }
+
+    @Issue("JENKINS-32179")
+    @Test public void conflictingBranches() throws Exception {
+        sampleRepo.init();
+        sampleRepo.write("Jenkinsfile", "");
+        sampleRepo.git("add", "Jenkinsfile");
+        sampleRepo.git("commit", "--all", "--message=flow");
+        WorkflowMultiBranchProject mp = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
+        mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+        mp.getSourcesList().add(new BranchSource(new GitSCMSource(null, sampleRepo.toString(), "", "*", "", false), new DefaultBranchPropertyStrategy(new BranchProperty[0])));
+        WorkflowJob p = scheduleAndFindBranchProject(mp, "master");
+        mp.getIndexing().writeWholeLogTo(System.out);
+        assertEquals(1, mp.getItems().size());
+        r.waitUntilNoActivity();
+        WorkflowRun b1 = p.getLastBuild();
+        assertEquals(1, b1.getNumber());
+        mp.scheduleBuild2(0).getFuture().get();
+        mp.getIndexing().writeWholeLogTo(System.out);
+        assertEquals("[p, p/master]", ExtensionList.lookup(Listener.class).get(0).names.toString());
+    }
+    @TestExtension("conflictingBranches") public static class Listener extends ItemListener {
+        List<String> names = new ArrayList<>();
+        @Override public void onCreated(Item item) {
+            names.add(item.getFullName());
         }
     }
 
