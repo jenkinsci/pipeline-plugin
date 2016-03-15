@@ -37,11 +37,13 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import jenkins.branch.BranchProperty;
 import jenkins.branch.BranchPropertyDescriptor;
+import jenkins.branch.BranchPropertyStrategyDescriptor;
 import jenkins.branch.BranchSource;
 import jenkins.branch.DefaultBranchPropertyStrategy;
 import jenkins.plugins.git.GitSCMSource;
 import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMSource;
+import jenkins.scm.api.SCMSourceDescriptor;
 import jenkins.scm.impl.SingleSCMSource;
 import static org.hamcrest.Matchers.*;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
@@ -53,6 +55,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 
@@ -114,6 +117,7 @@ public class WorkflowMultiBranchProjectTest {
         return p;
     }
 
+    @Issue("JENKINS-32670")
     @Test public void visibleBranchProperties() throws Exception {
         WorkflowMultiBranchProject p = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
         Set<Class<? extends BranchProperty>> clazzes = new HashSet<Class<? extends BranchProperty>>();
@@ -123,6 +127,7 @@ public class WorkflowMultiBranchProjectTest {
         // RateLimitBranchProperty & BuildRetentionBranchProperty hidden by JobPropertyStep.HideSuperfluousBranchProperties.
         // UntrustedBranchProperty hidden because it applies only to Project.
         assertEquals(Collections.<Class<? extends BranchProperty>>emptySet(), clazzes);
+        assertEquals(Collections.<BranchPropertyStrategyDescriptor>emptyList(), r.jenkins.getDescriptorByType(BranchSource.DescriptorImpl.class).propertyStrategyDescriptors(p, r.jenkins.getDescriptorByType(SingleSCMSource.DescriptorImpl.class)));
     }
 
     @SuppressWarnings("rawtypes")
