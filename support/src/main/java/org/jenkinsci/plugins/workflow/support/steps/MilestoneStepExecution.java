@@ -14,7 +14,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
 
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -51,11 +50,11 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
 
     @Override
     public boolean start() throws Exception {
-        enter(run, getContext(), step.ordinal, step.concurrency);
-        return false;
+        tryToPass(run, getContext(), step.ordinal);
+        return true;
     }
 
-    // Used in tests only
+    // Used in tests only (where the static context is kept between tests somehow)
     @Restricted(DoNotUse.class)
     public static void clear() {
         milestonesByOrdinalByJob = null;
@@ -66,9 +65,9 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         throw new UnsupportedOperationException();
     }
 
-    private static synchronized void enter(Run<?,?> r, StepContext context, Integer ordinal, Integer concurrency) {
-        LOGGER.log(Level.FINE, "enter {0} milestone {1}", new Object[] {r, ordinal});
-        println(context, "Entering milestone " + ordinal);
+    private static synchronized void tryToPass(Run<?,?> r, StepContext context, Integer ordinal) {
+        LOGGER.log(Level.FINE, "build {0} trying to pass milestone {1}", new Object[] {r, ordinal});
+        println(context, "Trying to pass milestone " + ordinal);
         load();
         Job<?,?> job = r.getParent();
         String jobName = job.getFullName();
@@ -82,32 +81,6 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
             milestone = new Milestone(ordinal);
             milestonesInJob.put(ordinal, milestone);
         }
-        milestone.concurrency = concurrency;
-        int build = r.number;
-        String externalizableId = r.getExternalizableId();
-        if (milestone.waitingContext != null) {
-            // Someone has got to give up.
-            if (milestone.waitingBuild < build) {
-                // Cancel the older one.
-                try {
-                    cancel(milestone.waitingContext, context);
-                } catch (Exception x) {
-                    LOGGER.log(WARNING, "could not cancel an older flow (perhaps since deleted?)", x);
-                }
-            } else if (milestone.waitingBuild > build) {
-                // Cancel this one. And work with the older one below, instead of the one initiating this call.
-                try {
-                    cancel(context, milestone.waitingContext);
-                } catch (Exception x) {
-                    LOGGER.log(WARNING, "could not cancel the current flow", x);
-                }
-                build = milestone.waitingBuild;
-                externalizableId = milestone.waitingBuildExternalizableId;
-                context = milestone.waitingContext;
-            } else {
-                throw new IllegalStateException("the same flow is trying to reënter the milestone " + ordinal); // see 'e' with two dots, that's Jesse Glick for you! - KK
-            }
-        }
 
         // Unblock the previous milestone
         for (Map.Entry<Integer, Milestone> entry : milestonesInJob.entrySet()) {
@@ -115,24 +88,20 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
                 continue;
             }
             Milestone milestone2 = entry.getValue();
-            // If we were holding another milestone in the same job, release it, unlocking its waiter to proceed.
-            if (milestone2.holding.remove(build)) {
+            // The build is passing a milestone, so it's not visible to any previous milestone
+            if (milestone2.wentAway(r)) {
                 // Ordering check
                 if(milestone2.ordinal != ordinal - 1) {
                     throw new MilestoneStepException(
                         String.format("Unordered milestone. Found ordinal %s but %s was expected.", ordinal, milestone2.ordinal + 1));
                 }
                 // Cancel older builds (holding or waiting to enter)
-                cancelOldersHoldingOrWaiting(milestone2, job.getBuildByNumber(build));
-                // If there is still a build applicable to proceed then unblock it
-                if (milestone2.waitingContext != null) {
-                    milestone2.unblock("Unblocked since " + r.getDisplayName() + " is moving into milestone " + ordinal);
-                }
+                cancelOldersInSight(milestone2, r);
             }
         }
 
         // checking order
-        if (milestone.lastBuild != null && build < milestone.lastBuild) {
+        if (milestone.lastBuild != null && r.getNumber() < milestone.lastBuild) {
             // cancel if it's older than the last one passing this milestone
             try {
                 cancel(context, milestone.lastBuild, milestone.lastBuildExternalizableId);
@@ -140,15 +109,8 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
                 LOGGER.log(WARNING, "could not cancel the current flow", x);
             }
         } else {
-            // It's in-order, try to proceed
-            milestone.waitingBuild = build;
-            milestone.waitingBuildExternalizableId = externalizableId;
-            milestone.waitingContext = context;
-            if (milestone.concurrency == null || milestone.holding.size() < milestone.concurrency) {
-                milestone.unblock("Proceeding");
-            } else {
-                println(context, "Waiting for builds " + milestone.holding);
-            }
+            // It's in-order, proceed
+            milestone.pass(context, r);
         }
         cleanUp(job, jobName);
         save();
@@ -165,13 +127,9 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         }
         boolean modified = false;
         for (Milestone milestone : milestonesInJob.values()) {
-            if (milestone.holding.contains(r.number)) {
-                milestone.holding.remove(r.number); // XSTR-757: do not rely on return value of TreeSet.remove(Object)
+            if (milestone.wentAway(r)) {
                 modified = true;
-                cancelOldersHoldingOrWaiting(milestone, r);
-                if (milestone.waitingContext != null) {
-                    milestone.unblock("Unblocked since " + r.getDisplayName() + " finished");
-                }
+                cancelOldersInSight(milestone, r);
             }
         }
         if (modified) {
@@ -181,30 +139,22 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
     }
 
     /**
-     * Cancels any build holding the milestone which is older than r.
+     * Cancels any build older than the given one in sight of the milestone.
      *
-     * @param r is a build leaving the milestone
+     * @param r the build which is going away of the given milestone
      * @param milestone the milestone which r is leaving (because it entered the next milestone or finished).
      */
-    private static void cancelOldersHoldingOrWaiting(Milestone milestone, Run<?, ?> r) {
-        // Holding
-        for (Integer holderNumber : milestone.holding) {
-            if (r.number > holderNumber) {
-                Run<?, ?> holder = r.getParent().getBuildByNumber(holderNumber);
-                Executor e = holder.getExecutor();
+    private static void cancelOldersInSight(Milestone milestone, Run<?, ?> r) {
+        // Cancel any older build in sight of the milestone
+        for (Integer inSightNumber : milestone.inSight) {
+            if (r.getNumber() > inSightNumber) {
+                Run<?, ?> olderInSightBuild = r.getParent().getBuildByNumber(inSightNumber);
+                Executor e = olderInSightBuild.getExecutor();
                 if (e != null) {
                     e.interrupt(Result.NOT_BUILT, new CanceledCause(r.getExternalizableId()));
                 } else{
                     LOGGER.log(WARNING, "could not cancel an older flow because it has no assigned executor");
                 }
-            }
-        }
-        // Waiting
-        if (milestone.waitingContext != null) {
-            try {
-                milestone.cancelWaitingByRun(r);
-            } catch (Exception x) {
-                LOGGER.log(WARNING, "could not cancel an older flow (perhaps since deleted?)", x);
             }
         }
     }
@@ -218,16 +168,6 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
             context.get(TaskListener.class).getLogger().println(message);
         } catch (Exception x) {
             LOGGER.log(WARNING, "failed to print message to dead " + context, x);
-        }
-    }
-
-    private static void cancel(StepContext context, StepContext newer) throws IOException, InterruptedException {
-        if (context.isReady() && newer.isReady()) {
-            println(context, "Canceled since " + newer.get(Run.class).getDisplayName() + " got here");
-            println(newer, "Canceling older " + context.get(Run.class).getDisplayName());
-            context.onFailure(new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(newer.get(Run.class))));
-        } else {
-            LOGGER.log(WARNING, "cannot cancel dead {0} or {1}", new Object[] {context, newer});
         }
     }
 
@@ -246,8 +186,8 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         Iterator<Entry<Integer, Milestone>> it = milestonesInJob.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<Integer, Milestone> entry = it.next();
-            Set<Integer> holding = entry.getValue().holding;
-            Iterator<Integer> it2 = holding.iterator();
+            Set<Integer> inSight = entry.getValue().inSight;
+            Iterator<Integer> it2 = inSight.iterator();
             while (it2.hasNext()) {
                 Integer number = it2.next();
                 if (job.getBuildByNumber(number) == null) {
@@ -308,35 +248,12 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         /**
          * Milestone ordinal.
          */
-        Integer ordinal;
+        final Integer ordinal;
 
         /**
-         * Numbers of builds currently running in this milestone.
+         * Numbers of builds that passed this milestone but haven't passed the next one.
          */
-        final Set<Integer> holding = new TreeSet<Integer>();
-
-        /**
-         * Maximum permitted size of {@link #holding}, or null for unbounded.
-         */
-        @CheckForNull
-        Integer concurrency;
-
-        /**
-         * Context of the build currently waiting to enter this stage, if any.
-         */
-        @CheckForNull StepContext waitingContext;
-
-        /**
-         * Number of the build corresponding to {@link #waitingContext}, if any.
-         */
-        @Nullable
-        Integer waitingBuild;
-
-        /**
-         * Externalizable ID of the build corresponding to {@link #waitingContext}, if any.
-         */
-        @Nullable
-        String waitingBuildExternalizableId;
+        final Set<Integer> inSight = new TreeSet<Integer>();
 
         /**
          * Last build that passed through the milestone, or null if none passed yet.
@@ -350,40 +267,33 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         @CheckForNull
         String lastBuildExternalizableId;
 
-        @Override public String toString() {
-            return "Stage[holding=" + holding + ", waitingBuild=" + waitingBuild + ", concurrency=" + concurrency + "]";
-        }
-
         Milestone(Integer ordinal) {
             this.ordinal = ordinal;
         }
 
-        /**
-         * Unblocks the build currently waiting.
-         *
-         * @param message a message to print to the log of the unblocked build
-         */
-        void unblock(String message) {
-            assert Thread.holdsLock(MilestoneStepExecution.class);
-            assert waitingContext != null;
-            assert waitingBuild != null;
-            assert !holding.contains(waitingBuild);
-            println(waitingContext, message);
-            waitingContext.onSuccess(null);
-            holding.add(waitingBuild);
-            lastBuild = waitingBuild;
-            lastBuildExternalizableId = waitingBuildExternalizableId;
-            waitingContext = null;
-            waitingBuild = null;
-            waitingBuildExternalizableId = null;
+        @Override public String toString() {
+            return "Milestone[inSight=" + inSight + ", lastBuildExternalizableId=" + lastBuildExternalizableId + "]";
         }
 
-        void cancelWaitingByRun(Run<?, ?> r) throws IOException, InterruptedException {
-            if (waitingContext != null) {
-                cancel(waitingContext, r.number, r.getExternalizableId());
-                waitingContext = null;
-                waitingBuild = null;
-                waitingBuildExternalizableId = null;
+        public void pass(StepContext context, Run<?, ?> build) {
+            lastBuild = build.getNumber();
+            lastBuildExternalizableId = build.getExternalizableId();
+            inSight.add(build.getNumber());
+            context.onSuccess(null);
+        }
+
+        /**
+         * Called when a build passes the next milestone.
+         *
+         * @param build the build passing the next milestone.
+         * @return true if the build was in sight (exists in inSight), false otherwise.
+         */
+        public boolean wentAway(Run<?, ?> build) {
+            if (inSight.contains(build.getNumber())) {
+                inSight.remove(build.getNumber()); // XSTR-757
+                return true;
+            } else {
+                return false;
             }
         }
     }
