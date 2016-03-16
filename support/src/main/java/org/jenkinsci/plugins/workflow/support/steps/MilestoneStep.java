@@ -3,7 +3,9 @@ package org.jenkinsci.plugins.workflow.support.steps;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Extension;
 
 /**
@@ -17,11 +19,23 @@ import hudson.Extension;
  */
 public class MilestoneStep extends AbstractStepImpl {
 
-    public Integer ordinal;
+    /**
+     * Optional milestone label.
+     */
+    private String label;
 
-    @DataBoundConstructor 
-    public MilestoneStep(Integer ordinal) {
-        this.ordinal = ordinal;
+    @DataBoundConstructor
+    public MilestoneStep() {
+    }
+
+    @DataBoundSetter
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    @CheckForNull
+    public String getLabel() {
+        return label;
     }
 
     @Extension public static final class DescriptorImpl extends AbstractStepDescriptorImpl {

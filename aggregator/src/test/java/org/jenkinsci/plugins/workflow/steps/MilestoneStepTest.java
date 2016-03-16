@@ -38,11 +38,11 @@ public class MilestoneStepTest {
                 p.setDefinition(new CpsFlowDefinition(
                         "semaphore 'inorder'\n" +
                         "echo 'Before milestone'\n" +
-                        "milestone 1\n" +
+                        "milestone()\n" +
                         "echo 'Passed first milestone'\n" +
-                        "milestone 2\n" +
+                        "milestone()\n" +
                         "echo 'Passed second milestone'\n" +
-                        "milestone 3\n" +
+                        "milestone()\n" +
                         "echo 'Passed third milestone'\n"));
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("inorder/1", b1);
@@ -67,10 +67,10 @@ public class MilestoneStepTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
-                        "milestone 1\n" +
+                        "milestone()\n" +
                         "echo 'First milestone'\n" +
                         "semaphore 'wait'\n" +
-                        "milestone 2\n" +
+                        "milestone()\n" +
                         "echo 'Second milestone'\n"));
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("wait/1", b1);
@@ -95,7 +95,7 @@ public class MilestoneStepTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
-                        "milestone 1\n" +
+                        "milestone label: 'My Label'\n" +
                         "node {\n" +
                         "  echo 'First milestone'\n" +
                         "  semaphore 'wait'\n" +
@@ -118,19 +118,17 @@ public class MilestoneStepTest {
     }
 
     @Test
-    public void milestoneOrder() {
+    public void milestoneNotAllowedInsideParallel() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
-                        "milestone 1\n" +
-                        "milestone 3\n" +
-                        "milestone 2\n"));
+                        "milestone()\n" +
+                        "parallel one: { milestone() }, two: { echo 'a'}\n" +
+                        "milestone()\n"));
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b1));
-                assertTrue("Unordered milestones must fail", b1.getLog().contains("Unordered milestone. Found ordinal 3 but 2 was expected"));
-                // TODO why is this not working?
-                // story.j.assertLogContains("Unordered milestone. Found ordinal 3 but 2 was expected", b1);
+                assertTrue(b1.getLog().contains("Using a milestone step inside parallel is not allowed"));
             }
         });
     }

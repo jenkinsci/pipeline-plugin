@@ -15,7 +15,10 @@ import java.util.logging.Logger;
 
 import javax.annotation.CheckForNull;
 
+import org.jenkinsci.plugins.workflow.actions.LabelAction;
+import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
@@ -29,6 +32,7 @@ import com.google.inject.Inject;
 import hudson.Extension;
 import hudson.XmlFile;
 import hudson.model.Executor;
+import hudson.model.InvisibleAction;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -50,8 +54,42 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
 
     @Override
     public boolean start() throws Exception {
-        tryToPass(run, getContext(), step.ordinal);
+        if (step.getLabel() != null) {
+            node.addAction(new LabelAction(step.getLabel()));
+        }
+        Integer ordinal = processOrdinal();
+        tryToPass(run, getContext(), ordinal);
         return true;
+    }
+
+    private synchronized Integer processOrdinal() {
+        FlowGraphWalker walker = new FlowGraphWalker();
+        walker.addHead(node);
+        Integer previousOrdinal = null;
+        for (FlowNode n : walker) {
+            // take advantage of this search to log a warning if a parallel step is found in the path
+            if(n.getAction(ThreadNameAction.class) != null) {
+                throw new MilestoneStepException("Using a milestone step inside parallel is not allowed");
+            }
+            OrdinalAction a = n.getAction(OrdinalAction.class);
+            if (a != null) {
+                previousOrdinal = a.ordinal;
+                break;
+            }
+        }
+        Integer nextOrdinal = 0;
+        if (previousOrdinal != null) {
+            nextOrdinal = previousOrdinal + 1;
+        }
+        node.addAction(new OrdinalAction(nextOrdinal));
+        return nextOrdinal;
+    }
+
+    private static class OrdinalAction extends InvisibleAction {
+        Integer ordinal;
+        public OrdinalAction(Integer ordinal) {
+            this.ordinal = ordinal;
+        }
     }
 
     // Used in tests only (where the static context is kept between tests somehow)
