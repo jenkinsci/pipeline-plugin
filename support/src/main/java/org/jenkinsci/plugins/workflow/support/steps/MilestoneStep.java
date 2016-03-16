@@ -11,11 +11,9 @@ import hudson.Extension;
  * <ol>
  *   <li>Builds pass through the step in order (taking the build number as sorter field)</li>
  *   <li>Older builds will not proceed (they are aborted) if a newer one already entered the milestone</li>
+ *   <li>Once a build enters the milestone, it will be never aborted</li>
+ *   <li>When a build passes a milestone, any older build that passed the previous milestone but not this one is aborted.</li>
  * </ol>
- *
- * When {@link #concurrency} is set the number of builds inside the milestone will be limited to that value and
- * the number of waiting builds is limited to 1, if a build reaches the milestone and an older build is waiting
- * to go through then the older one will be aborted.
  */
 public class MilestoneStep extends AbstractStepImpl {
 

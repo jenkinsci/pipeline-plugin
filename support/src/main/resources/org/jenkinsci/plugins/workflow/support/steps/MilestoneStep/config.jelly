@@ -28,7 +28,4 @@ THE SOFTWARE.
     <f:entry field="ordinal" title="Milestone ordinal">
         <f:number clazz="positive-number"/>
     </f:entry>
-    <f:entry field="concurrency" title="Concurrency">
-        <f:number clazz="positive-number"/>
-    </f:entry>
 </j:jelly>
