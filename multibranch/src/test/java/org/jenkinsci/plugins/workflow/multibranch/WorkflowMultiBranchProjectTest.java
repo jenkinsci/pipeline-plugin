@@ -119,6 +119,7 @@ public class WorkflowMultiBranchProjectTest {
         return p;
     }
 
+    @Issue("JENKINS-32670")
     @Test public void visibleBranchProperties() throws Exception {
         WorkflowMultiBranchProject p = r.jenkins.createProject(WorkflowMultiBranchProject.class, "p");
         Set<Class<? extends BranchProperty>> clazzes = new HashSet<Class<? extends BranchProperty>>();
@@ -128,6 +129,9 @@ public class WorkflowMultiBranchProjectTest {
         // RateLimitBranchProperty & BuildRetentionBranchProperty hidden by JobPropertyStep.HideSuperfluousBranchProperties.
         // UntrustedBranchProperty hidden because it applies only to Project.
         assertEquals(Collections.<Class<? extends BranchProperty>>emptySet(), clazzes);
+        /* TODO uncomment when branch-api 1.5+:
+        assertEquals(Collections.<BranchPropertyStrategyDescriptor>emptyList(), r.jenkins.getDescriptorByType(BranchSource.DescriptorImpl.class).propertyStrategyDescriptors(p, r.jenkins.getDescriptorByType(SingleSCMSource.DescriptorImpl.class)));
+        */
     }
 
     @SuppressWarnings("rawtypes")
