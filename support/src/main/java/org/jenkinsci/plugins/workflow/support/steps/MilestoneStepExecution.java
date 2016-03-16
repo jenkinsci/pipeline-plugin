@@ -299,7 +299,8 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
     }
 
     /**
-     * Records that a flow was canceled while waiting in a stage step because a newer flow entered that stage instead.
+     * Records that a build was canceled because it reached a milestone but a newer build already passed it, or
+     * a newer build {@link Milestone#wentAway(Run)} from the last milestone the build passed.
      */
     public static final class CanceledCause extends CauseOfInterruption {
 
