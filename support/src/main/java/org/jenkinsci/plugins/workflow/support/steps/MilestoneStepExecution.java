@@ -67,10 +67,6 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         walker.addHead(node);
         Integer previousOrdinal = null;
         for (FlowNode n : walker) {
-            // take advantage of this search to log a warning if a parallel step is found in the path
-            if(n.getAction(ThreadNameAction.class) != null) {
-                throw new MilestoneStepException("Using a milestone step inside parallel is not allowed");
-            }
             OrdinalAction a = n.getAction(OrdinalAction.class);
             if (a != null) {
                 previousOrdinal = a.ordinal;
