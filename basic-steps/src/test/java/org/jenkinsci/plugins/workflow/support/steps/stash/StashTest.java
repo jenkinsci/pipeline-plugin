@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.steps.stash;
+package org.jenkinsci.plugins.workflow.support.steps.stash;
 
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.flow.StashManager;
