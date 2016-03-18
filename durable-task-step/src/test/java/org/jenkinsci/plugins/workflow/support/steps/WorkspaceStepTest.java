@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.steps;
+package org.jenkinsci.plugins.workflow.support.steps;
 
 import hudson.slaves.DumbSlave;
 import java.io.File;

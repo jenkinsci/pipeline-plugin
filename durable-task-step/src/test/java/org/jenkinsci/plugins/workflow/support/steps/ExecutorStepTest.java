@@ -22,13 +22,14 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.steps;
+package org.jenkinsci.plugins.workflow.support.steps;
 
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.User;
 import hudson.model.labels.LabelAtom;
+import hudson.model.queue.QueueTaskFuture;
 import hudson.remoting.Launcher;
 import hudson.remoting.Which;
 import hudson.security.ACL;
@@ -51,7 +52,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 import org.apache.tools.ant.util.JavaEnvUtils;
-import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowExecution;
@@ -65,17 +65,27 @@ import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
+import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 /** Tests pertaining to {@code node} and {@code sh} steps. */
-public class ExecutorStepTest extends SingleJobTestBase {
+public class ExecutorStepTest {
 
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
     @Rule public TemporaryFolder tmp = new TemporaryFolder();
+
+    private WorkflowJob p;
+    private WorkflowRun b;
+    private CpsFlowExecution e;
 
     /**
      * Executes a shell script build on a slave.
@@ -422,6 +432,64 @@ public class ExecutorStepTest extends SingleJobTestBase {
                 story.j.assertLogContains("ran node block #49", story.j.assertBuildStatusSuccess(p.scheduleBuild2(0)));
             }
         });
+    }
+
+    // TODO simplify old utility methods
+
+    private Jenkins jenkins() {
+        return story.j.jenkins;
+    }
+
+    private void rebuildContext(JenkinsRule j) throws Exception {
+        WorkflowJob p2 = (WorkflowJob) j.jenkins.getItem("demo");
+        assertNotNull("could not find a job named demo", p2);
+        assert p!=p2;  // make sure Jenkins was restarted
+        p = p2;
+
+        WorkflowRun b2 = p.getLastBuild();
+        assert b!=b2;
+        b = b2;
+
+        e = (CpsFlowExecution) b.getExecution();
+    }
+
+    private DumbSlave createSlave(JenkinsRule j) throws Exception {
+        DumbSlave s = j.createSlave();
+        s.getComputer().connect(false).get(); // wait for the slave to fully get connected
+        return s;
+    }
+
+    private QueueTaskFuture<WorkflowRun> startBuilding() throws Exception {
+        QueueTaskFuture<WorkflowRun> f = p.scheduleBuild2(0);
+        b = f.waitForStart();
+        e = (CpsFlowExecution) b.getExecutionPromise().get();
+        return f;
+    }
+
+    private void assertThatWorkflowIsSuspended() throws Exception {
+        assertThatWorkflowIsSuspended(b, e);
+    }
+
+    private void assertThatWorkflowIsSuspended(WorkflowRun b, CpsFlowExecution e) throws Exception {
+        e.waitForSuspension();  // it should be in the suspended state
+        assert b.isBuilding();
+    }
+
+    private void assertBuildCompletedSuccessfully() throws Exception {
+        assertBuildCompletedSuccessfully(b);
+    }
+
+    private void assertBuildCompletedSuccessfully(WorkflowRun b) throws Exception {
+        assert !b.isBuilding();
+        story.j.assertBuildStatusSuccess(b);
+    }
+
+    private void waitForWorkflowToSuspend() throws Exception {
+        waitForWorkflowToSuspend(e);
+    }
+
+    private void waitForWorkflowToSuspend(CpsFlowExecution e) throws Exception {
+        e.waitForSuspension();
     }
 
 }
