@@ -18,8 +18,11 @@ import javax.annotation.CheckForNull;
 import org.jenkinsci.plugins.workflow.actions.LabelAction;
 import org.jenkinsci.plugins.workflow.actions.ThreadNameAction;
 import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
+import org.jenkinsci.plugins.workflow.graph.BlockEndNode;
+import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
@@ -66,7 +69,20 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         FlowGraphWalker walker = new FlowGraphWalker();
         walker.addHead(node);
         Integer previousOrdinal = null;
+        int parallelDetectionEnabled = 0;
         for (FlowNode n : walker) {
+
+            if (parallelDetectionEnabled <= 0 && n.getAction(ThreadNameAction.class) != null) {
+                listener.getLogger().println("Milestone step found inside pararallel, it's not possible to grant ordering in this case.");
+                throw new MilestoneStepException("Using a milestone step inside parallel is not allowed");
+            }
+
+            if (n instanceof BlockEndNode) {
+                parallelDetectionEnabled++;
+            } else if (n instanceof BlockStartNode && !(n instanceof FlowStartNode)) {
+                parallelDetectionEnabled--;
+            }
+
             OrdinalAction a = n.getAction(OrdinalAction.class);
             if (a != null) {
                 previousOrdinal = a.ordinal;

@@ -123,12 +123,42 @@ public class MilestoneStepTest {
             @Override public void evaluate() throws Throwable {
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition(
-                        "milestone()\n" +
-                        "parallel one: { milestone() }, two: { echo 'a'}\n" +
+                        "sleep 1\n" +
+                        "parallel one: { echo 'First' }, two: { \n" +
+                        "  node {\n" +
+                        "    echo 'Test'\n" +
+                        "  }\n" +
+                        "  milestone()\n" +
+                        "}\n" +
                         "milestone()\n"));
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b1));
-                assertTrue(b1.getLog().contains("Using a milestone step inside parallel is not allowed"));
+                story.j.assertLogContains("Milestone step found inside pararallel", b1);
+
+                p.setDefinition(new CpsFlowDefinition(
+                        "sleep 1\n" +
+                        "parallel one: { echo 'First' }, two: { \n" +
+                        "  echo 'Pre-node'\n" +
+                        "  node {\n" +
+                        "    milestone()\n" +
+                        "  }\n" +
+                        "}\n" +
+                        "milestone()\n"));
+                WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
+                story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b2));
+                story.j.assertLogContains("Milestone step found inside pararallel", b2);
+
+                p.setDefinition(new CpsFlowDefinition(
+                        "sleep 1\n" +
+                        "parallel one: { echo 'First' }, two: { \n" +
+                        "  echo 'Pre-node'\n" +
+                        "  node {\n" +
+                        "    echo 'Inside node'\n" +
+                        "  }\n" +
+                        "}\n" +
+                        "milestone()\n"));
+                WorkflowRun b3 = p.scheduleBuild2(0).waitForStart();
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b3));
             }
         });
     }
