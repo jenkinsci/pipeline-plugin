@@ -90,6 +90,7 @@ THE SOFTWARE.
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
+            <version>2.4.1</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -107,6 +108,7 @@ THE SOFTWARE.
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>mercurial</artifactId>
+            <version>1.54</version>
             <scope>test</scope>
         </dependency>
         <dependency> <!-- TODO kill -->

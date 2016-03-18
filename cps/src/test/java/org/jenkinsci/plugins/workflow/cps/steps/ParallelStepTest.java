@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.steps.parallel;
+package org.jenkinsci.plugins.workflow.cps.steps;
 
 import hudson.AbortException;
 import hudson.model.Result;
