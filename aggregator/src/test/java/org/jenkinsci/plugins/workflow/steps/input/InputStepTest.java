@@ -29,14 +29,11 @@ import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.model.BooleanParameterDefinition;
 import hudson.model.Job;
-import hudson.model.User;
 import hudson.model.queue.QueueTaskFuture;
 
 
 import java.util.List;
 
-import hudson.security.ACL;
-import hudson.security.GlobalMatrixAuthorizationStrategy;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
@@ -53,6 +50,7 @@ import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.util.Arrays;
+import org.jvnet.hudson.test.MockAuthorizationStrategy;
 
 /**
  * @author Kohsuke Kawaguchi
@@ -131,30 +129,19 @@ public class InputStepTest extends Assert {
     @Issue("JENKINS-26363")
     public void test_cancel_run_by_input() throws Exception {
         JenkinsRule.WebClient webClient = j.createWebClient();
-        JenkinsRule.DummySecurityRealm dummySecurityRealm = j.createDummySecurityRealm();
-        GlobalMatrixAuthorizationStrategy authorizationStrategy = new GlobalMatrixAuthorizationStrategy();
-
-        j.jenkins.setSecurityRealm(dummySecurityRealm);
-
+        j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
+        j.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy().
         // Only give "alice" basic privs. That's normally not enough to Job.CANCEL, only for the fact that "alice"
         // is listed as the submitter.
-        addUserWithPrivs("alice", authorizationStrategy);
+            grant(Jenkins.READ, Job.READ).everywhere().to("alice").
         // Only give "bob" basic privs.  That's normally not enough to Job.CANCEL and "bob" is not the submitter,
         // so they should be rejected.
-        addUserWithPrivs("bob", authorizationStrategy);
+            grant(Jenkins.READ, Job.READ).everywhere().to("bob").
         // Give "charlie" basic privs + Job.CANCEL.  That should allow user3 cancel.
-        addUserWithPrivs("charlie", authorizationStrategy);
-        authorizationStrategy.add(Job.CANCEL, "charlie");
-
-        j.jenkins.setAuthorizationStrategy(authorizationStrategy);
+            grant(Jenkins.READ, Job.READ, Job.CANCEL).everywhere().to("charlie"));
 
         final WorkflowJob foo = j.jenkins.createProject(WorkflowJob.class, "foo");
-        ACL.impersonate(User.get("alice").impersonate(), new Runnable() {
-            @Override
-            public void run() {
-                foo.setDefinition(new CpsFlowDefinition("input id: 'InputX', message: 'OK?', ok: 'Yes', submitter: 'alice'"));
-            }
-        });
+        foo.setDefinition(new CpsFlowDefinition("input id: 'InputX', message: 'OK?', ok: 'Yes', submitter: 'alice'", true));
 
         runAndAbort(webClient, foo, "alice", true);   // alice should work coz she's declared as 'submitter'
         runAndAbort(webClient, foo, "bob", false);    // bob shouldn't work coz he's not declared as 'submitter' and doesn't have Job.CANCEL privs
@@ -194,9 +181,4 @@ public class InputStepTest extends Assert {
         }
     }
 
-    private void addUserWithPrivs(String username, GlobalMatrixAuthorizationStrategy authorizationStrategy) {
-        authorizationStrategy.add(Jenkins.READ, username);
-        authorizationStrategy.add(Jenkins.RUN_SCRIPTS, username);
-        authorizationStrategy.add(Job.READ, username);
-    }
 }

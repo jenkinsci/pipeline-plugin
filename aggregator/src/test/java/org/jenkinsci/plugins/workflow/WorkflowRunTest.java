@@ -34,7 +34,6 @@ import hudson.model.StringParameterValue;
 import hudson.model.User;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.security.ACL;
-import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.security.Permission;
 import java.io.File;
 import java.io.IOException;
@@ -61,6 +60,7 @@ import org.junit.Test;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.MockAuthorizationStrategy;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 public class WorkflowRunTest {
@@ -168,12 +168,9 @@ public class WorkflowRunTest {
 
     @Test public void scriptApproval() throws Exception {
         r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
-        GlobalMatrixAuthorizationStrategy gmas = new GlobalMatrixAuthorizationStrategy();
-        gmas.add(Jenkins.READ, "devel");
-        for (Permission p : Item.PERMISSIONS.getPermissions()) {
-            gmas.add(p, "devel");
-        }
-        r.jenkins.setAuthorizationStrategy(gmas);
+        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy().
+            grant(Jenkins.READ).everywhere().to("devel").
+            grant(Item.PERMISSIONS.getPermissions().toArray(new Permission[0])).everywhere().to("devel"));
         final WorkflowJob p = r.jenkins.createProject(WorkflowJob.class, "p");
         final String groovy = "println 'hello'";
         ACL.impersonate(User.get("devel").impersonate(), new Runnable() {

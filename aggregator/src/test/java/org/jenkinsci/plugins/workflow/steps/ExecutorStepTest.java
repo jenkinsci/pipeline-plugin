@@ -32,7 +32,6 @@ import hudson.model.labels.LabelAtom;
 import hudson.remoting.Launcher;
 import hudson.remoting.Which;
 import hudson.security.ACL;
-import hudson.security.GlobalMatrixAuthorizationStrategy;
 import hudson.slaves.DumbSlave;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.slaves.JNLPLauncher;
@@ -71,6 +70,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.MockAuthorizationStrategy;
 
 /** Tests pertaining to {@code node} and {@code sh} steps. */
 public class ExecutorStepTest extends SingleJobTestBase {
@@ -388,9 +388,7 @@ public class ExecutorStepTest extends SingleJobTestBase {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 jenkins().setSecurityRealm(story.j.createDummySecurityRealm());
-                GlobalMatrixAuthorizationStrategy gmas = new GlobalMatrixAuthorizationStrategy();
-                gmas.add(Jenkins.ADMINISTER, "admin");
-                jenkins().setAuthorizationStrategy(gmas);
+                jenkins().setAuthorizationStrategy(new MockAuthorizationStrategy().grant(Jenkins.ADMINISTER).everywhere().to("admin"));
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition("node('nonexistent') {}", true));
                 startBuilding();
