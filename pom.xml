@@ -49,7 +49,7 @@
       <tag>HEAD</tag>
   </scm>
     <properties>
-        <jenkins.version>1.642.1</jenkins.version>
+        <jenkins.version>1.642.3</jenkins.version>
         <jenkins-test-harness.version>2.1</jenkins-test-harness.version>
     </properties>
     <modules>
