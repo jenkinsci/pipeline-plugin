@@ -28,7 +28,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins.workflow</groupId> <!-- TODO go straight to regular parent -->
         <artifactId>workflow-pom</artifactId>
-        <version>1.16-SNAPSHOT</version>
+        <version>2.0-SNAPSHOT</version>
     </parent>
     <artifactId>workflow-cps</artifactId>
     <packaging>hpi</packaging>
@@ -126,7 +126,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-scm-step</artifactId>
-            <version>1.16-SNAPSHOT</version>
+            <version>2.0-SNAPSHOT</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
