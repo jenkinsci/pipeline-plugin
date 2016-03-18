@@ -13,9 +13,6 @@ out
 .project
 .settings
 
-demo/snapshot/plugins/
-
-node
-node_modules
-generates-adjuncts
+cps/node/
+cps/node_modules/
 pom.xml.versionsBackup

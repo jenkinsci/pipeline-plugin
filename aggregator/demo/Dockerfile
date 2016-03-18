@@ -1,3 +1,4 @@
+# TODO use 1.642.3 when released
 FROM jenkins:1.642.1
 
 USER root
@@ -18,8 +19,7 @@ RUN chown -R jenkins /opt/jetty/logs
 RUN chown -R jenkins /opt/jetty/webapps
 
 ENV JENKINS_UC http://jenkins-updates.cloudbees.com
-COPY workflow-version.txt plugins.txt /tmp/files/
-RUN sed -i "s/@VERSION@/`cat /tmp/files/workflow-version.txt`/g" /tmp/files/plugins.txt
+COPY plugins.txt /tmp/files/
 USER jenkins
 RUN /usr/local/bin/plugins.sh /tmp/files/plugins.txt
 

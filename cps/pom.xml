@@ -26,7 +26,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.jenkins-ci.plugins.workflow</groupId>
+        <groupId>org.jenkins-ci.plugins.workflow</groupId> <!-- TODO go straight to regular parent -->
         <artifactId>workflow-pom</artifactId>
         <version>1.16-SNAPSHOT</version>
     </parent>
@@ -41,22 +41,22 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-step-api</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-api</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-support</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-scm-step</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -69,14 +69,14 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-support</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-basic-steps</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -118,10 +118,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <executions>
-                    <!-- 
-                        TODO currently, the workflow-job module depends on tests from here; this dependency should probably be broken.
-                    -->
+                <executions> <!-- TODO currently, the workflow-job module depends on tests from here; this dependency should probably be broken -->
                     <execution>
                         <goals>
                             <goal>test-jar</goal>

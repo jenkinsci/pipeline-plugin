@@ -62,10 +62,10 @@
         <module>cps</module>
         <module>cps-global-lib</module>
         <module>job</module>
-        <module>aggregator</module>
         <module>multibranch</module>
+        <module>aggregator</module>
     </modules>
-    <dependencyManagement>
+    <dependencyManagement> <!-- TODO perhaps inline -->
         <dependencies>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
@@ -116,7 +116,7 @@
                     <providerSelection>1.8</providerSelection>
                 </configuration>
             </plugin>
-            <plugin>
+            <plugin> <!-- TODO perhaps delete -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <configuration>
