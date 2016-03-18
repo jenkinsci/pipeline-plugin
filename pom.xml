@@ -64,31 +64,6 @@
         <module>cps-global-lib</module>
         <module>aggregator</module>
     </modules>
-    <dependencyManagement> <!-- TODO perhaps inline -->
-        <dependencies>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>script-security</artifactId>
-                <version>1.16</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>durable-task</artifactId>
-                <version>1.5</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>scm-api</artifactId>
-                <version>1.1</version>
-            </dependency>
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-all</artifactId>
-                <version>1.9.5</version>
-                <scope>test</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
     <build>
         <plugins>
             <plugin>
