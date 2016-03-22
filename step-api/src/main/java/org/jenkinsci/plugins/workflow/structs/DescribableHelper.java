@@ -64,6 +64,7 @@ import net.java.sezpoz.IndexItem;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.codehaus.groovy.reflection.ReflectionCache;
+import org.jenkinsci.plugins.structs.describable.DescribableModel;
 import org.kohsuke.stapler.ClassDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -73,6 +74,9 @@ import org.kohsuke.stapler.lang.Klass;
 /**
  * Utility for converting between {@link Describable}s (and some other objects) and map-like representations.
  * Ultimately should live in Jenkins core (or Stapler).
+ *
+ * @deprecated
+ *      Moved to the structs plugin. See {@link DescribableModel}
  */
 public class DescribableHelper {
 
