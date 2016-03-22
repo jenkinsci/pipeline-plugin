@@ -194,7 +194,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
                 return;
             }
             Milestone m = getFirstWithoutInSight(milestonesInJob);
-            while (m != null && milestonesInJob.size() > lastMilestoneOrdinal) {
+            while (m != null && milestonesInJob.size() - 1 > lastMilestoneOrdinal) {
                 modified = true;
                 milestonesInJob.remove(m.ordinal);
                 m = getFirstWithoutInSight(milestonesInJob);
@@ -218,6 +218,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
             List<FlowNode> heads = owner.get().getCurrentHeads();
             if (heads.size() == 1) {
                 FlowGraphWalker walker = new FlowGraphWalker();
+                walker.addHead(heads.get(0));
                 for (FlowNode n : walker) {
                     OrdinalAction action = n.getAction(OrdinalAction.class);
                     if (action != null) {
