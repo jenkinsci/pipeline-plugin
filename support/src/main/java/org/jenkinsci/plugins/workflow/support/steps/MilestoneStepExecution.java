@@ -5,6 +5,7 @@ import static java.util.logging.Level.WARNING;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -184,8 +185,68 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         }
         if (modified) {
             cleanUp(job, jobName);
+        }
+
+        // Clean non-existing milestones
+        if (r instanceof FlowExecutionOwner.Executable) {
+            Integer lastMilestoneOrdinal = getLastOrdinalInBuild(r);
+            if (lastMilestoneOrdinal == null) {
+                return;
+            }
+            Milestone m = getFirstWithoutInSight(milestonesInJob);
+            while (m != null && milestonesInJob.size() > lastMilestoneOrdinal) {
+                modified = true;
+                milestonesInJob.remove(m.ordinal);
+                m = getFirstWithoutInSight(milestonesInJob);
+            }
+            if (milestonesInJob.isEmpty()) {
+                modified = true;
+                milestonesByOrdinalByJob.remove(jobName);
+            }
+        }
+
+        if (modified) {
             save();
         }
+    }
+
+    @CheckForNull
+    private static Integer getLastOrdinalInBuild(Run<?, ?> r) {
+        int lastMilestoneOrdinal = 0;
+        FlowExecutionOwner owner = ((FlowExecutionOwner.Executable) r).asFlowExecutionOwner();
+        try {
+            List<FlowNode> heads = owner.get().getCurrentHeads();
+            if (heads.size() == 1) {
+                FlowGraphWalker walker = new FlowGraphWalker();
+                for (FlowNode n : walker) {
+                    OrdinalAction action = n.getAction(OrdinalAction.class);
+                    if (action != null) {
+                        lastMilestoneOrdinal = action.ordinal;
+                        break;
+                    }
+                }
+            } else {
+                LOGGER.log(Level.WARNING, "Trying to get last ordinal for a build still in progress?");
+                return null;
+            }
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Failed to traverse flow graph to search the last milestone ordinal", e);
+        }
+        return lastMilestoneOrdinal;
+    }
+
+    /**
+     * Returns the first milestone without any build in sight or null if not found.
+     */
+    @CheckForNull
+    private static Milestone getFirstWithoutInSight(Map<Integer, Milestone> milestones) {
+        for (Entry<Integer, Milestone> entry : milestones.entrySet()) {
+            Milestone m = entry.getValue();
+            if (m.inSight.isEmpty()) {
+                return m;
+            }
+        }
+        return null;
     }
 
     /**
