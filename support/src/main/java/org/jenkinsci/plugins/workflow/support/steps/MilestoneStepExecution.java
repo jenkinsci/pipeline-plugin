@@ -214,6 +214,9 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
     private static Integer getLastOrdinalInBuild(Run<?, ?> r) {
         int lastMilestoneOrdinal = 0;
         FlowExecutionOwner owner = ((FlowExecutionOwner.Executable) r).asFlowExecutionOwner();
+        if (owner == null) {
+            return null;
+        }
         try {
             List<FlowNode> heads = owner.get().getCurrentHeads();
             if (heads.size() == 1) {
