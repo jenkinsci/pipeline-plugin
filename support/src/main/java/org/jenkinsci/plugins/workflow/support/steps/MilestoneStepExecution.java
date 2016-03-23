@@ -126,7 +126,7 @@ public class MilestoneStepExecution extends AbstractSynchronousStepExecution<Voi
             milestonesInJob.put(ordinal, milestone);
         }
 
-        // Unblock the previous milestone
+        // Defensive order check and cancel older builds behind
         for (Map.Entry<Integer, Milestone> entry : milestonesInJob.entrySet()) {
             if (entry.getKey().equals(ordinal)) {
                 continue;
@@ -252,11 +252,17 @@ public class MilestoneStepExecution extends AbstractSynchronousStepExecution<Voi
         for (Integer inSightNumber : milestone.inSight) {
             if (r.getNumber() > inSightNumber) {
                 Run<?, ?> olderInSightBuild = r.getParent().getBuildByNumber(inSightNumber);
-                Executor e = olderInSightBuild.getExecutor();
-                if (e != null) {
-                    e.interrupt(Result.NOT_BUILT, new CanceledCause(r.getExternalizableId()));
-                } else{
-                    LOGGER.log(WARNING, "could not cancel an older flow because it has no assigned executor");
+                if (olderInSightBuild instanceof FlowExecutionOwner.Executable) {
+                    FlowExecutionOwner owner = ((FlowExecutionOwner.Executable) olderInSightBuild).asFlowExecutionOwner();
+                    if (owner != null) {
+                        try {
+                            owner.get().interrupt(Result.NOT_BUILT, new CanceledCause(r.getExternalizableId()));
+                        } catch (Exception e) {
+                            LOGGER.log(WARNING, "could not cancel [" + olderInSightBuild.getExternalizableId() + "]", e);
+                        }
+                    } else {
+                        LOGGER.log(WARNING, "could not cancel [" + olderInSightBuild.getExternalizableId() + "] because it has no FlowExecutionOwner.");
+                    }
                 }
             }
         }

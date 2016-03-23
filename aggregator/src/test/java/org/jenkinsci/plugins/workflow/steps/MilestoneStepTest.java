@@ -74,8 +74,7 @@ public class MilestoneStepTest {
                 story.j.waitForCompletion(b2);
 
                 // Once #2 continues and passes milestone 2 then #1 is automatically cancelled
-                // TODO: determine why it's getting ABORTED instead of NOT_BUILT
-                story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b1));
+                story.j.assertBuildStatus(Result.NOT_BUILT, story.j.waitForCompletion(b1));
             }
         });
     }
@@ -102,8 +101,7 @@ public class MilestoneStepTest {
                 story.j.waitForCompletion(b2);
 
                 // Once #2 finishes, so it passes the virtual ad-inifinitum milestone, then #1 is automatically cancelled
-                // TODO: determine why it's getting ABORTED instead of NOT_BUILT
-                story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b1));
+                story.j.assertBuildStatus(Result.NOT_BUILT, story.j.waitForCompletion(b1));
             }
         });
     }
