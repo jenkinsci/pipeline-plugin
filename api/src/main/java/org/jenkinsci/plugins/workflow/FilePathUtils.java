@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2013-2014, CloudBees, Inc.
+ * Copyright 2016 CloudBees, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +22,12 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.support.pickles;
+package org.jenkinsci.plugins.workflow;
 
-import org.jenkinsci.plugins.workflow.pickles.Pickle;
-import com.google.common.util.concurrent.ListenableFuture;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Computer;
+import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
@@ -39,64 +38,82 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-import javax.annotation.Nonnull;
-
 /**
- * @author Kohsuke Kawaguchi
+ * Candidates for inclusion in {@link FilePath}.
+ * TODO JENKINS-26096
  */
-public class FilePathPickle extends Pickle {
+public class FilePathUtils {
 
-    private static final Logger LOGGER = Logger.getLogger(FilePathPickle.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(FilePathUtils.class.getName());
 
-    private final String slave;
-    private final String path;
-
-    private FilePathPickle(FilePath v) {
-        // TODO JENKINS-26096 switch to FilePath.toComputer once it uses something like Listener here and so is actually reliable
-        slave = Listener.getChannelName(v.getChannel());
-        if (slave == null) {
-            throw new IllegalStateException("no known slave for " + v);
-        }
-        path = v.getRemote();
+    /**
+     * Looks up the {@link Node#getNodeName} corresponding to a given file.
+     * Compared to {@link FilePath#toComputer} this has two advantages:
+     * <ul>
+     * <li>it will still report a configured agent name even if the agent was subsequently disconnected (i.e., the {@link FilePath} is invalid)
+     * <li>it will still report a node name even if the agent is connected but currently has no executors
+     * </ul>
+     * Note that if an administrator disconnects an agent, configures and connects an unrelated agent with the same name,
+     * and then this method is called on a path created against the original connection, the result may be misleading.
+     * @param f a file, possibly remote
+     * @return a node name ({@code ""} for master), if known, else null
+     */
+    public static @CheckForNull String getNodeNameOrNull(@Nonnull FilePath f) {
+        return Listener.getChannelName(f.getChannel());
     }
 
-    @Override
-    public ListenableFuture<FilePath> rehydrate() {
-        return new TryRepeatedly<FilePath>(1) {
-            @Override
-            protected FilePath tryResolve() {
-                Jenkins j = Jenkins.getInstance();
-                if (j == null) {
-                    return null;
-                }
-                Computer c = j.getComputer(slave);
-                if (c == null) {
-                    return null;
-                }
-                VirtualChannel ch = c.getChannel();
-                if (ch == null) return null;
-                return new FilePath(ch, path);
-            }
-        };
-    }
-
-    @Extension public static final class Factory extends SingleTypedPickleFactory<FilePath> {
-        @Override protected Pickle pickle(FilePath object) {
-            return new FilePathPickle(object);
+    /**
+     * Same as {@link #getNodeNameOrNull} but throws a diagnostic exception in case of failure.
+     * @param f a file, possible remote
+     * @return a node name ({@code ""} for master), if known
+     * @throws IllegalStateException if the association to a node is unknown
+     */
+    public static @Nonnull String getNodeName(@Nonnull FilePath f) throws IllegalStateException {
+        String name = getNodeNameOrNull(f);
+        if (name != null) {
+            return name;
+        } else {
+            throw new IllegalStateException("no known slave for " + f + " among " + Listener.getChannelNames());
         }
     }
 
+    /**
+     * Attempts to create a live file handle based on persistable data.
+     * @param node a name as returned by {@link #getNodeName}
+     * @param path a path as returned by {@link FilePath#getRemote}
+     * @return a corresponding file handle, if a node with that name is online, else null
+     */
+    public static @CheckForNull FilePath find(@Nonnull String node, @Nonnull String path) {
+        Jenkins j = Jenkins.getInstance();
+        if (j == null) {
+            return null;
+        }
+        Computer c = j.getComputer(node);
+        if (c == null) {
+            return null;
+        }
+        VirtualChannel ch = c.getChannel();
+        if (ch == null) {
+            return null;
+        }
+        return new FilePath(ch, path);
+    }
+
+    private FilePathUtils() {}
+
+    @Restricted(NoExternalUse.class)
     @Extension public static final class Listener extends ComputerListener {
-        @Restricted(NoExternalUse.class)
-        private static final Map<VirtualChannel,String> channelNames = new WeakHashMap<VirtualChannel,String>();
+
+        private static final Map<VirtualChannel,String> channelNames = new WeakHashMap<>();
 
         // TODO: sync access?
-        public static String getChannelName(@Nonnull VirtualChannel channel) {
+        static String getChannelName(@Nonnull VirtualChannel channel) {
             String channelName = channelNames.get(channel);
 
             if (channelName == null) {
@@ -117,7 +134,7 @@ public class FilePathPickle extends Pickle {
             return channelName;
         }
 
-        public static Collection<String> getChannelNames() {
+        static Collection<String> getChannelNames() {
             return channelNames.values();
         }
 

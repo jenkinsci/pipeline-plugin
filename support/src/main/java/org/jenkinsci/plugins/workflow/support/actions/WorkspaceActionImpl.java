@@ -39,7 +39,7 @@ import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.actions.FlowNodeAction;
 import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
-import org.jenkinsci.plugins.workflow.support.pickles.FilePathPickle;
+import org.jenkinsci.plugins.workflow.FilePathUtils;
 
 public final class WorkspaceActionImpl extends WorkspaceAction implements FlowNodeAction {
 
@@ -51,11 +51,7 @@ public final class WorkspaceActionImpl extends WorkspaceAction implements FlowNo
     private transient FlowNode parent;
 
     public WorkspaceActionImpl(FilePath workspace, FlowNode parent) {
-        // TODO see FilePathPickle:
-        node = FilePathPickle.Listener.getChannelName(workspace.getChannel());
-        if (node == null) {
-            throw new IllegalStateException("no known slave for " + workspace + " among " + FilePathPickle.Listener.getChannelNames());
-        }
+        node = FilePathUtils.getNodeName(workspace);
         Jenkins j = Jenkins.getInstance();
         Node n = j == null ? null : node.isEmpty() ? j : j.getNode(node);
         labels = new TreeSet<LabelAtom>();

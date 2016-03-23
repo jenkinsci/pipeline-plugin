@@ -31,6 +31,7 @@ import hudson.model.Computer;
 import hudson.remoting.VirtualChannel;
 import hudson.slaves.WorkspaceList;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.FilePathUtils;
 import org.jenkinsci.plugins.workflow.pickles.Pickle;
 
 public class WorkspaceListLeasePickle extends Pickle {
@@ -40,11 +41,7 @@ public class WorkspaceListLeasePickle extends Pickle {
     private final String path;
 
     private WorkspaceListLeasePickle(WorkspaceList.Lease lease) {
-        // TODO see FilePathPickle:
-        slave = FilePathPickle.Listener.getChannelName(lease.path.getChannel());
-        if (slave == null) {
-            throw new IllegalStateException("no known slave for " + lease.path);
-        }
+        slave = FilePathUtils.getNodeNameOrNull(lease.path);
         path = lease.path.getRemote();
     }
 
@@ -55,6 +52,8 @@ public class WorkspaceListLeasePickle extends Pickle {
                 if (j == null) {
                     return null;
                 }
+                // FilePathUtils.find not useful here since we need c anyway, and cannot easily return a tuple
+                // (could call toComputer on result but then we iterate computers twice, a possible race condition)
                 Computer c = j.getComputer(slave);
                 if (c == null) {
                     return null;
