@@ -24,15 +24,14 @@ import org.jenkinsci.plugins.workflow.graph.BlockStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.graph.FlowStartNode;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepExecutionImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.DoNotUse;
 
 import com.google.inject.Inject;
 
+import hudson.AbortException;
 import hudson.Extension;
 import hudson.XmlFile;
 import hudson.model.Executor;
@@ -45,7 +44,7 @@ import hudson.model.listeners.RunListener;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.Jenkins;
 
-public class MilestoneStepExecution extends AbstractStepExecutionImpl {
+public class MilestoneStepExecution extends AbstractSynchronousStepExecution<Void> {
 
     private static final Logger LOGGER = Logger.getLogger(MilestoneStepExecution.class.getName());
 
@@ -54,19 +53,20 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
     @StepContextParameter private transient FlowNode node;
     @StepContextParameter private transient TaskListener listener;
 
-    private static Map<String, Map<Integer, Milestone>> milestonesByOrdinalByJob;
-
     @Override
-    public boolean start() throws Exception {
+    public Void run() throws Exception {
         if (step.getLabel() != null) {
             node.addAction(new LabelAction(step.getLabel()));
         }
-        Integer ordinal = processOrdinal();
+        int ordinal = processOrdinal();
         tryToPass(run, getContext(), ordinal);
-        return true;
+        return null;
     }
 
-    private synchronized Integer processOrdinal() {
+    /**
+     * Gets the next ordinal and throw {@link AbortException} the milestone lives inside a parallel step branch.
+     */
+    private synchronized int processOrdinal() throws AbortException {
         FlowGraphWalker walker = new FlowGraphWalker();
         walker.addHead(node);
         Integer previousOrdinal = null;
@@ -74,8 +74,8 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         for (FlowNode n : walker) {
 
             if (parallelDetectionEnabled <= 0 && n.getAction(ThreadNameAction.class) != null) {
-                listener.getLogger().println("Milestone step found inside pararallel, it's not possible to grant ordering in this case.");
-                throw new MilestoneStepException("Using a milestone step inside parallel is not allowed");
+                listener.getLogger().println("Milestone step found inside parallel, it's not possible to grant ordering in this case.");
+                throw new AbortException("Using a milestone step inside parallel is not allowed");
             }
 
             if (n instanceof BlockEndNode) {
@@ -90,7 +90,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
                 break;
             }
         }
-        Integer nextOrdinal = 0;
+        int nextOrdinal = 0;
         if (previousOrdinal != null) {
             nextOrdinal = previousOrdinal + 1;
         }
@@ -105,27 +105,20 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         }
     }
 
-    // Used in tests only (where the static context is kept between tests somehow)
-    @Restricted(DoNotUse.class)
-    public static void clear() {
-        milestonesByOrdinalByJob = null;
+    private static Map<String, Map<Integer, Milestone>> getMilestonesByOrdinalByJob() {
+        return MilestoneStep.DescriptorImpl.milestonesByOrdinalByJob;
     }
 
-    @Override
-    public void stop(Throwable cause) throws Exception {
-        throw new UnsupportedOperationException();
-    }
-
-    private static synchronized void tryToPass(Run<?,?> r, StepContext context, Integer ordinal) {
+    private static synchronized void tryToPass(Run<?,?> r, StepContext context, int ordinal) throws IOException, InterruptedException {
         LOGGER.log(Level.FINE, "build {0} trying to pass milestone {1}", new Object[] {r, ordinal});
         println(context, "Trying to pass milestone " + ordinal);
         load();
         Job<?,?> job = r.getParent();
         String jobName = job.getFullName();
-        Map<Integer, Milestone> milestonesInJob = milestonesByOrdinalByJob.get(jobName);
+        Map<Integer, Milestone> milestonesInJob = getMilestonesByOrdinalByJob().get(jobName);
         if (milestonesInJob == null) {
             milestonesInJob = new TreeMap<Integer,Milestone>();
-            milestonesByOrdinalByJob.put(jobName, milestonesInJob);
+            getMilestonesByOrdinalByJob().put(jobName, milestonesInJob);
         }
         Milestone milestone = milestonesInJob.get(ordinal);
         if (milestone == null) {
@@ -143,8 +136,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
             if (milestone2.wentAway(r)) {
                 // Ordering check
                 if(milestone2.ordinal != ordinal - 1) {
-                    throw new MilestoneStepException(
-                        String.format("Unordered milestone. Found ordinal %s but %s was expected.", ordinal, milestone2.ordinal + 1));
+                    throw new AbortException(String.format("Unordered milestone. Found ordinal %s but %s was expected.", ordinal, milestone2.ordinal + 1));
                 }
                 // Cancel older builds (holding or waiting to enter)
                 cancelOldersInSight(milestone2, r);
@@ -154,11 +146,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         // checking order
         if (milestone.lastBuild != null && r.getNumber() < milestone.lastBuild) {
             // cancel if it's older than the last one passing this milestone
-            try {
-                cancel(context, milestone.lastBuild, milestone.lastBuildExternalizableId);
-            } catch (Exception x) {
-                LOGGER.log(WARNING, "could not cancel the current flow", x);
-            }
+            cancel(context, milestone.lastBuild);
         } else {
             // It's in-order, proceed
             milestone.pass(context, r);
@@ -169,10 +157,10 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
 
     private static synchronized void exit(Run<?,?> r) {
         load();
-        LOGGER.log(Level.FINE, "exit {0}: {1}", new Object[] {r, milestonesByOrdinalByJob});
+        LOGGER.log(Level.FINE, "exit {0}: {1}", new Object[] {r, getMilestonesByOrdinalByJob()});
         Job<?,?> job = r.getParent();
         String jobName = job.getFullName();
-        Map<Integer, Milestone> milestonesInJob = milestonesByOrdinalByJob.get(jobName);
+        Map<Integer, Milestone> milestonesInJob = getMilestonesByOrdinalByJob().get(jobName);
         if (milestonesInJob == null) {
             return;
         }
@@ -201,7 +189,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
             }
             if (milestonesInJob.isEmpty()) {
                 modified = true;
-                milestonesByOrdinalByJob.remove(jobName);
+                getMilestonesByOrdinalByJob().remove(jobName);
             }
         }
 
@@ -286,17 +274,22 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         }
     }
 
-    private static void cancel(StepContext context, Integer build, String buildExternalizableId) throws IOException, InterruptedException {
+    private static void cancel(StepContext context, Integer build) throws IOException, InterruptedException {
         if (context.isReady()) {
             println(context, "Canceled since build #" + build + " already got here");
-            context.onFailure(new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(buildExternalizableId)));
+            Run<?, ?> r = context.get(Run.class);
+            String job = "";
+            if (r != null) { // it should be always non-null at this point, but let's do a defensive check
+                job = r.getParent().getFullName();
+            }
+            throw new FlowInterruptedException(Result.NOT_BUILT, new CanceledCause(job + "#" + build));
         } else {
-            LOGGER.log(WARNING, "cannot cancel dead " + buildExternalizableId);
+            LOGGER.log(WARNING, "cannot cancel dead #" + build);
         }
     }
 
     private static void cleanUp(Job<?,?> job, String jobName) {
-        Map<Integer, Milestone> milestonesInJob = milestonesByOrdinalByJob.get(jobName);
+        Map<Integer, Milestone> milestonesInJob = getMilestonesByOrdinalByJob().get(jobName);
         assert milestonesInJob != null;
         Iterator<Entry<Integer, Milestone>> it = milestonesInJob.entrySet().iterator();
         while (it.hasNext()) {
@@ -317,27 +310,27 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
 
     @SuppressWarnings("unchecked")
     private static synchronized void load() {
-        if (milestonesByOrdinalByJob == null) {
-            milestonesByOrdinalByJob = new TreeMap<String, Map<Integer, Milestone>>();
+        if (getMilestonesByOrdinalByJob() == null) {
+            MilestoneStep.DescriptorImpl.milestonesByOrdinalByJob = new TreeMap<String, Map<Integer, Milestone>>();
             try {
                 XmlFile configFile = getConfigFile();
                 if (configFile.exists()) {
-                    milestonesByOrdinalByJob = (Map<String, Map<Integer, Milestone>>) configFile.read();
+                    MilestoneStep.DescriptorImpl.milestonesByOrdinalByJob = (Map<String, Map<Integer, Milestone>>) configFile.read();
                 }
             } catch (IOException x) {
                 LOGGER.log(WARNING, null, x);
             }
-            LOGGER.log(Level.FINE, "load: {0}", milestonesByOrdinalByJob);
+            LOGGER.log(Level.FINE, "load: {0}", getMilestonesByOrdinalByJob());
         }
     }
 
     private static synchronized void save() {
         try {
-            getConfigFile().write(milestonesByOrdinalByJob);
+            getConfigFile().write(getMilestonesByOrdinalByJob());
         } catch (IOException x) {
             LOGGER.log(WARNING, null, x);
         }
-        LOGGER.log(Level.FINE, "save: {0}", milestonesByOrdinalByJob);
+        LOGGER.log(Level.FINE, "save: {0}", getMilestonesByOrdinalByJob());
     }
 
     private static XmlFile getConfigFile() throws IOException {
@@ -358,7 +351,7 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         }
     }
 
-    private static final class Milestone {
+    static final class Milestone {
 
         /**
          * Milestone ordinal.
@@ -376,25 +369,17 @@ public class MilestoneStepExecution extends AbstractStepExecutionImpl {
         @CheckForNull
         Integer lastBuild;
 
-        /**
-         * Last build extenalizable ID hat passed through the milestone, or null if none passed yet.
-         */
-        @CheckForNull
-        String lastBuildExternalizableId;
-
         Milestone(Integer ordinal) {
             this.ordinal = ordinal;
         }
 
         @Override public String toString() {
-            return "Milestone[inSight=" + inSight + ", lastBuildExternalizableId=" + lastBuildExternalizableId + "]";
+            return "Milestone[inSight=" + inSight + "]";
         }
 
         public void pass(StepContext context, Run<?, ?> build) {
             lastBuild = build.getNumber();
-            lastBuildExternalizableId = build.getExternalizableId();
             inSight.add(build.getNumber());
-            context.onSuccess(null);
         }
 
         /**

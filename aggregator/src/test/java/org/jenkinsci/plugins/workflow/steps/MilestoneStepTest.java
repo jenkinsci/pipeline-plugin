@@ -3,17 +3,13 @@ package org.jenkinsci.plugins.workflow.steps;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.support.steps.MilestoneStepExecution;
 import org.jenkinsci.plugins.workflow.test.steps.SemaphoreStep;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
-
-import static org.junit.Assert.*;
 
 import hudson.model.Result;
 
@@ -24,11 +20,6 @@ public class MilestoneStepTest {
 
     @Rule
     public RestartableJenkinsRule story = new RestartableJenkinsRule();
-
-    @Before
-    public void clear() {
-        MilestoneStepExecution.clear();
-    }
 
     @Test
     public void buildsMustPassThroughInOrder() {
@@ -53,7 +44,7 @@ public class MilestoneStepTest {
                 SemaphoreStep.success("inorder/2", null);
                 story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b2));
 
-                // Let #1 continue, so it must be early cancelled since #2 already went into milestone 1
+                // Let #1 continue, so it must be early cancelled since #2 already passed through milestone 1
                 SemaphoreStep.success("inorder/1", null);
                 story.j.assertBuildStatus(Result.NOT_BUILT, story.j.waitForCompletion(b1));
                 story.j.assertLogNotContains("Passed first milestone", b1);
@@ -76,13 +67,13 @@ public class MilestoneStepTest {
                 SemaphoreStep.waitForStart("wait/1", b1);
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("wait/2", b2);
-                // Now both #1 and #2 are into milestone 1
+                // Now both #1 and #2 passed milestone 1
 
-                // Let #2 continue so it leaves milestone 1
+                // Let #2 continue so it goes away from milestone 1 (and passes milestone 2)
                 SemaphoreStep.success("wait/2", null);
                 story.j.waitForCompletion(b2);
 
-                // Once #2 continues and reaches milestone 2 then #1 is automatically cancelled
+                // Once #2 continues and passes milestone 2 then #1 is automatically cancelled
                 // TODO: determine why it's getting ABORTED instead of NOT_BUILT
                 story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b1));
             }
@@ -104,13 +95,13 @@ public class MilestoneStepTest {
                 SemaphoreStep.waitForStart("wait/1", b1);
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("wait/2", b2);
-                // Now both #1 and #2 are into milestone 1
+                // Now both #1 and #2 passed milestone 1
 
-                // Let #2 continue so it leaves milestone 1
+                // Let #2 continue
                 SemaphoreStep.success("wait/2", null);
                 story.j.waitForCompletion(b2);
 
-                // Once #2 continues and leaves milestone 1 then #1 is automatically cancelled
+                // Once #2 finishes, so it passes the virtual ad-inifinitum milestone, then #1 is automatically cancelled
                 // TODO: determine why it's getting ABORTED instead of NOT_BUILT
                 story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b1));
             }
@@ -133,7 +124,7 @@ public class MilestoneStepTest {
                         "milestone()\n"));
                 WorkflowRun b1 = p.scheduleBuild2(0).waitForStart();
                 story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b1));
-                story.j.assertLogContains("Milestone step found inside pararallel", b1);
+                story.j.assertLogContains("Milestone step found inside parallel", b1);
 
                 p.setDefinition(new CpsFlowDefinition(
                         "sleep 1\n" +
@@ -146,7 +137,7 @@ public class MilestoneStepTest {
                         "milestone()\n"));
                 WorkflowRun b2 = p.scheduleBuild2(0).waitForStart();
                 story.j.assertBuildStatus(Result.FAILURE, story.j.waitForCompletion(b2));
-                story.j.assertLogContains("Milestone step found inside pararallel", b2);
+                story.j.assertLogContains("Milestone step found inside parallel", b2);
 
                 p.setDefinition(new CpsFlowDefinition(
                         "sleep 1\n" +
