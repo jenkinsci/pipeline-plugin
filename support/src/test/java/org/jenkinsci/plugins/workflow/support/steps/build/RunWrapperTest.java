@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.steps.build;
+package org.jenkinsci.plugins.workflow.support.steps.build;
 
 import hudson.model.Result;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;

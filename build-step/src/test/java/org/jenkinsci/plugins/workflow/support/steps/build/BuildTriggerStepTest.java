@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.workflow.steps.build;
+package org.jenkinsci.plugins.workflow.support.steps.build;
 
 import hudson.model.Action;
 import hudson.model.BooleanParameterDefinition;

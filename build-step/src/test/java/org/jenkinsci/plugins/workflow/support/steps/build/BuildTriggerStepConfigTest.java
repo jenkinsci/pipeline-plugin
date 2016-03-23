@@ -31,7 +31,7 @@ import org.junit.Rule;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
-public class BuildTriggerStepTest {
+public class BuildTriggerStepConfigTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
