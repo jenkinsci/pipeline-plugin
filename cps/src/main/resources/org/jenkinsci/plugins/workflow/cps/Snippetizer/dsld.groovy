@@ -2,32 +2,31 @@ package org.jenkinsci.plugins.workflow.cps.Snippetizer
 
 import hudson.FilePath
 import hudson.Functions
+import org.jenkinsci.plugins.structs.describable.DescribableModel
 import org.jenkinsci.plugins.workflow.cps.GlobalVariable
 import org.jenkinsci.plugins.workflow.cps.Snippetizer
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper.Schema
 
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
 Snippetizer snippetizer = my;
 
-Map<StepDescriptor,Schema> steps = new LinkedHashMap<StepDescriptor, Schema>();
+Map<StepDescriptor,DescribableModel> steps = new LinkedHashMap<StepDescriptor, DescribableModel>();
 
 def errorSteps = [:]
 
 [false, true].each { isAdvanced ->
     snippetizer.getStepDescriptors(isAdvanced).each { d ->
-        Schema schema
+        DescribableModel model
         try {
-            schema = DescribableHelper.schemaFor(d.clazz)
+            model = new DescribableModel(d.clazz)
         } catch (Exception e) {
             println "Error on ${d.clazz}: ${Functions.printThrowable(e)}"
             errorSteps.put(d.clazz, e.message)
         }
-        if (schema != null) {
-            steps.put(d, schema)
+        if (model != null) {
+            steps.put(d, model)
         }
 
     }
@@ -36,13 +35,13 @@ def errorSteps = [:]
 def nodeContext = []
 def scriptContext = []
 
-steps.each { StepDescriptor step, Schema schema ->
-    def params = schema.mandatoryParameters().collectEntries { p ->
-        [p, objectTypeToMap(fetchActualClass(schema.parameters().get(p).actualType))]
+steps.each { StepDescriptor step, DescribableModel model ->
+    def params = [:], opts = [:]
+
+    model.parameters.each { p ->
+        ( p.required ? params : opts )[p.name] = objectTypeToMap(fetchActualClass(p.rawType))
     }
-    def opts = schema.parameters().keySet().findAll { !(it in schema.mandatoryParameters()) }.collectEntries { k ->
-        [k, objectTypeToMap(fetchActualClass(schema.parameters().get(k).actualType))]
-    }
+
 
     boolean requiresNode = step.requiredContext.contains(FilePath)
     boolean takesClosure = step.takesImplicitBlockArgument()

@@ -48,13 +48,14 @@ import java.util.logging.Logger;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import static org.hamcrest.CoreMatchers.*;
+
+import org.jenkinsci.plugins.structs.describable.DescribableModel;
 import org.jenkinsci.plugins.workflow.steps.CatchErrorStep;
 import org.jenkinsci.plugins.workflow.steps.CoreStep;
 import org.jenkinsci.plugins.workflow.steps.EchoStep;
 import org.jenkinsci.plugins.workflow.steps.PwdStep;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
-import org.jenkinsci.plugins.workflow.structs.DescribableHelper;
 import org.jenkinsci.plugins.workflow.support.steps.ExecutorStep;
 import org.jenkinsci.plugins.workflow.support.steps.StageStep;
 import org.jenkinsci.plugins.workflow.support.steps.WorkspaceStep;
@@ -73,7 +74,7 @@ public class SnippetizerTest {
 
     @ClassRule public static JenkinsRule r = new JenkinsRule();
     
-    private static final Logger logger = Logger.getLogger(DescribableHelper.class.getName());
+    private static final Logger logger = Logger.getLogger(DescribableModel.class.getName());
     @BeforeClass public static void logging() {
         logger.setLevel(Level.ALL);
         Handler handler = new ConsoleHandler();
