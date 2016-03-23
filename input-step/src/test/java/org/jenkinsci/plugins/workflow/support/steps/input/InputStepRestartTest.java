@@ -22,42 +22,46 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.workflow.steps.input;
+package org.jenkinsci.plugins.workflow.support.steps.input;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
-import org.jenkinsci.plugins.workflow.SingleJobTestBase;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.support.actions.PauseAction;
-import org.jenkinsci.plugins.workflow.support.steps.input.InputAction;
-import org.jenkinsci.plugins.workflow.support.steps.input.InputStepExecution;
 import static org.junit.Assert.*;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.model.Statement;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.RestartableJenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
 
-public class InputStepRestartTest extends SingleJobTestBase {
+public class InputStepRestartTest {
+
+    @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
+    @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
 
     @Issue("JENKINS-25889")
     @Test public void restart() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                p = jenkins().createProject(WorkflowJob.class, "demo");
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition("input 'paused'"));
-                startBuilding();
+                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
                 story.j.waitForMessage("paused", b);
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                rebuildContext(story.j);
+                WorkflowRun b = story.j.jenkins.getItemByFullName("p", WorkflowJob.class).getBuildByNumber(1);
                 proceed(b);
                 story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
                 sanity(b);
@@ -88,7 +92,7 @@ public class InputStepRestartTest extends SingleJobTestBase {
     @Test public void oldFlow() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                WorkflowJob p = jenkins().getItemByFullName("p", WorkflowJob.class);
+                WorkflowJob p = story.j.jenkins.getItemByFullName("p", WorkflowJob.class);
                 assertNotNull(p);
                 WorkflowRun b = p.getLastBuild();
                 assertNotNull(b);

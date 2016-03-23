@@ -35,7 +35,7 @@ import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.WithoutJenkins;
 
-public class InputStepTest {
+public class InputStepConfigTest {
     
     @Rule public JenkinsRule r = new JenkinsRule();
 

@@ -59,6 +59,7 @@
         <module>durable-task-step</module>
         <module>scm-step</module>
         <module>build-step</module>
+        <module>input-step</module>
         <module>cps</module>
         <module>job</module>
         <module>multibranch</module>
