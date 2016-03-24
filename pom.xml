@@ -60,6 +60,7 @@
         <module>scm-step</module>
         <module>build-step</module>
         <module>input-step</module>
+        <module>stage-step</module>
         <module>cps</module>
         <module>job</module>
         <module>multibranch</module>

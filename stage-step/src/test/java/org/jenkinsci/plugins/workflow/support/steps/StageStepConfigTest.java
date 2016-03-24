@@ -30,7 +30,7 @@ import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
-public class StageStepTest {
+public class StageStepConfigTest {
 
     @Rule public JenkinsRule r = new JenkinsRule();
 
