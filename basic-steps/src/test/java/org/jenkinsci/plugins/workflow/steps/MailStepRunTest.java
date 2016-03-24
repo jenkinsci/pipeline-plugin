@@ -39,7 +39,7 @@ import javax.mail.internet.MimeMultipart;
 /**
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
-public class MailStepTest {
+public class MailStepRunTest {
 
     @Rule public JenkinsRule jenkinsRule = new JenkinsRule();
 

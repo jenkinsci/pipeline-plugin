@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.workflow.steps;
 
-import static org.junit.Assert.assertTrue;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.Run;
@@ -31,8 +30,9 @@ import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.inject.Inject;
+import static org.junit.Assert.assertTrue;
 
-public class SynchronousNonBlockingStepTest {
+public class AbstractSynchronousNonBlockingStepExecutionTest {
 
     @Rule public JenkinsRule j = new JenkinsRule();
 

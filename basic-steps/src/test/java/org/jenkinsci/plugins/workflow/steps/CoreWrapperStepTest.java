@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import jenkins.tasks.SimpleBuildWrapper;
-import org.jenkinsci.plugins.workflow.JenkinsRuleExt;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;

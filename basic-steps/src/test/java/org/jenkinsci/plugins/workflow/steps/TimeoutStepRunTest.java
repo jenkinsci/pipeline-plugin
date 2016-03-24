@@ -18,11 +18,13 @@ import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 import java.util.List;
+import org.jenkinsci.plugins.workflow.steps.SleepStep;
+import org.jenkinsci.plugins.workflow.steps.TimeoutStepExecution;
 
 /**
  * @author Kohsuke Kawaguchi
  */
-public class TimeoutStepTest extends Assert {
+public class TimeoutStepRunTest extends Assert {
 
     @ClassRule public static BuildWatcher buildWatcher = new BuildWatcher();
 
