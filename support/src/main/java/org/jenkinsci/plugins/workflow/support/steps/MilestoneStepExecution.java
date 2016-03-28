@@ -252,17 +252,11 @@ public class MilestoneStepExecution extends AbstractSynchronousStepExecution<Voi
         for (Integer inSightNumber : milestone.inSight) {
             if (r.getNumber() > inSightNumber) {
                 Run<?, ?> olderInSightBuild = r.getParent().getBuildByNumber(inSightNumber);
-                if (olderInSightBuild instanceof FlowExecutionOwner.Executable) {
-                    FlowExecutionOwner owner = ((FlowExecutionOwner.Executable) olderInSightBuild).asFlowExecutionOwner();
-                    if (owner != null) {
-                        try {
-                            owner.get().interrupt(Result.NOT_BUILT, new CanceledCause(r.getExternalizableId()));
-                        } catch (Exception e) {
-                            LOGGER.log(WARNING, "could not cancel [" + olderInSightBuild.getExternalizableId() + "]", e);
-                        }
-                    } else {
-                        LOGGER.log(WARNING, "could not cancel [" + olderInSightBuild.getExternalizableId() + "] because it has no FlowExecutionOwner.");
-                    }
+                Executor e = olderInSightBuild.getExecutor();
+                if (e != null) {
+                    e.interrupt(Result.NOT_BUILT, new CanceledCause(r.getExternalizableId()));
+                } else {
+                    LOGGER.log(WARNING, "could not cancel an older flow because it has no assigned executor");
                 }
             }
         }
