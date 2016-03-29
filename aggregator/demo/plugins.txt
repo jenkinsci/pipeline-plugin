@@ -17,6 +17,7 @@ pipeline-stage-view:1.0
 scm-api:1.1
 script-security:1.17
 ssh-credentials:1.11
+structs:1.1
 workflow-aggregator:1.15
 workflow-api:1.15
 workflow-basic-steps:1.15
