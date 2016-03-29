@@ -29,7 +29,6 @@ import hudson.model.Node;
 import hudson.model.Queue;
 import hudson.model.User;
 import hudson.model.labels.LabelAtom;
-import hudson.model.queue.QueueTaskFuture;
 import hudson.remoting.Launcher;
 import hudson.remoting.Which;
 import hudson.security.ACL;
@@ -72,7 +71,6 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
@@ -83,10 +81,6 @@ public class ExecutorStepTest {
     @Rule public RestartableJenkinsRule story = new RestartableJenkinsRule();
     @Rule public TemporaryFolder tmp = new TemporaryFolder();
 
-    private WorkflowJob p;
-    private WorkflowRun b;
-    private CpsFlowExecution e;
-
     /**
      * Executes a shell script build on a slave.
      *
@@ -96,11 +90,11 @@ public class ExecutorStepTest {
     @Test public void buildShellScriptOnSlave() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                DumbSlave s = createSlave(story.j);
+                DumbSlave s = story.j.createOnlineSlave();
                 s.setLabelString("remote quick");
                 s.getNodeProperties().add(new EnvironmentVariablesNodeProperty(new EnvironmentVariablesNodeProperty.Entry("ONSLAVE", "true")));
 
-                p = jenkins().createProject(WorkflowJob.class, "demo");
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
                     "node('" + s.getNodeName() + "') {\n" +
                     "    sh('echo before=`basename $PWD`')\n" +
@@ -109,21 +103,21 @@ public class ExecutorStepTest {
                     "    sh('echo after=$PWD')\n" +
                     "}"));
 
-                startBuilding();
+                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
                 SemaphoreStep.waitForStart("wait/1", b);
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                rebuildContext(story.j);
-                assertThatWorkflowIsSuspended();
+                WorkflowJob p = (WorkflowJob) story.j.jenkins.getItem("demo");
+                WorkflowRun b = p.getLastBuild();
                 SemaphoreStep.success("wait/1", null);
                 story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
 
                 story.j.assertLogContains("before=demo", b);
                 story.j.assertLogContains("ONSLAVE=true", b);
 
-                FlowGraphWalker walker = new FlowGraphWalker(e);
+                FlowGraphWalker walker = new FlowGraphWalker(b.getExecution());
                 List<WorkspaceAction> actions = new ArrayList<WorkspaceAction>();
                 for (FlowNode n : walker) {
                     WorkspaceAction a = n.getAction(WorkspaceAction.class);
@@ -140,17 +134,18 @@ public class ExecutorStepTest {
     @Test public void buildShellScriptOnSlaveWithDifferentResumePoint() throws Exception {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                p = jenkins().createProject(WorkflowJob.class, "demo");
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 String script = "node {semaphore 'wait'}";
                 p.setDefinition(new CpsFlowDefinition(script));
-                startBuilding();
-                waitForWorkflowToSuspend();
+                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+                ((CpsFlowExecution) b.getExecutionPromise().get()).waitForSuspension();
                 // intentionally not waiting for semaphore step to begin
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                rebuildContext(story.j);
+                WorkflowJob p = (WorkflowJob) story.j.jenkins.getItem("demo");
+                WorkflowRun b = p.getLastBuild();
                 SemaphoreStep.success("wait/1", null);
                 story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
             }
@@ -191,7 +186,7 @@ public class ExecutorStepTest {
                 DumbSlave s = new DumbSlave("dumbo", "dummy", tmp.getRoot().getAbsolutePath(), "1", Node.Mode.NORMAL, "", new JNLPLauncher(), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
                 story.j.jenkins.addNode(s);
                 startJnlpProc();
-                p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 File f1 = new File(story.j.jenkins.getRootDir(), "f1");
                 File f2 = new File(story.j.jenkins.getRootDir(), "f2");
                 new FileOutputStream(f1).close();
@@ -200,7 +195,7 @@ public class ExecutorStepTest {
                     "    sh 'touch \"" + f2 + "\"; while [ -f \"" + f1 + "\" ]; do sleep 1; done; echo finished waiting; rm \"" + f2 + "\"'\n" +
                     "    echo 'OK, done'\n" +
                     "}"));
-                startBuilding();
+                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
                 while (!f2.isFile()) {
                     Thread.sleep(100);
                 }
@@ -210,7 +205,8 @@ public class ExecutorStepTest {
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                rebuildContext(story.j);
+                WorkflowJob p = (WorkflowJob) story.j.jenkins.getItem("demo");
+                WorkflowRun b = p.getLastBuild();
                 assertTrue(b.isBuilding()); // TODO occasionally fails; log ends with: ‘Running: Allocate node : Body : Start’ (no shell step in sight)
                 startJnlpProc(); // Have to relaunch JNLP agent, since the Jenkins port has changed, and we cannot force JenkinsRule to reuse the same port as before.
                 File f1 = new File(story.j.jenkins.getRootDir(), "f1");
@@ -240,7 +236,7 @@ public class ExecutorStepTest {
                 DumbSlave s = new DumbSlave("dumbo", "dummy", tmp.getRoot().getAbsolutePath(), "1", Node.Mode.NORMAL, "", new JNLPLauncher(), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
                 story.j.jenkins.addNode(s);
                 startJnlpProc();
-                p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 File f1 = new File(story.j.jenkins.getRootDir(), "f1");
                 File f2 = new File(story.j.jenkins.getRootDir(), "f2");
                 new FileOutputStream(f1).close();
@@ -249,7 +245,7 @@ public class ExecutorStepTest {
                     "    sh 'touch \"" + f2 + "\"; while [ -f \"" + f1 + "\" ]; do sleep 1; done; echo finished waiting; rm \"" + f2 + "\"'\n" +
                     "    echo 'OK, done'\n" +
                     "}"));
-                startBuilding();
+                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
                 while (!f2.isFile()) {
                     Thread.sleep(100);
                 }
@@ -281,23 +277,17 @@ public class ExecutorStepTest {
         final AtomicReference<String> dir = new AtomicReference<String>();
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                DumbSlave s = createSlave(story.j);
+                DumbSlave s = story.j.createOnlineSlave();
                 s.getNodeProperties().add(new EnvironmentVariablesNodeProperty(new EnvironmentVariablesNodeProperty.Entry("ONSLAVE", "true")));
 
-                p = jenkins().createProject(WorkflowJob.class, "demo");
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 dir.set(s.getRemoteFS() + "/workspace/" + p.getFullName());
                 p.setDefinition(new CpsFlowDefinition(
                     "node('" + s.getNodeName() + "') {\n" +
                     "    sh('pwd; echo ONSLAVE=$ONSLAVE')\n" +
                     "}"));
 
-                startBuilding();
-
-                while (!e.isComplete()) {
-                    e.waitForSuspension();
-                }
-
-                assertBuildCompletedSuccessfully();
+                WorkflowRun b = story.j.assertBuildStatusSuccess(p.scheduleBuild2(0));
 
                 story.j.assertLogContains(dir.get(), b);
                 story.j.assertLogContains("ONSLAVE=true", b);
@@ -310,8 +300,8 @@ public class ExecutorStepTest {
             @Override public void evaluate() throws Throwable {
                 @SuppressWarnings("deprecation")
                 String slaveRoot = story.j.createTmpDir().getPath();
-                jenkins().addNode(new DumbSlave("slave", "dummy", slaveRoot, "2", Node.Mode.NORMAL, "", story.j.createComputerLauncher(null), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList()));
-                p = jenkins().createProject(WorkflowJob.class, "demo");
+                story.j.jenkins.addNode(new DumbSlave("slave", "dummy", slaveRoot, "2", Node.Mode.NORMAL, "", story.j.createComputerLauncher(null), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList()));
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
                         "node('slave') {\n" + // this locks the WS
                         "    sh('echo default=`basename $PWD`')\n" +
@@ -333,18 +323,15 @@ public class ExecutorStepTest {
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                rebuildContext(story.j);
+                WorkflowJob p = (WorkflowJob) story.j.jenkins.getItem("demo");
+                WorkflowRun b = p.getLastBuild();
                 WorkflowRun b1 = p.getBuildByNumber(1);
-                CpsFlowExecution e1 = (CpsFlowExecution) b1.getExecution();
-                assertThatWorkflowIsSuspended(b1, e1);
                 WorkflowRun b2 = p.getBuildByNumber(2);
-                CpsFlowExecution e2 = (CpsFlowExecution) b2.getExecution();
-                assertThatWorkflowIsSuspended(b2, e2);
                 SemaphoreStep.success("wait/1", null);
                 SemaphoreStep.success("wait/2", null);
                 story.j.waitUntilNoActivity();
-                assertBuildCompletedSuccessfully(b1);
-                assertBuildCompletedSuccessfully(b2);
+                story.j.assertBuildStatusSuccess(b1);
+                story.j.assertBuildStatusSuccess(b2);
                 // TODO once got ‘InvalidClassException: cannot bind non-proxy descriptor to a proxy class’ inside BourneShellScript.doLaunch
                 story.j.assertLogContains("default=demo", b1);
                 story.j.assertLogContains("before=demo@2", b1);
@@ -365,16 +352,17 @@ public class ExecutorStepTest {
     @Test public void executorStepRestart() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                p = jenkins().createProject(WorkflowJob.class, "demo");
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition("node('special') {echo 'OK ran'}"));
-                startBuilding();
+                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
                 story.j.waitForMessage("Still waiting to schedule task", b);
             }
         });
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 story.j.createSlave("special", null);
-                rebuildContext(story.j);
+                WorkflowJob p = (WorkflowJob) story.j.jenkins.getItem("demo");
+                WorkflowRun b = p.getLastBuild();
                 // TODO JENKINS-27532 sometimes two copies of the WorkflowRun are loaded
                 story.j.assertLogContains("OK ran", story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b)));
             }
@@ -384,7 +372,7 @@ public class ExecutorStepTest {
     @Test public void tailCall() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                p = jenkins().createProject(WorkflowJob.class, "demo");
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition("def r = node {'the result'}; echo \"got ${r}\""));
                 story.j.assertLogContains("got the result", story.j.assertBuildStatusSuccess(p.scheduleBuild2(0)));
                 p.setDefinition(new CpsFlowDefinition("try {node {error 'a problem'}} catch (e) {echo \"failed with ${e.message}\"}"));
@@ -397,11 +385,11 @@ public class ExecutorStepTest {
     @Test public void queueTaskVisibility() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                jenkins().setSecurityRealm(story.j.createDummySecurityRealm());
-                jenkins().setAuthorizationStrategy(new MockAuthorizationStrategy().grant(Jenkins.ADMINISTER).everywhere().to("admin"));
-                p = jenkins().createProject(WorkflowJob.class, "demo");
+                story.j.jenkins.setSecurityRealm(story.j.createDummySecurityRealm());
+                story.j.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy().grant(Jenkins.ADMINISTER).everywhere().to("admin"));
+                final WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition("node('nonexistent') {}", true));
-                startBuilding();
+                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
                 story.j.waitForMessage("Still waiting to schedule task", b);
                 ACL.impersonate(User.get("admin").impersonate(), new Runnable() {
                     @Override public void run() {
@@ -427,69 +415,11 @@ public class ExecutorStepTest {
     @Test public void quickNodeBlock() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                p = jenkins().createProject(WorkflowJob.class, "demo");
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition("for (int i = 0; i < 50; i++) {node {echo \"ran node block #${i}\"}}"));
                 story.j.assertLogContains("ran node block #49", story.j.assertBuildStatusSuccess(p.scheduleBuild2(0)));
             }
         });
-    }
-
-    // TODO simplify old utility methods
-
-    private Jenkins jenkins() {
-        return story.j.jenkins;
-    }
-
-    private void rebuildContext(JenkinsRule j) throws Exception {
-        WorkflowJob p2 = (WorkflowJob) j.jenkins.getItem("demo");
-        assertNotNull("could not find a job named demo", p2);
-        assert p!=p2;  // make sure Jenkins was restarted
-        p = p2;
-
-        WorkflowRun b2 = p.getLastBuild();
-        assert b!=b2;
-        b = b2;
-
-        e = (CpsFlowExecution) b.getExecution();
-    }
-
-    private DumbSlave createSlave(JenkinsRule j) throws Exception {
-        DumbSlave s = j.createSlave();
-        s.getComputer().connect(false).get(); // wait for the slave to fully get connected
-        return s;
-    }
-
-    private QueueTaskFuture<WorkflowRun> startBuilding() throws Exception {
-        QueueTaskFuture<WorkflowRun> f = p.scheduleBuild2(0);
-        b = f.waitForStart();
-        e = (CpsFlowExecution) b.getExecutionPromise().get();
-        return f;
-    }
-
-    private void assertThatWorkflowIsSuspended() throws Exception {
-        assertThatWorkflowIsSuspended(b, e);
-    }
-
-    private void assertThatWorkflowIsSuspended(WorkflowRun b, CpsFlowExecution e) throws Exception {
-        e.waitForSuspension();  // it should be in the suspended state
-        assert b.isBuilding();
-    }
-
-    private void assertBuildCompletedSuccessfully() throws Exception {
-        assertBuildCompletedSuccessfully(b);
-    }
-
-    private void assertBuildCompletedSuccessfully(WorkflowRun b) throws Exception {
-        assert !b.isBuilding();
-        story.j.assertBuildStatusSuccess(b);
-    }
-
-    private void waitForWorkflowToSuspend() throws Exception {
-        waitForWorkflowToSuspend(e);
-    }
-
-    private void waitForWorkflowToSuspend(CpsFlowExecution e) throws Exception {
-        e.waitForSuspension();
     }
 
 }
