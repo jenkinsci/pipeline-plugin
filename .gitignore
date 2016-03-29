@@ -13,6 +13,4 @@ out
 .project
 .settings
 
-cps/node/
-cps/node_modules/
 pom.xml.versionsBackup
