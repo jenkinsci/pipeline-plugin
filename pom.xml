@@ -67,26 +67,6 @@
         <module>cps-global-lib</module>
         <module>aggregator</module>
     </modules>
-    <build>
-        <plugins>
-            <plugin>
-                <!-- why is this necessary!? -->
-                <!-- fix attempted at https://github.com/jenkinsci/jenkins/commit/101507f49873de0239ccb7839649ea71187712b2 but apparently failed. -->
-                <groupId>org.codehaus.gmaven</groupId>
-                <artifactId>gmaven-plugin</artifactId>
-                <configuration>
-                    <providerSelection>1.8</providerSelection>
-                </configuration>
-            </plugin>
-            <plugin> <!-- TODO perhaps delete -->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <configuration>
-                    <tagNameFormat>workflow-@{project.version}</tagNameFormat>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
     <repositories>
         <repository>
