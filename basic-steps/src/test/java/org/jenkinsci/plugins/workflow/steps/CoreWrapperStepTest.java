@@ -32,15 +32,27 @@ import hudson.console.ConsoleLogFilter;
 import hudson.console.LineTransformationOutputStream;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Computer;
+import hudson.model.Descriptor;
+import hudson.model.Node;
 import hudson.model.Run;
+import hudson.model.Slave;
 import hudson.model.TaskListener;
+import hudson.slaves.CommandLauncher;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.RetentionStrategy;
+import hudson.slaves.SlaveComputer;
 import hudson.tasks.BuildWrapperDescriptor;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import jenkins.tasks.SimpleBuildWrapper;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -54,6 +66,7 @@ import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -70,7 +83,7 @@ public class CoreWrapperStepTest {
                 Map<String,String> slaveEnv = new HashMap<String,String>();
                 slaveEnv.put("PATH", "/usr/bin:/bin");
                 slaveEnv.put("HOME", "/home/jenkins");
-                JenkinsRuleExt.createSpecialEnvSlave(story.j, "slave", "", slaveEnv);
+                createSpecialEnvSlave(story.j, "slave", "", slaveEnv);
                 WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
                 p.setDefinition(new CpsFlowDefinition("node('slave') {wrap([$class: 'MockWrapper']) {semaphore 'restarting'; echo \"groovy PATH=${env.PATH}:\"; sh 'echo shell PATH=$PATH:'}}"));
                 WorkflowRun b = p.scheduleBuild2(0).getStartCondition().get();
@@ -200,6 +213,42 @@ public class CoreWrapperStepTest {
             @Override public boolean isApplicable(AbstractProject<?,?> item) {
                 return true;
             }
+        }
+    }
+
+    // TODO add to jenkins-test-harness
+    /**
+     * Akin to {@link JenkinsRule#createSlave(String, String, EnvVars)} but allows {@link Computer#getEnvironment} to be controlled rather than directly modifying launchers.
+     * @param env variables to override in {@link Computer#getEnvironment}; null values will get unset even if defined in the test environment
+     * @see <a href="https://github.com/jenkinsci/jenkins/pull/1553/files#r23784822">explanation in core PR 1553</a>
+     */
+    public static Slave createSpecialEnvSlave(JenkinsRule rule, String nodeName, @CheckForNull String labels, Map<String,String> env) throws Exception {
+        @SuppressWarnings("deprecation") // keep consistency with original signature rather than force the caller to pass in a TemporaryFolder rule
+        File remoteFS = rule.createTmpDir();
+        SpecialEnvSlave slave = new SpecialEnvSlave(remoteFS, rule.createComputerLauncher(/* yes null */null), nodeName, labels != null ? labels : "", env);
+        rule.jenkins.addNode(slave);
+        return slave;
+    }
+    private static class SpecialEnvSlave extends Slave {
+        private final Map<String,String> env;
+        SpecialEnvSlave(File remoteFS, CommandLauncher launcher, String nodeName, @Nonnull String labels, Map<String,String> env) throws Descriptor.FormException, IOException {
+            super(nodeName, nodeName, remoteFS.getAbsolutePath(), 1, Node.Mode.NORMAL, labels, launcher, RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
+            this.env = env;
+        }
+        @Override public Computer createComputer() {
+            return new SpecialEnvComputer(this, env);
+        }
+    }
+    private static class SpecialEnvComputer extends SlaveComputer {
+        private final Map<String,String> env;
+        SpecialEnvComputer(SpecialEnvSlave slave, Map<String,String> env) {
+            super(slave);
+            this.env = env;
+        }
+        @Override public EnvVars getEnvironment() throws IOException, InterruptedException {
+            EnvVars env2 = super.getEnvironment();
+            env2.overrideAll(env);
+            return env2;
         }
     }
 
