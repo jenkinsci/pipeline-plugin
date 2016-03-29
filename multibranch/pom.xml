@@ -90,9 +90,15 @@ THE SOFTWARE.
             <artifactId>cloudbees-folder</artifactId>
             <version>5.2.1</version>
         </dependency>
-        <dependency> <!-- TODO kill -->
+        <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>workflow-aggregator</artifactId>
+            <artifactId>workflow-basic-steps</artifactId>
+            <version>1.15</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>workflow-cps-global-lib</artifactId>
             <version>1.15</version>
             <scope>test</scope>
         </dependency>
@@ -141,7 +147,7 @@ THE SOFTWARE.
             <version>1.54</version>
             <scope>test</scope>
         </dependency>
-        <dependency> <!-- TODO kill -->
+        <dependency>
             <groupId>org.jenkins-ci.modules</groupId>
             <artifactId>sshd</artifactId>
             <version>1.6</version>
