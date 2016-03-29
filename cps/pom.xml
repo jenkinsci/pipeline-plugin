@@ -189,16 +189,6 @@
         </resources>
         <plugins>
             <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
-                <executions> <!-- TODO currently, the workflow-job module depends on tests from here; this dependency should probably be broken -->
-                    <execution>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <!-- why is this necessary!? otherwise compiling src/test/groovy/ fails -->
                 <!-- fix attempted at https://github.com/jenkinsci/jenkins/commit/101507f49873de0239ccb7839649ea71187712b2 but apparently failed. -->
                 <groupId>org.codehaus.gmaven</groupId>
