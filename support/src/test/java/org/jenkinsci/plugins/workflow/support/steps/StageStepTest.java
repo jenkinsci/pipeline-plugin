@@ -38,11 +38,14 @@ public class StageStepTest {
         StageStep s = new StepConfigTester(r).configRoundTrip(new StageStep("name"));
         assertEquals("name", s.name);
         assertEquals(null, s.concurrency);
+        assertEquals(false, s.eager);
         s = new StageStep("name");
         s.concurrency = 1;
+        s.eager = true;
         s = new StepConfigTester(r).configRoundTrip(s);
         assertEquals("name", s.name);
         assertEquals(Integer.valueOf(1), s.concurrency);
+        assertEquals(true, s.eager);
     }
 
 }

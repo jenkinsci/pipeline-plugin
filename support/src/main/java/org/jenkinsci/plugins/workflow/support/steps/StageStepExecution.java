@@ -3,11 +3,7 @@ package org.jenkinsci.plugins.workflow.support.steps;
 import com.google.inject.Inject;
 import hudson.Extension;
 import hudson.XmlFile;
-import hudson.model.InvisibleAction;
-import hudson.model.Job;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.model.listeners.RunListener;
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +52,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
     public boolean start() throws Exception {
         node.addAction(new LabelAction(step.name));
         node.addAction(new StageActionImpl(step.name));
-        enter(run, getContext(), step.name, step.concurrency);
+        enter(run, getContext(), step.name, step.concurrency, step.eager);
         return false; // execute asynchronously
     }
 
@@ -107,7 +103,7 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
         LOGGER.log(Level.FINE, "save: {0}", stagesByNameByJob);
     }
 
-    private static synchronized void enter(Run<?,?> r, StepContext context, String name, Integer concurrency) {
+    private static synchronized void enter(Run<?,?> r, StepContext context, String name, Integer concurrency, boolean eager) {
         LOGGER.log(Level.FINE, "enter {0} {1}", new Object[] {r, name});
         println(context, "Entering stage " + name);
         load();
@@ -145,6 +141,19 @@ public class StageStepExecution extends AbstractStepExecutionImpl {
                 context = stage.waitingContext;
             } else {
                 throw new IllegalStateException("the same flow is trying to reënter the stage " + name); // see 'e' with two dots, that's Jesse Glick for you! - KK
+            }
+        }
+        // Interrupts any build in the holding state
+        if (eager) {
+            Iterator<Integer> it = stage.holding.iterator();
+            while (it.hasNext()) {
+                Integer i = it.next();
+                Executor ex = job.getBuildByNumber(i).getExecutor();
+                if (ex != null) {
+                    ex.interrupt(Result.NOT_BUILT, new CanceledCause(r));
+
+                }
+                it.remove();
             }
         }
         for (Map.Entry<String,Stage> entry : stagesByName.entrySet()) {

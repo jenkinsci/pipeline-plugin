@@ -41,6 +41,7 @@ public final class StageStep extends AbstractStepImpl {
 
     public final String name;
     @DataBoundSetter public @CheckForNull Integer concurrency;
+    @DataBoundSetter public @CheckForNull boolean eager;
 
     @DataBoundConstructor public StageStep(String name) {
         if (name == null || name.isEmpty()) {
