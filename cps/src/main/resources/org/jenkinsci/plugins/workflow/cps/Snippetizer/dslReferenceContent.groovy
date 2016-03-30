@@ -15,6 +15,9 @@ import org.jenkinsci.plugins.workflow.steps.StepDescriptor
 
 import javax.servlet.RequestDispatcher
 
+// keeps track of recursion inside generateHelp
+stack = new Stack();
+
 Snippetizer snippetizer = my;
 
 def l = namespace(lib.LayoutTagLib)
@@ -91,6 +94,10 @@ def generateHelp(DescribableModel model, int headerLevel) throws Exception {
     if (help != null && !help.equals("")) {
       div(class:"help", style:"display: block") { raw(help) }
     }
+    if (stack.contains(model.type))
+      return; // recursion. just show the title & cut the search
+
+    stack.push(model.type);
     dl(class:'help-list mandatory'){
       // TODO else could use RequestDispatcher (as in Descriptor.doHelp) to serve template-based help
       model.parameters.findAll{ it.required }.each { p ->
@@ -115,6 +122,7 @@ def generateHelp(DescribableModel model, int headerLevel) throws Exception {
         }
       }
     }
+    stack.pop();
   }.call()
 }
 
