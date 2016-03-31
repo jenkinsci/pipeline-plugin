@@ -26,14 +26,13 @@ package org.jenkinsci.plugins.workflow.actions;
 
 import hudson.FilePath;
 import hudson.model.Action;
-import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.labels.LabelAtom;
-import hudson.remoting.VirtualChannel;
 import java.util.Set;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.workflow.FilePathUtils;
 
 /**
  * Represents the fact that a step run on a particular workspace.
@@ -56,20 +55,7 @@ public abstract class WorkspaceAction implements Action {
 
     /** Reconstructs the live workspace, if possible. */
     public final @CheckForNull FilePath getWorkspace() {
-        // TODO copied from FilePathPickle. WorkspaceListLeasePickle also needs to do the same. Perhaps we need to extract a FilePathHandle or similar?
-        Jenkins j = Jenkins.getInstance();
-        if (j == null) {
-            return null;
-        }
-        Computer c = j.getComputer(getNode());
-        if (c == null) {
-            return null;
-        }
-        VirtualChannel ch = c.getChannel();
-        if (ch == null) {
-            return null;
-        }
-        return new FilePath(ch, getPath());
+        return FilePathUtils.find(getNode(), getPath());
     }
 
 }

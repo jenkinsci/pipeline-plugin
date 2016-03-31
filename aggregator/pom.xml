@@ -26,142 +26,109 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.jenkins-ci.plugins.workflow</groupId>
-        <artifactId>workflow-pom</artifactId>
-        <version>1.16-SNAPSHOT</version>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>2.5</version>
+        <relativePath/>
     </parent>
+    <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-aggregator</artifactId>
+    <version>2.0-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Pipeline</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
     <description>A suite of plugins that lets you orchestrate automation, simple or complex. See http://jenkins-ci.org/solutions/pipeline/ for more details</description>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+    <scm>
+        <connection>scm:git:git://github.com/jenkinsci/workflow-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/workflow-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/workflow-plugin</url>
+    </scm>
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+    <properties>
+        <jenkins.version>1.642.3</jenkins.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-step-api</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-api</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-support</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-durable-task-step</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-scm-step</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-cps</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-cps-global-lib</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-job</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-basic-steps</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>workflow-support</artifactId>
-            <version>${project.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>workflow-cps</artifactId>
-            <version>${project.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
+            <artifactId>workflow-multibranch</artifactId>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>script-security</artifactId>
-            <scope>test</scope>
+            <artifactId>pipeline-build-step</artifactId>
+            <version>2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>git</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.httpcomponents</groupId>
-                    <artifactId>httpclient</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>pipeline-input-step</artifactId>
+            <version>2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>subversion</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>mercurial</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>javadoc</artifactId>
-            <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jvnet.mock-javamail</groupId>
-            <artifactId>mock-javamail</artifactId>
-            <version>1.9</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>junit</groupId>
-                    <artifactId>junit</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>junit</artifactId>
-            <version>1.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.modules</groupId>
-            <artifactId>sshd</artifactId>
-            <version>1.6</version>
-            <scope>test</scope><!-- from git-server via workflow-cps-global-lib and otherwise unavailable during tests -->
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>matrix-auth</artifactId>
-            <version>1.0.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-test-harness-tools</artifactId>
-            <version>2.0</version>
-            <scope>test</scope>
+            <artifactId>pipeline-stage-step</artifactId>
+            <version>2.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
     <build>
@@ -175,47 +142,6 @@
                         <org.jenkinsci.plugins.durabletask>FINE</org.jenkinsci.plugins.durabletask>
                     </loggers>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.gmaven</groupId>
-                <artifactId>groovy-maven-plugin</artifactId>
-                <version>2.0</version>
-                <executions>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>execute</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <source>
-                        def plugins = new File(basedir, 'work/plugins');
-                        for (dep in project.dependencies) {
-                            if (dep.groupId != project.groupId) {
-                                continue;
-                            }
-                            def a = dep.artifactId;
-                            def theHpl = new File(new File(basedir.parentFile, a.replaceFirst('^workflow-', '')), 'target/test-classes/the.hpl');
-                            if (theHpl.file) {
-                                plugins.mkdirs();
-                                ant.copy(file: theHpl, tofile: new File(plugins, a + '.hpl'), overwrite: true, verbose: true);
-                            } else {
-                                println('Warning: no such file ' + theHpl);
-                            }
-                        }
-                    </source>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

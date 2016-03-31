@@ -25,5 +25,5 @@ THE SOFTWARE.
 
 <?jelly escape-by-default='true'?>
 <div>
-    Pipeline steps running external processes that may survive a Jenkins restart or slave reconnection.
+    Pipeline steps locking agents and workspaces, and running external processes that may survive a Jenkins restart or slave reconnection.
 </div>

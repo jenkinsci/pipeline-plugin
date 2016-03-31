@@ -26,29 +26,59 @@ THE SOFTWARE.
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.jenkins-ci.plugins.workflow</groupId>
-        <artifactId>workflow-pom</artifactId>
-        <version>1.16-SNAPSHOT</version>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>2.5</version>
+        <relativePath/>
     </parent>
+    <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-multibranch</artifactId>
+    <version>2.0-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Pipeline: Multibranch</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Plugin</url>
     <description>Enhances Pipeline plugin to handle branches better by automatically grouping builds from different branches</description>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+    <scm>
+        <connection>scm:git:git://github.com/jenkinsci/workflow-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/workflow-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/workflow-plugin</url>
+    </scm>
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+    <properties>
+        <jenkins.version>1.642.3</jenkins.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-job</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-cps</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>scm-api</artifactId>
+            <version>1.1</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -62,34 +92,41 @@ THE SOFTWARE.
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>workflow-aggregator</artifactId>
-            <version>${project.version}</version>
+            <artifactId>workflow-basic-steps</artifactId>
+            <version>1.15</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>workflow-cps-global-lib</artifactId>
+            <version>1.15</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-step-api</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>workflow-support</artifactId>
-            <version>${project.version}</version>
+            <version>1.15</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>workflow-aggregator</artifactId>
-            <version>${project.version}</version>
+            <artifactId>workflow-scm-step</artifactId>
+            <version>2.0-SNAPSHOT</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
+            <version>2.4.1</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -107,6 +144,7 @@ THE SOFTWARE.
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>mercurial</artifactId>
+            <version>1.54</version>
             <scope>test</scope>
         </dependency>
         <dependency>
