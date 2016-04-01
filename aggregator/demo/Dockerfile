@@ -1,5 +1,4 @@
-# TODO use 1.642.3 when released
-FROM jenkins:1.642.1
+FROM jenkins:1.642.3
 
 USER root
 
@@ -18,21 +17,38 @@ RUN cd /tmp; ln -s /opt/jetty/webapps
 RUN chown -R jenkins /opt/jetty/logs
 RUN chown -R jenkins /opt/jetty/webapps
 
-ENV JENKINS_UC http://jenkins-updates.cloudbees.com
-COPY plugins.txt /tmp/files/
-USER jenkins
-RUN /usr/local/bin/plugins.sh /tmp/files/plugins.txt
-
-ADD repo /tmp/files/repo-wc
-USER root
-RUN chown -R jenkins.jenkins /tmp/files
-USER jenkins
 WORKDIR /tmp/files
-RUN git init --bare repo && cd repo-wc && git init && git add . && git -c user.email=demo@jenkins-ci.org -c user.name="Pipeline Demo" commit -m 'demo' && git push ../repo master
 
 # Prepare local Maven repo. Note that $JENKINS_HOME is a volume so we cannot populate it now.
-RUN echo '<settings><mirrors><mirror><id>central</id><url>http://repo.jenkins-ci.org/simple/repo1-cache/</url><mirrorOf>central</mirrorOf></mirror></mirrors><localRepository>/usr/share/jenkins/ref/.m2/repository</localRepository></settings>' > /tmp/files/settings.xml
-RUN cd repo-wc && /usr/local/maven/bin/mvn -s /tmp/files/settings.xml install && /usr/local/maven/bin/mvn -s /tmp/files/settings.xml -f sometests -Dmaven.test.failure.ignore clean install
+RUN mkdir repo-wc
+ADD repo/pom.xml repo-wc/pom.xml
+ADD repo/src repo-wc/src
+ADD repo/sometests repo-wc/sometests
+RUN chown -R jenkins.jenkins .
+USER jenkins
+RUN echo '<settings><mirrors><mirror><id>central</id><url>http://repo.jenkins-ci.org/simple/repo1-cache/</url><mirrorOf>central</mirrorOf></mirror></mirrors><localRepository>/usr/share/jenkins/ref/.m2/repository</localRepository></settings>' > settings.xml
+RUN /usr/local/maven/bin/mvn -s settings.xml -f repo-wc install && /usr/local/maven/bin/mvn -s settings.xml -f repo-wc/sometests -Dmaven.test.failure.ignore clean install
+
+ENV JENKINS_UC http://jenkins-updates.cloudbees.com
+COPY plugins.txt .
+RUN /usr/local/bin/plugins.sh plugins.txt
+
+# Now copy the complete repo including Pipeline script (not only the files needed to warm up the Maven cache).
+RUN rm -rf repo-wc
+ADD repo repo-wc
+USER root
+RUN chown -R jenkins.jenkins repo-wc
+USER jenkins
+RUN git init --bare repo && \
+    cd repo-wc && \
+    git init && \
+    git add . && \
+    git -c user.email=demo@jenkins-ci.org -c user.name="Pipeline Demo" commit -m 'demo' && \
+    git push ../repo master && \
+    cd .. && \
+    rm -rfv repo-wc
+# TODO deletion of repo-wc does not seem to work: claims to have been deleted, but then still there in subsequent steps; anyway it is small
+# RUN ls -lRa; false
 
 ADD JENKINS_HOME /usr/share/jenkins/ref
 
