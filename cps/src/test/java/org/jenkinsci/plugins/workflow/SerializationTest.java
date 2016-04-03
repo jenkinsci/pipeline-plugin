@@ -146,7 +146,6 @@ public class SerializationTest extends SingleJobTestBase {
         });
     }
 
-    @Ignore("TODO java.io.NotSerializableException: java.util.ArrayList$Itr")
     @Issue("JENKINS-27421")
     @Test public void listIterator() {
         story.addStep(new Statement() {
@@ -203,7 +202,7 @@ public class SerializationTest extends SingleJobTestBase {
         });
     }
 
-    @Ignore("TODO fails even with https://github.com/cloudbees/groovy-cps/pull/23")
+    @Ignore("TODO needs https://github.com/cloudbees/groovy-cps/pull/23 & https://github.com/jenkinsci/script-security-plugin/pull/50")
     @Issue("JENKINS-26481")
     @Test public void eachClosure() {
         story.addStep(new Statement() {
@@ -228,7 +227,7 @@ public class SerializationTest extends SingleJobTestBase {
                 SemaphoreStep.success("b/1", null);
                 SemaphoreStep.waitForStart("c/1", b);
                 SemaphoreStep.success("c/1", null);
-                story.j.assertBuildStatusSuccess(b);
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
                 story.j.assertLogContains("abc", b);
             }
         });
