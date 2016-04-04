@@ -1,4 +1,4 @@
-TAG=1.15
+TAG=2.0-SNAPSHOT
 IMAGE=jenkinsci/workflow-demo
 DOCKER_RUN=docker run --rm -p 2222:2222 -p 8080:8080 -p 8081:8081 -p 9418:9418 -ti
 
