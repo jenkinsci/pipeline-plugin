@@ -1,0 +1,16 @@
+<div>
+    <p>By default, Pipeline builds can run concurrently.</p>
+    <p>
+        The milestone step forces all builds to go through in order, so an older build will never be allowed pass
+        a milestone (it is aborted) if a newer build already passed it.
+    </p>
+    <p>
+        In general this step grants:
+        <ul>
+            <li>Builds pass milestones in order (taking the build number as sorter field).</li>
+            <li>Older builds will not proceed (they are aborted) if a newer one already passed the milestone.</li>
+            <li>When a build passes a milestone, any older build that passed the previous milestone but not this one is aborted.</li>
+            <li>Once a build passes the milestone, it will be never aborted by a newer build that didn't pass the milestone yet.</li>
+        </ul>
+    </p>
+</div>

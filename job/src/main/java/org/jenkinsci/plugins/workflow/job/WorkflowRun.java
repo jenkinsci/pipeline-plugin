@@ -227,7 +227,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
                     return;
                 }
                 try {
-                    execution.interrupt(Result.ABORTED);
+                    execution.interrupt(getExecutor().abortResult());
                 } catch (Exception x) {
                     LOGGER.log(Level.WARNING, null, x);
                 }
