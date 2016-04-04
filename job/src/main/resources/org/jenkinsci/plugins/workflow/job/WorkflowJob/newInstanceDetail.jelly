@@ -25,5 +25,5 @@
   -->
 
 <j:jelly xmlns:j="jelly:core">
-  ${it.description}
+  <j:out value="${it.description}"/>
 </j:jelly>
