@@ -25,7 +25,5 @@
   -->
 
 <j:jelly xmlns:j="jelly:core">
-    Orchestrates long-running activities that can span multiple build slaves. Suitable for
-    building pipelines (formerly known as workflows) and/or organizing complex activities that do not easily fit
-    in free-style job type.
+  ${it.description}
 </j:jelly>

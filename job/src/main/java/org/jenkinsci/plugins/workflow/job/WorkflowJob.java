@@ -597,6 +597,39 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
             return new WorkflowJob(parent, name);
         }
 
+        /**
+         * Needed if it wants Pipeline jobs are categorized in Jenkins 2.x.
+         *
+         * TODO: Override when the baseline is upgraded to 2.x
+         *
+         * @return A string it represents a ItemCategory identifier.
+         */
+        public String getCategoryId() {
+            return "standaloneprojects";
+        }
+
+        /**
+         * Needed if it wants Pipeline jobs are categorized in Jenkins 2.x.
+         *
+         * TODO: Override when the baseline is upgraded to 2.x
+         *
+         * @return A string with the Item description.
+         */
+        public String getDescription() {
+            return Messages.WorkflowJob_Description();
+        }
+
+        /**
+         * Needed if it wants Pipeline jobs are categorized in Jenkins 2.x.
+         *
+         * TODO: Override when the baseline is upgraded to 2.x
+         *
+         * @return A string it represents a URL pattern to get the Item icon in different sizes.
+         */
+        public String getIconFilePathPattern() {
+            return "plugin/workflow-job/images/:size/pipelinejob.png";
+        }
+
         /** TODO JENKINS-20020 can delete this in case {@code f:dropdownDescriptorSelector} defaults to applying {@code h.filterDescriptors} */
         @Restricted(DoNotUse.class) // Jelly
         public Collection<FlowDefinitionDescriptor> getDefinitionDescriptors(WorkflowJob context) {
