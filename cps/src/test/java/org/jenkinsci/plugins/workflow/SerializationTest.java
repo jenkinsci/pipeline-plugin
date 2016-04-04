@@ -146,7 +146,6 @@ public class SerializationTest extends SingleJobTestBase {
         });
     }
 
-    @Ignore("TODO java.io.NotSerializableException: java.util.ArrayList$Itr")
     @Issue("JENKINS-27421")
     @Test public void listIterator() {
         story.addStep(new Statement() {
@@ -203,11 +202,40 @@ public class SerializationTest extends SingleJobTestBase {
         });
     }
 
+    @Issue("JENKINS-26481")
+    @Test public void eachClosure() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                p = jenkins().createProject(WorkflowJob.class, "demo");
+                p.setDefinition(new CpsFlowDefinition(
+                    "node {\n" +
+                    "  ['a', 'b', 'c'].each {f -> writeFile file: f, text: f}\n" +
+                    "  def text = ''\n" +
+                    "  ['a', 'b', 'c'].each {f -> semaphore f; text += readFile f}\n" +
+                    "  echo text\n" +
+                    "}\n", true));
+                b = p.scheduleBuild2(0).waitForStart();
+                SemaphoreStep.waitForStart("a/1", b);
+                SemaphoreStep.success("a/1", null);
+                SemaphoreStep.waitForStart("b/1", b);
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                rebuildContext(story.j);
+                SemaphoreStep.success("b/1", null);
+                SemaphoreStep.waitForStart("c/1", b);
+                SemaphoreStep.success("c/1", null);
+                story.j.assertBuildStatusSuccess(story.j.waitForCompletion(b));
+                story.j.assertLogContains("abc", b);
+            }
+        });
+    }
+
     @Ignore("TODO JENKINS-31314: calls writeFile just once, echoes null (i.e., return value of writeFile), then succeeds")
     @Test public void nonCpsContinuable() {
         story.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                ScriptApproval.get().approveSignature("staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods each java.lang.Object groovy.lang.Closure"); // TODO whitelist; should work inside @NonCPS but pending JENKINS-26481 not outside
                 p = jenkins().createProject(WorkflowJob.class, "demo");
                 p.setDefinition(new CpsFlowDefinition(
                     "@NonCPS def shouldBomb() {\n" +
