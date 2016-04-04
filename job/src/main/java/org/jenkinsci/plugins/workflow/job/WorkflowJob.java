@@ -601,6 +601,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
          * Needed if it wants Pipeline jobs are categorized in Jenkins 2.x.
          *
          * TODO: Override when the baseline is upgraded to 2.x
+         * TODO: Replace to {@code StandaloneProjectsCategory.ID}
          *
          * @return A string it represents a ItemCategory identifier.
          */
