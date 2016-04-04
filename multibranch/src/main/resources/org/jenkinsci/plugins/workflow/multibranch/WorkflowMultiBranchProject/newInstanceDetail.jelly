@@ -24,6 +24,6 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<div>
-    ${%body}
-</div>
+<j:jelly xmlns:j="jelly:core">
+  <j:out value="${it.description}"/>
+</j:jelly>

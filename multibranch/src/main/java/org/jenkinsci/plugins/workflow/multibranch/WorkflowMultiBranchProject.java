@@ -71,7 +71,15 @@ public class WorkflowMultiBranchProject extends MultiBranchProject<WorkflowJob,W
     @Extension public static class DescriptorImpl extends MultiBranchProjectDescriptor {
 
         @Override public String getDisplayName() {
-            return "Multibranch Pipeline";
+            return Messages.WorkflowMultiBranchProject_DisplayName();
+        }
+
+        public String getDescription() {
+            return Messages.WorkflowMultiBranchProject_Description();
+        }
+
+        public String getIconFilePathPattern() {
+            return "plugin/workflow-multibranch/images/:size/pipelinemultibranchproject.png";
         }
 
         @Override public TopLevelItem newInstance(ItemGroup parent, String name) {
