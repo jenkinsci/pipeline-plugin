@@ -202,7 +202,6 @@ public class SerializationTest extends SingleJobTestBase {
         });
     }
 
-    @Ignore("TODO needs https://github.com/cloudbees/groovy-cps/pull/23 & https://github.com/jenkinsci/script-security-plugin/pull/50")
     @Issue("JENKINS-26481")
     @Test public void eachClosure() {
         story.addStep(new Statement() {
