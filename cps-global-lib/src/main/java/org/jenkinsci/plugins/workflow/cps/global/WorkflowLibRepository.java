@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.workflow.cps.global;
 
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.model.RootAction;
 import jenkins.model.Jenkins;
 import org.eclipse.jgit.lib.Repository;
@@ -71,7 +72,9 @@ public class WorkflowLibRepository extends FileBackedHttpGitRepository implement
             @Override
             public void onPostReceive(ReceivePack rp, Collection<ReceiveCommand> commands) {
                 base.onPostReceive(rp,commands);
-                globalVariableList.rebuild();
+                for (GlobalRepoHookListener hookListener: ExtensionList.lookup(GlobalRepoHookListener.class)) {
+                    hookListener.hook();
+                }
             }
         });
 
