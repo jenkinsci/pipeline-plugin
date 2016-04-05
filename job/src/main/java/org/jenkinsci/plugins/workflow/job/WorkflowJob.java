@@ -606,7 +606,7 @@ public final class WorkflowJob extends Job<WorkflowJob,WorkflowRun> implements B
          * @return A string it represents a ItemCategory identifier.
          */
         public String getCategoryId() {
-            return "standaloneprojects";
+            return "standalone-projects";
         }
 
         /**
