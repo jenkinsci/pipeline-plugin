@@ -1,4 +1,0 @@
-<?jelly escape-by-default='true'?>
-<div>
-  Global shared library for Pipeline scripts.
-</div>

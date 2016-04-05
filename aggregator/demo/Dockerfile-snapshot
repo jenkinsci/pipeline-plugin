@@ -1,2 +1,0 @@
-FROM jenkinsci/workflow-demo:RELEASE
-ADD snapshot-plugins /usr/share/jenkins/ref/plugins
