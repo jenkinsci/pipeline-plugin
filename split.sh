@@ -34,3 +34,5 @@ split job
 split multibranch
 split cps-global-lib
 split aggregator
+# Cleanup:
+# for p in …; do mv -v $p $p-full; git clone --single-branch $p-full $p; rm -rf $p-full; (cd $p; git tag | xargs git tag -d; git gc --prune=all --aggressive; git remote set-url origin git@github.com:jenkinsci/$p.git; (echo target; echo work) >> .gitignore; git add .gitignore; perl -p -i -e 's!jenkinsci/workflow-plugin!jenkinsci/\${project.artifactId}-plugin!g' */pom.xml); done
