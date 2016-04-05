@@ -72,8 +72,8 @@ public class WorkflowLibRepository extends FileBackedHttpGitRepository implement
             @Override
             public void onPostReceive(ReceivePack rp, Collection<ReceiveCommand> commands) {
                 base.onPostReceive(rp,commands);
-                for (GlobalRepoHookListener hookListener: ExtensionList.lookup(GlobalRepoHookListener.class)) {
-                    hookListener.hook();
+                for (WorkflowLibRepositoryListener hookListener: ExtensionList.lookup(WorkflowLibRepositoryListener.class)) {
+                    hookListener.repositoryUpdated();
                 }
             }
         });

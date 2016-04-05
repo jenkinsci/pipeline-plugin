@@ -16,25 +16,16 @@
  */
 package org.jenkinsci.plugins.workflow.cps.global;
 
-import hudson.Extension;
 import hudson.ExtensionPoint;
-import javax.inject.Inject;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-public abstract class GlobalRepoHookListener implements ExtensionPoint {
+/**
+ * A listener to respond to the receipt of packs by the {@link WorkflowLibRepository}
+ */
+public abstract class WorkflowLibRepositoryListener implements ExtensionPoint {
 
-    public abstract void hook();
+    /**
+     * Called when the {@link WorkflowLibRepository} receives a pack.
+     */
+    public abstract void repositoryUpdated();
 
-    @Extension
-    @Restricted({NoExternalUse.class})
-    public static class UserDefinedGlobalVariableRepoListener extends GlobalRepoHookListener {
-        @Inject
-        UserDefinedGlobalVariableList globalVariableList;
-
-        @Override
-        public void hook() {
-            globalVariableList.rebuild();
-        }
-    }
 }
