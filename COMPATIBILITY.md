@@ -127,6 +127,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `chucknorris`: [JENKINS-32594](https://issues.jenkins-ci.org/browse/JENKINS-32594)
 - [ ] `sidebar-link`: [JENKINS-33458](https://issues.jenkins-ci.org/browse/JENKINS-33458)
 - [ ] `throttle-concurrent-builds`: [JENKINS-31801](https://issues.jenkins-ci.org/browse/JENKINS-31801)
+- [x] `Exclusion`: supported as of 0.11
 
 ## Custom steps
 
