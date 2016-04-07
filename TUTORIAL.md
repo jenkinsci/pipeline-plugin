@@ -20,7 +20,7 @@ Before you begin, ensure you have the following installed or running:
 
 **Note**: If you are running CloudBees Jenkins Enterprise 14.11 or later, you already have Pipeline (plus additional associated features).
 
-If you want to play with Pipeline without installing Jenkins separately (or accessing your production system), try running the [Docker demo](demo/README.md).
+If you want to play with Pipeline without installing Jenkins separately (or accessing your production system), try running the [Docker demo](https://github.com/jenkinsci/workflow-aggregator-plugin/blob/master/demo/README.md).
 
 # Creating a Pipeline
 
@@ -657,7 +657,7 @@ Every SCM push can still trigger a separate build of a quicker earlier stage as 
 Yet each build runs linearly and can even retain a single workspace, avoiding the need to identify and copy artifacts between builds.
 (Even if you dispose of a workspace from an earlier stage, you can retain information about it using simple local variables.)
 
-Consult the [Docker demo](demo/README.md) for an example of a Pipeline using multiple `stage`s.
+Consult the [Docker demo](https://github.com/jenkinsci/workflow-aggregator-plugin/blob/master/demo/README.md) for an example of a Pipeline using multiple `stage`s.
 
 # Loading Script Text from Version Control
 
@@ -708,7 +708,7 @@ def hello(whom) {
 **Note**: While it can contain helper functions, the only code at top level is a Groovy `Closure`, which is the return value of the script, and thus of the main script’s `load` step.
 
 The helper script can alternately define functions and return `this`, in which case the result of the `load` step can be used to invoke those functions like object methods.
-An older version of the [Docker demo](demo/README.md) showed this technique in practice:
+An older version of the [Docker demo](https://github.com/jenkinsci/workflow-aggregator-plugin/blob/master/demo/README.md) showed this technique in practice:
 
 ```groovy
 def pipeline
@@ -733,7 +733,7 @@ To reduce the amount of boilerplate needed in the master script, you can try the
 ## Retaining Global Libraries
 
 Plugins inject function and class names into a Pipeline before it runs. The plugin bundled with Pipeline allows you to eliminate the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
-A [separate document](cps-global-lib/README.md) has details on this system.
+A [separate document](https://github.com/jenkinsci/workflow-cps-global-lib-plugin/blob/master/README.md) has details on this system.
 
 ## Creating Multibranch Projects
 

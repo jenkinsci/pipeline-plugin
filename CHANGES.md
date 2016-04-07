@@ -2,6 +2,11 @@
 
 Only noting significant user changes, not internal code cleanups and minor bug fixes.
 
+## 2.x
+
+After the 1.15 release, Pipeline component plugins were moved into individual repositories, with changelogs in the corresponding wiki pages.
+For example, the [Pipeline Groovy plugin wiki](https://wiki.jenkins-ci.org/display/JENKINS/Pipeline+Groovy+Plugin) lists its changelog starting with 2.0.
+
 ## 1.15 (Mar 10 2016)
 
 * Now based on Jenkins core 1.642.x. `BuildDiscarderProperty` may now be referenced from the `properties` step without a disambiguating package name.

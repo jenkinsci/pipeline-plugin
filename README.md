@@ -41,7 +41,6 @@ A new collection of [examples, snippets, tips, and tricks](https://github.com/je
 
 Releases are available on the Jenkins update center.
 You need to be running a sufficiently recent Jenkins release: an LTS in the 1.580.x line or newer (currently 1.609.x for the latest updates), or a weekly release.
-See the [changelog](CHANGES.md) for news.
 
 For OSS Jenkins users, install _Pipeline_ (its dependencies will be pulled in automatically).
 You will need to restart Jenkins to complete installation.
@@ -50,11 +49,10 @@ CloudBees Jenkins Enterprise users get Pipeline automatically as of the 14.11 (1
 Otherwise install _CloudBees Pipeline_ from the update center.
 Again dependencies will be pulled in automatically, including all the OSS plugins.
 
-For multibranch pipelines and organization folders, install _Pipeline: Multibranch_ plus at least one SCM provider, such as _GitHub Branch Source_.
+For multibranch pipelines and organization folders, install _Pipeline: Multibranch_ (includes as of _Pipeline_ 2.0) plus at least one SCM provider, such as _GitHub Branch Source_.
 
 # News & questions
 
-* [Changelog](CHANGES.md)
 * [jenkins-workflow tag](http://stackoverflow.com/tags/jenkins-workflow) on StackOverflow
 * [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide) (file issues in the `workflow-plugin` component, or other components with the `workflow` label)
 * [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/pipeline) (mention `pipeline` in the subject)
@@ -62,7 +60,7 @@ For multibranch pipelines and organization folders, install _Pipeline: Multibran
 
 # Demo
 
-See the [demo overview](demo/README.md) using Docker if you want to try a complete setup quickly. In short:
+See the [demo overview](https://github.com/jenkinsci/workflow-aggregator-plugin/blob/master/demo/README.md) using Docker if you want to try a complete setup quickly. In short:
 
     docker run -p 8080:8080 -p 8081:8081 -p 8022:22 -ti jenkinsci/workflow-demo
 
@@ -81,14 +79,6 @@ Workflow Meetup London (Mar 2015): [slides](http://www.slideshare.net/jgcloudbee
 Jenkins Workflow Screencast (Jan 2015): [video](https://www.youtube.com/watch?v=Welwf1wTU-w)
 
 Webinar _Orchestrating the Continuous Delivery Process in Jenkins with Workflow_ (Dec 2014): [video](http://youtu.be/ZqfiW8eVcuQ)
-
-# Detailed guides
-
-[Reusing build steps from freestyle projects](basic-steps/CORE-STEPS.md)
-
-[Using version control from a Pipeline](scm-step/README.md)
-
-[Using the global Groovy class library](cps-global-lib/README.md)
 
 # Development
 
