@@ -202,7 +202,7 @@ public String getLocation() {
 private String actualLocation(Run<?,?> build, TaskListener listener) {
     if (build instanceof AbstractBuild) {
         EnvVars env = build.getEnvironment(listener);
-        env.overrideAll(build.getBuildVariables());
+        env.overrideAll(((AbstractBuild) build).getBuildVariables());
         return env.expand(location);
     } else {
         return location;
