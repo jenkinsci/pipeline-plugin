@@ -179,6 +179,37 @@ If you need a `Node` where the build is running to replace `getBuiltOn`, you can
 
 `TransientProjectActionFactory` can be replaced by `TransientActionFactory<Job>`.
 
+#### Variable substitutions
+
+There is no equivalent to `AbstractBuild.getBuildVariables()` for `WorkflowRun` (any Groovy local variables are not accessible as such).
+Also, `WorkflowRun.getEnvironment(TaskListener)` _is_ implemented, but only yields the initial build environment, irrespective of `withEnv` blocks and the like.
+(To get the _contextual_ environment in a `Step`, you can inject `EnvVars` using `@StepContextParameter`;
+pending [JENKINS-29144](https://issues.jenkins-ci.org/browse/JENKINS-29144) there is no equivalent for a `SimpleBuildStep`.
+A `SimpleBuildWrapper` does have access to an `initialEnvironment` if required.)
+
+Anyway code run from Pipeline should take any configuration values as literal strings and make no attempt to perform variable substitution (including via the `token-macro` plugin),
+since the script author would be using Groovy facilities (`"like ${this}"`) for any desired dynamic behavior.
+To have a single code fragment support both Pipeline and traditional builds, you can use idioms such as:
+
+```java
+private final String location;
+public String getLocation() {
+    return location;
+}
+@DataBoundSetter public void setLocation(String location) {
+    this.location = location;
+}
+private String actualLocation(Run<?,?> build, TaskListener listener) {
+    if (build instanceof AbstractBuild) {
+        EnvVars env = build.getEnvironment(listener);
+        env.overrideAll(build.getBuildVariables());
+        return env.expand(location);
+    } else {
+        return location;
+    }
+}
+```
+
 #### Constructor vs. setters
 
 It is a good idea to replace a lengthy `@DataBoundConstructor` with a short one taking just truly mandatory parameters (such as a server location).
