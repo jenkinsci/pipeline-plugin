@@ -143,7 +143,7 @@ None of these considerations apply to mandatory parameters with no default, whic
 
 ### SCMs
 
-See the [user documentation](scm-step/README.md) for background. The `checkout` metastep uses an `SCM`.
+See the [user documentation](https://github.com/jenkinsci/workflow-scm-step-plugin/blob/master/README.md) for background. The `checkout` metastep uses an `SCM`.
 
 As the author of an SCM plugin, there are some changes you should make to ensure your plugin can be used from pipelines.
 You can use `mercurial-plugin` as a relatively straightforward code example.
@@ -192,7 +192,7 @@ You still need to make the aforementioned changes, since at the end you are just
 
 ### Build steps
 
-See the [user documentation](basic-steps/CORE-STEPS.md) for background. The metastep is `step`.
+See the [user documentation](https://github.com/jenkinsci/workflow-basic-steps-plugin/blob/master/CORE-STEPS.md) for background. The metastep is `step`.
 
 To add support for use of a `Builder` or `Publisher` from a pipeline, depend on Jenkins 1.577+, typically 1.580.1 ([tips](#basic-update)).
 Then implement `SimpleBuildStep`, following the guidelines in [its Javadoc](http://javadoc.jenkins-ci.org/jenkins/tasks/SimpleBuildStep.html).
@@ -248,7 +248,7 @@ Do not necessarily need any special integration, but are encouraged to use `Once
 ## Custom steps
 
 Plugins can also implement custom Pipeline steps with specialized behavior.
-See [here](step-api/README.md) for more.
+See [here](https://github.com/jenkinsci/workflow-step-api-plugin/blob/master/README.md) for more.
 
 ## Historical background
 
