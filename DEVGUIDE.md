@@ -229,6 +229,17 @@ node {
 
 but if the `workspace` is being ignored anyway (in this case because `FunkyNotificationBuilder` only cares about artifacts that have already been archived), it may be better to just write a custom step (described below).
 
+#### Run listeners vs. publishers
+
+For code which genuinely has to run after the build completes, there is `RunListener`.
+If the behavior of this hook needs to be customizable at the job level, the usual technique would be to define a `JobProperty`.
+(One distinction from freestyle projects is that in the case of Pipeline there is no way to introspect the “list of build steps” or “list of publishers” or “list of build wrappers” so any decisions based on such metadata are impossible.)
+
+In most other cases, you just want some code to run after some _portion_ of the build completes, which is typically handled with a `Publisher` if you wish to share a code base with freestyle projects.
+For regular `Publisher`s, which are run as part of the build, a Pipeline script would use the `step` metastep. There are two subtypes:
+* `Recorder`s generally should be placed inline with other build steps in whatever order makes sense.
+* `Notifier`s can be placed in a `finally` block, or you can use the `catchError` step. [This document](https://github.com/jenkinsci/workflow-basic-steps-plugin/blob/master/CORE-STEPS.md#interacting-with-build-status) goes into depth.
+
 ### Build wrappers
 
 Here the metastep is `wrap`.
