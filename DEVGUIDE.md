@@ -252,6 +252,8 @@ If that would be constricting, consider writing a custom step instead.
 
 Replace `Trigger<AbstractProject>` with `Trigger<X>` where `X` is `Job` or perhaps `ParameterizedJob` or `SCMTriggerItem` and implement `TriggerDescriptor.isApplicable` accordingly.
 
+Use `EnvironmentContributor` rather than `RunListener.setUpEnvironment`.
+
 ## Clouds
 
 Do not necessarily need any special integration, but are encouraged to use `OnceRetentionStrategy` from `durable-task` to allow Pipeline builds to survive restarts.
