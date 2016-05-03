@@ -44,6 +44,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -124,6 +125,12 @@ public class CpsScmFlowDefinitionTest {
         ChangeLogSet.Entry entry = iterator.next();
         assertEquals("[flow.groovy]", entry.getAffectedPaths().toString());
         assertFalse(iterator.hasNext());
+    }
+
+    @Test public void configRoundTrip() throws Exception {
+        WorkflowJob job = r.jenkins.createProject(WorkflowJob.class, "p");
+        job.setDefinition(new CpsFlowDefinition("echo 'whatever'"));
+        r.configRoundtrip(job);
     }
 
     // TODO 1.599+ use standard version
