@@ -113,7 +113,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `claim`: scheduled to be supported as of 2.8
 - [X] `ListSubversionTagsParameterValue` (`subversion`): supported as of 2.5.6
 - [X] `authorize-project`: supported as of 1.1.0
-- [ ] `lockable-resources` : [JENKINS-30269](https://issues.jenkins-ci.org/browse/JENKINS-30269)
+- [X] `lockable-resources`: supported as of 1.8 (except for [JENKINS-34273](https://issues.jenkins-ci.org/browse/JENKINS-34273) and [JENKINS-34268](https://issues.jenkins-ci.org/browse/JENKINS-34268))
 - [X] `customize-build-now`: supported as of 1.1
 - [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
 - [X] `embeddable-build-status`: scheduled to be supported as of 1.9
