@@ -32,7 +32,7 @@
     </parent>
     <groupId>org.jenkins-ci.plugins.workflow</groupId>
     <artifactId>workflow-pom</artifactId>
-    <version>1.4.3-SNAPSHOT</version>
+    <version>1.4.3-beta-1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Workflow: Parent</name>
     <url>https://github.com/jenkinsci/workflow-plugin</url>
