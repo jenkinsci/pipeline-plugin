@@ -63,24 +63,24 @@ THE SOFTWARE.
         <f:block>
             <input type="button" value="Generate Groovy" onclick="handlePrototype_${id}(); return false" class="submit-button primary"/>
             <f:textarea id="prototypeText_${id}" readonly="true" style="margin-top: 10px" />
-        </f:block>
-        <script>
-            function handlePrototype_${id}() {
-                buildFormTree(document.forms.config);
-                // TODO JSON.stringify fails in some circumstances: https://gist.github.com/jglick/70ec4b15c1f628fdf2e9 due to Array.prototype.toJSON
-                var json = Object.toJSON(JSON.parse(${configFormJS ?: 'document.forms.config'}.elements.json.value).${definitionJS ?: 'definition'}.snippetizer.prototype);
-                if (!json) {
-                    return; // just a separator
-                }
-                new Ajax.Request('${rootURL}/${it.GENERATE_URL}', {
-                    method: 'POST',
-                    parameters: {json: json},
-                    onSuccess: function(r) {
-                        document.getElementById('prototypeText_${id}').value = r.responseText;
+            <script>
+                function handlePrototype_${id}() {
+                    buildFormTree(document.forms.config);
+                    // TODO JSON.stringify fails in some circumstances: https://gist.github.com/jglick/70ec4b15c1f628fdf2e9 due to Array.prototype.toJSON
+                    var json = Object.toJSON(JSON.parse(${configFormJS ?: 'document.forms.config'}.elements.json.value).${definitionJS ?: 'definition'}.snippetizer.prototype);
+                    if (!json) {
+                        return; // just a separator
                     }
-                });
-            }
-        </script>
+                    new Ajax.Request('${rootURL}/${it.GENERATE_URL}', {
+                        method: 'POST',
+                        parameters: {json: json},
+                        onSuccess: function(r) {
+                            document.getElementById('prototypeText_${id}').value = r.responseText;
+                        }
+                    });
+                }
+            </script>
+        </f:block>
         <f:section title="Global variables"/>
         <f:dropdownList name="var" title="Variable">
             <j:forEach var="var" items="${it.globalVariables}">

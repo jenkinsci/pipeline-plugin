@@ -34,6 +34,7 @@ import hudson.scm.SCMRevisionState;
 import hudson.triggers.SCMTrigger;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.graph.FlowNode;
@@ -126,6 +127,12 @@ public class CpsScmFlowDefinitionTest {
         assertEquals(2, b.number);
         List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = b.getChangeSets();
         assertEquals(Collections.emptyList(), changeSets);
+    }
+
+    @Test public void configRoundTrip() throws Exception {
+        WorkflowJob job = r.jenkins.createProject(WorkflowJob.class, "p");
+        job.setDefinition(new CpsFlowDefinition("echo 'whatever'"));
+        r.configRoundtrip(job);
     }
 
     // TODO 1.599+ use standard version
