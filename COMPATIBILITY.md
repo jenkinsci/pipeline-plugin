@@ -64,6 +64,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `StashNotifier` (`stashNotifier`): [issue 92](https://github.com/jenkinsci/stashnotifier-plugin/issues/92)
 - [X] `LambdaUploadBuildStep`, `LambdaInvokeBuildStep`, `LambdaEventSourceBuildStep` (`aws-lambda`): supported as of 0.5.0
 - [X] `CucumberReportPublisher` (`cucumber-reports`): supported as of 2.1.0
+- [ ] `Powershell` (`powershell`): [JENKINS-34581](https://issues.jenkins-ci.org/browse/JENKINS-34581)
 
 ## Build wrappers
 
