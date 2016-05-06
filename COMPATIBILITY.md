@@ -107,7 +107,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `rebuild`: supported as of 1.24
 - [X] `parameterized-trigger` (to support a pipeline as downstream): supported as of 2.28
 - [X] `build-token-root`: supported as of 1.2
-- [X] `build-failure-analyzer`: [JENKINS-27123](https://issues.jenkins-ci.org/browse/JENKINS-27123)
+- [X] `build-failure-analyzer`: supported as of 1.15
 - [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
 - [X] `job-dsl`: Pipeline creation supported as of 1.29
 - [X] `zentimestamp`: basic compatibility in 4.2
