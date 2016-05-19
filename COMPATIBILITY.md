@@ -65,6 +65,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `LambdaUploadBuildStep`, `LambdaInvokeBuildStep`, `LambdaEventSourceBuildStep` (`aws-lambda`): supported as of 0.5.0
 - [X] `CucumberReportPublisher` (`cucumber-reports`): supported as of 2.1.0
 - [ ] `Powershell` (`powershell`): [JENKINS-34581](https://issues.jenkins-ci.org/browse/JENKINS-34581)
+- [ ] ` Nexus Artifact Uploader` (`nexus`): [JENKINS-34943](https://issues.jenkins-ci.org/browse/JENKINS-34943)
 
 ## Build wrappers
 
