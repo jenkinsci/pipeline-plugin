@@ -97,6 +97,7 @@ Now, click on your Pipeline and **Configure** it to edit its script.
 
 ```groovy
 node {
+  checkout scm
   git url: 'https://github.com/jglick/simple-maven-project-with-tests.git'
   def mvnHome = tool 'M3'
   sh "${mvnHome}/bin/mvn -B verify"
