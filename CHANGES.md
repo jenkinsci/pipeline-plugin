@@ -17,6 +17,10 @@ For example, the [Pipeline Groovy plugin wiki](https://wiki.jenkins-ci.org/displ
 * [JENKINS-32925](https://issues.jenkins-ci.org/browse/JENKINS-32925): stack overflow displaying reference documentation in certain cases.
 * [JENKINS-27152](https://issues.jenkins-ci.org/browse/JENKINS-27152): offering `tmp` option to `pwd` step.
 
+## 1.14.1 (May 24 2016)
+
+* [JENKINS-34450](https://issues.jenkins-ci.org/browse/JENKINS-34450): work around core deadlock (backport from `workflow-job` 2.2).
+
 ## 1.14 (Feb 25 2016)
 
 * [JENKINS-32727](https://issues.jenkins-ci.org/browse/JENKINS-32727): new facility to replay Pipeline builds with a modified script.
