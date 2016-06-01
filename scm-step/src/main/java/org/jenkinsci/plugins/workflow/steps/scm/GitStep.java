@@ -33,25 +33,18 @@ import hudson.Extension;
 import hudson.Util;
 import hudson.model.Item;
 import hudson.model.TaskListener;
-import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitException;
-import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.GitTool;
-import hudson.plugins.git.Messages;
-import hudson.plugins.git.SubmoduleConfig;
-import hudson.plugins.git.UserRemoteConfig;
-import hudson.plugins.git.extensions.GitSCMExtension;
-import hudson.plugins.git.extensions.impl.LocalBranch;
 import hudson.scm.SCM;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import java.util.Collection;
 import org.jenkinsci.plugins.gitclient.Git;
 import org.jenkinsci.plugins.gitclient.GitClient;
 import org.jenkinsci.plugins.gitclient.GitURIRequirementsBuilder;
@@ -61,9 +54,10 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
+import jenkins.model.Jenkins;
 
 /**
- * Runs Git using {@link GitSCM}.
+ * Runs Git using {@code GitSCM}.
  */
 public final class GitStep extends SCMStep {
 
@@ -95,17 +89,32 @@ public final class GitStep extends SCMStep {
         this.credentialsId = Util.fixEmpty(credentialsId);
     }
 
+    @SuppressWarnings("rawtypes")
     @Override public SCM createSCM() {
-        return new GitSCM(createRepoList(url, credentialsId), Collections.singletonList(new BranchSpec("*/" + branch)), false, Collections.<SubmoduleConfig>emptyList(), null, null, Collections.<GitSCMExtension>singletonList(new LocalBranch(branch)));
+        try {
+            ClassLoader cl = Jenkins.getActiveInstance().getPluginManager().uberClassLoader;
+            return (SCM) cl.loadClass("hudson.plugins.git.GitSCM").getConstructor(
+                List.class, // userRemoteConfigs
+                List.class, // branches
+                Boolean.class, // doGenerateSubmoduleConfigurations
+                Collection.class, // submoduleCfg
+                cl.loadClass("hudson.plugins.git.browser.GitRepositoryBrowser"), // browser
+                String.class, // gitTool
+                List.class // extensions
+            ).newInstance(
+                Collections.singletonList(cl.loadClass("hudson.plugins.git.UserRemoteConfig").getConstructor(String.class, String.class, String.class, String.class).newInstance(url, null, null, credentialsId)),
+                Collections.singletonList(cl.loadClass("hudson.plugins.git.BranchSpec").getConstructor(String.class).newInstance("*/" + branch)),
+                false,
+                Collections.EMPTY_LIST,
+                null,
+                null,
+                Collections.singletonList(cl.loadClass("hudson.plugins.git.extensions.impl.LocalBranch").getConstructor(String.class).newInstance(branch)));
+        } catch (RuntimeException x) {
+            throw x;
+        } catch (Exception x) {
+            throw new IllegalStateException(x);
+        }
     }
-
-    // copied from GitSCM
-    static private List<UserRemoteConfig> createRepoList(String url, String credentialsId) {
-        List<UserRemoteConfig> repoList = new ArrayList<UserRemoteConfig>();
-        repoList.add(new UserRemoteConfig(url, null, null, credentialsId));
-        return repoList;
-    }
-
 
     private static StandardCredentials lookupCredentials(Item project, @Nonnull String credentialId, String uri) {
         return CredentialsMatchers.firstOrNull(
@@ -116,9 +125,17 @@ public final class GitStep extends SCMStep {
 
     @Extension(optional=true) public static final class DescriptorImpl extends SCMStepDescriptor {
 
-        public DescriptorImpl() {
-            // Fail now if dependency plugin not loaded. Descriptor.<init> will actually fail anyway, but this is just to be sure.
-            GitSCM.class.hashCode();
+        public DescriptorImpl() throws Exception {
+            ClassLoader cl = Jenkins.getActiveInstance().getPluginManager().uberClassLoader;
+            // Dependency plugin must be loaded…
+            cl.loadClass("hudson.plugins.git.GitSCM");
+            // …but not our own replacement.
+            try {
+                cl.loadClass("jenkins.plugins.git.GitStep");
+                throw new IllegalStateException("skip the old copy of GitStep");
+            } catch (ClassNotFoundException x) {
+                // good
+            }
         }
 
         // copy/paste from GitSCM.DescriptorImpl
@@ -166,7 +183,7 @@ public final class GitStep extends SCMStep {
             try {
                 git.getHeadRev(url, "HEAD");
             } catch (GitException e) {
-                return FormValidation.error(Messages.UserRemoteConfig_FailedToConnect(e.getMessage()));
+                return FormValidation.error("Failed to connect to repository : " + e.getMessage());
             }
 
             return FormValidation.ok();
