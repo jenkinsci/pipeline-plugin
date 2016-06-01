@@ -26,11 +26,11 @@ package org.jenkinsci.plugins.workflow.steps.scm;
 
 import hudson.Extension;
 import hudson.scm.SCM;
-import hudson.scm.SubversionSCM;
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * Runs Subversion using {@link SubversionSCM}.
+ * Runs Subversion using {@code SubversionSCM}.
  */
 public final class SubversionStep extends SCMStep {
 
@@ -45,14 +45,29 @@ public final class SubversionStep extends SCMStep {
     }
 
     @Override protected SCM createSCM() {
-        return new SubversionSCM(url); // TODO maybe default to UpdateWithCleanUpdater, etc.
+        try {
+            ClassLoader cl = Jenkins.getActiveInstance().getPluginManager().uberClassLoader;
+            return (SCM) cl.loadClass("hudson.scm.SubversionSCM").getConstructor(String.class).newInstance(url);
+        } catch (RuntimeException x) {
+            throw x;
+        } catch (Exception x) {
+            throw new IllegalStateException(x);
+        }
     }
 
     @Extension(optional=true) public static final class DescriptorImpl extends SCMStepDescriptor {
 
-        public DescriptorImpl() {
-             // Fail now if dependency plugin not loaded. Descriptor.<init> will actually fail anyway, but this is just to be sure.
-            SubversionSCM.class.hashCode();
+        public DescriptorImpl() throws Exception {
+            ClassLoader cl = Jenkins.getActiveInstance().getPluginManager().uberClassLoader;
+            // Dependency plugin must be loaded…
+            cl.loadClass("hudson.scm.SubversionSCM");
+            // …but not our own replacement.
+            try {
+                cl.loadClass("jenkins.scm.impl.subversion.SubversionStep");
+                throw new IllegalStateException("skip the old copy of SubversionStep");
+            } catch (ClassNotFoundException x) {
+                // good
+            }
         }
 
         @Override public String getFunctionName() {
