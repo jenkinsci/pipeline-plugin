@@ -17,6 +17,10 @@ For example, the [Pipeline Groovy plugin wiki](https://wiki.jenkins-ci.org/displ
 * [JENKINS-32925](https://issues.jenkins-ci.org/browse/JENKINS-32925): stack overflow displaying reference documentation in certain cases.
 * [JENKINS-27152](https://issues.jenkins-ci.org/browse/JENKINS-27152): offering `tmp` option to `pwd` step.
 
+## 1.14.2 (Jun 01 2016)
+
+* [JENKINS-35247](https://issues.jenkins-ci.org/browse/JENKINS-35247): `git` and `subversion` plugin dependencies made dynamic, in preparation for `git` and `svn` steps being moved to the respective plugins.
+
 ## 1.14.1 (May 24 2016)
 
 * [JENKINS-34450](https://issues.jenkins-ci.org/browse/JENKINS-34450): work around core deadlock (backport from `workflow-job` 2.2).
@@ -167,6 +171,10 @@ Note: if you also have _CloudBees Workflow: Groovy Checkpoint_ installed, you _m
 * [JENKINS-26552](https://issues.jenkins-ci.org/browse/JENKINS-26552) and thus [JENKINS-27389](https://issues.jenkins-ci.org/browse/JENKINS-27389): problems with environment variables fixed.
 * Avoid some possible name clashes with function names in scripts (`build` reported).
 * API addition: block-scoped steps can now pass in `EnvironmentExpander` and/or `ConsoleLogFilter` to better customize processing of nested code.
+
+## 1.4.3 (Jun 01 2016)
+
+* [JENKINS-35247](https://issues.jenkins-ci.org/browse/JENKINS-35247): `git` and `subversion` plugin dependencies made dynamic, in preparation for `git` and `svn` steps being moved to the respective plugins.
 
 ## 1.4.2 (Jul 21 2015)
 
