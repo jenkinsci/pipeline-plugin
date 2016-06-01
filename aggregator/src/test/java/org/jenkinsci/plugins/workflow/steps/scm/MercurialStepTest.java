@@ -47,6 +47,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.For;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.RandomlyFails;
 
 @For(GenericSCMStep.class) // formerly a dedicated MercurialStep
 public class MercurialStepTest {
@@ -66,6 +67,7 @@ public class MercurialStepTest {
         r.jenkins.getDescriptorByType(SCMTrigger.DescriptorImpl.class).synchronousPolling = true;
     }
 
+    @RandomlyFails("TODO sometimes get expected:<2> but was:<3> (probably need to suppress builds during notifyCommit)")
     @Test public void multipleSCMs() throws Exception {
         File sampleRepo = tmp.newFolder();
         hg(sampleRepo, "init");

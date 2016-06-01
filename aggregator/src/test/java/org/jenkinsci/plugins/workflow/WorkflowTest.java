@@ -650,6 +650,7 @@ public class WorkflowTest extends SingleJobTestBase {
         });
     }
 
+    @RandomlyFails("TODO sometimes get AssertionError from CpsStepContext$1.run(CpsStepContext.java:247)")
     @Issue("JENKINS-26513")
     @Test public void executorStepRestart() {
         story.addStep(new Statement() {
