@@ -85,7 +85,8 @@ The following sections guide you through creating a simple Pipeline.
 To set up for creating a Pipeline, ensure you have the following:
 
 1. First, you need a Maven installation available to do builds with.
-Go to _Jenkins » Manage Jenkins » Configure System_, click **Add Maven**, give it the name **M3** and allow it to install automatically.
+Go to _Jenkins » Manage Jenkins » Configure System_, click **Add Maven**, give it the name **M3** and allow it to install automatically. For Jenkins 2.x and later, this option is under  _Jenkins » Manage Jenkins » Global Tool Configuration_ instead. 
+
 
 2. Only if you do not have Git installed on your Jenkins server: click **Delete Git** on the default Git installation and _Add Git » JGit_ to replace it.
 
