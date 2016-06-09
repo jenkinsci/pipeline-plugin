@@ -42,7 +42,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `CloverPublisher` (`clover`): [JENKINS-27302](https://issues.jenkins-ci.org/browse/JENKINS-27302)
 - [ ] `MsBuildBuilder` (`msbuild`): [JENKINS-26948](https://issues.jenkins-ci.org/browse/JENKINS-26948)
 - [X] `HipChatNotifier` (`hipchat`): supported as of 1.0.0
-- [ ] `IronMQNotifier` (`ironmq-notifier`): [JENKINS-35505](https://issues.jenkins-ci.org/browse/JENKINS-35505)
+- [ ]  IronMQNotifier` (`ironmq-notifier`): [JENKINS-35505](https://issues.jenkins-ci.org/browse/JENKINS-35505)
 - [X] `LogParserPublisher` (`log-parser`): supported as of 2.0
 - [X] `SlackNotifier` (`slack`): supported as of 2.0
 - [ ] ~~`DescriptionSetterPublisher` (`description-setter`): [PR 7](https://github.com/jenkinsci/description-setter-plugin/pull/7)~~
