@@ -68,6 +68,8 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `TestPackageBuilder` (+6 more), `ATXPublisher` (+4 more) (`ecutest`): supported as of 1.11
 - [X] `GatlingPublisher` (`gatling`): supported as of 1.2.0
 - [ ] `BitbucketBuildStatusNotifier`: (`bitbucket-build-status-notifier`) [JENKINS-33841](https://issues.jenkins-ci.org/browse/JENKINS-33841)
+- [X] `NexusArtifactUploader` (`nexus-artifact-uploader`): supported as of 2.2
+- [ ] `CppcheckPublisher` (`cppcheck`): [JENKINS-34943](https://issues.jenkins-ci.org/browse/JENKINS-35096)
 
 ## Build wrappers
 
