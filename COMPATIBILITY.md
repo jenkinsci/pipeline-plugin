@@ -66,6 +66,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `CucumberReportPublisher` (`cucumber-reports`): supported as of 2.1.0
 - [ ] `Powershell` (`powershell`): [JENKINS-34581](https://issues.jenkins-ci.org/browse/JENKINS-34581)
 - [X] `TestPackageBuilder` (+6 more), `ATXPublisher` (+4 more) (`ecutest`): supported as of 1.11
+- [X] `GatlingPublisher` (`gatling`): supported as of 1.2.0
 
 ## Build wrappers
 
