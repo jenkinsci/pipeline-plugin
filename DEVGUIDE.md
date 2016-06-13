@@ -269,7 +269,7 @@ Traditional Jenkins `Job`s are defined in a fairly deep type hierarchy: `Freesty
 (As well as paired `Run` types: `FreestyleBuild`, etc.)
 In older versions of Jenkins, much of the interesting implementation was in `AbstractProject` (or `AbstractBuild`), which was packed full of assorted features not present in `Job` (or `Run`).
 Some of these features were also needed by Pipeline, like having a programmatic way to start a build (optionally with parameters), or lazy-load build records, or integrate with SCM triggers.
-Others were not applicable to Pipeline, like declaring a single SCM and a single workspace per build, or being tied to a specific label, or running a linear sequence of build steps within the scope of a single Java method call.
+Others were not applicable to Pipeline, like declaring a single SCM and a single workspace per build, or being tied to a specific label, or running a linear sequence of build steps within the scope of a single Java method call, or having a simple list of build steps and wrappers whose configuration is guaranteed to remain the same from build to build.
 
 `WorkflowJob` directly extends `Job` since it cannot act like an `AbstractProject`.
 Therefore some refactoring was needed, to make the relevant features available to other `Job` types without code or API duplication.
