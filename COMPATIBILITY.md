@@ -67,6 +67,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `Powershell` (`powershell`): [JENKINS-34581](https://issues.jenkins-ci.org/browse/JENKINS-34581)
 - [X] `TestPackageBuilder` (+6 more), `ATXPublisher` (+4 more) (`ecutest`): supported as of 1.11
 - [X] `GatlingPublisher` (`gatling`): supported as of 1.2.0
+- [ ] `BitbucketBuildStatusNotifier`: (`bitbucket-build-status-notifier`) [JENKINS-33841](https://issues.jenkins-ci.org/browse/JENKINS-33841)
 
 ## Build wrappers
 
