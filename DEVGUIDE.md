@@ -67,6 +67,8 @@ private String actualLocation(Run<?,?> build, TaskListener listener) {
 }
 ```
 
+[JENKINS-35671](https://issues.jenkins-ci.org/browse/JENKINS-35671) would simplify this.
+
 #### Constructor vs. setters
 
 It is a good idea to replace a lengthy `@DataBoundConstructor` with a short one taking just truly mandatory parameters (such as a server location).
@@ -140,6 +142,22 @@ public @Nonnull String getStuff() {
 
 None of these considerations apply to mandatory parameters with no default, which should be requested in the `@DataBoundConstructor` and have a simple getter.
 (You could still have a `default` in the configuration form as a hint to new users, as a complement to a full description in `help-stuff.html`, but the value chosen will always be saved.)
+
+#### Handling secrets
+
+If your plugin ever stored secrets (such as passwords) in a plain `String`-valued fields, it was already insecure and should at least have been using `Secret`.
+`Secret`-valued fields are more secure, but are not really appropriate for projects defined in source code, like Pipeline jobs.
+
+Instead you should integrate with the [Credentials plugin](https://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin). Then your builder etc. would typically have a `credentialsId` field which just refers to the ID of the credentials.
+(The user can pick a mnemonic ID for use in scripted jobs.)
+Typically the `config.jelly` used in _Snippet Generator_ will have a `<c:select/>` control,
+backed by a `doFillCredentialsId` web method on the `Descriptor` to enumerate credentials currently available of the intended type (such as `StandardUsernamePasswordCredentials`) and perhaps restricted to some domain (such as a hostname obtained via a `@QueryParameter` from a nearby form field).
+At runtime, you will look up the credentials by ID and use them.
+
+Plugins formerly using `Secret` will generally need to use an `@Initializer` to migrate the configuration of freestyle projects to use Credentials instead.
+
+The details of adopting Credentials are too numerous to list here.
+Pending a proper developer’s guide, it is best to follow the example of well-maintained plugins which have already made such a conversion.
 
 ### SCMs
 
