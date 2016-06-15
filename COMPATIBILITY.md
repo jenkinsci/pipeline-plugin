@@ -71,6 +71,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `BitbucketBuildStatusNotifier`: (`bitbucket-build-status-notifier`) [JENKINS-33841](https://issues.jenkins-ci.org/browse/JENKINS-33841)
 - [X] `NexusArtifactUploader` (`nexus-artifact-uploader`): supported as of 2.2
 - [ ] `CppcheckPublisher` (`cppcheck`): [JENKINS-34943](https://issues.jenkins-ci.org/browse/JENKINS-35096)
+- [X] `MarathonStep` (`marathon`): supported as of 1.2.1 (https://github.com/mesosphere/jenkins-marathon-plugin)
 
 ## Build wrappers
 
