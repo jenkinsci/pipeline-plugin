@@ -106,7 +106,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `mock-slave` (for prototyping): supported as of 1.7
 - [X] `docker`: supported as of 0.8
 - [X] `nectar-vmware` (CloudBees Jenkins Enterprise): supported as of 4.3.2
-- [ ] `operations-center-cloud` (CloudBees Jenkins Enterprise/Operations Center): CJP-2951
+- [X] `operations-center-cloud` (CloudBees Jenkins Enterprise/Operations Center): supported as of 1.7.5/1.8.3
 - [X] `ec2`: known to work as is
 
 ## Miscellaneous
