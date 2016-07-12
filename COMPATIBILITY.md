@@ -71,7 +71,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `BitbucketBuildStatusNotifier`: (`bitbucket-build-status-notifier`) [JENKINS-33841](https://issues.jenkins-ci.org/browse/JENKINS-33841)
 - [X] `NexusArtifactUploader` (`nexus-artifact-uploader`): supported as of 2.2
 - [ ] `CppcheckPublisher` (`cppcheck`): [JENKINS-34943](https://issues.jenkins-ci.org/browse/JENKINS-35096)
-- [ ] `ConfluencePublisher` (`confluence-publisher-plugin`): [JENKINS-36345](https://issues.jenkins-ci.org/browse/JENKINS-36345)
+- [ ] `ConfluencePublisher` (`confluence-publisher`): [JENKINS-36345](https://issues.jenkins-ci.org/browse/JENKINS-36345)
 
 ## Build wrappers
 
