@@ -32,7 +32,7 @@ Replace `AbstractBuild.getProject` with `Run.getParent`.
 
 `BuildListener` has also been replaced with `TaskListener` in new method overloads.
 
-If you need a `Node` where the build is running to replace `getBuiltOn`, you can use `FilePath.getComputer`.
+If you need a `Node` where the build is running to replace `getBuiltOn`, you can use `FilePath.toComputer`.
 
 `TransientProjectActionFactory` can be replaced by `TransientActionFactory<Job>`.
 
