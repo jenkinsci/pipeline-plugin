@@ -39,7 +39,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `JaCoCoPublisher` (`jacoco`): [JENKINS-27120](https://issues.jenkins-ci.org/browse/JENKINS-27120)
 - [X] `Publisher` (`testng`): supported as of 1.14
 - [ ] `Gradle` (`gradle`): [JENKINS-27393](https://issues.jenkins-ci.org/browse/JENKINS-27393)
-- [ ] `CloverPublisher` (`clover`): [JENKINS-27302](https://issues.jenkins-ci.org/browse/JENKINS-27302)
+- [X] `CloverPublisher` (`clover`): supported as of 4.6.0
 - [ ] `MsBuildBuilder` (`msbuild`): [JENKINS-26948](https://issues.jenkins-ci.org/browse/JENKINS-26948)
 - [X] `HipChatNotifier` (`hipchat`): supported as of 1.0.0
 - [ ] `IronMQNotifier` (`ironmq-notifier`): [JENKINS-35505](https://issues.jenkins-ci.org/browse/JENKINS-35505)
