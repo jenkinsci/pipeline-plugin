@@ -151,6 +151,7 @@ For cases when a first-class Pipeline step (rather than an adaptation of functio
 - [X] `mailer`: `mail` step in Pipeline 1.2
 - [ ] `artifactory`: [JENKINS-30121](https://issues.jenkins-ci.org/browse/JENKINS-30121)
 - [X] `email-ext`: `emailext` step since 2.41
+- [X] `marathon`: `marathon` step since 1.2.1
 
 # Plugin Developer Guide
 
