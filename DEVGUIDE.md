@@ -159,6 +159,109 @@ Plugins formerly using `Secret` will generally need to use an `@Initializer` to 
 The details of adopting Credentials are too numerous to list here.
 Pending a proper developer’s guide, it is best to follow the example of well-maintained plugins which have already made such a conversion.
 
+#### Defining symbols
+
+By default, scripts making use of your plugin will need to refer to the (simple) Java class name of the extension.
+For example, if you defined
+
+```java
+public class ForgetBuilder extends Builder implements SimpleBuildStep {
+    private final String what;
+    @DataBoundConstructor public ForgetBuilder(String what) {this.what = what;}
+    public String getWhat() {return what;}
+    @Override public void perform(Run build, FilePath workspace, Launcher launcher,
+            TaskListener listener) throws InterruptedException, IOException {
+        listener.getLogger().println("What was " + what + "?");
+    }
+    @Extension public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
+        @Override public String getDisplayName() {return "Forget things";}
+        @Override public boolean isApplicable(Class<? extends AbstractProject> t) {return true;}
+    }
+}
+```
+
+then scripts would use this builder as follows:
+
+```groovy
+step([$class: 'ForgetBuilder', what: 'everything'])
+```
+
+To make for a more attractive and mnemonic usage style, you can depend on `org.jenkins-ci:symbol-annotation`
+and add a `@Symbol` to your `Descriptor`, uniquely identifying it among extensions of its kind
+(in this example, `SimpleBuildStep`s):
+
+```java
+// …
+@Symbol("forget")
+@Extension public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
+// …
+```
+
+Now when users of sufficiently new versions of Pipeline wish to run your builder, they can use a shorter syntax:
+
+```groovy
+forget 'everything'
+```
+
+`@Symbol`s are not limited to extensions used at “top level” by metasteps such as `step`.
+Any `Descriptor` can have an associated symbol.
+Therefore if your plugin uses other `Describable`s for any kind of structured configuration,
+you should also annotate those implementations.
+For example if you have defined an extension point
+
+```java
+public abstract Timeframe extends AbstractDescribableImpl<Timeframe> implements ExtensionPoint {
+    public abstract boolean areWeThereYet();
+}
+```
+
+with some implementations such as
+
+```java
+@Extension public class Immediately extends Timeframe {
+    @DataBoundConstructor public Immediately() {}
+    @Override public boolean areWeThereYet() {return true;}
+    @Symbol("now")
+    @Extension public static DescriptorImpl extends Descriptor<Timeframe> {
+        @Override public String getDisplayName() {return "Right now";}
+    }
+}
+```
+
+or
+
+```java
+@Extension public class HoursAway extends Timeframe {
+    private final long hours;
+    @DataBoundConstructor public HoursAway(long hours) {this.hours = hours;}
+    public long getHours() {return hours;}
+    @Override public boolean areWeThereYet() {/* … */}
+    @Symbol("soon")
+    @Extension public static DescriptorImpl extends Descriptor<Timeframe> {
+        @Override public String getDisplayName() {return "Pretty soon";}
+    }
+}
+```
+
+which are selectable in your configuration
+
+```java
+private Timeframe when = new Immediately();
+public Timeframe getWhen() {return when;}
+@DataBoundSetter public void setWhen(Timeframe when) {this.when = when;}
+```
+
+then a script could select a timeframe using the symbols you have defined:
+
+```groovy
+forget 'nothing' // whenever
+forget what: 'something', when: now()
+forget what: 'everything else', when: soon(1)
+```
+
+_Snippet Generator_ will offer the simplified syntax wherever available.
+Freestyle project configuration will ignore the symbol, though a future version of the Job DSL plugin may take advantage of it.
+
 ### SCMs
 
 See the [user documentation](https://github.com/jenkinsci/workflow-scm-step-plugin/blob/master/README.md) for background. The `checkout` metastep uses an `SCM`.
