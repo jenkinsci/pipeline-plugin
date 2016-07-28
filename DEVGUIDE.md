@@ -159,6 +159,53 @@ Plugins formerly using `Secret` will generally need to use an `@Initializer` to 
 The details of adopting Credentials are too numerous to list here.
 Pending a proper developer’s guide, it is best to follow the example of well-maintained plugins which have already made such a conversion.
 
+#### Defining symbols
+
+By default, scripts making use of your plugin will need to refer to the (simple) Java class name of the extension.
+For example, if you defined
+
+```java
+public class ForgetBuilder extends Builder implements SimpleBuildStep {
+    private final String what;
+    @DataBoundConstructor public ForgetBuilder(String what) {this.what = what;}
+    public String getWhat() {return what;}
+    @Override public void perform(Run build, FilePath workspace, Launcher launcher,
+            TaskListener listener) throws InterruptedException, IOException {
+        listener.getLogger().println("What was " + what + "?");
+    }
+    @Extension public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
+        @Override public String getDisplayName() {return "Forget things";}
+        @Override public boolean isApplicable(Class<? extends AbstractProject> t) {return true;}
+    }
+}
+```
+
+then scripts would use this builder as follows:
+
+```groovy
+step([$class: 'ForgetBuilder', what: 'everything'])
+```
+
+To make for a more attractive and mnemonic usage style, you can depend on `org.jenkins-ci:symbol-annotation`
+and add a `@Symbol` to your `Descriptor`, uniquely identifying it among extensions of its kind
+(in this example, `SimpleBuildStep`s):
+
+```java
+// …
+@Symbol("forget")
+@Extension public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
+// …
+```
+
+Now when users of sufficiently new versions of Pipeline wish to run your builder, they can use a shorter syntax:
+
+```groovy
+forget 'everything'
+```
+
+_Snippet Generator_ will offer the simplified syntax wherever available.
+Freestyle project configuration will ignore the symbol, though a future version of the Job DSL plugin may take advantage of it.
+
 ### SCMs
 
 See the [user documentation](https://github.com/jenkinsci/workflow-scm-step-plugin/blob/master/README.md) for background. The `checkout` metastep uses an `SCM`.
