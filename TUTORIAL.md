@@ -308,6 +308,14 @@ It may be a fully-qualified class name (`hudson.tasks.ArtifactArchiver`), but th
 
 In some cases, part of a step configuration will force an object to be of a fixed class. Thus, `$class` can be omitted entirely.
 
+Newer versions of Pipeline will often allow shorter forms, such as
+
+```groovy
+archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+```
+
+See the _Pipeline Syntax: Reference_ page inside Jenkins for a detailed guide on step configuration syntax.
+
 **Example**: rather than using the simple `git` step, you can use the more general `checkout` step and specify any complex configuration supported by the Git plugin:
 
 ```groovy
