@@ -116,7 +116,7 @@ Finished: FAILURE
 
 ### Modifying for Windows Variations
 
-This documentation assumes Jenkins is running on Linux or another Unix-like operating system. If your Jenkins server (or, later, slave) is running on Windows, try using `bat` in place of `sh`, and use backslashes as the file separator where needed (backslashes do generally need to be escaped inside strings).
+This documentation assumes Jenkins is running on Linux or another Unix-like operating system. If your Jenkins server (or, later, agent node) is running on Windows, try using `bat` in place of `sh`, and use backslashes as the file separator where needed (backslashes do generally need to be escaped inside strings).
 
 **Example**: rather than:
 
@@ -133,7 +133,7 @@ bat "${mvnHome}\\bin\\mvn -B verify"
 ## Understanding Syntax
 
 A `node` is a step that schedules a task to run by adding it to the Jenkins build queue.
-* As soon as an executor slot is available on a **node** (the Jenkins master, or a slave), the task is run on that node.
+* As soon as an executor slot is available on a **node** (the Jenkins master, or agent), the task is run on that node.
 * A `node` also allocates a **workspace** (file directory) on that node for the duration of the task (more on this later).
 
 Groovy functions  accept **closures** (blocks of code) and some steps expect a block.
@@ -237,7 +237,7 @@ node {
 * You can override certain environment variables and the overrides are seen by subsequent `sh` steps (or anything else that pays attention to environment variables).
 * You can run `mvn` without a fully-qualified path.
 
-Setting a variable such as `PATH` in this way is only safe if you are using a single slave for this build.
+Setting a variable such as `PATH` in this way is only safe if you are using a single agent for this build.
 As an alternative, you can use the `withEnv` step to set a variable within a scope:
 
 ```groovy
@@ -325,9 +325,9 @@ checkout scm: [$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfi
 Here, `[[name: '*/master']]`is an array with one map element, `[name: '*/master']`, which is an object of type `hudson.plugins.git.BranchSpec`, but we can omit `$class: 'BranchSpec'` since `branches` can only hold this kind of object.
 Similarly, the elements of `userRemoteConfigs` are declared to be of type `UserRemoteConfig`, so this need not be mentioned.
 
-# Using Slaves
+# Using Agents
 
-Thus far, pipeline has run only on the Jenkins master - assuming you had no slaves configured.
+Thus far, pipeline has run only on the "master" agent on your Jenkins server - assuming you had no other agents configured.
 You can even force it to run on the master by telling the `node` step the following:
 
 ```groovy
@@ -338,18 +338,18 @@ node('master') {
 
 Here, you pass a value for the optional `label` parameter of the step, as well as a body block.
 
-To create a simple slave:
+To create a simple agent:
 
-1.  Select _Manage Jenkins » Manage Nodes » New Node_ and create a _Dumb Slave_.
+1.  Select _Manage Jenkins » Manage Nodes » New Node_ and create a _Permanent Agent_.
 Leave _# of executors_ as 1.
 
-2. Pick a **Remote root directory** such as `/tmp/slave`.
+2. Pick a **Remote root directory** such as `/tmp/agent`.
 
-3. Enter `remote` in the **Labels** field and set the _Launch method_ to _Launch slave agents via Java Web Start_.
+3. Enter `remote` in the **Labels** field and set the _Launch method_ to _Launch agents via Java Web Start_.
 
-4. **Save**, then click on the new slave and **Launch**.
+4. **Save**, then click on the new agent and **Launch**.
 
-5. Now, go back to your Pipeline definition and request this slave’s label:
+5. Now, go back to your Pipeline definition and request this agent's label:
 
 ```groovy
 node('remote') {
@@ -357,7 +357,7 @@ node('remote') {
 }
 ```
 
-The parameter may be a slave name, or a single label, or even a label expression such as:
+The parameter may be a node name, or a single label, or even a label expression such as:
 
 ```groovy
 node('unix && 64bit') {
@@ -368,10 +368,10 @@ node('unix && 64bit') {
 When you **Build Now**, you see:
 
 ```
-Running on <yourslavename> in /<slaveroot>/workspace/<jobname>
+Running on <youragentname> in /<agentroot>/workspace/<jobname>
 ```
 
-and the `M3` Maven installation being unpacked to this slave root.
+and the `M3` Maven installation being unpacked to this agent root.
 
 ## Pausing: Flyweight vs. Heavyweight Executors
 
@@ -400,7 +400,7 @@ If you click **Proceed**, the build will proceed as before.
 First, go to the Jenkins main page and look at the **Build Executor Status** widget.
 
 * You will see an unnumbered entry under **master** named  **jobname #10**; executors #1 and #2 on the master are idle.
-* You will also see an entry under your slave, in a numbered row (probably #1) called **Building part of jobname #10**.
+* You will also see an entry under your agent, in a numbered row (probably #1) called **Building part of jobname #10**.
 
 Why are there two executors consumed by one Pipeline build?
 
@@ -409,10 +409,10 @@ Why are there two executors consumed by one Pipeline build?
 * Flyweight executors are always available.
 
 When you run a `node` step:
-* A regular heavyweight executor is allocated on a node (usually a slave) matching the label expression, as soon as one is available. This executor represents the real work being done on the node.
+* A regular heavyweight executor is allocated on a node (usually an agent) matching the label expression, as soon as one is available. This executor represents the real work being done on the node.
 
 * If you start a second build of the Pipeline while the first is still paused with the one available executor, you will see both Pipeline builds running on master.
-But only the first will have grabbed the one available executor on the slave; the other **part of jobname #11** will be shown in **Build Queue (1)**.
+But only the first will have grabbed the one available executor on the agent; the other **part of jobname #11** will be shown in **Build Queue (1)**.
 (shortly after, the console log for the second build will note that it is still waiting for an available executor).
 
 To finish up, click the ▾ beside either executor entry for any running Pipeline and select **Paused for Input**, then click **Proceed**
@@ -424,12 +424,12 @@ In addition to waiting to allocate an executor on a node, the `node` step also a
 Workspaces are locked for the duration of the step: only one build at a time can use a given workspace.
 If multiple builds need a workspace on the same node, additional workspaces are allocated.
 
-**Configure** your slave, set **# of executors** to 2 and **Save**.
+**Configure** your agent, set **# of executors** to 2 and **Save**.
 Now start your build twice in a row.
 The log for the second build will show
 
 ```
-Running on <yourslavename> in /<slaveroot>/workspace/<jobname>@2
+Running on <youragentname> in /<agentroot>/workspace/<jobname>@2
 ```
 
 The `@2` shows that the build used a separate workspace from the first one, with which it ran concurrently.
@@ -441,7 +441,7 @@ Cloning the remote Git repository
 
 since this new workspace required a new copy of the project sources.
 
-You can also use the `ws` step to explicitly ask for another workspace on the current slave, _without_ grabbing a new executor slot.
+You can also use the `ws` step to explicitly ask for another workspace on the current agent, _without_ grabbing a new executor slot.
 Inside its body all commands run in the second workspace.
 The `dir` step can be used to run a block with a different working directory (typically a subdirectory of the workspace) without allocating a new workspace.
 
@@ -603,10 +603,10 @@ A later version of the plugin may remove the need for this workaround.
 When you run this Pipeline for the first time, it will check out a project and run all of its tests in sequence.
 The second and subsequent times you run it, the `splitTests` task will partition your tests into two sets of roughly equal runtime.
 The rest of the Pipeline then runs these in parallel — so if you look at **trend** (in the **Build History** widget) you will see the second and subsequent builds taking roughly half the time of the first.
-If you only have the one slave configured with its two executors, this won't save time, but you may have multiple slaves on different hardware matching the same label expression.
+If you only have the one agent configured with its two executors, this won't save as much time, but you may have multiple agents on different hardware matching the same label expression.
 
 This script is more complex than the previous ones so it bears some examination.
-You start by grabbing a slave, checking out sources, and making a copy of them using the `archive` step:
+You start by grabbing an agent, checking out sources, and making a copy of them using the `archive` step:
 
 ```groovy
 archive 'pom.xml, src/'
@@ -619,9 +619,9 @@ step([$class: 'ArtifactArchiver', artifacts: 'pom.xml, src/'])
 ```
 
 Later,  `unarchive` these same files back into **other** workspaces.
-You could have just run `git` anew in each slave’s workspace, but this would result in duplicated changelog entries, as well as contacting the Git server twice.
+You could have just run `git` anew in each agent's workspace, but this would result in duplicated changelog entries, as well as contacting the Git server twice.
 * A Pipeline build is permitted to run as many SCM checkouts as it needs to, which is useful for projects working with multiple repositories, but not what we want here.
-* More importantly, if anyone pushes a new Git commit at  the wrong time, you might be testing different sources in some branches - which is prevented when you do the checkout just once and distribute sources to slaves yourself.
+* More importantly, if anyone pushes a new Git commit at  the wrong time, you might be testing different sources in some branches - which is prevented when you do the checkout just once and distribute sources to agents yourself.
 
 The command `splitTests` returns a list of lists of strings.
 From each (list) entry, you construct one branch to run; the label (map key) is akin to a thread name, and will appear in the build log.
@@ -629,7 +629,7 @@ The Maven project is set up to expect a file `exclusions.txt` at its root, and i
 When you run the `parallel` step, each branch is started at the same time, and the overall step completes when all the branches finish: “fork & join”.
 
 There are several new ideas at work here:
-* A single Pipeline build allocates several executors, potentially on different slaves, at the same time.
+* A single Pipeline build allocates several executors, potentially on different agents, at the same time.
 You can see these starting and finishing in the Jenkins executor widget on the main screen.
 
 * Each call to `node` gets its own workspace.
@@ -641,7 +641,7 @@ Do not use `env` in this case:
 env.PATH = "${mvnHome}/bin:${env.PATH}"
 ```
 
-because environment variable overrides are  limited to being global to a pipeline run, not local to the current thread (and thus slave).
+because environment variable overrides are  limited to being global to a pipeline run, not local to the current thread (and thus agent).
 You could, however, use the `withEnv` step as noted above.
 
 You may also have noticed that you are running `JUnitResultArchiver` several times, something that is not possible in a freestyle project.
@@ -686,8 +686,8 @@ The standard Groovy `evaluate` function can be used, but most likely you will wa
 For this purpose, you can use the `load` step, which takes a filename in the workspace and runs it as Groovy source text.
 
 The loaded file can contain statements at top level, which are run immediately.
-That is fine if you only want to use a single executor and workspace, and do not mind hard-coding the slave label in the Jenkins job.
-For more complex cases, though, you want to leave the external script in full control of slave allocation.
+That is fine if you only want to use a single executor and workspace, and do not mind hard-coding the agent label in the Jenkins job.
+For more complex cases, though, you want to leave the external script in full control of agent allocation.
 In that case the main script defined in the job can just load and run a closure (block of code to be run later):
 
 ```groovy
@@ -705,7 +705,7 @@ Here `pipeline.groovy` could look like:
 
 ```groovy
 { ->
-  node('special-slave') {
+  node('special-agent') {
     hello 'world'
   }
 }
@@ -721,7 +721,7 @@ An older version of the [Docker demo](https://github.com/jenkinsci/workflow-aggr
 
 ```groovy
 def pipeline
-node('slave') {
+node('agent') {
     git '…'
     pipeline = load 'pipeline.groovy'
     pipeline.devQAStaging()
