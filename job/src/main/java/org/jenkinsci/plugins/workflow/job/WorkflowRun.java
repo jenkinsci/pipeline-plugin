@@ -63,6 +63,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -488,7 +489,7 @@ public final class WorkflowRun extends Run<WorkflowJob,WorkflowRun> implements F
                 try {
                     OutputStream logger = new FileOutputStream(getLogFile(), true);
                     listener = new StreamBuildListener(logger, Charset.defaultCharset());
-                    listener.getLogger().println("Resuming build");
+                    listener.getLogger().println("Resuming build at " + new Date() + " after Jenkins restart");
                 } catch (IOException x) {
                     LOGGER.log(Level.WARNING, null, x);
                     listener = new StreamBuildListener(new NullStream());
