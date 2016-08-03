@@ -64,7 +64,14 @@ public class WorkspaceListLeasePickle extends Pickle {
                     return null;
                 }
                 FilePath fp = new FilePath(ch, path);
-                return c.getWorkspaceList().acquire(fp);
+                // Since there is no equivalent to Lock.tryLock for WorkspaceList (.record would work but throws AssertionError and swaps the holder):
+                WorkspaceList.Lease lease = c.getWorkspaceList().allocate(fp);
+                if (lease.path.equals(fp)) {
+                    return lease;
+                } else { // @2 or other variant, not what we expected to be able to lock without contention
+                    lease.release();
+                    throw new IllegalStateException("JENKINS-37121: something already locked " + fp);
+                }
             }
         };
     }
