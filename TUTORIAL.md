@@ -314,6 +314,9 @@ Newer versions of Pipeline will often allow shorter forms, such as
 archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
 ```
 
+_Pipeline: Groovy_ 2.10 or later is needed for such syntax.
+Depending on the particular call, you may also need _Pipeline: Basic Steps_ 2.1 or later,
+Jenkins core 2.2 or later, and/or updated versions of various Pipeline-compatible plugins.
 See the _Pipeline Syntax: Reference_ page inside Jenkins for a detailed guide on step configuration syntax.
 
 **Example**: rather than using the simple `git` step, you can use the more general `checkout` step and specify any complex configuration supported by the Git plugin:
