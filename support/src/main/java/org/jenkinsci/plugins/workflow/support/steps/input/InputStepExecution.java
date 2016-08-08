@@ -33,12 +33,17 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import jenkins.util.Timer;
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException;
 
 /**
  * @author Kohsuke Kawaguchi
  */
 public class InputStepExecution extends AbstractStepExecutionImpl implements ModelObject {
+
+    private static final Logger LOGGER = Logger.getLogger(InputStepExecution.class.getName());
 
     @StepContextParameter private transient Run run;
 
@@ -77,7 +82,12 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
 
     @Override
     public void stop(Throwable cause) throws Exception {
-        doAbort();
+        // JENKINS-37154: we might be inside the VM thread, so do not do anything which might block on the VM thread
+        Timer.get().submit(new Runnable() {
+            @Override public void run() {
+                doAbort();
+            }
+        });
     }
 
     public String getId() {
@@ -150,7 +160,7 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
      * @return A HttpResponse object that represents Status code (200) indicating the request succeeded normally.
      * @throws IOException
      */
-    public HttpResponse proceed(Object v) throws IOException {
+    public HttpResponse proceed(Object v) {
         User user = User.current();
         if (user != null){
             run.addAction(new ApproverAction(user.getId()));
@@ -158,9 +168,8 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
         }
 
         outcome = new Outcome(v, null);
-        getContext().onSuccess(v);
-
         postSettlement();
+        getContext().onSuccess(v);
 
         // TODO: record this decision to FlowNode
 
@@ -181,14 +190,13 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
      * REST endpoint to abort the workflow.
      */
     @RequirePOST
-    public HttpResponse doAbort() throws IOException, ServletException {
+    public HttpResponse doAbort() {
         preAbortCheck();
 
         FlowInterruptedException e = new FlowInterruptedException(Result.ABORTED, new Rejection(User.current()));
         outcome = new Outcome(null,e);
-        getContext().onFailure(e);
-
         postSettlement();
+        getContext().onFailure(e);
 
         // TODO: record this decision to FlowNode
 
@@ -217,15 +225,21 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
         }
     }
 
-    private void postSettlement() throws IOException {
+    private void postSettlement() {
         try {
             getPauseAction().remove(this);
             run.save();
+        } catch (IOException x) {
+            LOGGER.log(Level.WARNING, "failed to remove InputAction from " + run, x);
         } finally {
             if (node != null) {
-                PauseAction.endCurrentPause(node);
+                try {
+                    PauseAction.endCurrentPause(node);
+                } catch (IOException x) {
+                    LOGGER.log(Level.WARNING, "failed to end PauseAction in " + run, x);
+                }
             } else {
-                assert false : "cannot set pause end time for " + getId() + " in " + run;
+                LOGGER.log(Level.WARNING, "cannot set pause end time for {0} in {1}", new Object[] {getId(), run});
             }
         }
     }

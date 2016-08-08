@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.workflow.steps.input;
 
+import hudson.model.Result;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,6 +82,26 @@ public class InputStepRestartTest extends SingleJobTestBase {
         assertFalse(pauses.get(0).isPaused());
         String xml = FileUtils.readFileToString(new File(b.getRootDir(), "build.xml"));
         assertFalse(xml, xml.contains(InputStepExecution.class.getName()));
+    }
+
+    @Issue("JENKINS-37154")
+    @Test public void interrupt() {
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowJob p = story.j.jenkins.createProject(WorkflowJob.class, "p");
+                p.setDefinition(new CpsFlowDefinition("catchError {input 'paused'}"));
+                WorkflowRun b = p.scheduleBuild2(0).waitForStart();
+                story.j.waitForMessage("paused", b);
+            }
+        });
+        story.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                WorkflowRun b = story.j.jenkins.getItemByFullName("p", WorkflowJob.class).getBuildByNumber(1);
+                b.getExecutor().interrupt();
+                story.j.assertBuildStatus(Result.ABORTED, story.j.waitForCompletion(b));
+                sanity(b);
+            }
+        });
     }
 
     @Issue("JENKINS-25889")

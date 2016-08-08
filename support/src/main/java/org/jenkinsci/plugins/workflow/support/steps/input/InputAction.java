@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
@@ -21,6 +22,10 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 public class InputAction implements RunAction2 {
 
     private static final Logger LOGGER = Logger.getLogger(InputAction.class.getName());
+
+    /** JENKINS-37154: number of seconds to block in {@link #loadExecutions} before we give up */
+    @SuppressWarnings("FieldMayBeFinal")
+    private static /* not final */ int LOAD_EXECUTIONS_TIMEOUT = Integer.getInteger(InputAction.class.getName() + ".LOAD_EXECUTIONS_TIMEOUT", 10);
 
     private transient List<InputStepExecution> executions = new ArrayList<InputStepExecution>();
     @SuppressFBWarnings(value="IS2_INCONSISTENT_SYNC", justification="CopyOnWriteArrayList")
@@ -61,12 +66,8 @@ public class InputAction implements RunAction2 {
                 }
             }
             if (execution != null) {
-                // Futures.addCallback is the safer way to iterate, but we need to know that the result is in.
-                // And we cannot start the calculation during onLoad because we are still inside WorkflowRun.onLoad and the CpsFlowExecution is not yet initialized.
-                // WorkflowRun has getExecutionPromise but that is not accessible via API.
-                // Even if we add such an API to FlowExecutionOwner, and look for FlowExecutionOwner.Executable,
-                // FlowExecutionList would need an API for getting owners without blocking on the execution.
-                for (StepExecution se : execution.getCurrentExecutions(true).get()) {
+                // JENKINS-37154 sometimes we must block here in order to get accurate results
+                for (StepExecution se : execution.getCurrentExecutions(true).get(LOAD_EXECUTIONS_TIMEOUT, TimeUnit.SECONDS)) {
                     if (se instanceof InputStepExecution) {
                         InputStepExecution ise = (InputStepExecution) se;
                         if (ids.contains(ise.getId())) {
