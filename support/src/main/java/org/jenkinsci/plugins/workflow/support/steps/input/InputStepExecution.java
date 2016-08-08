@@ -158,7 +158,6 @@ public class InputStepExecution extends AbstractStepExecutionImpl implements Mod
      *
      * @param v An object that represents the parameters sent in the request
      * @return A HttpResponse object that represents Status code (200) indicating the request succeeded normally.
-     * @throws IOException
      */
     public HttpResponse proceed(Object v) {
         User user = User.current();
