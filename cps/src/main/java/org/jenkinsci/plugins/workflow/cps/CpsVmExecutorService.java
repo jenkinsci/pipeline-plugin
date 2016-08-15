@@ -27,11 +27,11 @@ class CpsVmExecutorService extends InterceptingExecutorService {
         return new Runnable() {
             @Override
             public void run() {
-                String oldThreadName = setUp();
+                ThreadContext context = setUp();
                 try {
                     r.run();
                 } finally {
-                    tearDown(oldThreadName);
+                    tearDown(context);
                 }
             }
         };
@@ -42,31 +42,51 @@ class CpsVmExecutorService extends InterceptingExecutorService {
         return new Callable<V>() {
             @Override
             public V call() throws Exception {
-                String oldThreadName = setUp();
+                ThreadContext context = setUp();
                 try {
                     return r.call();
                 } finally {
-                    tearDown(oldThreadName);
+                    tearDown(context);
                 }
             }
         };
     }
 
-    private String setUp() {
+    private static class ThreadContext {
+        final Thread thread;
+        final String name;
+        final ClassLoader classLoader;
+        ThreadContext(Thread thread) {
+            this.thread = thread;
+            this.name = thread.getName();
+            this.classLoader = thread.getContextClassLoader();
+        }
+        void restore() {
+            thread.setName(name);
+            thread.setContextClassLoader(classLoader);
+        }
+    }
+
+    private ThreadContext setUp() {
         CpsFlowExecution execution = cpsThreadGroup.getExecution();
         ACL.impersonate(execution.getAuthentication());
         CURRENT.set(cpsThreadGroup);
         cpsThreadGroup.busy = true;
         Thread t = Thread.currentThread();
-        String oldThreadName = t.getName();
+        ThreadContext context = new ThreadContext(t);
         t.setName("Running " + execution);
-        return oldThreadName;
+        assert cpsThreadGroup.getExecution() != null;
+        if (cpsThreadGroup.getExecution().getShell() != null) {
+            assert cpsThreadGroup.getExecution().getShell().getClassLoader() != null;
+            t.setContextClassLoader(cpsThreadGroup.getExecution().getShell().getClassLoader());
+        }
+        return context;
     }
 
-    private void tearDown(String oldThreadName) {
+    private void tearDown(ThreadContext context) {
         CURRENT.set(null);
         cpsThreadGroup.busy = false;
-        Thread.currentThread().setName(oldThreadName);
+        context.restore();
     }
 
     static ThreadLocal<CpsThreadGroup> CURRENT = new ThreadLocal<CpsThreadGroup>();
