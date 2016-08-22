@@ -139,6 +139,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [ ] `throttle-concurrent-builds`: [JENKINS-31801](https://issues.jenkins-ci.org/browse/JENKINS-31801)
 - [x] `Exclusion`: supported as of 0.11
 - [X] `jobconfighistory`: scheduled to be supported as of 2.14
+- [X] `next-build-number`: supported as of 1.4
 
 ## Custom steps
 
