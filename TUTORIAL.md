@@ -565,6 +565,8 @@ def version(text) {
 
 Here the logic inside the `version` function is run by the normal Groovy runtime, so any local variables are permitted.
 
+The [Pipeline: Groovy plugin page](https://github.com/jenkinsci/workflow-cps-plugin/blob/master/README.md) has deeper background on `@NonCPS`.
+
 ## Creating Multiple Threads
 Pipelines can use a `parallel` step to perform multiple actions at once.
 This special step takes a map as its argument; keys are “branch names” (labels for your own benefit), and values are blocks to run.
