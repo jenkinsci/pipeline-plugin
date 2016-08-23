@@ -25,6 +25,7 @@ Entries list the class name serving as the entry point to the relevant functiona
 - [X] `Fingerprinter` (core)
 - [X] `JUnitResultArchiver` (`junit`)
 - [X] `JavadocArchiver` (`javadoc`)
+- [X] `TapPublisher` (`tap`): [JENKINS-34000](https://issues.jenkins-ci.org/browse/JENKINS-34000) as of 2.0
 - [X] `Mailer` (`mailer`)
 - [X] `CopyArtifact` (`copyartifact`): [JENKINS-24887](https://issues.jenkins-ci.org/browse/JENKINS-24887) in 1.34
 - [ ] `DeployPublisher` (`deployer-framework`): [JENKINS-25976](https://issues.jenkins-ci.org/browse/JENKINS-25976)
