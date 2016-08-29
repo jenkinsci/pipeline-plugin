@@ -6,6 +6,8 @@ This document captures the ongoing status of plugins known to be compatible or i
 
 Entries list the class name serving as the entry point to the relevant functionality of the plugin (generally an `@Extension`), the plugin short name, and implementation status.
 
+Newly filed issues should bear the label `pipeline` for ease of tracking.
+
 ## SCMs
 
 - [X] `GitSCM` (`git`): supported as of 2.3; native `git` step also bundled
