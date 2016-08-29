@@ -214,7 +214,7 @@ Note: if you also have _CloudBees Workflow: Groovy Checkpoint_ installed, you _m
 * `catchError` was incorrectly setting build status to failed when it was merely aborted, canceled, etc.
 * [JENKINS-26123](https://issues.jenkins-ci.org/browse/JENKINS-26123): added `wait` option to `build`.
 * Check for failure to even trigger a build from `build`.
-* [PR 52](https://github.com/jenkinsci/workflow-plugin/pull/52): fixed some memory leaks causing the permanent generation and heap to grow unbounded after many flow builds.
+* [PR 52](https://github.com/jenkinsci/pipeline-plugin/pull/52): fixed some memory leaks causing the permanent generation and heap to grow unbounded after many flow builds.
 * [JENKINS-26120](https://issues.jenkins-ci.org/browse/JENKINS-26120): added `sleep` step.
 
 ## 1.2 (Jan 24 2015)
@@ -240,4 +240,4 @@ Note: if you also have _CloudBees Workflow: Groovy Checkpoint_ installed, you _m
 
 ## 1.0 (Nov 25 2014)
 
-See [archives](https://github.com/jenkinsci/workflow-plugin/blob/cdca218ca11e127d97543a2e209803708c5af9d8/CHANGES.md) for changes in pre-1.0 betas.
+See [archives](https://github.com/jenkinsci/pipeline-plugin/blob/cdca218ca11e127d97543a2e209803708c5af9d8/CHANGES.md) for changes in pre-1.0 betas.
