@@ -54,7 +54,7 @@ For multibranch pipelines and organization folders, install _Pipeline: Multibran
 # News & questions
 
 * [jenkins-workflow tag](http://stackoverflow.com/tags/jenkins-workflow) on StackOverflow
-* [JIRA](https://issues.jenkins-ci.org/secure/IssueNavigator.jspa?reset=true&jqlQuery=project+%3D+JENKINS+AND+resolution+%3D+Unresolved+AND+%28component+%3D+workflow-plugin+OR+labels+in+%28workflow%29%29+ORDER+BY+component+ASC,+key+DESC&mode=hide) (file issues in the `workflow-plugin` component, or other components with the `workflow` label)
+* [JIRA](https://issues.jenkins-ci.org/issues/?jql=project%20%3D%20JENKINS%20AND%20resolution%20%3D%20Unresolved%20AND%20%28component%20in%20%28pipeline%2C%20pipeline-build-step-plugin%2C%20pipeline-graph-analysis-plugin%2C%20pipeline-input-step-plugin%2C%20pipeline-milestone-step-plugin%2C%20pipeline-stage-step-plugin%2C%20pipeline-stage-view-plugin%2C%20workflow-aggregator-plugin%2C%20workflow-api-plugin%2C%20workflow-basic-steps-plugin%2C%20workflow-cps-global-lib-plugin%2C%20workflow-cps-plugin%2C%20workflow-durable-task-step-plugin%2C%20workflow-job-plugin%2C%20workflow-multibranch-plugin%2C%20workflow-scm-step-plugin%2C%20workflow-step-api-plugin%2C%20workflow-support-plugin%29%20OR%20labels%20in%20%28pipeline%29%29%20ORDER%20BY%20component%20ASC%2C%20key%20DESC&mode=hide) (file issues in the `pipeline` component, or other components with the `pipeline` label)
 * [User list discussions](https://groups.google.com/forum/#!topicsearchin/jenkinsci-users/pipeline) (mention `pipeline` in the subject)
 * [#JenkinsPipeline](https://twitter.com/hashtag/JenkinsPipeline) on Twitter
 
