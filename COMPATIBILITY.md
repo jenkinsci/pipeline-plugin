@@ -140,7 +140,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] `sidebar-link`: [JENKINS-33458](https://issues.jenkins-ci.org/browse/JENKINS-33458)
 - [ ] `throttle-concurrent-builds`: [JENKINS-31801](https://issues.jenkins-ci.org/browse/JENKINS-31801)
 - [x] `Exclusion`: supported as of 0.11
-- [X] `jobconfighistory`: scheduled to be supported as of 2.14
+- [X] `jobconfighistory`: supported as of 2.14
 - [X] `next-build-number`: supported as of 1.4
 
 ## Custom steps
