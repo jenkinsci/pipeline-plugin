@@ -131,7 +131,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `embeddable-build-status`: scheduled to be supported as of 1.9
 - [X] `groovy-postbuild`: supported as of 2.3
 - [X] `jira` : supported as of 2.2
-- [ ] `ownership` : [JENKINS-32353](https://issues.jenkins-ci.org/browse/JENKINS-32353)
+- [X] `ownership` : supported as of 0.9.0
 - [ ] `job-restrictions`: [JENKINS-32355](https://issues.jenkins-ci.org/browse/JENKINS-32355)
 - [X] `buildtriggerbadge`: supported as of 2.2
 - [X] `build-monitor-plugin`: supported as of 1.6+build.159 
