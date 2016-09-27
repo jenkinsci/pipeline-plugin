@@ -35,7 +35,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] `Maven` (home TBD): [JENKINS-26057](https://issues.jenkins-ci.org/browse/JENKINS-26057)
 - [ ] `XShellBuilder` (`xshell`): [JENKINS-26169](https://issues.jenkins-ci.org/browse/JENKINS-26169)
 - [ ] ~~`DockerBuilder` (`docker-build-step`): [JENKINS-26178](https://issues.jenkins-ci.org/browse/JENKINS-26178)~~
-- [ ] `CucumberTestResultArchiver` (`cucumber-testresult-plugin`): [JENKINS-26340](https://issues.jenkins-ci.org/browse/JENKINS-26340)
+- [X] `CucumberTestResultArchiver` (`cucumber-testresult-plugin`): supported as of 0.9.6
 - [X] `HtmlPublisher` (`htmlpublisher`): supported as of 1.6
 - [ ] `HttpRequest` (`http_request`): [JENKINS-32263](https://issues.jenkins-ci.org/browse/JENKINS-32263)
 - [ ] `JaCoCoPublisher` (`jacoco`): [JENKINS-27120](https://issues.jenkins-ci.org/browse/JENKINS-27120)
