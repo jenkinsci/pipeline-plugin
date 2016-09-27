@@ -142,6 +142,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [x] `Exclusion`: supported as of 0.11
 - [X] `jobconfighistory`: supported as of 2.14
 - [X] `next-build-number`: supported as of 1.4
+- [ ] `tracking-svn` [JENKINS-38060](https://issues.jenkins-ci.org/browse/JENKINS-38060)
 
 ## Custom steps
 
