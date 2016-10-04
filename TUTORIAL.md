@@ -571,39 +571,34 @@ The [Pipeline: Groovy plugin page](https://github.com/jenkinsci/workflow-cps-plu
 Pipelines can use a `parallel` step to perform multiple actions at once.
 This special step takes a map as its argument; keys are “branch names” (labels for your own benefit), and values are blocks to run.
 
-To see how this can be useful, install a new plugin: **Parallel Test Executor** (version 1.6 or later).
+To see how this can be useful, install a new plugin: **Parallel Test Executor** (version 1.9 or later).
 This plugin includes a Pipeline step that lets you split apart slow test runs.
-Also make sure the JUnit plugin is at least version 1.3+.
+Also make sure the JUnit plugin is at least version 1.18+.
 
 Now create a new pipeline with the following script:
 
 ```groovy
 node('remote') {
-  git url: 'https://github.com/jenkinsci/parallel-test-executor-plugin-sample.git'
-  archive 'pom.xml, src/'
+  git 'https://github.com/jenkinsci/parallel-test-executor-plugin-sample.git'
+  stash name: 'sources', includes: 'pom.xml,src/'
 }
-def splits = splitTests([$class: 'CountDrivenParallelism', size: 2])
+def splits = splitTests count(2)
 def branches = [:]
 for (int i = 0; i < splits.size(); i++) {
-  def exclusions = splits.get(i);
+  def index = i // fresh variable per iteration; i will be mutated
   branches["split${i}"] = {
     node('remote') {
-      sh 'rm -rf *'
-      unarchive mapping: ['pom.xml' : '.', 'src/' : '.']
+      deleteDir()
+      unstash 'sources'
+      def exclusions = splits.get(index);
       writeFile file: 'exclusions.txt', text: exclusions.join("\n")
       sh "${tool 'M3'}/bin/mvn -B -Dmaven.test.failure.ignore test"
-      step([$class: 'JUnitResultArchiver', testResults: 'target/surefire-reports/*.xml'])
+      junit 'target/surefire-reports/*.xml'
     }
   }
 }
 parallel branches
 ```
-
-**Note**: to enable the Groovy sandbox on this script, be sure to update the Script Security plugin to version 1.11 or later.
-Even so, you may see a `RejectedAccessException` error at this point.
-If so, a Jenkins administrator will need to go to **Manage Jenkins » In-process Script Approval** and **Approve** `staticMethod org.codehaus.groovy.runtime.ScriptBytecodeAdapter compareLessThan java.lang.Object java.lang.Object`.
-Then try running your script again and it should work.
-A later version of the plugin may remove the need for this workaround.
 
 When you run this Pipeline for the first time, it will check out a project and run all of its tests in sequence.
 The second and subsequent times you run it, the `splitTests` task will partition your tests into two sets of roughly equal runtime.
