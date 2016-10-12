@@ -64,7 +64,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] `ZfjReporter` (`zephyr-for-jira-test-management`): [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
 - [ ] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
 - [X] `PerfSigRecorder` and 5 more (`performance-signature-dynatrace`): supported as of 2.0
-- [ ] `StashNotifier` (`stashNotifier`): [issue 92](https://github.com/jenkinsci/stashnotifier-plugin/issues/92)
+- [X] `StashNotifier` (`stashNotifier`): supported as of 1.11
 - [X] `LambdaUploadBuildStep`, `LambdaInvokeBuildStep`, `LambdaEventSourceBuildStep` (`aws-lambda`): supported as of 0.5.0
 - [X] `CucumberReportPublisher` (`cucumber-reports`): supported as of 2.1.0
 - [ ] `Powershell` (`powershell`): [JENKINS-34581](https://issues.jenkins-ci.org/browse/JENKINS-34581)
