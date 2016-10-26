@@ -42,6 +42,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `Publisher` (`testng`): supported as of 1.14
 - [ ] `Gradle` (`gradle`): [JENKINS-27393](https://issues.jenkins-ci.org/browse/JENKINS-27393)
 - [X] `CloverPublisher` (`clover`): supported as of 4.6.0
+- [ ] `CloverPHP` (`clover`): [JENKINS-37068](https://issues.jenkins-ci.org/browse/JENKINS-37068)
 - [ ] `MsBuildBuilder` (`msbuild`): [JENKINS-26948](https://issues.jenkins-ci.org/browse/JENKINS-26948)
 - [X] `HipChatNotifier` (`hipchat`): supported as of 1.0.0
 - [ ] `IronMQNotifier` (`ironmq-notifier`): [JENKINS-35505](https://issues.jenkins-ci.org/browse/JENKINS-35505)
