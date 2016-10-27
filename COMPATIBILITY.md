@@ -52,7 +52,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] `VeracodeNotifier` (`veracode-scanner`): [JENKINS-28387](https://issues.jenkins-ci.org/browse/JENKINS-28387)
 - [X] `SeleniumHtmlReportPublisher` (`seleniumhtmlreport`): supported as of 1.0
 - [ ] `GitPublisher` (`git`) or a custom step: [JENKINS-28335](https://issues.jenkins-ci.org/browse/JENKINS-28335)
-- [ ] SonarQube Jenkins: [SONARJNKNS-213](http://jira.sonarsource.com/browse/SONARJNKNS-213)
+- [X] SonarQube Jenkins: supported as of 2.5
 - [X] `VSphereBuildStepContainer` (`vsphere-cloud`): supported as of 2.13
 - [X] `ScoveragePublisher` (`scoverage`): supported as of 1.2.0
 - [ ] `AWSCodeDeployPublisher` (`codedeploy`): [issue 36](https://github.com/awslabs/aws-codedeploy-plugin/issues/36)
@@ -88,7 +88,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
 - [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
 - [X] `AnsiColorBuildWrapper` (`ansicolor`): supported as of 0.4.2
-- [ ] `CustomToolInstallWrapper` (`custom-tools-plugin`): [JENKINS-30680](https://issues.jenkins-ci.org/browse/JENKINS-30680) 
+- [ ] `CustomToolInstallWrapper` (`custom-tools-plugin`): [JENKINS-30680](https://issues.jenkins-ci.org/browse/JENKINS-30680)
 - [ ] `PortAllocator` (`port-allocator`): [JENKINS-31449](https://issues.jenkins-ci.org/browse/JENKINS-31449)
 
 ## Triggers
@@ -134,7 +134,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `ownership` : supported as of 0.9.0
 - [ ] `job-restrictions`: [JENKINS-32355](https://issues.jenkins-ci.org/browse/JENKINS-32355)
 - [X] `buildtriggerbadge`: supported as of 2.2
-- [X] `build-monitor-plugin`: supported as of 1.6+build.159 
+- [X] `build-monitor-plugin`: supported as of 1.6+build.159
 - [X] `radiatorview`: supported as of 1.25
 - [ ] `chucknorris`: [JENKINS-32594](https://issues.jenkins-ci.org/browse/JENKINS-32594)
 - [ ] `sidebar-link`: [JENKINS-33458](https://issues.jenkins-ci.org/browse/JENKINS-33458)
