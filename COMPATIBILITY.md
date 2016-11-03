@@ -154,7 +154,7 @@ For cases when a first-class Pipeline step (rather than an adaptation of functio
 - [X] `parallel-test-executor`: `splitTests` step since 1.6
 - [ ] `gerrit-trigger`: [JENKINS-26102](https://issues.jenkins-ci.org/browse/JENKINS-26102), [JENKINS-26103](https://issues.jenkins-ci.org/browse/JENKINS-26103)
 - [X] `mailer`: `mail` step in Pipeline 1.2
-- [ ] `artifactory`: [JENKINS-30121](https://issues.jenkins-ci.org/browse/JENKINS-30121)
+- [X] `artifactory`: step as of 2.5.0
 - [X] `email-ext`: `emailext` step since 2.41
 - [X] `marathon`: `marathon` step since 1.2.1
 
