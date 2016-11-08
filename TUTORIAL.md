@@ -606,22 +606,22 @@ The rest of the Pipeline then runs these in parallel — so if you look at **tre
 If you only have the one agent configured with its two executors, this won't save as much time, but you may have multiple agents on different hardware matching the same label expression.
 
 This script is more complex than the previous ones so it bears some examination.
-You start by grabbing an agent, checking out sources, and making a copy of them using the `archive` step:
+You start by grabbing an agent, checking out sources, and making a copy of them using the `stash` step:
 
 ```groovy
-archive 'pom.xml, src/'
+stash name: 'sources', includes: 'pom.xml,src/'
 ```
 
 is shorthand for the more general:
 
 ```groovy
-step([$class: 'ArtifactArchiver', artifacts: 'pom.xml, src/'])
+step([$class: 'StashStep', includes: 'pom.xml, src/'])
 ```
 
-Later,  `unarchive` these same files back into **other** workspaces.
+Later,  `unstash` these same files back into **other** workspaces.
 You could have just run `git` anew in each agent's workspace, but this would result in duplicated changelog entries, as well as contacting the Git server twice.
 * A Pipeline build is permitted to run as many SCM checkouts as it needs to, which is useful for projects working with multiple repositories, but not what we want here.
-* More importantly, if anyone pushes a new Git commit at  the wrong time, you might be testing different sources in some branches - which is prevented when you do the checkout just once and distribute sources to agents yourself.
+* More importantly, if anyone pushes a new Git commit at the wrong time, you might be testing different sources in some branches - which is prevented when you do the checkout just once and distribute sources to agents yourself.
 
 The command `splitTests` returns a list of lists of strings.
 From each (list) entry, you construct one branch to run; the label (map key) is akin to a thread name, and will appear in the build log.
