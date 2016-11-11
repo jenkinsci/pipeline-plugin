@@ -88,7 +88,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
 - [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
 - [X] `AnsiColorBuildWrapper` (`ansicolor`): supported as of 0.4.2
-- [ ] `CustomToolInstallWrapper` (`custom-tools-plugin`): [JENKINS-30680](https://issues.jenkins-ci.org/browse/JENKINS-30680) 
+- [ ] `CustomToolInstallWrapper` (`custom-tools-plugin`): [JENKINS-30680](https://issues.jenkins-ci.org/browse/JENKINS-30680)
 - [ ] `PortAllocator` (`port-allocator`): [JENKINS-31449](https://issues.jenkins-ci.org/browse/JENKINS-31449)
 
 ## Triggers
@@ -134,7 +134,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `ownership` : supported as of 0.9.0
 - [ ] `job-restrictions`: [JENKINS-32355](https://issues.jenkins-ci.org/browse/JENKINS-32355)
 - [X] `buildtriggerbadge`: supported as of 2.2
-- [X] `build-monitor-plugin`: supported as of 1.6+build.159 
+- [X] `build-monitor-plugin`: supported as of 1.6+build.159
 - [X] `radiatorview`: supported as of 1.25
 - [ ] `chucknorris`: [JENKINS-32594](https://issues.jenkins-ci.org/browse/JENKINS-32594)
 - [ ] `sidebar-link`: [JENKINS-33458](https://issues.jenkins-ci.org/browse/JENKINS-33458)
@@ -154,7 +154,7 @@ For cases when a first-class Pipeline step (rather than an adaptation of functio
 - [X] `parallel-test-executor`: `splitTests` step since 1.6
 - [ ] `gerrit-trigger`: [JENKINS-26102](https://issues.jenkins-ci.org/browse/JENKINS-26102), [JENKINS-26103](https://issues.jenkins-ci.org/browse/JENKINS-26103)
 - [X] `mailer`: `mail` step in Pipeline 1.2
-- [ ] `artifactory`: [JENKINS-30121](https://issues.jenkins-ci.org/browse/JENKINS-30121)
+- [X] `artifactory`: step as of 2.5.0
 - [X] `email-ext`: `emailext` step since 2.41
 - [X] `marathon`: `marathon` step since 1.2.1
 
