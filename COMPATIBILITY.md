@@ -38,7 +38,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `CucumberTestResultArchiver` (`cucumber-testresult-plugin`): supported as of 0.9.6
 - [X] `HtmlPublisher` (`htmlpublisher`): supported as of 1.6
 - [ ] `HttpRequest` (`http_request`): [JENKINS-32263](https://issues.jenkins-ci.org/browse/JENKINS-32263)
-- [ ] `JaCoCoPublisher` (`jacoco`): [JENKINS-27120](https://issues.jenkins-ci.org/browse/JENKINS-27120)
+- [X] `JaCoCoPublisher` (`jacoco`): supported as of 2.1.0
 - [X] `Publisher` (`testng`): supported as of 1.14
 - [ ] `Gradle` (`gradle`): [JENKINS-27393](https://issues.jenkins-ci.org/browse/JENKINS-27393)
 - [X] `CloverPublisher` (`clover`): supported as of 4.6.0
