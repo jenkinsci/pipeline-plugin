@@ -76,6 +76,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] `ConfluencePublisher` (`confluence-publisher`): [JENKINS-36345](https://issues.jenkins-ci.org/browse/JENKINS-36345)
 - [ ] `ValgrindPublisher` (`valgrind`): [JENKINS-34981](https://issues.jenkins-ci.org/browse/JENKINS-34981)
 - [ ] `HockeyappRecorder` (`hockeyapp`): [JENKINS-33310](https://issues.jenkins-ci.org/browse/JENKINS-33310)
+- [ ] `XCodeBuilder` (`Xcode`): [JENKINS-33355](https://issues.jenkins-ci.org/browse/JENKINS-33355)
 
 ## Build wrappers
 
