@@ -40,16 +40,17 @@ A new collection of [examples, snippets, tips, and tricks](https://github.com/je
 # Installation
 
 Releases are available on the Jenkins update center.
-You need to be running a sufficiently recent Jenkins release: an LTS in the 1.580.x line or newer (currently 1.609.x for the latest updates), or a weekly release.
+You need to be running a sufficiently recent Jenkins release: an LTS in the 1.580.x line or newer (currently 1.642.x for the latest updates), or a weekly release.
 
-For OSS Jenkins users, install _Pipeline_ (its dependencies will be pulled in automatically).
-You will need to restart Jenkins to complete installation.
+For Jenkins 2.x users, _Pipeline_ is selected by default in the setup wizard.
+If you did not pick it, or are running Jenkins 1.x, install _Pipeline_ (its dependencies will be pulled in automatically);
+you will need to restart Jenkins to complete installation.
 
 CloudBees Jenkins Enterprise users get Pipeline automatically as of the 14.11 (1.580.1.1) release.
 Otherwise install _CloudBees Pipeline_ from the update center.
 Again dependencies will be pulled in automatically, including all the OSS plugins.
 
-For multibranch pipelines and organization folders, install _Pipeline: Multibranch_ (includes as of _Pipeline_ 2.0) plus at least one SCM provider, such as _GitHub Branch Source_.
+For multibranch pipelines and organization folders, install _Pipeline: Multibranch_ (included as of _Pipeline_ 2.0) plus at least one SCM provider, such as _GitHub Branch Source_.
 
 # News & questions
 
@@ -68,17 +69,11 @@ and browse [localhost:8080](http://localhost:8080/).
 
 # Presentations
 
+_Directions for Pipeline_ (JW Sep 2016): [slides and video](https://www.cloudbees.com/directions-pipeline)
+
 Webinar _Continuous Delivery as Code with Jenkins Workflow_ (Sep 2015): [slides](https://www.cloudbees.com/sites/default/files/webinar-_continuous_delivery_as_code_with_jenkins_workflow.pdf) and [video](https://youtu.be/Q2pZdzaaCXg) (demo starts at 20:30)
 
 Jenkins Workflow: What’s Up? (JUC West) (Sep 2015): [slides](http://www.slideshare.net/jgcloudbees/juc-west-15-jenkins-workflow-whats-up) and [video](https://youtu.be/VkIzoU7zYzE)
-
-Jenkins Office Hour on Workflow for plugin developers (Aug 2015): [video](https://www.youtube.com/watch?v=4zdy7XGx3PA)
-
-Workflow Meetup London (Mar 2015): [slides](http://www.slideshare.net/jgcloudbees/london-workflow-summit-kkjg)
-
-Jenkins Workflow Screencast (Jan 2015): [video](https://www.youtube.com/watch?v=Welwf1wTU-w)
-
-Webinar _Orchestrating the Continuous Delivery Process in Jenkins with Workflow_ (Dec 2014): [video](http://youtu.be/ZqfiW8eVcuQ)
 
 # Development
 

@@ -14,7 +14,7 @@ Pipeline (formerly known as Workflow) was built with the community’s requireme
 
 Before you begin, ensure you have the following installed or running:
 
-+ You must be running Jenkins 1.580.1 or later (1.609.1+ for latest features).
++ You must be running Jenkins 1.580.1 or later (1.642.3+ for latest features).
 
 + Ensure Pipeline is installed: navigate to **Plugin Manager**, install **Pipeline** and restart Jenkins.
 
@@ -648,17 +648,8 @@ You can click on individual steps and get more details, such as the log output f
 
 # Creating Stages
 
-By default, Pipeline builds can run concurrently.
-The `stage` command lets you mark certain sections of a build as being constrained by limited concurrency (or, later, unconstrained).
-Newer builds are always given priority when entering such a throttled stage; older builds will simply exit early if they are preëmpted.
-
-A concurrency of one is useful to let you lock a singleton resource, such as deployment to a single target server.
-Only one build will deploy at a given time: the newest which passed all previous stages.
-
-A finite concurrency ≥1 can also be used to prevent slow build stages such as integration tests from overloading the system.
-Every SCM push can still trigger a separate build of a quicker earlier stage as compilation and unit tests.
-Yet each build runs linearly and can even retain a single workspace, avoiding the need to identify and copy artifacts between builds.
-(Even if you dispose of a workspace from an earlier stage, you can retain information about it using simple local variables.)
+A `stage` block lets you label certain sections of a build for use in visualizations.
+Other steps like `milestone` and `lock` can be used to control concurrency of multiple builds.
 
 Consult the [Docker demo](https://github.com/jenkinsci/workflow-aggregator-plugin/blob/master/demo/README.md) for an example of a Pipeline using multiple `stage`s.
 
@@ -672,6 +663,10 @@ The easiest way to do this is to select **Pipeline script from SCM** when defini
 
 In that case you do not enter any Groovy code in the Jenkins UI; you just indicate where in source code you want to retrieve the program.
 If you update this repository, a new build will be triggered, so long as your job is configured with an SCM polling trigger.
+
+## Using Libraries
+
+The [Shared Groovy Libraries plugin](https://github.com/jenkinsci/workflow-cps-global-lib-plugin/blob/master/README.md), included in the Pipeline suite, allows multiple jobs to shared common utility code.
 
 ## Triggering Manual Loading
 
@@ -732,11 +727,6 @@ return this;
 In this case `devQAStaging` runs on the same node as the main source code checkout, while `production` runs outside of that block (and in fact allocates a different node).
 
 To reduce the amount of boilerplate needed in the master script, you can try the [Workflow Remote File Loader plugin](https://github.com/jenkinsci/workflow-remote-loader-plugin/blob/master/README.md#workflow-remote-file-loader-plugin).
-
-## Retaining Global Libraries
-
-Plugins inject function and class names into a Pipeline before it runs. The plugin bundled with Pipeline allows you to eliminate the above boilerplate and keep the whole script (except one “bootstrap” line) in a Git server hosted by Jenkins.
-A [separate document](https://github.com/jenkinsci/workflow-cps-global-lib-plugin/blob/master/README.md) has details on this system.
 
 ## Creating Multibranch Projects
 
