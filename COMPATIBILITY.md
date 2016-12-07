@@ -103,6 +103,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `bitbucket`: supported as of 1.1.2
 - [ ] `bitbucket-pullrequest-builder`: [JENKINS-31749](https://issues.jenkins-ci.org/browse/JENKINS-31749)
 - [ ] `xtrigger`: [JENKINS-31933](https://issues.jenkins-ci.org/browse/JENKINS-31933)
+- [X] `jira-trigger`: supported as of 0.4.0
 
 ## Clouds
 
