@@ -257,7 +257,16 @@ See  Help in the **Snippet Generator** for the `withEnv` step for more details o
 
 ## Build Parameters
 
-If you have configured your pipeline to accept parameters when it is built — **Build with Parameters** — they are accessible as Groovy variables of the same name.
+If you have configured your pipeline to accept parameters when it is built — **Build with Parameters** — they are accessible as Groovy variables inside `params`. Example:
+
+```groovy
+node {
+  sh "isFoo is ${params.isFoo}"
+  sh "isFoo is " + params.isFoo
+  if (params.isFoo) {
+    // do something
+  }
+```
 
 # Recording Test Results and Artifacts
 
