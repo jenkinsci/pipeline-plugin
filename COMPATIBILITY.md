@@ -79,8 +79,6 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] `HockeyappRecorder` (`hockeyapp`): [JENKINS-33310](https://issues.jenkins-ci.org/browse/JENKINS-33310)
 - [X] `WsCleanup` (`ws-cleanup`): supported as of 0.30
 - [ ] `XCodeBuilder` (`xcode-plugin`): [JENKINS-33355](https://issues.jenkins-ci.org/browse/JENKINS-33355)
-- [ ] `Release Plugin` (`release`): [JENKINS-40765](https://issues.jenkins-ci.org/browse/JENKINS-40765)
-- [ ] `M2 Release Plugin` (`m2release`): [JENKINS-40766](https://issues.jenkins-ci.org/browse/JENKINS-40766)
 
 ## Build wrappers
 
@@ -163,6 +161,8 @@ For cases when a first-class Pipeline step (rather than an adaptation of functio
 - [X] `artifactory`: step as of 2.5.0
 - [X] `email-ext`: `emailext` step since 2.41
 - [X] `marathon`: `marathon` step since 1.2.1
+- [ ] `Release Plugin` (`release`): [JENKINS-40765](https://issues.jenkins-ci.org/browse/JENKINS-40765)
+- [ ] `M2 Release Plugin` (`m2release`): [JENKINS-40766](https://issues.jenkins-ci.org/browse/JENKINS-40766)
 
 # Plugin Developer Guide
 
