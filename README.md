@@ -33,6 +33,8 @@ Pipelines can be divided into sequential stages, not only for labeling but to th
 
 Read the [tutorial](TUTORIAL.md) to get started writing pipelines.
 
+Look at some [example workflows](https://github.com/jenkinsci/workflow-examples).
+
 There is also a [DZone Refcard](https://dzone.com/refcardz/continuous-delivery-with-jenkins-workflow).
 
 A new collection of [examples, snippets, tips, and tricks](https://github.com/jenkinsci/pipeline-examples) is in progress.
