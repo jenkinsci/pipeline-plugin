@@ -259,8 +259,6 @@ See  Help in the **Snippet Generator** for the `withEnv` step for more details o
 
 If you have configured your pipeline to accept parameters when it is built — **Build with Parameters** — they are accessible as Groovy variables inside `params`. They are also accessible as environment variables.
 
-Example:
-
 **Example**: Using `isFoo` parameter defined as a boolean parameter (checkbox in the UI):
 
 ```groovy
