@@ -186,7 +186,7 @@ then scripts would use this builder as follows:
 step([$class: 'ForgetBuilder', what: 'everything'])
 ```
 
-To make for a more attractive and mnemonic usage style, you can depend on `org.jenkins-ci:symbol-annotation`
+To make for a more attractive and mnemonic usage style, you can depend on `org.jenkins-ci.plugins:structs`
 and add a `@Symbol` to your `Descriptor`, uniquely identifying it among extensions of its kind
 (in this example, `SimpleBuildStep`s):
 
