@@ -91,7 +91,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [x] `MaskPasswordsBuildWrapper` (`mask-passwords`): supported as of 2.8
 - [X] `XvfbBuildWrapper` (`xvfb`): supported as of 1.1.0-beta-1
 - [X] `GCloudBuildWrapper` (`gcloud-sdk`): scheduled to be supported as of 0.0.2
-- [X] `NpmPackagesBuildWrapper` (`nodejs`): scheduled to be supported as of 0.3
+- [X] `NodeJSBuildWrapper` (`nodejs`): supported as of 1.1.0
 - [X] `AnsiColorBuildWrapper` (`ansicolor`): supported as of 0.4.2
 - [ ] `CustomToolInstallWrapper` (`custom-tools-plugin`): [JENKINS-30680](https://issues.jenkins-ci.org/browse/JENKINS-30680)
 - [ ] `PortAllocator` (`port-allocator`): [JENKINS-31449](https://issues.jenkins-ci.org/browse/JENKINS-31449)
