@@ -377,7 +377,11 @@ Use `EnvironmentContributor` rather than `RunListener.setUpEnvironment`.
 
 ## Clouds
 
-Do not necessarily need any special integration, but are encouraged to use `OnceRetentionStrategy` from `durable-task` to allow Pipeline builds to survive restarts.
+Do not necessarily need any special integration,
+but “one-shot”-style agent implementations are encouraged to use `OnceRetentionStrategy` from `durable-task`
+(or otherwise use `ExecutorListener` and consider `ContinuableExecutable`)
+to allow Pipeline builds to survive restarts.
+You should *not* implement `EphemeralNode` or listen to `Run` events.
 
 ## Custom steps
 
