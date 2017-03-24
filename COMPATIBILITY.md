@@ -150,6 +150,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `jobconfighistory`: supported as of 2.14
 - [X] `next-build-number`: supported as of 1.4
 - [ ] `tracking-svn` [JENKINS-38060](https://issues.jenkins-ci.org/browse/JENKINS-38060)
+- [x] `PrioritySorter`: supported as of 3.5.0
 
 ## Custom steps
 
