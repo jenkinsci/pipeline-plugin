@@ -1,3 +1,10 @@
+**This document is no longer maintained.**
+Current Pipeline documentation lives on the [jenkins.io documentation zone](https://jenkins.io/doc/book/pipeline/).
+Content will be removed from this document as it is verified that the new site has equivalent information,
+or that it is outdated or unnecessary.
+
+------------
+
 This document is intended for new users of the pipeline feature to learn how to write and understand pipelines.
 
 # Why Pipeline?
