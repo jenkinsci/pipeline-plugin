@@ -46,9 +46,13 @@ Then visit http://localhost:8080/jenkins/ to play with the plugins.
 
 (If your IDE supports compile-on-save mode this is especially convenient since each `hpi:run` will pick up compiled changes without needing to run to `package` phase.)
 
-You can also run the Docker demo with snapshot binaries, after (re-)building one or more component plugins using `mvn -DskipTests clean install`:
+You can also run the basic Docker demo with snapshot binaries:
 
-    make -C workflow-aggregator-plugin/demo run-snapshot
+* (re-)build one or more component plugins using `mvn -DskipTests clean install`
+* specify a `2.x-SNAPSHOT` version in `workflow-aggregator-plugin/demo/plugins.txt`
+* run: `make -C workflow-aggregator-plugin/demo run`
+
+(A similar procedure works for other Docker-based demos, such as in `github-branch-source-plugin`.)
 
 The snapshot Docker demo is mainly useful for verifying the effect of ongoing changes on future demo binary releases.
 You get the `cd` sample job set up, but your environment is thrown away if you kill the Docker container (for example with Ctrl-C).
