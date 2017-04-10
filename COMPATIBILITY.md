@@ -47,7 +47,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `HipChatNotifier` (`hipchat`): supported as of 1.0.0
 - [ ] `IronMQNotifier` (`ironmq-notifier`): [JENKINS-35505](https://issues.jenkins-ci.org/browse/JENKINS-35505)
 - [X] `LogParserPublisher` (`log-parser`): supported as of 2.0
-- [X] `RocketChatNotifier` (`rocketchatnotifier`): supported as of 2.0
+- [X] `RocketChatNotifier` (`rocketchatnotifier`): supported as of 0.5.0
 - [X] `SlackNotifier` (`slack`): supported as of 2.0
 - [ ] ~~`DescriptionSetterPublisher` (`description-setter`): [PR 7](https://github.com/jenkinsci/description-setter-plugin/pull/7)~~
 - [ ] `CopyToSlaveBuildWrapper` and `CopyToMasterNotifier` (`copy-to-slave`): [JENKINS-28386](https://issues.jenkins-ci.org/browse/JENKINS-28386)
