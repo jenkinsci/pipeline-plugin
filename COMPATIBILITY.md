@@ -166,7 +166,7 @@ For cases when a first-class Pipeline step (rather than an adaptation of functio
 - [X] `artifactory`: step as of 2.5.0
 - [X] `email-ext`: `emailext` step since 2.41
 - [X] `marathon`: `marathon` step since 1.2.1
-- [ ] `Release Plugin` (`release`): [JENKINS-40765](https://issues.jenkins-ci.org/browse/JENKINS-40765)
+- [X] `Release Plugin` (`release`): [JENKINS-40765](https://issues.jenkins-ci.org/browse/JENKINS-40765)
 - [ ] `M2 Release Plugin` (`m2release`): [JENKINS-40766](https://issues.jenkins-ci.org/browse/JENKINS-40766)
 
 # Plugin Developer Guide
