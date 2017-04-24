@@ -19,7 +19,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `RepoScm` (`repo`): supported as of 1.9.0
 - [X] `teamconcert`: supported as of 1.9.4
 - [X] `CVSSCM` (`cvs`): scheduled to be supported in 2.13
-- [ ] `TeamFoundationServerScm` (`tfs`): [JENKINS-31803](https://issues.jenkins-ci.org/browse/JENKINS-31803)
+- [X] `TeamFoundationServerScm` (`tfs`): supported as of 5.3.4
 - [X] `AccuRevSCM` (`accurev`): supported as of 0.7.10
 
 ## Build steps and post-build actions
