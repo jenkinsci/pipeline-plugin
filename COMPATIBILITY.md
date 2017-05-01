@@ -129,7 +129,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] `shelve-project`: [JENKINS-26432](https://issues.jenkins-ci.org/browse/JENKINS-26432)
 - [X] `job-dsl`: Pipeline creation supported as of 1.29
 - [X] `zentimestamp`: basic compatibility in 4.2
-- [X] `claim`: scheduled to be supported as of 2.8
+- [ ] `claim`: [JENKINS-33969](https://issues.jenkins-ci.org/browse/JENKINS-33969)
 - [X] `ListSubversionTagsParameterValue` (`subversion`): supported as of 2.5.6
 - [X] `authorize-project`: supported as of 1.1.0
 - [X] `lockable-resources`: supported as of 1.8 (except for [JENKINS-34273](https://issues.jenkins-ci.org/browse/JENKINS-34273) and [JENKINS-34268](https://issues.jenkins-ci.org/browse/JENKINS-34268))
