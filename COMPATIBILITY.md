@@ -138,20 +138,21 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `embeddable-build-status`: scheduled to be supported as of 1.9
 - [X] `groovy-postbuild`: supported as of 2.3
 - [X] `jira` : supported as of 2.2
-- [X] `ownership` : supported as of 0.9.0
-- [ ] `job-restrictions`: [JENKINS-32355](https://issues.jenkins-ci.org/browse/JENKINS-32355)
+- [X] `ownership` : supported as of 0.9.0 ([Documentation](https://github.com/jenkinsci/ownership-plugin/blob/master/doc/PipelineIntegration.md))
+- [ ] `job-restrictions`: partial support, [JENKINS-32355](https://issues.jenkins-ci.org/browse/JENKINS-32355)
 - [X] `buildtriggerbadge`: supported as of 2.2
 - [X] `build-monitor-plugin`: supported as of 1.6+build.159
 - [X] `radiatorview`: supported as of 1.25
 - [ ] `chucknorris`: [JENKINS-32594](https://issues.jenkins-ci.org/browse/JENKINS-32594)
 - [ ] `sidebar-link`: [JENKINS-33458](https://issues.jenkins-ci.org/browse/JENKINS-33458)
-- [ ] `throttle-concurrent-builds`: [JENKINS-31801](https://issues.jenkins-ci.org/browse/JENKINS-31801)
+- [x] `throttle-concurrent-builds`: supported as of 2.0 ([Documentation](https://github.com/jenkinsci/throttle-concurrent-builds-plugin#throttling-in-jenkins-pipeline))
 - [x] `Exclusion`: supported as of 0.11
 - [X] `jobconfighistory`: supported as of 2.14
 - [X] `next-build-number`: supported as of 1.4
 - [ ] `tracking-svn` [JENKINS-38060](https://issues.jenkins-ci.org/browse/JENKINS-38060)
 - [x] `PrioritySorter`: supported as of 3.5.0
 - [ ] `scoring-load-balancer`: [JENKINS-41267](https://issues.jenkins-ci.org/browse/JENKINS-41267)
+- [ ] `envinject-plugin`: partial support, [JENKINS-42614](https://issues.jenkins-ci.org/browse/JENKINS-42614) ([Documentation](https://wiki.jenkins-ci.org/display/JENKINS/EnvInject+Plugin#EnvInjectPlugin-JenkinsPipeline))
 
 ## Custom steps
 
@@ -166,7 +167,7 @@ For cases when a first-class Pipeline step (rather than an adaptation of functio
 - [X] `artifactory`: step as of 2.5.0
 - [X] `email-ext`: `emailext` step since 2.41
 - [X] `marathon`: `marathon` step since 1.2.1
-- [ ] `Release Plugin` (`release`): [JENKINS-40765](https://issues.jenkins-ci.org/browse/JENKINS-40765)
+- [x] `Release Plugin` (`release`): step since 2.7
 - [ ] `M2 Release Plugin` (`m2release`): [JENKINS-40766](https://issues.jenkins-ci.org/browse/JENKINS-40766)
 
 # Plugin Developer Guide
