@@ -80,7 +80,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] `ValgrindPublisher` (`valgrind`): [JENKINS-34981](https://issues.jenkins-ci.org/browse/JENKINS-34981)
 - [ ] `HockeyappRecorder` (`hockeyapp`): [JENKINS-33310](https://issues.jenkins-ci.org/browse/JENKINS-33310)
 - [X] `WsCleanup` (`ws-cleanup`): supported as of 0.30
-- [ ] `XCodeBuilder` (`xcode-plugin`): [JENKINS-33355](https://issues.jenkins-ci.org/browse/JENKINS-33355)
+- [X] `XCodeBuilder` (`xcode-plugin`): supported as of 2.0.0
 
 ## Build wrappers
 
