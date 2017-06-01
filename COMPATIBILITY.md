@@ -39,7 +39,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] ~~`DockerBuilder` (`docker-build-step`): [JENKINS-26178](https://issues.jenkins-ci.org/browse/JENKINS-26178)~~
 - [X] `CucumberTestResultArchiver` (`cucumber-testresult-plugin`): supported as of 0.9.6
 - [X] `HtmlPublisher` (`htmlpublisher`): supported as of 1.6
-- [ ] `HttpRequest` (`http_request`): [JENKINS-32263](https://issues.jenkins-ci.org/browse/JENKINS-32263)
+- [X] `HttpRequest` (`http_request`): supported as of 1.8.11
 - [X] `JacocoPublisher` (`jacoco`): supported as of 2.1.0
 - [X] `Publisher` (`testng`): supported as of 1.14
 - [ ] `Gradle` (`gradle`): [JENKINS-27393](https://issues.jenkins-ci.org/browse/JENKINS-27393)
@@ -63,7 +63,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
 - [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
 - [X] `XUnitPublisher` and `XUnitBuilder` (`xunit`): scheduled to be supported as of 1.100
-- [ ] `PerformancePublisher` (`performance`): [JENKINS-32650](https://issues.jenkins-ci.org/browse/JENKINS-32650)
+- [ ] `PerformancePublisher` (`performance`): scheduled to be supported as of 3.1
 - [ ] `ZfjReporter` (`zephyr-for-jira-test-management`): [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
 - [ ] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
 - [X] `PerfSigRecorder` and 5 more (`performance-signature-dynatrace`): supported as of 2.0
@@ -73,12 +73,12 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] `Powershell` (`powershell`): [JENKINS-34581](https://issues.jenkins-ci.org/browse/JENKINS-34581)
 - [X] `TestPackageBuilder` (+6 more), `ATXPublisher` (+4 more) (`ecutest`): supported as of 1.11
 - [X] `GatlingPublisher` (`gatling`): supported as of 1.2.0
-- [ ] `BitbucketBuildStatusNotifier`: (`bitbucket-build-status-notifier`) [JENKINS-33841](https://issues.jenkins-ci.org/browse/JENKINS-33841)
+- [X] `BitbucketBuildStatusNotifier`: (`bitbucket-build-status-notifier`) supported as of 1.3
 - [X] `NexusArtifactUploader` (`nexus-artifact-uploader`): supported as of 2.2
 - [ ] `CppcheckPublisher` (`cppcheck`): [JENKINS-34943](https://issues.jenkins-ci.org/browse/JENKINS-35096)
 - [ ] `ConfluencePublisher` (`confluence-publisher`): [JENKINS-36345](https://issues.jenkins-ci.org/browse/JENKINS-36345)
 - [ ] `ValgrindPublisher` (`valgrind`): [JENKINS-34981](https://issues.jenkins-ci.org/browse/JENKINS-34981)
-- [ ] `HockeyappRecorder` (`hockeyapp`): [JENKINS-33310](https://issues.jenkins-ci.org/browse/JENKINS-33310)
+- [X] `HockeyappRecorder` (`hockeyapp`): supported as of 1.2.2
 - [X] `WsCleanup` (`ws-cleanup`): supported as of 0.30
 - [X] `XCodeBuilder` (`xcode-plugin`): supported as of 2.0.0
 
@@ -100,7 +100,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 ## Triggers
 
 - [X] `gerrit-trigger`: supported as of 2.15.0
-- [ ] `ghprb`: [JENKINS-26591](https://issues.jenkins-ci.org/browse/JENKINS-26591)
+- [X] `ghprb`: supported as of 1.36
 - [X] `github`: supported as of 1.14.0
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
 - [X] `deployment-notification`: scheduled to be supported as of 1.3
@@ -134,7 +134,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `authorize-project`: supported as of 1.1.0
 - [X] `lockable-resources`: supported as of 1.8 (except for [JENKINS-34273](https://issues.jenkins-ci.org/browse/JENKINS-34273) and [JENKINS-34268](https://issues.jenkins-ci.org/browse/JENKINS-34268))
 - [X] `customize-build-now`: supported as of 1.1
-- [ ] `test-results-analyzer` : [JENKINS-30522](https://issues.jenkins-ci.org/browse/JENKINS-30522)
+- [X] `test-results-analyzer` : supported as of 0.3.4
 - [X] `embeddable-build-status`: scheduled to be supported as of 1.9
 - [X] `groovy-postbuild`: supported as of 2.3
 - [X] `jira` : supported as of 2.2
