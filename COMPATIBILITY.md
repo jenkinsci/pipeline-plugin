@@ -169,6 +169,7 @@ For cases when a first-class Pipeline step (rather than an adaptation of functio
 - [X] `marathon`: `marathon` step since 1.2.1
 - [x] `Release Plugin` (`release`): step since 2.7
 - [ ] `M2 Release Plugin` (`m2release`): [JENKINS-40766](https://issues.jenkins-ci.org/browse/JENKINS-40766)
+- [X] `r`: (`r-plugin`): `r` step as of 0.4 via [pull request 4](https://github.com/jenkinsci/r-plugin/pull/4)
 
 # Plugin Developer Guide
 
