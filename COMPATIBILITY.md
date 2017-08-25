@@ -60,7 +60,8 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] `AWSCodeDeployPublisher` (`codedeploy`): [issue 36](https://github.com/awslabs/aws-codedeploy-plugin/issues/36)
 - [X] `AnsiblePlaybookBuilder` (`ansible`): supported as of 0.4
 - [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
-- [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
+- [ ] ~~`CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)~~
+- [X] `CoverityViewResultsPublisher` (`coverityResults`): Support in 1.10.0
 - [X] `XUnitPublisher` and `XUnitBuilder` (`xunit`): scheduled to be supported as of 1.100
 - [ ] `PerformancePublisher` (`performance`): scheduled to be supported as of 3.1
 - [ ] `ZfjReporter` (`zephyr-for-jira-test-management`): [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
@@ -96,6 +97,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [ ] `CustomToolInstallWrapper` (`custom-tools-plugin`): [JENKINS-30680](https://issues.jenkins-ci.org/browse/JENKINS-30680)
 - [ ] `PortAllocator` (`port-allocator`): [JENKINS-31449](https://issues.jenkins-ci.org/browse/JENKINS-31449)
 - [X] `withAnt` (`ant`): supported as of 1.6
+- [X] `CoverityEnvBuildWrapper ` (`withCoverityEnv`): supported as of 1.10.0
 
 ## Triggers
 
