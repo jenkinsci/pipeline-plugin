@@ -153,7 +153,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [x] `PrioritySorter`: supported as of 3.5.0
 - [ ] `scoring-load-balancer`: [JENKINS-41267](https://issues.jenkins-ci.org/browse/JENKINS-41267)
 - [ ] `envinject-plugin`: partial support, [JENKINS-42614](https://issues.jenkins-ci.org/browse/JENKINS-42614) ([Documentation](https://wiki.jenkins-ci.org/display/JENKINS/EnvInject+Plugin#EnvInjectPlugin-JenkinsPipeline))
-- [ ] `junit-realtime-test-reporter`: [JENKINS-35420](https://issues.jenkins-ci.org/browse/JENKINS-35420)
+- [X] `junit-realtime-test-reporter`: `realtimeJUnit` step as of 0.5
 
 ## Custom steps
 
