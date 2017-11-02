@@ -81,6 +81,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `HockeyappRecorder` (`hockeyapp`): supported as of 1.2.2
 - [X] `WsCleanup` (`ws-cleanup`): supported as of 0.30
 - [X] `XCodeBuilder` (`xcode-plugin`): supported as of 2.0.0
+- [X] `PlotBuilder` (`plot`): supported as of 2.0.0
 
 ## Build wrappers
 
