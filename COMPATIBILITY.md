@@ -62,7 +62,8 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
 - [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
 - [X] `XUnitPublisher` and `XUnitBuilder` (`xunit`): scheduled to be supported as of 1.100
-- [ ] `PerformancePublisher` (`performance`): scheduled to be supported as of 3.1
+- [X] `PerformancePublisher` and `PerformanceTest` (`performance`): supported as of 3.1
+- [X] `BlazeMeterTest` (`blazemeter`): supported as of 4.0
 - [ ] `ZfjReporter` (`zephyr-for-jira-test-management`): [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
 - [ ] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
 - [X] `PerfSigRecorder` and 5 more (`performance-signature-dynatrace`): supported as of 2.0
