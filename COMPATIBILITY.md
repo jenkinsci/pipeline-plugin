@@ -18,7 +18,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `IntegritySCM` (`integrity-plugin`): supported as of 1.36
 - [X] `RepoScm` (`repo`): supported as of 1.9.0
 - [X] `teamconcert`: supported as of 1.9.4
-- [X] `CVSSCM` (`cvs`): scheduled to be supported in 2.13
+- [X] `CVSSCM` (`cvs`): supported as of 2.13
 - [X] `TeamFoundationServerScm` (`tfs`): supported as of 5.3.4
 - [X] `AccuRevSCM` (`accurev`): supported as of 0.7.10
 
@@ -59,8 +59,8 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `ScoveragePublisher` (`scoverage`): supported as of 1.2.0
 - [ ] `AWSCodeDeployPublisher` (`codedeploy`): [issue 36](https://github.com/awslabs/aws-codedeploy-plugin/issues/36)
 - [X] `AnsiblePlaybookBuilder` (`ansible`): supported as of 0.4
-- [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): scheduled to be supported as of 1.14.3
-- [ ] `CoverityPublisher` (`coverity`): [JENKINS-32354](https://issues.jenkins-ci.org/browse/JENKINS-32354)
+- [X] `GitHubCommitNotifier`, `GitHubSetCommitStatusBuilder` (`github`): supported as of 1.14.0
+- [x] `CoverityPublisher` (`coverity`): supported as of 1.10.0
 - [X] `XUnitPublisher` and `XUnitBuilder` (`xunit`): scheduled to be supported as of 1.100
 - [X] `PerformancePublisher` and `PerformanceTest` (`performance`): supported as of 3.1
 - [X] `BlazeMeterTest` (`blazemeter`): supported as of 4.0
@@ -105,7 +105,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `ghprb`: supported as of 1.36
 - [X] `github`: supported as of 1.14.0
 - [ ] `xtrigger-plugin`: [JENKINS-27301](https://issues.jenkins-ci.org/browse/JENKINS-27301)
-- [X] `deployment-notification`: scheduled to be supported as of 1.3
+- [X] `deployment-notification`: supported as of 1.3
 - [X] `gitlab-plugin`: supported as of 1.1.26
 - [X] `bitbucket`: supported as of 1.1.2
 - [ ] `bitbucket-pullrequest-builder`: [JENKINS-31749](https://issues.jenkins-ci.org/browse/JENKINS-31749)
@@ -137,7 +137,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `lockable-resources`: supported as of 1.8 (except for [JENKINS-34273](https://issues.jenkins-ci.org/browse/JENKINS-34273) and [JENKINS-34268](https://issues.jenkins-ci.org/browse/JENKINS-34268))
 - [X] `customize-build-now`: supported as of 1.1
 - [X] `test-results-analyzer` : supported as of 0.3.4
-- [X] `embeddable-build-status`: scheduled to be supported as of 1.9
+- [X] `embeddable-build-status`: supported as of 1.9
 - [X] `groovy-postbuild`: supported as of 2.3
 - [X] `jira` : supported as of 2.2
 - [X] `ownership` : supported as of 0.9.0 ([Documentation](https://github.com/jenkinsci/ownership-plugin/blob/master/doc/PipelineIntegration.md))
