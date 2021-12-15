@@ -73,7 +73,7 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `StashNotifier` (`stashNotifier`): [supported as of 1.11](https://github.com/jenkinsci/stashnotifier-plugin#note-on-pipeline-plugin-usage)
 - [X] `LambdaUploadBuildStep`, `LambdaInvokeBuildStep`, `LambdaEventSourceBuildStep` (`aws-lambda`): supported as of 0.5.0
 - [X] `CucumberReportPublisher` (`cucumber-reports`): supported as of 2.1.0
-- [ ] `Powershell` (`powershell`): [JENKINS-34581](https://issues.jenkins-ci.org/browse/JENKINS-34581)
+- [X] `Powershell` (`powershell`): [JENKINS-34581](https://issues.jenkins-ci.org/browse/JENKINS-34581)
 - [X] `TestPackageBuilder` (+6 more), `ATXPublisher` (+4 more) (`ecutest`): supported as of 1.11
 - [X] `GatlingPublisher` (`gatling`): supported as of 1.2.0
 - [X] `BitbucketBuildStatusNotifier`: (`bitbucket-build-status-notifier`) supported as of 1.3
