@@ -68,19 +68,19 @@ Newly filed issues should bear the label `pipeline` for ease of tracking.
 - [X] `PerformancePublisher` and `PerformanceTest` (`performance`): supported as of 3.1
 - [X] `BlazeMeterTest` (`blazemeter`): supported as of 4.0
 - [ ] `ZfjReporter` (`zephyr-for-jira-test-management`): [JENKINS-32801](https://issues.jenkins-ci.org/browse/JENKINS-32801)
-- [ ] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
+- [X] `BapSshPublisher` (`publish-over-ssh`): [JENKINS-27963](https://issues.jenkins-ci.org/browse/JENKINS-27963)
 - [X] `PerfSigRecorder` and 5 more (`performance-signature-dynatrace`): supported as of 2.0
 - [X] `StashNotifier` (`stashNotifier`): [supported as of 1.11](https://github.com/jenkinsci/stashnotifier-plugin#note-on-pipeline-plugin-usage)
 - [X] `LambdaUploadBuildStep`, `LambdaInvokeBuildStep`, `LambdaEventSourceBuildStep` (`aws-lambda`): supported as of 0.5.0
 - [X] `CucumberReportPublisher` (`cucumber-reports`): supported as of 2.1.0
-- [ ] `Powershell` (`powershell`): [JENKINS-34581](https://issues.jenkins-ci.org/browse/JENKINS-34581)
+- [X] `Powershell` (`powershell`): [JENKINS-34581](https://issues.jenkins-ci.org/browse/JENKINS-34581)
 - [X] `TestPackageBuilder` (+6 more), `ATXPublisher` (+4 more) (`ecutest`): supported as of 1.11
 - [X] `GatlingPublisher` (`gatling`): supported as of 1.2.0
 - [X] `BitbucketBuildStatusNotifier`: (`bitbucket-build-status-notifier`) supported as of 1.3
 - [X] `NexusArtifactUploader` (`nexus-artifact-uploader`): supported as of 2.2
-- [ ] `CppcheckPublisher` (`cppcheck`): [JENKINS-34943](https://issues.jenkins-ci.org/browse/JENKINS-35096)
+- [X] `CppcheckPublisher` (`cppcheck`): [JENKINS-34943](https://issues.jenkins-ci.org/browse/JENKINS-35096)
 - [ ] `ConfluencePublisher` (`confluence-publisher`): [JENKINS-36345](https://issues.jenkins-ci.org/browse/JENKINS-36345)
-- [ ] `ValgrindPublisher` (`valgrind`): [JENKINS-34981](https://issues.jenkins-ci.org/browse/JENKINS-34981)
+- [X] `ValgrindPublisher` (`valgrind`): [JENKINS-34981](https://issues.jenkins-ci.org/browse/JENKINS-34981)
 - [X] `HockeyappRecorder` (`hockeyapp`): supported as of 1.2.2
 - [X] `WsCleanup` (`ws-cleanup`): supported as of 0.30
 - [X] `XCodeBuilder` (`xcode-plugin`): supported as of 2.0.0
