@@ -1,3 +1,5 @@
+**Obsolete** and unmaintained. Rather use the `pipeline` label in Jira.
+
 # Plugin Compatibility with Pipeline
 
 For architectural reasons, plugins providing various extensions of interest to builds cannot be made automatically compatible with Pipeline.

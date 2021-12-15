@@ -1,3 +1,5 @@
+**Obsolete**. Kept only for some historical resources.
+
 # Introduction
 
 Building continuous delivery pipelines and similarly complex tasks in Jenkins using freestyle projects and traditional plugins can be awkward.
